@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.local/
+*.tsbuildinfo
+.DS_Store
+
+# Local planning, private reference-package research, and credentials.
+/analysis/
+/docs/
+.env
+.env.*
+!.env.example

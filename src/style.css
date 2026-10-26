@@ -1,0 +1,824 @@
+:root {
+  font-family:
+    Inter,
+    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Microsoft YaHei",
+    sans-serif;
+  color: #303431;
+  background: #efeee9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-weight: 400;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+button,
+a,
+input {
+  touch-action: manipulation;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button,
+a[role="button"] {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+button {
+  border: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+.click-wheel:focus-visible {
+  outline: 2px solid #b85c30;
+  outline-offset: 4px;
+}
+
+button:active {
+  filter: brightness(0.92);
+}
+
+input {
+  font-size: 16px;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.classic-device {
+  position: relative;
+  width: 320px;
+  height: 528px;
+  border-radius: 35px;
+  background: linear-gradient(
+    110deg,
+    #f3f3ee 0%,
+    #d8dad7 22%,
+    #d0d3d0 52%,
+    #e6e7e2 75%,
+    #c6cbc6 100%
+  );
+  box-shadow:
+    inset 0 1px 2px 2px #ffffffe8,
+    inset 3px 0 3px #ffffffa1,
+    inset -3px 0 3px #a8aea9,
+    0 2px 2px #646d626b,
+    0 16px 26px -16px #59624c85;
+  border: 1px solid #a9b0a8;
+  padding: 23px 21px;
+  z-index: 1;
+}
+
+.classic-device:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    #ffffff15 1px,
+    #ffffff15 2px
+  );
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.top-hold {
+  position: absolute;
+  top: -3px;
+  left: 47px;
+  width: 43px;
+  height: 3px;
+  background: #838b80;
+  border-radius: 4px;
+}
+
+.top-hold i {
+  display: block;
+  width: 23px;
+  height: 3px;
+  background: #bec3ba;
+  margin-left: 2px;
+}
+
+.screen-glass {
+  height: 215px;
+  border: 3px solid #242925;
+  border-radius: 9px;
+  background: #242925;
+  padding: 5px;
+  box-shadow:
+    0 1px 1px #ffffffb0,
+    inset 0 0 2px #000;
+  position: relative;
+  z-index: 2;
+}
+
+.lcd-screen {
+  background: #fbfcfa;
+  height: 100%;
+  border-radius: 2px;
+  overflow: hidden;
+  color: #222827;
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen-status {
+  height: 23px;
+  flex-shrink: 0;
+  background: linear-gradient(#f7faf6, #c7cfc8);
+  border-bottom: 1px solid #a4b0a6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 7px;
+  font-size: 12px;
+}
+
+.screen-status > strong {
+  font-weight: 700;
+}
+
+.screen-indicators {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  color: #52685d;
+}
+
+.screen-power {
+  display: block;
+  width: 20px;
+  height: 9px;
+  border: 1px solid #66786a;
+  border-radius: 2px;
+  position: relative;
+  padding: 1px;
+}
+
+.screen-power:after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 2px;
+  height: 3px;
+  width: 2px;
+  background: #66786a;
+}
+
+.screen-power i {
+  display: block;
+  height: 100%;
+  width: 80%;
+  background: #80a77d;
+}
+
+.home-screen {
+  display: grid;
+  grid-template-columns: 53% 47%;
+  flex: 1;
+  min-height: 0;
+}
+
+.screen-menu {
+  border-right: 1px solid #a8b2a8;
+  padding-top: 4px;
+  position: relative;
+}
+
+.screen-row {
+  width: 100%;
+  height: 29px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  gap: 5px;
+  padding: 0 7px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  position: relative;
+}
+
+.screen-row > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.screen-row > span:last-child:not(:first-child) {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.screen-row.selected {
+  background: linear-gradient(#77abe3, #367fc9);
+  box-shadow:
+    inset 0 1px #a6c9ee,
+    inset 0 -1px #306da9;
+  color: white;
+}
+
+.screen-preview {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 10px 8px;
+  background: linear-gradient(120deg, #fcfdfb, #e5eae1);
+  gap: 7px;
+}
+
+.screen-preview strong {
+  font-size: 12px;
+}
+
+.screen-preview > span {
+  font-size: 9px;
+  color: #737d6f;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screen-preview .record-art {
+  width: 88px;
+  height: 84px;
+  box-shadow: 4px 5px 6px #6470502a;
+  transform: rotate(-7deg);
+  margin-bottom: 5px;
+}
+
+.record-art {
+  width: 165px;
+  height: 177px;
+  position: relative;
+  border-radius: 2px;
+  background: #d17a49;
+  overflow: hidden;
+  background-image: linear-gradient(145deg, #e7a06b, #bc633b);
+  box-shadow: 0 12px 18px -12px #684b2b44;
+}
+
+.record-art:before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid #fff4d645;
+}
+
+.record-disc {
+  position: absolute;
+  width: 118px;
+  height: 118px;
+  top: 17px;
+  left: 51px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle,
+    #2c3430 0,
+    #2c3430 1px,
+    #39413a 2px,
+    #2c3430 3px
+  );
+  box-shadow: 0 4px 8px #5c392655;
+  display: grid;
+  place-items: center;
+  transform: rotate(-20deg);
+}
+
+.record-label {
+  width: 41px;
+  height: 41px;
+  border-radius: 50%;
+  background: #ece6ce;
+  display: grid;
+  place-items: center;
+  color: #bb6f3d;
+  font-size: 21px;
+  font-family: Georgia, serif;
+  font-style: italic;
+}
+
+.record-label i {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #303a30;
+}
+
+.record-label span {
+  transform: translateY(-7px);
+}
+
+.record-art.small .record-disc {
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 34%;
+}
+
+.record-art.small .record-label {
+  width: 34%;
+  height: 34%;
+  font-size: 15px;
+}
+
+.record-art.small .record-label i {
+  width: 3px;
+  height: 3px;
+}
+
+.record-art.small .record-label span {
+  transform: translateY(-4px);
+}
+
+.record-art.small:before {
+  inset: 5px;
+}
+
+.click-wheel {
+  position: relative;
+  width: 218px;
+  height: 218px;
+  background: linear-gradient(145deg, #fafbf8, #eaede7);
+  border-radius: 50%;
+  margin: 27px auto 0;
+  border: 1px solid #c0c7bd;
+  box-shadow:
+    0 1px 1px #ffffffc9,
+    inset 0 1px 3px #fff8;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  z-index: 3;
+}
+
+.wheel-button {
+  position: absolute;
+  padding: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  color: #8c9488;
+  touch-action: none;
+  border-radius: 12px;
+}
+
+.wheel-button svg {
+  width: 24px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.wheel-menu {
+  width: 80px;
+  height: 51px;
+  top: 3px;
+  left: 68px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.wheel-previous {
+  width: 52px;
+  height: 74px;
+  left: 1px;
+  top: 72px;
+}
+
+.wheel-next {
+  width: 52px;
+  height: 74px;
+  right: 1px;
+  top: 72px;
+}
+
+.wheel-play {
+  width: 80px;
+  height: 51px;
+  left: 68px;
+  bottom: 3px;
+}
+
+.wheel-select {
+  width: 87px;
+  height: 87px;
+  top: 64px;
+  left: 64px;
+  border-radius: 50%;
+  border: 1px solid #b8c0b4;
+  background: linear-gradient(130deg, #d9ded4, #c2c9bf);
+  box-shadow:
+    inset 0 1px 2px #f6f8f3,
+    0 1px 2px #bac1b7;
+}
+
+.wheel-select.is-pressed {
+  background: linear-gradient(130deg, #bec7b8, #d1d8ca);
+  box-shadow: inset 0 1px 4px #74806955;
+}
+
+.device-engraving {
+  position: absolute;
+  bottom: 16px;
+  text-align: center;
+  left: 0;
+  right: 0;
+  color: #a3aca0;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: 600;
+  text-shadow: 0 1px #fff8;
+}
+
+.song-screen {
+  min-height: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.screen-song-list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+.screen-song-list::-webkit-scrollbar {
+  display: none;
+}
+
+.screen-song-list .screen-row {
+  height: 28px;
+  font-size: 11px;
+}
+
+.screen-footer {
+  font-size: 9px;
+  text-align: center;
+  color: #7b8875;
+  background: #eff2eb;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.track-playing-marker {
+  font-size: 9px;
+}
+
+.screen-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 8px;
+  text-align: center;
+  padding: 10px;
+}
+
+.screen-empty .music-note {
+  font-size: 26px;
+  color: #8a9b7c;
+  line-height: 1;
+}
+
+.screen-empty strong {
+  font-size: 12px;
+}
+
+.screen-empty p {
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 0;
+  color: #7a8b6c;
+}
+
+.screen-empty button {
+  font-size: 10px;
+  padding: 5px 12px;
+  border: 1px solid #a9b59f;
+  border-radius: 3px;
+  background: #edf2e9;
+  color: #5c7050;
+}
+
+.now-playing-screen {
+  padding: 12px 10px 4px;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.now-playing-top {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.now-playing-top .record-art {
+  width: 78px;
+  height: 78px;
+  flex-shrink: 0;
+}
+
+.now-playing-top > div:last-child {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+
+.now-playing-top p {
+  font-size: 9px;
+  margin: 0;
+  color: #839078;
+}
+
+.now-playing-top strong {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.now-playing-top span {
+  font-size: 9px;
+  color: #718463;
+}
+
+.screen-progress {
+  margin-top: 13px;
+}
+
+.screen-progress > div {
+  display: flex;
+  justify-content: space-between;
+  font-family: monospace;
+  font-size: 9px;
+  color: #718263;
+  margin-top: 4px;
+}
+
+.screen-error {
+  font-size: 9px;
+  color: #a25436;
+  line-height: 1.4;
+  margin: 5px 0 0;
+  overflow-y: auto;
+}
+
+/* Keep every interaction inside the device; dimensions follow its width. */
+.app-shell {
+  --device-width: min(360px, calc(100vw - 32px));
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+.classic-device {
+  width: var(--device-width);
+  height: calc(var(--device-width) * 1.65);
+  padding: calc(var(--device-width) * 0.072) calc(var(--device-width) * 0.066);
+  border-radius: calc(var(--device-width) * 0.109);
+}
+.classic-device.is-dragging {
+  outline: 3px solid #657d55;
+  outline-offset: 5px;
+}
+.screen-glass {
+  height: calc(var(--device-width) * 0.672);
+}
+.lcd-screen {
+  position: relative;
+}
+.screen-status {
+  height: 26px;
+  font-size: 13px;
+}
+.screen-menu {
+  overflow-y: auto;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.screen-menu::-webkit-scrollbar {
+  display: none;
+}
+.screen-row {
+  height: 32px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.screen-row.selected {
+  background: linear-gradient(#2e6da8, #1f578d);
+  color: white;
+  box-shadow:
+    inset 0 1px #6da1cd,
+    inset 0 -1px #194c7e;
+}
+.screen-song-list .screen-row {
+  height: 32px;
+  font-size: 12px;
+}
+.settings-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.settings-screen .screen-menu {
+  border: 0;
+  width: 100%;
+}
+.screen-preview .record-art {
+  width: 88px;
+  height: 88px;
+}
+.screen-preview > span {
+  color: #566a49;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.click-wheel {
+  width: calc(var(--device-width) * 0.68125);
+  height: calc(var(--device-width) * 0.68125);
+  margin-top: calc(var(--device-width) * 0.0844);
+}
+.wheel-menu {
+  left: 31%;
+  top: 1%;
+  width: 37%;
+  height: 24%;
+  color: #65705c;
+}
+.wheel-previous {
+  left: 0;
+  top: 33%;
+  width: 24%;
+  height: 34%;
+}
+.wheel-next {
+  right: 0;
+  top: 33%;
+  width: 24%;
+  height: 34%;
+}
+.wheel-play {
+  left: 31%;
+  bottom: 1%;
+  width: 37%;
+  height: 24%;
+}
+.wheel-select {
+  left: 29.5%;
+  top: 29.5%;
+  width: 41%;
+  height: 41%;
+}
+.now-playing-screen {
+  padding: 14px 10px 6px;
+}
+.now-playing-top {
+  gap: 12px;
+}
+.now-playing-top .record-art {
+  width: calc(var(--device-width) * 0.244);
+  height: calc(var(--device-width) * 0.244);
+}
+.now-playing-top strong {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.now-playing-top p,
+.now-playing-top span,
+.screen-footer,
+.screen-progress > div {
+  color: #566a49;
+}
+.screen-progress {
+  margin-top: 10px;
+}
+.screen-progress input {
+  display: block;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  accent-color: #658454;
+  cursor: pointer;
+}
+.screen-error {
+  color: #824523;
+  font-size: 10px;
+  flex: 1;
+}
+.screen-error p {
+  margin: 3px 0;
+}
+.screen-error button,
+.screen-empty button {
+  border: 1px solid #a6b39b;
+  border-radius: 3px;
+  background: #edf2e9;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: #435a36;
+}
+.screen-error button {
+  margin-right: 8px;
+  padding: 3px 10px;
+}
+.screen-notice {
+  position: absolute;
+  z-index: 3;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: #e7eddff5;
+  color: #435a36;
+  border-top: 1px solid #acb9a1;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+}
+@media (max-height: 650px) and (min-width: 500px) {
+  .app-shell {
+    --device-width: 300px;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .wheel-button:hover {
+    color: #66735d;
+  }
+}
