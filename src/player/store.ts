@@ -63,7 +63,7 @@ if ("mediaSession" in navigator) {
         track && typeof MediaMetadata !== "undefined"
           ? new MediaMetadata({
               title: track.title,
-              artist: "本地音乐",
+              artist: track.artist ?? "本地音乐",
               album: "ReiPod",
             })
           : null;

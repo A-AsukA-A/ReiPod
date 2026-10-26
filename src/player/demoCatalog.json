@@ -1,0 +1,32 @@
+[
+  {
+    "filename": "carefree.mp3",
+    "artist": "Kevin MacLeod",
+    "bytes": 6566713,
+    "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400037",
+    "sha256": "8433b770a630d9b1594fd484442c677907ece899a4d149954cd2e74fd733e311",
+    "title": "Carefree",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "id": "USUAN1400037"
+  },
+  {
+    "filename": "monkeys-spinning-monkeys.mp3",
+    "artist": "Kevin MacLeod",
+    "bytes": 5005207,
+    "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400011",
+    "sha256": "a5bb345c23849ad0786aa0bc5157a9f2d4039660fe00282e55754d475f36dc14",
+    "title": "Monkeys Spinning Monkeys",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "id": "USUAN1400011"
+  },
+  {
+    "filename": "sneaky-snitch.mp3",
+    "artist": "Kevin MacLeod",
+    "bytes": 5466943,
+    "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100772",
+    "sha256": "db1710333d68a215277f77e4e17e1a64bf4ed38f87c70f8d0f56b16b6aa4f884",
+    "title": "Sneaky Snitch",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "id": "USUAN1100772"
+  }
+]

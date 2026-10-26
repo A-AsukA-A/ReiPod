@@ -3,7 +3,8 @@ import { ClickWheel } from "./input/ClickWheel";
 import type { WheelCommand } from "./input/ClickWheel";
 import { importFiles, player, usePlayer } from "./player/store";
 import type { PlaybackStatus } from "./player/Player";
-import { useTestMusic } from "./player/testMusic";
+import demoCatalog from "./player/demoCatalog.json";
+import { getDemoTracks } from "./player/demoTracks";
 
 type Page = "home" | "songs" | "playing" | "settings";
 type MenuItem = { label: string; detail?: string; action: () => void };
@@ -66,14 +67,15 @@ export function App() {
       if (rejected) setNotice(`${rejected} 个非音频文件未加入`);
     } else setNotice(rejected ? "请选择音频文件" : "歌曲已在列表中");
   };
-  const testMusic = useTestMusic();
   const loadTestMusic = () => {
-    if (testMusic.loading) return;
+    player.add(getDemoTracks(import.meta.env.BASE_URL));
+    navigate("songs");
+    const firstDemo = player
+      .getSnapshot()
+      .tracks.findIndex((track) => track.kind === "demo");
+    setSelection(Math.max(0, firstDemo));
+    remembered.current.songs = Math.max(0, firstDemo);
     setNotice("");
-    void testMusic
-      .load()
-      .then(addFiles)
-      .catch(() => setNotice("试听载入失败，请重试"));
   };
 
   const homeItems: MenuItem[] = [
@@ -88,15 +90,11 @@ export function App() {
       action: () => navigate("playing"),
     },
     { label: "导入音乐", detail: "本地文件", action: openFiles },
-    ...(testMusic.samples.length
-      ? [
-          {
-            label: "试听音乐",
-            detail: "周杰伦 · 试听片段",
-            action: loadTestMusic,
-          },
-        ]
-      : []),
+    {
+      label: "试听音乐",
+      detail: `${demoCatalog.length} 首内置音乐`,
+      action: loadTestMusic,
+    },
     { label: "设置", action: () => navigate("settings") },
   ];
   const settingsItems: MenuItem[] = [
@@ -119,12 +117,16 @@ export function App() {
         );
       },
     },
-    ...testMusic.samples.map((sample) => ({
-      label: `${sample.title} · 来源`,
+    {
+      label: "试听曲目版权",
       action: () => {
-        window.open(sample.source, "_blank", "noopener,noreferrer");
+        window.open(
+          `${import.meta.env.BASE_URL}music/credits.txt`,
+          "_blank",
+          "noopener,noreferrer",
+        );
       },
-    })),
+    },
   ];
   const items =
     page === "home" ? homeItems : page === "settings" ? settingsItems : [];
@@ -204,11 +206,7 @@ export function App() {
       </span>
       <strong>暂无歌曲</strong>
       <button onClick={openFiles}>导入音乐</button>
-      {testMusic.samples.length > 0 && (
-        <button onClick={loadTestMusic} disabled={testMusic.loading}>
-          试听音乐
-        </button>
-      )}
+      <button onClick={loadTestMusic}>试听音乐</button>
     </div>
   );
 
@@ -353,7 +351,7 @@ export function App() {
                       </p>
                       <strong title={current.title}>{current.title}</strong>
                       <span>
-                        本地音乐 ·{" "}
+                        {current.artist ?? "本地音乐"} ·{" "}
                         {current.filename.split(".").pop()?.toUpperCase()}
                       </span>
                       <span>{statusText[state.status]}</span>
@@ -390,13 +388,9 @@ export function App() {
               ) : (
                 emptyScreen
               ))}
-            {(notice || testMusic.loading || dragging) && (
+            {(notice || dragging) && (
               <div className="screen-notice" role="status">
-                {dragging
-                  ? "松开以导入音乐"
-                  : testMusic.loading
-                    ? "正在载入试听…"
-                    : notice}
+                {dragging ? "松开以导入音乐" : notice}
               </div>
             )}
           </div>

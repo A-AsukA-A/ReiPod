@@ -19,4 +19,6 @@ React / React DOM：Meta Platforms, Inc. and affiliates，MIT。发行声明见 
 
 `scripts/create-test-audio.mjs` 合成三段原创 12 秒 PCM WAV，用于解码 / 连播检查；输出保存在忽略目录 `.local/`。
 
-用户要求的周杰伦开发试听素材：Apple iTunes Search API 返回的《告白气球 (Live)》《千山万水》各约 30 秒 AAC 试听片段。下载时间 2026-10-26；原始来源、标题与文件名保存在本机 `.local/test-music/catalog.json`，界面提供对应官方页面链接。仅作为本次私人开发测试文件，由 Vite 开发中间件提供，不放入 `public/`，不进入生产包，不视为获得完整曲目或发行授权。
+公开试听：`public/music/` 包含 Kevin MacLeod 的《Carefree》《Monkeys Spinning Monkeys》《Sneaky Snitch》完整 MP3，使用 CC BY 4.0，未经剪辑或重新编码。来源、许可及署名见 [public/music/credits.txt](public/music/credits.txt)，播放器「设置 → 试听曲目版权」可查看。`src/player/demoCatalog.json` 保存官方曲目页、许可地址、字节数与 SHA-256；构建检查只允许这些明确列出的公开音频。
+
+早期私人开发试听素材：Apple iTunes Search API 返回的周杰伦《告白气球 (Live)》《千山万水》各约 30 秒 AAC 试听片段，仍仅保存在本机忽略目录 `.local/test-music/`；不进入公开仓库、构建或当前试听菜单。

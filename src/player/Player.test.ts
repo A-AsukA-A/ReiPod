@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Player } from "./Player";
+import { getDemoTracks } from "./demoTracks";
 import type { AudioPort, Track } from "./Player";
 
 class FakeAudio extends EventTarget {
@@ -53,6 +54,26 @@ function setup() {
 }
 
 describe("shared playback session", () => {
+  it("adds hosted demos once without replacing an active imported song", () => {
+    const { player, audios } = setup();
+    player.select("1");
+    audios[0].emit("playing");
+    audios[0].currentTime = 7;
+    audios[0].emit("timeupdate");
+    const demos = getDemoTracks("/ReiPod/");
+    expect(demos.every((track) => track.url.startsWith("/ReiPod/music/"))).toBe(
+      true,
+    );
+    player.add(demos);
+    player.add(getDemoTracks("/ReiPod/"));
+    expect(player.getSnapshot()).toMatchObject({
+      currentId: "1",
+      status: "playing",
+      position: 7,
+    });
+    expect(player.getSnapshot().tracks).toHaveLength(6);
+    expect(audios).toHaveLength(1);
+  });
   it("derives playback and progress from the backend and preserves it across UI subscribers", () => {
     const { player, audios } = setup();
     player.select("1");
