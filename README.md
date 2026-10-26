@@ -12,6 +12,8 @@ Choose **试听音乐** to add three full built-in tracks: **Carefree**, **Monke
 
 Mouse wheel and keyboard controls are available when the wheel is focused: ↑/↓ select, Enter confirms, Escape returns, and Space plays or pauses.
 
+MENU returns one level and keeps the selected row; hold MENU to return home, or press Home on the keyboard. The screen header also provides back and now-playing shortcuts. Opening the current song keeps its position and resumes it if paused. Dragging the progress slider previews the time and seeks once on release; a track change cancels the old seek. Clearing the list requires confirmation, with Cancel selected by default. The demo list shows only built-in tracks, even after local files are imported.
+
 Music stays on your device. Files must be reimported after a refresh. MP3, AAC/M4A and PCM WAV are suggested; decoding depends on the browser. The web player does not provide native iPhone haptics or guarantee background playback.
 
 ## Develop

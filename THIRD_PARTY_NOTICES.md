@@ -7,7 +7,7 @@
 - Copyright (c) 2019 Tanner Villarete，MIT。完整许可保存在 [vendor/ipod-classic-js/LICENSE](vendor/ipod-classic-js/LICENSE)，随生产包附带 [public/third-party-licenses.txt](public/third-party-licenses.txt)。
 - `src/input/geometry.ts` 抽取并修改 `app/components/ClickWheel/helpers.ts` 的 `getCircularBoundingInfo` 与 `getAngleBetweenPoints`；角度保留浮点精度，新增逐采样圆周展开。
 - `ClickWheel/index.tsx` 中的角度选择、旋转取消点击、事件驱动导航结构用于参考；ReiPod 使用 Pointer Events / pointer capture 重新衔接，补中心死区、取消 / 移出处理、累计拖动判定、慢速阈值及快速加速。不引入 Motion、Styled Components、Next.js 或原项目的音乐账号依赖。
-- 菜单只需四个页面，独立实现本轮页面切换，不声称移植了上游整套页面管理器。
+- 菜单、返回栈、行焦点记忆与清空确认独立实现，不声称移植了上游整套页面管理器。
 
 ## 其他运行依赖
 

@@ -2,13 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { getCircularBoundingInfo } from "./geometry";
 import { WheelGesture } from "./WheelGesture";
 
-export type WheelCommand = "menu" | "previous" | "next" | "play" | "select";
+export type WheelCommand =
+  "menu" | "home" | "previous" | "next" | "play" | "select";
 type Props = {
   onRotate: (steps: number) => void;
   onCommand: (command: WheelCommand) => void;
+  playLabel?: string;
 };
 
-export function ClickWheel({ onRotate, onCommand }: Props) {
+export function ClickWheel({
+  onRotate,
+  onCommand,
+  playLabel = "播放或暂停",
+}: Props) {
   const root = useRef<HTMLDivElement>(null);
   const gesture = useRef<{
     id: number;
@@ -18,6 +24,29 @@ export function ClickWheel({ onRotate, onCommand }: Props) {
   const [pressed, setPressed] = useState<WheelCommand | null>(null);
   const callbacks = useRef({ onRotate, onCommand });
   callbacks.current = { onRotate, onCommand };
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+  const keyboardMenu = useRef(false);
+  const cancelHold = () => {
+    if (holdTimer.current !== null) clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+  };
+  const resetGesture = () => {
+    cancelHold();
+    gesture.current = null;
+    keyboardMenu.current = false;
+    longPressFired.current = false;
+    setPressed(null);
+  };
+  const startMenuHold = () => {
+    cancelHold();
+    longPressFired.current = false;
+    holdTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      setPressed(null);
+      callbacks.current.onCommand("home");
+    }, 600);
+  };
 
   const commandAt = (x: number, y: number): WheelCommand => {
     const { centerPoint: center, radius } = getCircularBoundingInfo(
@@ -33,8 +62,11 @@ export function ClickWheel({ onRotate, onCommand }: Props) {
   useEffect(() => {
     const wheel = root.current!;
     let remainder = 0;
+    let lastWheelTime = 0;
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
+      if (event.timeStamp - lastWheelTime > 180) remainder = 0;
+      lastWheelTime = event.timeStamp;
       const delta =
         event.deltaY *
         (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 120 : 1);
@@ -49,7 +81,13 @@ export function ClickWheel({ onRotate, onCommand }: Props) {
       }
     };
     wheel.addEventListener("wheel", handleWheel, { passive: false });
-    return () => wheel.removeEventListener("wheel", handleWheel);
+    const cancel = () => resetGesture();
+    window.addEventListener("blur", cancel);
+    return () => {
+      wheel.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("blur", cancel);
+      cancelHold();
+    };
   }, []);
 
   const control = (
@@ -61,6 +99,35 @@ export function ClickWheel({ onRotate, onCommand }: Props) {
       type="button"
       className={`wheel-button wheel-${command} ${pressed === command ? "is-pressed" : ""}`}
       aria-label={label}
+      title={command === "menu" ? "返回，长按回主页" : undefined}
+      onKeyDown={(event) => {
+        if (command !== "menu" || (event.key !== "Enter" && event.key !== " "))
+          return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.repeat || keyboardMenu.current) return;
+        keyboardMenu.current = true;
+        setPressed("menu");
+        startMenuHold();
+      }}
+      onKeyUp={(event) => {
+        if (
+          command !== "menu" ||
+          !keyboardMenu.current ||
+          (event.key !== "Enter" && event.key !== " ")
+        )
+          return;
+        event.preventDefault();
+        event.stopPropagation();
+        cancelHold();
+        keyboardMenu.current = false;
+        setPressed(null);
+        if (!longPressFired.current) onCommand("menu");
+        longPressFired.current = false;
+      }}
+      onBlur={() => {
+        if (keyboardMenu.current) resetGesture();
+      }}
       onClick={(event) => {
         if (event.detail === 0) onCommand(command);
       }}
@@ -75,7 +142,7 @@ export function ClickWheel({ onRotate, onCommand }: Props) {
       ref={root}
       tabIndex={0}
       role="group"
-      aria-label="Classic 转轮：绕圈或滚轮选择，上下方向键选择，Enter 确认，Escape 返回，空格播放暂停"
+      aria-label="Classic 转轮：绕圈或滚轮选择，上下方向键选择，Enter 确认，Escape 返回，Home 回主页，空格播放暂停"
       onContextMenu={(event) => event.preventDefault()}
       onPointerDown={(event) => {
         if (!event.isPrimary || event.button !== 0 || gesture.current) return;
@@ -103,11 +170,14 @@ export function ClickWheel({ onRotate, onCommand }: Props) {
           ),
         };
         node.setPointerCapture(event.pointerId);
+        longPressFired.current = false;
+        if (command === "menu") startMenuHold();
         setPressed(command);
       }}
       onPointerMove={(event) => {
         const active = gesture.current;
         if (!active || active.id !== event.pointerId) return;
+        if (longPressFired.current) return;
         const steps = active.input.move(
           { x: event.clientX, y: event.clientY },
           event.timeStamp,
@@ -116,33 +186,37 @@ export function ClickWheel({ onRotate, onCommand }: Props) {
           setPressed(null);
           onRotate(steps);
         }
-        if (!active.input.canClick({ x: event.clientX, y: event.clientY }))
+        if (!active.input.canClick({ x: event.clientX, y: event.clientY })) {
+          cancelHold();
           setPressed(null);
+        }
       }}
       onPointerUp={(event) => {
         const active = gesture.current;
         if (!active || active.id !== event.pointerId) return;
+        cancelHold();
         gesture.current = null;
         setPressed(null);
         if (
+          !longPressFired.current &&
           active.input.canClick({ x: event.clientX, y: event.clientY }) &&
           commandAt(event.clientX, event.clientY) === active.command
         )
           onCommand(active.command);
+        longPressFired.current = false;
       }}
-      onPointerCancel={() => {
-        gesture.current = null;
-        setPressed(null);
+      onPointerCancel={(event) => {
+        if (gesture.current?.id === event.pointerId) resetGesture();
       }}
-      onLostPointerCapture={() => {
-        gesture.current = null;
-        setPressed(null);
+      onLostPointerCapture={(event) => {
+        if (gesture.current?.id === event.pointerId) resetGesture();
       }}
       onKeyDown={(event) => {
         if (event.altKey || event.ctrlKey || event.metaKey) return;
         const isButton = event.target instanceof HTMLButtonElement;
         const commands: Record<string, WheelCommand> = {
           Escape: "menu",
+          Home: "home",
           Backspace: "menu",
           ArrowLeft: "previous",
           ArrowRight: "next",
@@ -176,7 +250,7 @@ export function ClickWheel({ onRotate, onCommand }: Props) {
       )}
       {control(
         "play",
-        "播放或暂停",
+        playLabel,
         <svg viewBox="0 0 28 18" aria-hidden="true">
           <path d="M4 2v14l10-7zM18 2h3v14h-3zm6 0h3v14h-3z" />
         </svg>,

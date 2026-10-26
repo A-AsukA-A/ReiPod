@@ -54,6 +54,24 @@ function setup() {
 }
 
 describe("shared playback session", () => {
+  it("reopens and resumes the current song without restarting its session", () => {
+    const { player, audios } = setup();
+    player.activate("1");
+    audios[0].emit("playing");
+    audios[0].currentTime = 42;
+    audios[0].emit("timeupdate");
+    player.activate("1");
+    expect(audios).toHaveLength(1);
+    expect(audios[0].play).toHaveBeenCalledTimes(1);
+    expect(player.getSnapshot().position).toBe(42);
+    player.pause();
+    player.activate("1");
+    expect(audios).toHaveLength(1);
+    expect(audios[0].play).toHaveBeenCalledTimes(2);
+    expect(audios[0].currentTime).toBe(42);
+    player.activate("2");
+    expect(audios).toHaveLength(2);
+  });
   it("adds hosted demos once without replacing an active imported song", () => {
     const { player, audios } = setup();
     player.select("1");

@@ -177,6 +177,15 @@ export class Player {
     else audio.load();
   }
 
+  /** Opening the current song keeps its session and progress. */
+  activate(id: string) {
+    if (id === this.state.currentId && this.audio) {
+      if (!this.wantsPlay) this.play();
+      return;
+    }
+    this.select(id);
+  }
+
   play() {
     if (!this.audio) {
       if (this.state.tracks[0]) this.select(this.state.tracks[0].id);
