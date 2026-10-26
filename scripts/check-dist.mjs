@@ -44,6 +44,7 @@ if (/\b(?:src|href)="\/(?!\/)/.test(html)) {
   );
 }
 await readFile("dist/third-party-licenses.txt", "utf8");
+await readFile("dist/music-metadata-license.txt", "utf8");
 await readFile("dist/music/credits.txt", "utf8");
 console.log(
   `Public build verified: ${approvedMusic.size} approved demo tracks, credits included, private test music excluded.`,

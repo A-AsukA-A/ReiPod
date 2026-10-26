@@ -1,7 +1,16 @@
+import { shuffled, shuffleAfterCurrent } from "./ordering";
+
 export type Track = {
   id: string;
   title: string;
   artist?: string;
+  album?: string;
+  albumArtist?: string;
+  artwork?: string;
+  trackNumber?: number;
+  duration?: number;
+  importedAt?: number;
+  lyrics?: { time: number; text: string }[];
   kind?: "local" | "demo";
   filename: string;
   size: number;
@@ -11,11 +20,16 @@ export type PlaybackStatus =
   "idle" | "loading" | "playing" | "paused" | "buffering" | "ended" | "error";
 export type PlayerState = {
   tracks: Track[];
+  queue: string[];
+  shuffle: boolean;
+  repeat: "off" | "all" | "one";
+  favorites: string[];
   currentId: string | null;
   status: PlaybackStatus;
   position: number;
   duration: number;
   volume: number;
+  volumeControl: boolean;
   error: string | null;
 };
 
@@ -40,11 +54,16 @@ export type AudioPort = Pick<
 export class Player {
   private state: PlayerState = {
     tracks: [],
+    queue: [],
+    shuffle: false,
+    repeat: "off",
+    favorites: [],
     currentId: null,
     status: "idle",
     position: 0,
     duration: 0,
     volume: 0.8,
+    volumeControl: true,
     error: null,
   };
   private listeners = new Set<() => void>();
@@ -53,6 +72,8 @@ export class Player {
   private intent = 0;
   private wantsPlay = false;
   private cleanups: (() => void)[] = [];
+  private naturalOrder: string[] = [];
+  private queueIsLibrary = true;
 
   constructor(
     private createAudio: () => AudioPort = () => new Audio(),
@@ -74,14 +95,82 @@ export class Player {
     const ids = new Set(this.state.tracks.map((track) => track.id));
     const unique = tracks.filter((track) => {
       if (ids.has(track.id)) {
-        this.revoke(track.url);
+        if (track.url.startsWith("blob:")) this.revoke(track.url);
         return false;
       }
       ids.add(track.id);
       return true;
     });
-    this.update({ tracks: [...this.state.tracks, ...unique] });
+    if (this.queueIsLibrary)
+      this.naturalOrder.push(...unique.map((track) => track.id));
+    this.update({
+      tracks: [...this.state.tracks, ...unique],
+      queue: this.queueIsLibrary
+        ? [...this.state.queue, ...unique.map((track) => track.id)]
+        : this.state.queue,
+    });
     return unique.length;
+  }
+
+  updateTrack(id: string, patch: Partial<Track>) {
+    const existing = this.state.tracks.find((track) => track.id === id);
+    if (!existing) {
+      if (patch.artwork?.startsWith("blob:")) this.revoke(patch.artwork);
+      return;
+    }
+    if (
+      patch.artwork &&
+      existing.artwork?.startsWith("blob:") &&
+      existing.artwork !== patch.artwork
+    )
+      this.revoke(existing.artwork);
+    this.update({
+      tracks: this.state.tracks.map((track) =>
+        track.id === id
+          ? { ...track, ...patch, id: track.id, url: track.url }
+          : track,
+      ),
+    });
+  }
+
+  setQueue(ids: string[], selectedId?: string) {
+    const valid = new Set(this.state.tracks.map((track) => track.id));
+    const order = [...new Set(ids)].filter((id) => valid.has(id));
+    this.naturalOrder = order;
+    this.queueIsLibrary =
+      order.length === this.state.tracks.length &&
+      order.every((id, index) => this.state.tracks[index]?.id === id);
+    const current = selectedId ?? this.state.currentId;
+    const queue = this.state.shuffle
+      ? current && order.includes(current)
+        ? [current, ...shuffled(order.filter((id) => id !== current))]
+        : shuffled(order)
+      : order;
+    this.update({ queue });
+  }
+
+  setShuffle(shuffle: boolean) {
+    if (shuffle === this.state.shuffle) return;
+    this.update({
+      shuffle,
+      queue: shuffle
+        ? shuffleAfterCurrent(this.state.queue, this.state.currentId)
+        : [...this.naturalOrder],
+    });
+  }
+
+  setRepeat(repeat: PlayerState["repeat"]) {
+    this.update({ repeat });
+  }
+  setFavorites(favorites: string[]) {
+    this.update({ favorites: [...new Set(favorites)] });
+  }
+  toggleFavorite(id: string) {
+    this.setFavorites(
+      this.state.favorites.includes(id)
+        ? this.state.favorites.filter((item) => item !== id)
+        : [...this.state.favorites, id],
+    );
   }
 
   private release() {
@@ -98,6 +187,8 @@ export class Player {
   select(id: string, autoplay = true) {
     const track = this.state.tracks.find((item) => item.id === id);
     if (!track) return;
+    if (!this.state.queue.includes(id))
+      this.setQueue(this.state.tracks.map((item) => item.id));
     this.session++;
     this.intent++;
     this.release();
@@ -113,6 +204,7 @@ export class Player {
       position: 0,
       duration: 0,
       error: null,
+      volumeControl: Math.abs(audio.volume - this.state.volume) < 0.01,
     });
     const on = (event: string, callback: () => void) => {
       const guarded = () => {
@@ -150,9 +242,12 @@ export class Player {
       if (this.wantsPlay) this.update({ status: "buffering" });
     });
     on("ended", () => {
-      const index = this.state.tracks.findIndex((item) => item.id === id);
-      if (index < this.state.tracks.length - 1)
-        this.select(this.state.tracks[index + 1].id);
+      const index = this.state.queue.indexOf(id);
+      if (this.state.repeat === "one") this.select(id);
+      else if (index >= 0 && index < this.state.queue.length - 1)
+        this.select(this.state.queue[index + 1]);
+      else if (this.state.repeat === "all" && this.state.queue.length)
+        this.select(this.state.queue[0]);
       else {
         this.wantsPlay = false;
         this.update({ status: "ended", position: this.state.duration });
@@ -178,7 +273,14 @@ export class Player {
   }
 
   /** Opening the current song keeps its session and progress. */
-  activate(id: string) {
+  activate(id: string, queue?: string[]) {
+    if (
+      queue &&
+      (id !== this.state.currentId ||
+        queue.length !== this.naturalOrder.length ||
+        queue.some((item, index) => this.naturalOrder[index] !== item))
+    )
+      this.setQueue(queue, id);
     if (id === this.state.currentId && this.audio) {
       if (!this.wantsPlay) this.play();
       return;
@@ -188,7 +290,8 @@ export class Player {
 
   play() {
     if (!this.audio) {
-      if (this.state.tracks[0]) this.select(this.state.tracks[0].id);
+      const first = this.state.queue[0] ?? this.state.tracks[0]?.id;
+      if (first) this.select(first);
       return;
     }
     if (this.state.status === "error" && this.state.currentId) {
@@ -246,13 +349,11 @@ export class Player {
     this.skip(-1);
   }
   private skip(direction: number) {
-    const { tracks, currentId } = this.state;
-    if (!tracks.length) return;
-    const index = tracks.findIndex((track) => track.id === currentId);
+    const { queue, currentId } = this.state;
+    if (!queue.length) return;
+    const index = currentId ? queue.indexOf(currentId) : -1;
     this.select(
-      tracks[
-        index < 0 ? 0 : (index + direction + tracks.length) % tracks.length
-      ].id,
+      queue[index < 0 ? 0 : (index + direction + queue.length) % queue.length],
     );
   }
   seek(position: number) {
@@ -270,16 +371,26 @@ export class Player {
   setVolume(volume: number) {
     const value = Math.max(0, Math.min(1, volume));
     if (this.audio) this.audio.volume = value;
-    this.update({ volume: value });
+    this.update({
+      volume: this.audio ? this.audio.volume : value,
+      volumeControl: !this.audio || Math.abs(this.audio.volume - value) < 0.01,
+    });
   }
   clear() {
     this.session++;
     this.intent++;
     this.wantsPlay = false;
     this.release();
-    this.state.tracks.forEach((track) => this.revoke(track.url));
+    this.state.tracks.forEach((track) => {
+      if (track.url.startsWith("blob:")) this.revoke(track.url);
+      if (track.artwork?.startsWith("blob:")) this.revoke(track.artwork);
+    });
+    this.naturalOrder = [];
+    this.queueIsLibrary = true;
     this.update({
       tracks: [],
+      queue: [],
+      favorites: [],
       currentId: null,
       status: "idle",
       position: 0,

@@ -11,7 +11,9 @@
 
 ## 其他运行依赖
 
-React / React DOM：Meta Platforms, Inc. and affiliates，MIT。发行声明见 `public/third-party-licenses.txt`，原许可同时由 npm 包提供。开发工具及传递依赖的版本由 `package-lock.json` 锁定，各包许可在其 npm 包中。
+music-metadata 12.3.2：Borewit，MIT，用于在本机解析音频标签、内嵌封面和歌词；通过动态导入按需加载。完整许可见 [public/music-metadata-license.txt](public/music-metadata-license.txt)，同时收录于发行包的开源许可文件。
+
+React / React DOM / Scheduler：Meta Platforms, Inc. and affiliates，MIT。运行依赖的完整许可汇总于 `public/third-party-licenses.txt`，包括 music-metadata 依赖的 MIT / BSD 许可；纯类型包 @tokenizer/token 编译后不进入 JavaScript。开发工具及传递依赖的版本由 `package-lock.json` 锁定，各包原许可同时由其 npm 包提供。
 
 ## 视觉与测试音频
 

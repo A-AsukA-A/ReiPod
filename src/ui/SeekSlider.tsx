@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import type { PlayerState } from "../player/Player";
 import { player } from "../player/store";
 import { committedSeek } from "./seek";
@@ -34,6 +35,11 @@ export function SeekSlider({ state }: { state: PlayerState }) {
   return (
     <div
       className={`screen-progress ${preview?.trackId === state.currentId ? "is-seeking" : ""}`}
+      style={
+        {
+          "--progress": `${state.duration ? Math.max(0, Math.min(100, (position / state.duration) * 100)) : 0}%`,
+        } as CSSProperties
+      }
     >
       <input
         type="range"

@@ -1,18 +1,42 @@
 export type Page =
-  "home" | "songs" | "demos" | "playing" | "settings" | "confirm-clear";
-export type Screen = { page: Page; selectedKey: string | null };
+  | "home"
+  | "music"
+  | "songs"
+  | "demos"
+  | "playing"
+  | "settings"
+  | "confirm-clear"
+  | "coverflow"
+  | "albums"
+  | "artists"
+  | "album-tracks"
+  | "artist-tracks"
+  | "favorites"
+  | "recent"
+  | "playlists";
+export type Screen = {
+  page: Page;
+  selectedKey: string | null;
+  groupKey?: string;
+};
 export type NavigationState = {
   screen: Screen;
   history: Screen[];
-  remembered: Partial<Record<Page, string | null>>;
+  remembered: Record<string, string | null>;
 };
 export const initialNavigation: NavigationState = {
-  screen: { page: "home", selectedKey: "music" },
+  screen: { page: "home", selectedKey: "coverflow" },
   history: [],
   remembered: {},
 };
 export type NavigationAction =
-  | { type: "open"; page: Page; selectedKey?: string; defaultKey?: string }
+  | {
+      type: "open";
+      page: Page;
+      selectedKey?: string;
+      defaultKey?: string;
+      groupKey?: string;
+    }
   | { type: "select"; key: string }
   | { type: "move"; keys: string[]; steps: number }
   | { type: "back" }
@@ -27,11 +51,13 @@ export function navigationReducer(
   if (action.type === "reset") return initialNavigation;
   const remembered = {
     ...state.remembered,
-    [state.screen.page]: state.screen.selectedKey,
+    [state.screen.groupKey
+      ? `${state.screen.page}:${state.screen.groupKey}`
+      : state.screen.page]: state.screen.selectedKey,
   };
   if (action.type === "home")
     return {
-      screen: { page: "home", selectedKey: remembered.home ?? "music" },
+      screen: { page: "home", selectedKey: remembered.home ?? "coverflow" },
       history: [],
       remembered,
     };
@@ -40,27 +66,29 @@ export function navigationReducer(
     return previous
       ? { screen: previous, history: state.history.slice(0, -1), remembered }
       : {
-          screen: { page: "home", selectedKey: remembered.home ?? "music" },
+          screen: { page: "home", selectedKey: remembered.home ?? "coverflow" },
           history: [],
           remembered,
         };
   }
   if (action.type === "open") {
-    if (action.page === state.screen.page && action.selectedKey === undefined)
-      return state;
+    const same =
+      action.page === state.screen.page &&
+      action.groupKey === state.screen.groupKey;
+    if (same && action.selectedKey === undefined) return state;
     return {
       screen: {
         page: action.page,
+        ...(action.groupKey ? { groupKey: action.groupKey } : {}),
         selectedKey:
           action.selectedKey ??
-          remembered[action.page] ??
+          remembered[
+            action.groupKey ? `${action.page}:${action.groupKey}` : action.page
+          ] ??
           action.defaultKey ??
           null,
       },
-      history:
-        action.page === state.screen.page
-          ? state.history
-          : [...state.history, state.screen],
+      history: same ? state.history : [...state.history, state.screen],
       remembered,
     };
   }

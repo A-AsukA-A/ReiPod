@@ -54,6 +54,55 @@ function setup() {
 }
 
 describe("shared playback session", () => {
+  it("plays an album queue without leaking unrelated library songs into auto-next", () => {
+    const { player, audios } = setup();
+    player.activate("2", ["2", "3"]);
+    player.add([
+      {
+        id: "4",
+        title: "New import",
+        filename: "4.mp3",
+        size: 1,
+        url: "blob:4",
+      },
+    ]);
+    expect(player.getSnapshot().queue).toEqual(["2", "3"]);
+    audios[0].emit("ended");
+    expect(player.getSnapshot().currentId).toBe("3");
+    audios[1].emit("ended");
+    expect(player.getSnapshot().status).toBe("ended");
+  });
+  it("implements repeat-one, manual skip, and repeat-all at queue boundaries", () => {
+    const { player, audios } = setup();
+    player.activate("2", ["2", "3"]);
+    player.setRepeat("one");
+    audios[0].emit("ended");
+    expect(player.getSnapshot().currentId).toBe("2");
+    expect(audios).toHaveLength(2);
+    player.next();
+    expect(player.getSnapshot().currentId).toBe("3");
+    player.setRepeat("all");
+    audios[2].emit("ended");
+    expect(player.getSnapshot().currentId).toBe("2");
+  });
+  it("toggles shuffle without restarting and anchors a manual song selection", () => {
+    const { player, audios } = setup();
+    player.select("1");
+    audios[0].currentTime = 20;
+    audios[0].emit("timeupdate");
+    player.setShuffle(true);
+    expect(player.getSnapshot().queue[0]).toBe("1");
+    expect(player.getSnapshot().position).toBe(20);
+    expect(audios).toHaveLength(1);
+    player.activate("2", ["1", "2", "3"]);
+    expect(player.getSnapshot().queue[0]).toBe("2");
+    player.setShuffle(false);
+    expect(player.getSnapshot().queue).toEqual(["1", "2", "3"]);
+    player.toggleFavorite("2");
+    expect(player.getSnapshot().favorites).toEqual(["2"]);
+    player.toggleFavorite("2");
+    expect(player.getSnapshot().favorites).toEqual([]);
+  });
   it("reopens and resumes the current song without restarting its session", () => {
     const { player, audios } = setup();
     player.activate("1");

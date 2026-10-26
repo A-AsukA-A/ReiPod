@@ -3,17 +3,19 @@ import { getCircularBoundingInfo } from "./geometry";
 import { WheelGesture } from "./WheelGesture";
 
 export type WheelCommand =
-  "menu" | "home" | "previous" | "next" | "play" | "select";
+  "menu" | "home" | "favorite" | "previous" | "next" | "play" | "select";
 type Props = {
-  onRotate: (steps: number) => void;
+  onRotate: (steps: number, source?: "pointer" | "wheel" | "keyboard") => void;
   onCommand: (command: WheelCommand) => void;
   playLabel?: string;
+  onFeedback?: (kind: "press" | "release") => void;
 };
 
 export function ClickWheel({
   onRotate,
   onCommand,
   playLabel = "播放或暂停",
+  onFeedback,
 }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const gesture = useRef<{
@@ -22,8 +24,8 @@ export function ClickWheel({
     command: WheelCommand;
   } | null>(null);
   const [pressed, setPressed] = useState<WheelCommand | null>(null);
-  const callbacks = useRef({ onRotate, onCommand });
-  callbacks.current = { onRotate, onCommand };
+  const callbacks = useRef({ onRotate, onCommand, onFeedback });
+  callbacks.current = { onRotate, onCommand, onFeedback };
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFired = useRef(false);
   const keyboardMenu = useRef(false);
@@ -38,13 +40,13 @@ export function ClickWheel({
     longPressFired.current = false;
     setPressed(null);
   };
-  const startMenuHold = () => {
+  const startMenuHold = (command: "home" | "favorite" = "home") => {
     cancelHold();
     longPressFired.current = false;
     holdTimer.current = setTimeout(() => {
       longPressFired.current = true;
       setPressed(null);
-      callbacks.current.onCommand("home");
+      callbacks.current.onCommand(command);
     }, 600);
   };
 
@@ -76,6 +78,7 @@ export function ClickWheel({
         callbacks.current.onRotate(
           Math.sign(remainder) *
             Math.min(3, Math.trunc(Math.abs(remainder) / 32)),
+          "wheel",
         );
         remainder %= 32;
       }
@@ -129,7 +132,10 @@ export function ClickWheel({
         if (keyboardMenu.current) resetGesture();
       }}
       onClick={(event) => {
-        if (event.detail === 0) onCommand(command);
+        if (event.detail === 0) {
+          onFeedback?.("release");
+          onCommand(command);
+        }
       }}
     >
       {content}
@@ -170,8 +176,10 @@ export function ClickWheel({
           ),
         };
         node.setPointerCapture(event.pointerId);
+        onFeedback?.("press");
         longPressFired.current = false;
         if (command === "menu") startMenuHold();
+        if (command === "select") startMenuHold("favorite");
         setPressed(command);
       }}
       onPointerMove={(event) => {
@@ -184,7 +192,7 @@ export function ClickWheel({
         );
         if (steps) {
           setPressed(null);
-          onRotate(steps);
+          onRotate(steps, "pointer");
         }
         if (!active.input.canClick({ x: event.clientX, y: event.clientY })) {
           cancelHold();
@@ -201,8 +209,10 @@ export function ClickWheel({
           !longPressFired.current &&
           active.input.canClick({ x: event.clientX, y: event.clientY }) &&
           commandAt(event.clientX, event.clientY) === active.command
-        )
+        ) {
+          onFeedback?.("release");
           onCommand(active.command);
+        }
         longPressFired.current = false;
       }}
       onPointerCancel={(event) => {
@@ -217,6 +227,8 @@ export function ClickWheel({
         const commands: Record<string, WheelCommand> = {
           Escape: "menu",
           Home: "home",
+          f: "favorite",
+          F: "favorite",
           Backspace: "menu",
           ArrowLeft: "previous",
           ArrowRight: "next",
@@ -226,7 +238,7 @@ export function ClickWheel({
         if (isButton && (event.key === "Enter" || event.key === " ")) return;
         if (event.key === "ArrowUp" || event.key === "ArrowDown") {
           event.preventDefault();
-          onRotate(event.key === "ArrowUp" ? -1 : 1);
+          onRotate(event.key === "ArrowUp" ? -1 : 1, "keyboard");
         } else if (commands[event.key]) {
           event.preventDefault();
           if (!event.repeat) onCommand(commands[event.key]);

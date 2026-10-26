@@ -2,6 +2,27 @@ import { describe, expect, it } from "vitest";
 import { initialNavigation, navigationReducer as reduce } from "./navigation";
 
 describe("player navigation", () => {
+  it("remembers track focus separately for each album, including back navigation", () => {
+    let nav = reduce(initialNavigation, {
+      type: "open",
+      page: "album-tracks",
+      groupKey: "album-a",
+      defaultKey: "a1",
+    });
+    nav = reduce(nav, { type: "select", key: "a2" });
+    nav = reduce(nav, {
+      type: "open",
+      page: "album-tracks",
+      groupKey: "album-b",
+      defaultKey: "b1",
+    });
+    expect(nav.screen.selectedKey).toBe("b1");
+    nav = reduce(nav, { type: "back" });
+    expect(nav.screen).toMatchObject({
+      groupKey: "album-a",
+      selectedKey: "a2",
+    });
+  });
   it("remembers a directly clicked item through playing and nested back navigation", () => {
     let nav = reduce(initialNavigation, { type: "select", key: "demo" });
     nav = reduce(nav, { type: "open", page: "demos", defaultKey: "song-1" });
