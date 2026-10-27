@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ClickWheel } from "./input/ClickWheel";
 import type { WheelCommand } from "./input/ClickWheel";
 import { feedback } from "./input/feedback";
@@ -27,6 +20,9 @@ import { AlbumArt } from "./ui/AlbumArt";
 import { CoverFlow } from "./ui/CoverFlow";
 import { Lyrics } from "./ui/Lyrics";
 import { setPreferences, usePreferences } from "./ui/preferences";
+import { PlayerIcon } from "./ui/PlayerIcon";
+import { MarqueeText } from "./ui/MarqueeText";
+import { useLcdMotion } from "./ui/useLcdMotion";
 
 type MenuItem = {
   key: string;
@@ -71,7 +67,11 @@ export function App() {
   const content = useRef<HTMLDivElement>(null);
   const dragDepth = useRef(0);
   const lastInput = useRef("pointer");
-  const lastDepth = useRef(0);
+  const capture = useLcdMotion(
+    content,
+    `${page}:${groupKey ?? ""}:${page === "playing" && playView === "lyrics" ? "lyrics" : "page"}`,
+    lastInput,
+  );
   const active = state.status === "playing";
   const busy = state.status === "loading" || state.status === "buffering";
   const selectedAlbum = albums.find((album) => album.id === groupKey);
@@ -82,9 +82,15 @@ export function App() {
     "artist-tracks",
     "favorites",
     "recent",
+    "queue",
   ];
   const isTrackList = trackPages.includes(page);
   const visibleTracks = useMemo(() => {
+    if (page === "queue")
+      return state.queue.flatMap((id) => {
+        const track = state.tracks.find((track) => track.id === id);
+        return track ? [track] : [];
+      });
     if (page === "demos")
       return state.tracks.filter((track) => track.kind === "demo");
     if (page === "album-tracks")
@@ -100,7 +106,7 @@ export function App() {
         (a, b) => (b.importedAt ?? 0) - (a.importedAt ?? 0),
       );
     return state.tracks;
-  }, [page, groupKey, state.tracks, state.favorites, albums]);
+  }, [page, groupKey, state.tracks, state.favorites, state.queue, albums]);
 
   const open = (target: Page, selectedKey?: string, group?: string) => {
     const latest = player.getSnapshot();
@@ -122,6 +128,7 @@ export function App() {
                   : target === "playlists"
                     ? "all"
                     : (latest.currentId ?? latest.tracks[0]?.id ?? "import");
+    if (target !== page || group !== groupKey) capture("forward");
     dispatch({
       type: "open",
       page: target,
@@ -132,6 +139,7 @@ export function App() {
     setNotice("");
   };
   const back = () => {
+    if (navigation.history.length) capture("back");
     dispatch({ type: "back" });
     setNotice("");
   };
@@ -165,7 +173,10 @@ export function App() {
     id: string,
     queue = visibleTracks.map((track) => track.id),
   ) => {
-    player.activate(id, queue.length ? queue : undefined);
+    player.activate(
+      id,
+      page === "queue" ? undefined : queue.length ? queue : undefined,
+    );
     setPlayView("art");
     open("playing");
   };
@@ -358,6 +369,7 @@ export function App() {
       key: "confirm",
       label: "清空资料库",
       action: () => {
+        capture("back");
         clearLibrary();
         dispatch({ type: "reset" });
         setNotice("资料库已清空");
@@ -447,14 +459,18 @@ export function App() {
       row.action();
     }
   };
-  const cyclePlayView = () => {
-    setPlayView((view) =>
-      view === "art" ? "seek" : view === "seek" ? "lyrics" : "art",
-    );
+  const changePlayView = (view: PlayView) => {
+    if ((view === "lyrics") !== (playView === "lyrics")) capture("replace");
+    setPlayView(view);
     setVolumeOverlay(false);
   };
+  const cyclePlayView = () =>
+    changePlayView(
+      playView === "art" ? "seek" : playView === "seek" ? "lyrics" : "art",
+    );
   const command = (value: WheelCommand) => {
     if (value === "home") {
+      if (page !== "home") capture("back");
       dispatch({ type: "home" });
       setNotice("");
     }
@@ -538,27 +554,6 @@ export function App() {
     const timer = setTimeout(() => setVolumeOverlay(false), 1300);
     return () => clearTimeout(timer);
   }, [volumeOverlay, state.volume]);
-  useLayoutEffect(() => {
-    const previous = lastDepth.current;
-    lastDepth.current = navigation.history.length;
-    if (
-      lastInput.current === "keyboard" ||
-      matchMedia("(prefers-reduced-motion: reduce)").matches
-    )
-      return;
-    const animation = content.current?.animate(
-      [
-        {
-          transform: `translateX(${navigation.history.length < previous ? -18 : 18}px)`,
-          opacity: 0.6,
-        },
-        { transform: "translateX(0)", opacity: 1 },
-      ],
-      { duration: 135, easing: "cubic-bezier(.2,.7,.2,1)" },
-    );
-    return () => animation?.cancel();
-  }, [page, groupKey]);
-
   const title =
     page === "album-tracks"
       ? (selectedAlbum?.title ?? "专辑")
@@ -578,6 +573,7 @@ export function App() {
             favorites: "我的收藏",
             recent: "最近添加",
             playlists: "播放列表",
+            queue: "播放队列",
           }[page];
   const renderRows = () =>
     rows.map((row) => (
@@ -586,25 +582,33 @@ export function App() {
         ref={row.key === focusedRow?.key ? selectedRow : undefined}
         disabled={row.disabled}
         aria-current={row.key === focusedRow?.key ? "true" : undefined}
-        className={`screen-row ${row.key === focusedRow?.key ? "selected" : ""} ${row.key === "confirm" ? "destructive" : ""} ${page === "albums" ? "album-row" : ""}`}
-        onPointerDown={() => feedback("press")}
+        className={`screen-row ${row.key === focusedRow?.key ? "selected" : ""} ${row.key === "confirm" ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${isTrackList ? "track-row" : ""}`}
+        onPointerDown={() => {
+          feedback("press");
+          dispatch({ type: "select", key: row.key });
+        }}
         onClick={() => chooseRow(row)}
       >
         {page === "albums" && (
           <AlbumArt src={row.artwork} title={row.label} artist={row.detail} />
         )}
         <span className="row-label">
-          {isTrackList && state.currentId === row.key && (
-            <span className="track-playing-marker" aria-hidden="true">
-              {active ? "▶" : "Ⅱ"}{" "}
-            </span>
-          )}
-          {row.label}
+          <span className="row-title">
+            {isTrackList && state.currentId === row.key && (
+              <span className="track-playing-marker" aria-hidden="true">
+                <PlayerIcon name={active ? "play" : "pause"} filled={active} />
+              </span>
+            )}
+            <MarqueeText
+              text={row.label}
+              active={row.key === focusedRow?.key}
+            />
+          </span>
           {page === "albums" && <small>{row.detail}</small>}
         </span>
         {row.value && <span className="row-value">{row.value}</span>}
         <span className="row-chevron" aria-hidden="true">
-          ›
+          <PlayerIcon name="chevron" />
         </span>
       </button>
     ));
@@ -662,7 +666,11 @@ export function App() {
           <i />
         </div>
         <div className="screen-glass">
-          <div className="lcd-screen">
+          <div
+            className="lcd-screen"
+            data-page={page}
+            data-view={page === "playing" ? playView : undefined}
+          >
             <div className="screen-status">
               <button
                 className="screen-back"
@@ -670,13 +678,13 @@ export function App() {
                 disabled={!navigation.history.length}
                 onClick={back}
               >
-                ‹
+                <PlayerIcon name="back" />
               </button>
               <strong>{title}</strong>
               <span className="play-modes">
                 {state.shuffle && (
                   <span title="随机播放" aria-label="随机播放">
-                    ⤨
+                    <PlayerIcon name="shuffle" />
                   </span>
                 )}
                 {state.repeat !== "off" && (
@@ -684,7 +692,8 @@ export function App() {
                     title={`重复${repeatText[state.repeat]}`}
                     aria-label={`重复${repeatText[state.repeat]}`}
                   >
-                    ↻{state.repeat === "one" && <small>1</small>}
+                    <PlayerIcon name="repeat" />
+                    {state.repeat === "one" && <small>1</small>}
                   </span>
                 )}
               </span>
@@ -695,208 +704,250 @@ export function App() {
                   onClick={() => open("playing")}
                 >
                   <span aria-hidden="true">
-                    {busy ? "…" : active ? "▶" : "Ⅱ"}
+                    {busy ? (
+                      <i className="lcd-loading" />
+                    ) : (
+                      <PlayerIcon
+                        name={active ? "play" : "pause"}
+                        filled={active}
+                      />
+                    )}
                   </span>
                 </button>
               ) : (
                 <span className="screen-header-spacer" />
               )}
             </div>
-            <div className="screen-content" ref={content}>
-              {(page === "home" || page === "music") && (
-                <div className="home-screen">
-                  <nav
-                    className="screen-menu"
-                    aria-label={page === "home" ? "主菜单" : "音乐菜单"}
-                  >
-                    {renderRows()}
-                  </nav>
-                  <div className="screen-preview">
-                    {page === "home" && focusedRow?.key === "coverflow" ? (
-                      <div className="preview-stack">
-                        {albums.slice(0, 3).map((album) => (
-                          <AlbumArt
-                            key={album.id}
-                            src={album.artwork}
-                            title={album.title}
-                            artist={album.artist}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <AlbumArt
-                        src={previewTrack?.artwork}
-                        title={previewTrack?.album ?? "ReiPod"}
-                        artist={previewTrack?.artist}
-                      />
-                    )}
-                    <strong>
-                      {page === "home" && focusedRow?.key === "playing"
-                        ? current?.title
-                        : focusedRow?.label}
-                    </strong>
-                    <span>
-                      {focusedRow?.detail ?? `${state.tracks.length} 首歌曲`}
-                    </span>
-                  </div>
-                </div>
-              )}
-              {page === "coverflow" &&
-                (albums.length ? (
-                  <CoverFlow
-                    albums={albums}
-                    index={selectedIndex}
-                    onMove={(steps) => rotate(steps, "pointer")}
-                    onChoose={() => focusedRow && chooseRow(focusedRow)}
-                    animate={coverMotion}
-                  />
-                ) : (
-                  <div className="screen-empty">
-                    <strong>暂无专辑</strong>
-                    <nav className="empty-actions" aria-label="添加音乐">
-                      {renderRows()}
-                    </nav>
-                  </div>
-                ))}
-              {(page === "settings" ||
-                page === "confirm-clear" ||
-                page === "artists" ||
-                page === "albums" ||
-                page === "playlists") && (
-                <div className="settings-screen">
-                  {page === "confirm-clear" && (
-                    <p className="clear-question">
-                      清空资料库及已保存的文件？
-                      <span>不会删除设备上的原始文件</span>
-                    </p>
-                  )}
-                  <nav
-                    className="screen-menu"
-                    aria-label={
-                      page === "settings"
-                        ? "设置菜单"
-                        : page === "confirm-clear"
-                          ? "清空确认"
-                          : `${title}列表`
-                    }
-                  >
-                    {renderRows()}
-                  </nav>
-                  {(page === "albums" || page === "artists") && (
-                    <div className="screen-footer">
-                      {page === "albums" ? albums.length : artists.length}{" "}
-                      {page === "albums" ? "张专辑" : "位艺人"}
-                    </div>
-                  )}
-                </div>
-              )}
-              {(isTrackList || (page === "playing" && !current)) &&
-                (isTrackList && visibleTracks.length ? (
-                  <div className="song-screen">
-                    <div
-                      className="screen-song-list"
-                      role="group"
-                      aria-label={`${title}列表`}
+            <div className="screen-viewport">
+              <div className="screen-content" ref={content}>
+                {(page === "home" || page === "music") && (
+                  <div className="home-screen">
+                    <nav
+                      className="screen-menu"
+                      aria-label={page === "home" ? "主菜单" : "音乐菜单"}
                     >
                       {renderRows()}
-                    </div>
-                    <div className="screen-footer">
-                      {selectedIndex + 1} / {visibleTracks.length}
+                    </nav>
+                    <div className="screen-preview">
+                      {page === "home" && focusedRow?.key === "coverflow" ? (
+                        <div className="preview-stack">
+                          {albums.slice(0, 3).map((album) => (
+                            <AlbumArt
+                              key={album.id}
+                              src={album.artwork}
+                              title={album.title}
+                              artist={album.artist}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <AlbumArt
+                          src={previewTrack?.artwork}
+                          title={previewTrack?.album ?? "ReiPod"}
+                          artist={previewTrack?.artist}
+                        />
+                      )}
+                      <strong>
+                        {page === "home" && focusedRow?.key === "playing"
+                          ? current?.title
+                          : focusedRow?.label}
+                      </strong>
+                      <span>
+                        {focusedRow?.detail ?? `${state.tracks.length} 首歌曲`}
+                      </span>
                     </div>
                   </div>
-                ) : (
-                  <div className="screen-empty">
-                    <span className="music-note" aria-hidden="true">
-                      ♫
-                    </span>
-                    <strong>
-                      {page === "favorites" ? "还没有收藏的歌曲" : "暂无歌曲"}
-                    </strong>
-                    {page === "favorites" ? (
-                      <small>播放时长按中心键加入收藏</small>
-                    ) : (
+                )}
+                {page === "coverflow" &&
+                  (albums.length ? (
+                    <CoverFlow
+                      albums={albums}
+                      index={selectedIndex}
+                      onMove={(steps, source) => rotate(steps, source)}
+                      onChoose={() => focusedRow && chooseRow(focusedRow)}
+                      animate={coverMotion}
+                    />
+                  ) : (
+                    <div className="screen-empty">
+                      <strong>暂无专辑</strong>
                       <nav className="empty-actions" aria-label="添加音乐">
                         {renderRows()}
                       </nav>
+                    </div>
+                  ))}
+                {(page === "settings" ||
+                  page === "confirm-clear" ||
+                  page === "artists" ||
+                  page === "albums" ||
+                  page === "playlists") && (
+                  <div className="settings-screen">
+                    {page === "confirm-clear" && (
+                      <p className="clear-question">
+                        清空资料库及已保存的文件？
+                        <span>不会删除设备上的原始文件</span>
+                      </p>
+                    )}
+                    <nav
+                      className="screen-menu"
+                      aria-label={
+                        page === "settings"
+                          ? "设置菜单"
+                          : page === "confirm-clear"
+                            ? "清空确认"
+                            : `${title}列表`
+                      }
+                    >
+                      {renderRows()}
+                    </nav>
+                    {(page === "albums" || page === "artists") && (
+                      <div className="screen-footer">
+                        {page === "albums" ? albums.length : artists.length}{" "}
+                        {page === "albums" ? "张专辑" : "位艺人"}
+                      </div>
                     )}
                   </div>
-                ))}
-              {page === "playing" && current && (
-                <div className={`now-playing-screen view-${playView}`}>
-                  {playView === "lyrics" ? (
-                    <Lyrics
-                      track={current}
-                      position={state.position}
-                      wheelStep={lyricWheel}
-                    />
+                )}
+                {(isTrackList || (page === "playing" && !current)) &&
+                  (isTrackList && visibleTracks.length ? (
+                    <div className="song-screen">
+                      <div
+                        className="screen-song-list"
+                        role="group"
+                        aria-label={`${title}列表`}
+                      >
+                        {renderRows()}
+                      </div>
+                      <div className="screen-footer">
+                        {selectedIndex + 1} / {visibleTracks.length}
+                      </div>
+                    </div>
                   ) : (
-                    <div className="now-playing-top">
-                      <div className="np-cover">
-                        <AlbumArt
-                          src={current.artwork}
-                          title={current.album ?? current.title}
-                          artist={current.artist}
-                        />
-                        <div className="np-cover-reflection" aria-hidden="true">
+                    <div className="screen-empty">
+                      <span className="music-note" aria-hidden="true">
+                        ♫
+                      </span>
+                      <strong>
+                        {page === "favorites" ? "还没有收藏的歌曲" : "暂无歌曲"}
+                      </strong>
+                      {page === "favorites" ? (
+                        <small>播放时长按中心键加入收藏</small>
+                      ) : (
+                        <nav className="empty-actions" aria-label="添加音乐">
+                          {renderRows()}
+                        </nav>
+                      )}
+                    </div>
+                  ))}
+                {page === "playing" && current && (
+                  <div className={`now-playing-screen view-${playView}`}>
+                    {playView === "lyrics" ? (
+                      <Lyrics
+                        track={current}
+                        position={state.position}
+                        wheelStep={lyricWheel}
+                        onQueue={() => open("queue", current.id)}
+                        onClose={() => changePlayView("art")}
+                      />
+                    ) : (
+                      <div className="now-playing-top">
+                        <div className="np-cover">
                           <AlbumArt
                             src={current.artwork}
                             title={current.album ?? current.title}
                             artist={current.artist}
                           />
+                          <div
+                            className="np-cover-reflection"
+                            aria-hidden="true"
+                          >
+                            <AlbumArt
+                              src={current.artwork}
+                              title={current.album ?? current.title}
+                              artist={current.artist}
+                            />
+                          </div>
+                        </div>
+                        <div className="np-info">
+                          <div className="np-index">
+                            {state.queue.indexOf(current.id) + 1} /{" "}
+                            {state.queue.length}
+                          </div>
+                          <strong>
+                            <MarqueeText text={current.title} active />
+                          </strong>
+                          <span>
+                            <MarqueeText
+                              text={current.artist || "未知艺人"}
+                              active
+                            />
+                          </span>
+                          <span>
+                            <MarqueeText
+                              text={current.album || "未知专辑"}
+                              active
+                            />
+                          </span>
+                          {state.status !== "playing" && (
+                            <small>{statusText[state.status]}</small>
+                          )}
                         </div>
                       </div>
-                      <div className="np-info">
-                        <div className="np-index">
-                          {state.queue.indexOf(current.id) + 1} /{" "}
-                          {state.queue.length}
-                        </div>
-                        <strong title={current.title}>{current.title}</strong>
-                        <span>{current.artist || "未知艺人"}</span>
-                        <span>{current.album || "未知专辑"}</span>
-                        <small>{statusText[state.status]}</small>
-                      </div>
+                    )}
+                    <SeekSlider state={state} />
+                    <div className="np-actions">
+                      <button
+                        aria-label={
+                          state.favorites.includes(current.id)
+                            ? "取消收藏"
+                            : "收藏歌曲"
+                        }
+                        aria-pressed={state.favorites.includes(current.id)}
+                        onClick={() => toggleFavorite(current.id)}
+                      >
+                        <PlayerIcon
+                          name="star"
+                          filled={state.favorites.includes(current.id)}
+                        />
+                      </button>
+                      <span
+                        className="play-view-dots"
+                        aria-label={
+                          playView === "seek" ? "进度视图" : "封面视图"
+                        }
+                      >
+                        <i className={playView === "art" ? "active" : ""} />
+                        <i className={playView === "seek" ? "active" : ""} />
+                        <i />
+                      </span>
+                      <button
+                        aria-label="查看播放队列"
+                        onClick={() => open("queue", current.id)}
+                      >
+                        <PlayerIcon name="queue" />
+                      </button>
+                      <button
+                        aria-label={
+                          playView === "lyrics" ? "返回封面" : "查看歌词"
+                        }
+                        onClick={() =>
+                          changePlayView(
+                            playView === "lyrics" ? "art" : "lyrics",
+                          )
+                        }
+                      >
+                        <PlayerIcon name="lyrics" filled />
+                      </button>
                     </div>
-                  )}
-                  <SeekSlider state={state} />
-                  <div className="np-actions">
-                    <button
-                      aria-label={
-                        state.favorites.includes(current.id)
-                          ? "取消收藏"
-                          : "收藏歌曲"
-                      }
-                      aria-pressed={state.favorites.includes(current.id)}
-                      onClick={() => toggleFavorite(current.id)}
-                    >
-                      {state.favorites.includes(current.id) ? "★" : "☆"}
-                    </button>
-                    <span>
-                      {playView === "seek"
-                        ? "转轮调整进度"
-                        : playView === "lyrics"
-                          ? "转轮滚动歌词"
-                          : "中心键切换视图"}
-                    </span>
-                    <button
-                      aria-label={
-                        playView === "lyrics" ? "返回封面" : "查看歌词"
-                      }
-                      onClick={() =>
-                        setPlayView(playView === "lyrics" ? "art" : "lyrics")
-                      }
-                    >
-                      ❞
-                    </button>
+                    {state.error && (
+                      <div className="screen-error" role="alert">
+                        <p>{state.error}</p>
+                        <button onClick={() => player.play()}>重试</button>
+                        <button onClick={() => player.next()}>下一首</button>
+                      </div>
+                    )}
                   </div>
-                  {state.error && (
-                    <div className="screen-error" role="alert">
-                      <p>{state.error}</p>
-                      <button onClick={() => player.play()}>重试</button>
-                      <button onClick={() => player.next()}>下一首</button>
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
             {volumeOverlay && (
               <div className="volume-overlay">

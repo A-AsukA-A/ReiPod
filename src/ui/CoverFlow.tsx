@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import type { Album } from "../player/library";
 import { AlbumArt } from "./AlbumArt";
+import { MarqueeText } from "./MarqueeText";
 
 export function CoverFlow({
   albums,
@@ -11,7 +12,7 @@ export function CoverFlow({
 }: {
   albums: Album[];
   index: number;
-  onMove: (steps: number) => void;
+  onMove: (steps: number, source?: "pointer" | "keyboard") => void;
   onChoose: () => void;
   animate: boolean;
 }) {
@@ -75,7 +76,7 @@ export function CoverFlow({
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
             event.preventDefault();
-            onMove(event.key === "ArrowLeft" ? -1 : 1);
+            onMove(event.key === "ArrowLeft" ? -1 : 1, "keyboard");
           }
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
@@ -85,7 +86,7 @@ export function CoverFlow({
       >
         {albums.map((entry, i) => {
           const offset = i - index;
-          if (Math.abs(offset) > 2) return null;
+          if (Math.abs(offset) > 4) return null;
           return (
             <button
               type="button"
@@ -95,7 +96,7 @@ export function CoverFlow({
               aria-current={i === index ? "true" : undefined}
               tabIndex={i === index ? 0 : -1}
               style={{
-                transform: `translateX(calc(-50% + ${offset * 64}px)) translateZ(${-Math.abs(offset) * 44}px) rotateY(${offset === 0 ? 0 : offset > 0 ? -58 : 58}deg)`,
+                transform: `translateX(${offset === 0 ? -50 : -50 + Math.sign(offset) * (75 + (Math.abs(offset) - 1) * 37)}%) translateZ(${offset === 0 ? 0 : -35}px) rotateY(${offset === 0 ? 0 : offset > 0 ? -62 : 62}deg)`,
                 zIndex: 10 - Math.abs(offset),
               }}
               onClick={(event) => {
@@ -122,8 +123,12 @@ export function CoverFlow({
         })}
       </div>
       <div className="cf-caption" aria-live="polite">
-        <strong>{album?.title ?? "暂无专辑"}</strong>
-        <span>{album?.artist ?? "导入音乐后在这里浏览"}</span>
+        <strong>
+          <MarqueeText text={album?.title ?? "暂无专辑"} active />
+        </strong>
+        <span>
+          <MarqueeText text={album?.artist ?? "导入音乐后在这里浏览"} active />
+        </span>
       </div>
     </div>
   );

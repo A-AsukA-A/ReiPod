@@ -14,6 +14,8 @@ Turn the wheel to select, press the center to confirm, and use MENU to go back. 
 
 Import a matching `.lrc` file with the audio, or afterwards, for synchronized lyrics. Embedded plain lyrics can also be displayed. Lyrics are read from your files; the player does not fetch them from a music service.
 
+The lyrics view uses the full LCD, with queue and cover controls beside the song header and a thin progress strip at the bottom. The queue button shows the actual current playback order. Long selected titles scroll after a short pause. Desktop controls have no focus outlines, pressed tiles or selectable text. Menu navigation keeps the classic blue selection bar; forward and back use opposite screen slides, while keyboard navigation stays immediate and reduced motion is respected.
+
 Mouse wheel and keyboard controls are available when the wheel is focused: ↑/↓ select, Enter confirms, Escape returns, Home goes home, Space plays or pauses, and F toggles favorites.
 
 MENU keeps the selected row when returning. The screen header also provides back and now-playing shortcuts. Opening the current song keeps its position and resumes it if paused. Dragging the progress slider previews the time and seeks once on release; a track change cancels the old seek. **设置** includes shuffle, repeat off/all/one, wheel sounds, silver/black finishes and light/dark surroundings. Clearing the library requires confirmation, with Cancel selected by default.

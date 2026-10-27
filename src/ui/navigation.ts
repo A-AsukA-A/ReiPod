@@ -13,7 +13,8 @@ export type Page =
   | "artist-tracks"
   | "favorites"
   | "recent"
-  | "playlists";
+  | "playlists"
+  | "queue";
 export type Screen = {
   page: Page;
   selectedKey: string | null;
