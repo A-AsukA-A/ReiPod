@@ -1,32 +1,22 @@
 import { useSyncExternalStore } from "react";
-export type Preferences = {
-  finish: "silver" | "black";
-  background: "warm" | "dark";
-  clickSound: boolean;
-};
-let preferences: Preferences = {
-  finish: "silver",
-  background: "warm",
-  clickSound: true,
-};
+import { parsePreferences } from "./classicSettings";
+import type { Preferences } from "./classicSettings";
+export type { Preferences } from "./classicSettings";
+let preferences = parsePreferences(null);
 try {
-  const saved = JSON.parse(localStorage.getItem("reipod-appearance") ?? "null");
-  if (saved)
-    preferences = {
-      finish: saved.finish === "black" ? "black" : "silver",
-      background: saved.background === "dark" ? "dark" : "warm",
-      clickSound: saved.clickSound !== false,
-    };
+  preferences = parsePreferences(
+    JSON.parse(localStorage.getItem("reipod-appearance") ?? "null"),
+  );
 } catch {
-  /* Use defaults when storage is unavailable. */
+  /* Defaults also migrate older appearance-only settings. */
 }
 const listeners = new Set<() => void>();
 export function setPreferences(patch: Partial<Preferences>) {
-  preferences = { ...preferences, ...patch };
+  preferences = parsePreferences({ ...preferences, ...patch });
   try {
     localStorage.setItem("reipod-appearance", JSON.stringify(preferences));
   } catch {
-    /* Controls still work for this session. */
+    /* Controls remain usable for this session. */
   }
   listeners.forEach((listener) => listener());
 }

@@ -3,12 +3,44 @@ import type { RefObject } from "react";
 import { durationInMilliseconds } from "./motion";
 
 type Direction = "forward" | "back" | "replace";
+let snapshotSequence = 0;
 
 /** Freeze the pixels currently on the LCD, including an interrupted slide. */
 function snapshot(element: HTMLElement) {
   const copy = element.cloneNode(true) as HTMLElement;
   const originals = [element, ...element.querySelectorAll<HTMLElement>("*")];
   const copies = [copy, ...copy.querySelectorAll<HTMLElement>("*")];
+  const suffix = `-snapshot-${++snapshotSequence}`;
+  const ids = new Map<string, string>();
+  for (const child of copies)
+    if (child.id) {
+      const next = child.id + suffix;
+      ids.set(child.id, next);
+      child.id = next;
+    }
+  // SVG paints and accessible labels need their cloned IDs, not the live page's.
+  for (const child of copies)
+    for (const attribute of [...child.attributes]) {
+      if (attribute.name === "id") continue;
+      let value = attribute.value;
+      for (const [oldId, newId] of ids) {
+        if (value === `#${oldId}`) value = `#${newId}`;
+        value = value
+          .replaceAll(`url(#${oldId})`, `url(#${newId})`)
+          .replaceAll(`url("#${oldId}")`, `url("#${newId}")`)
+          .replaceAll(`url('#${oldId}')`, `url('#${newId}')`);
+        if (
+          attribute.name === "aria-labelledby" ||
+          attribute.name === "aria-describedby" ||
+          attribute.name === "for"
+        )
+          value = value
+            .split(" ")
+            .map((id) => (id === oldId ? newId : id))
+            .join(" ");
+      }
+      if (value !== attribute.value) child.setAttribute(attribute.name, value);
+    }
   // Apply scroll after insertion: detached nodes cannot retain a scroll offset.
   const restore = () =>
     originals.forEach((original, index) => {
@@ -24,7 +56,6 @@ function snapshot(element: HTMLElement) {
     }
     copies[index].style.animation = "none";
     copies[index].style.transition = "none";
-    copies[index].removeAttribute("id");
   });
   return { copy, restore };
 }

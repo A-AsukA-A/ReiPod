@@ -849,3 +849,490 @@
     animation: none;
   }
 }
+
+/* Baseline: 320×240 LCD; 61.8×103.5 mm body. UI measurements are visual calibrations. */
+.app-shell {
+  --lcd-width: calc(var(--device-width) * 0.8220065);
+  --lcd-unit: calc(var(--lcd-width) / 320);
+}
+.classic-device {
+  height: calc(var(--device-width) * 1.6747573);
+  padding: calc(var(--device-width) * 0.064) 0 0;
+}
+.screen-glass {
+  width: calc(var(--lcd-width) + 6px);
+  height: calc(var(--lcd-width) * 0.75 + 6px);
+  aspect-ratio: auto;
+  margin-inline: auto;
+  padding: 0;
+  border: 3px solid #090b0d;
+  border-radius: 5px;
+}
+.lcd-screen {
+  --lcd-header-height: calc(var(--lcd-unit) * 20);
+  border-radius: 1px;
+  font-family:
+    "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei",
+    sans-serif;
+  -webkit-font-smoothing: auto;
+}
+.screen-status {
+  padding-inline: calc(var(--lcd-unit) * 4);
+  gap: calc(var(--lcd-unit) * 3);
+  background: linear-gradient(#fdfdfd, #e6e9eb 45%, #c4cbd1 100%);
+}
+.screen-status > strong {
+  font-size: calc(var(--lcd-unit) * 14);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.25px;
+}
+.screen-playing-link,
+.screen-header-spacer {
+  width: calc(var(--lcd-unit) * 11);
+  height: calc(var(--lcd-unit) * 16);
+  flex-shrink: 0;
+}
+.screen-header-spacer {
+  display: none;
+}
+.screen-playing-link .player-icon {
+  width: calc(var(--lcd-unit) * 9);
+  height: calc(var(--lcd-unit) * 11);
+}
+.screen-row,
+.screen-song-list .screen-row {
+  height: calc(var(--lcd-unit) * 24);
+  font-size: calc(var(--lcd-unit) * 16);
+  font-weight: 700;
+  padding-inline: calc(var(--lcd-unit) * 5);
+  gap: calc(var(--lcd-unit) * 4);
+}
+.screen-row.selected {
+  background: linear-gradient(#52b9eb 0%, #30a1df 45%, #128bcb 100%);
+  box-shadow:
+    inset 0 1px #88d3f6,
+    inset 0 -1px #197cad;
+}
+.screen-row .row-chevron .player-icon {
+  width: calc(var(--lcd-unit) * 9);
+  height: calc(var(--lcd-unit) * 15);
+  stroke-width: 3;
+}
+.home-screen > .menu-preview {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+.menu-preview {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  background: linear-gradient(#91a5b2, #46535d);
+}
+.menu-preview > .album-preview {
+  position: absolute;
+  inset: 0;
+}
+.menu-preview > .album-preview[aria-hidden="true"] {
+  visibility: hidden;
+}
+.menu-preview-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: calc(var(--lcd-unit) * 34) calc(var(--lcd-unit) * 8)
+    calc(var(--lcd-unit) * 10);
+  gap: calc(var(--lcd-unit) * 9);
+  color: white;
+  text-align: center;
+  background: linear-gradient(150deg, #97aab7 0%, #71838f 44%, #46535c 100%);
+  animation: preview-card-in 130ms ease-out both;
+}
+.menu-preview-card > strong {
+  font-size: calc(var(--lcd-unit) * 15);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: normal;
+  text-shadow: 0 1px 2px #1b2c3a9c;
+  overflow-wrap: anywhere;
+}
+.menu-preview-card > span {
+  font-size: calc(var(--lcd-unit) * 11);
+  line-height: 1.5;
+  color: #f0f4f7;
+}
+.classic-glyph {
+  flex-shrink: 0;
+  width: calc(var(--lcd-unit) * 100);
+  height: calc(var(--lcd-unit) * 100);
+  margin-bottom: calc(var(--lcd-unit) * 8);
+  filter: drop-shadow(0 1px 0 #eff6ffa6) drop-shadow(0 3px 2px #24374769);
+}
+.preview-now-art {
+  width: calc(var(--lcd-unit) * 110);
+  height: calc(var(--lcd-unit) * 110);
+  margin-top: calc(var(--lcd-unit) * -12);
+  margin-bottom: calc(var(--lcd-unit) * 5);
+  box-shadow: 0 4px 8px #1c303947;
+  transform: rotate(-5deg);
+}
+.preview-now-art > .album-art {
+  width: 100%;
+  height: 100%;
+}
+.preview-storage {
+  height: calc(var(--lcd-unit) * 9);
+  width: 85%;
+  border: 1px solid #e1ecf3;
+  border-radius: 3px;
+  background: linear-gradient(#e6eef5, #a4b4c1);
+  box-shadow: inset 0 1px 2px #263b4c55;
+}
+.preview-storage i {
+  display: block;
+  height: 100%;
+  background: #67bde7;
+  border-radius: inherit;
+}
+.split-settings-screen {
+  display: grid;
+  grid-template-columns: 50% 50%;
+  grid-template-rows: var(--lcd-header-height) minmax(0, 1fr);
+}
+.split-settings-screen > .screen-menu {
+  grid-column: 1;
+  grid-row: 2;
+}
+.split-settings-screen > .menu-preview {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+.lcd-screen[data-page="settings"] .screen-status {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 50%;
+  z-index: 3;
+  border-right: 1px solid #9c9fa3;
+}
+.split-settings-screen .screen-row .row-value {
+  font-size: calc(var(--lcd-unit) * 11);
+}
+.split-settings-screen .screen-row {
+  font-size: calc(var(--lcd-unit) * 14);
+}
+.classic-battery {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  width: calc(var(--lcd-unit) * 22);
+  height: calc(var(--lcd-unit) * 11);
+  border: 1px solid #65716b;
+  border-radius: 1px;
+  padding: 1px;
+  margin-right: 2px;
+  box-shadow:
+    0 1px #fff9,
+    inset 0 0 1px #fff;
+  background: linear-gradient(#c5d0cd, #f3f5f0);
+}
+.classic-battery::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 2px;
+  height: calc(100% - 4px);
+  width: 2px;
+  background: #65716b;
+}
+.classic-battery > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(#b5eb82 0%, #8dc950 45%, #5da12c 51%, #96ce65);
+  box-shadow: inset 0 1px #eaffc5;
+}
+.classic-battery.is-low > i {
+  background: linear-gradient(#ffb49f, #d74030);
+}
+.classic-battery > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: #3a4938;
+}
+.classic-battery > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 8px;
+  color: #6a7974;
+}
+.click-wheel {
+  margin-top: calc(var(--device-width) * 0.16);
+  width: calc(var(--device-width) * 0.68);
+  height: calc(var(--device-width) * 0.68);
+  background: linear-gradient(145deg, #fff, #f7f7f6);
+  border-color: #d0d2d3;
+}
+.wheel-menu {
+  font-size: calc(var(--device-width) * 0.037);
+  letter-spacing: 0;
+}
+.wheel-button svg {
+  width: calc(var(--device-width) * 0.073);
+  height: calc(var(--device-width) * 0.048);
+}
+@keyframes preview-card-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-preview-card {
+    animation: none;
+  }
+}
+.screen-row.album-row {
+  height: calc(var(--lcd-unit) * 44);
+}
+.top-hold {
+  left: calc(var(--device-width) * 0.13);
+  top: -9px;
+  width: calc(var(--device-width) * 0.105);
+  height: 17px;
+  padding: 6px 0;
+  background: transparent;
+  z-index: 5;
+  border-radius: 0;
+}
+.top-hold::before {
+  content: "";
+  position: absolute;
+  inset: 6px 0;
+  background: #8b9499;
+  border-radius: 4px;
+}
+.top-hold i {
+  position: relative;
+  width: 55%;
+  height: 5px;
+  margin: 0 2px;
+  border-radius: 3px;
+  background: #d6d8d8;
+  box-shadow: inset 0 1px #fff9;
+}
+.top-hold[data-held="true"]::before {
+  background: #e48b36;
+}
+.top-hold[data-held="true"] i {
+  margin-left: calc(45% - 2px);
+}
+.hold-icon {
+  width: calc(var(--lcd-unit) * 8);
+  height: calc(var(--lcd-unit) * 10);
+  fill: #73808a;
+  stroke: #52616b;
+  stroke-width: 1.2;
+  flex-shrink: 0;
+}
+.lcd-screen[data-sleeping="true"] {
+  background: #101316;
+}
+.lcd-screen[data-sleeping="true"] > * {
+  visibility: hidden;
+}
+
+.menu-preview-card > strong,
+.menu-preview-card > span,
+.preview-storage {
+  flex-shrink: 0;
+}
+.lcd-screen:is([data-page="home"], [data-page="music"], [data-page="settings"])
+  .play-modes {
+  display: none;
+}
+.classic-about,
+.classic-adjustment,
+.clock-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--lcd-unit) * 8);
+  padding: calc(var(--lcd-unit) * 10);
+  overflow-y: auto;
+}
+.classic-about > strong {
+  font-size: calc(var(--lcd-unit) * 26);
+}
+.classic-about > span {
+  font-size: calc(var(--lcd-unit) * 13);
+  color: #75818b;
+}
+.classic-about dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--lcd-unit) * 5) calc(var(--lcd-unit) * 30);
+  margin: 0;
+  width: 80%;
+  font-size: calc(var(--lcd-unit) * 14);
+}
+.classic-about dd {
+  margin: 0;
+  text-align: right;
+}
+.classic-about nav,
+.classic-adjustment nav,
+.clock-screen nav {
+  width: 100%;
+  margin-top: auto;
+}
+.classic-adjustment .classic-glyph {
+  width: calc(var(--lcd-unit) * 70);
+  height: calc(var(--lcd-unit) * 70);
+  margin: 0;
+  filter: drop-shadow(0 1px 1px #718694);
+}
+.classic-adjustment input {
+  width: 85%;
+  accent-color: #2199db;
+  flex-shrink: 0;
+}
+.classic-adjustment small {
+  font-size: calc(var(--lcd-unit) * 11);
+  color: #7b858d;
+}
+.classic-adjustment strong {
+  font-size: calc(var(--lcd-unit) * 16);
+}
+.lcd-backlight-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: #000;
+  opacity: 0.62;
+  pointer-events: none;
+}
+.classic-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 4);
+}
+.classic-clock svg {
+  width: calc(var(--lcd-unit) * 118);
+  height: calc(var(--lcd-unit) * 118);
+}
+.classic-clock strong {
+  font-size: calc(var(--lcd-unit) * 25);
+}
+.classic-clock span {
+  font-size: calc(var(--lcd-unit) * 12);
+  color: #75828e;
+}
+.np-firmware-control {
+  margin-top: calc(var(--lcd-unit) * 2);
+}
+.np-firmware-control > small {
+  font-size: calc(var(--lcd-unit) * 10);
+  color: #747d85;
+}
+.np-shuffle-options,
+.classic-rating {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 3);
+  margin-top: calc(var(--lcd-unit) * 2);
+}
+.np-shuffle-options button {
+  padding: calc(var(--lcd-unit) * 2) calc(var(--lcd-unit) * 5);
+  font-size: calc(var(--lcd-unit) * 11);
+  border: 1px solid #acb7bf;
+  background: linear-gradient(#fff, #e6ebef);
+  border-radius: 2px;
+}
+.np-shuffle-options button[aria-pressed="true"] {
+  background: linear-gradient(#49b3e7, #158bce);
+  border-color: #2086bc;
+  color: white;
+}
+.classic-rating button {
+  background: transparent;
+  padding: 0;
+  color: #bdc6ce;
+}
+.classic-rating button[aria-pressed="true"] {
+  color: #318bc8;
+}
+.classic-rating .player-icon {
+  width: calc(var(--lcd-unit) * 15);
+  height: calc(var(--lcd-unit) * 15);
+}
+.now-playing-screen[data-volume="true"] > .screen-progress {
+  visibility: hidden;
+}
+.classic-volume {
+  position: absolute;
+  bottom: calc(var(--lcd-unit) * 32);
+  left: calc(var(--lcd-unit) * 10);
+  right: calc(var(--lcd-unit) * 10);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 7);
+  height: calc(var(--lcd-unit) * 25);
+  background: white;
+  color: #8997a4;
+}
+.classic-volume > .player-icon {
+  width: calc(var(--lcd-unit) * 18);
+  height: calc(var(--lcd-unit) * 18);
+}
+.classic-volume > .player-icon:first-child {
+  transform: scale(0.75);
+}
+.classic-volume-track {
+  flex: 1;
+  height: calc(var(--lcd-unit) * 7);
+  background: linear-gradient(#cad2d8, #f1f4f6);
+  border: 1px solid #99a5b0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.classic-volume-track i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(#7cc6f4, #3897d7);
+  box-shadow: inset 0 1px #c3e8ff;
+}
+.view-seek .screen-progress input::-webkit-slider-thumb {
+  width: calc(var(--lcd-unit) * 8);
+  height: calc(var(--lcd-unit) * 8);
+  border-radius: 0;
+  transform: rotate(45deg);
+  border: 1px solid #5983a7;
+  background: #e7f4fc;
+}
+.view-seek .screen-progress input::-moz-range-thumb {
+  width: calc(var(--lcd-unit) * 8);
+  height: calc(var(--lcd-unit) * 8);
+  border-radius: 0;
+  transform: rotate(45deg);
+  border: 1px solid #5983a7;
+  background: #e7f4fc;
+}
+
+.lcd-screen { font-synthesis: weight; }

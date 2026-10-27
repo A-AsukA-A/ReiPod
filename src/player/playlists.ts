@@ -100,6 +100,26 @@ export function removeFromPlaylists(trackId: string) {
     })),
   );
 }
+export function addToOnTheGo(trackId: string) {
+  const existing = playlists.find((item) => item.id === "on-the-go");
+  if (existing?.trackIds.includes(trackId))
+    return { added: false, persisted: true };
+  return {
+    added: true,
+    persisted: save(
+      existing
+        ? playlists.map((item) =>
+            item.id === "on-the-go"
+              ? { ...item, trackIds: [...item.trackIds, trackId] }
+              : item,
+          )
+        : [
+            ...playlists,
+            { id: "on-the-go", name: "On-The-Go", trackIds: [trackId] },
+          ],
+    ),
+  };
+}
 export function clearPlaylists() {
   return save([]);
 }
