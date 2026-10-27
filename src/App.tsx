@@ -805,14 +805,17 @@ export function App() {
     const row = selectedRow.current,
       container = row?.parentElement;
     if (!row || !container) return;
-    if (row.offsetTop < container.scrollTop)
-      container.scrollTop = row.offsetTop;
+    const top =
+      row.getBoundingClientRect().top -
+      container.getBoundingClientRect().top +
+      container.scrollTop -
+      container.clientTop;
+    if (top < container.scrollTop) container.scrollTop = top;
     else if (
-      row.offsetTop + row.offsetHeight >
+      top + row.offsetHeight >
       container.scrollTop + container.clientHeight
     )
-      container.scrollTop =
-        row.offsetTop + row.offsetHeight - container.clientHeight;
+      container.scrollTop = top + row.offsetHeight - container.clientHeight;
   }, [navigation.screen, focusedRow?.key]);
   useEffect(() => {
     if (!notice) return;
@@ -950,55 +953,55 @@ export function App() {
             data-page={page}
             data-view={page === "playing" ? playView : undefined}
           >
-            <div className="screen-status">
-              <button
-                className="screen-back"
-                aria-label="返回上一级"
-                disabled={!navigation.history.length}
-                onClick={() => back()}
-              >
-                <PlayerIcon name="back" />
-              </button>
-              <strong>{title}</strong>
-              <span className="play-modes">
-                {state.shuffle && (
-                  <span title="随机播放" aria-label="随机播放">
-                    <PlayerIcon name="shuffle" />
-                  </span>
-                )}
-                {state.repeat !== "off" && (
-                  <span
-                    title={`重复${repeatText[state.repeat]}`}
-                    aria-label={`重复${repeatText[state.repeat]}`}
-                  >
-                    <PlayerIcon name="repeat" />
-                    {state.repeat === "one" && <small>1</small>}
-                  </span>
-                )}
-              </span>
-              {current ? (
-                <button
-                  className="screen-playing-link"
-                  aria-label="返回正在播放"
-                  onClick={() => open("playing")}
-                >
-                  <span aria-hidden="true">
-                    {busy ? (
-                      <i className="lcd-loading" />
-                    ) : (
-                      <PlayerIcon
-                        name={active ? "play" : "pause"}
-                        filled={active}
-                      />
-                    )}
-                  </span>
-                </button>
-              ) : (
-                <span className="screen-header-spacer" />
-              )}
-            </div>
             <div className="screen-viewport">
               <div className="screen-content" ref={content}>
+                <div className="screen-status">
+                  <button
+                    className="screen-back"
+                    aria-label="返回上一级"
+                    disabled={!navigation.history.length}
+                    onClick={() => back()}
+                  >
+                    <PlayerIcon name="back" />
+                  </button>
+                  <strong>{title}</strong>
+                  <span className="play-modes">
+                    {state.shuffle && (
+                      <span title="随机播放" aria-label="随机播放">
+                        <PlayerIcon name="shuffle" />
+                      </span>
+                    )}
+                    {state.repeat !== "off" && (
+                      <span
+                        title={`重复${repeatText[state.repeat]}`}
+                        aria-label={`重复${repeatText[state.repeat]}`}
+                      >
+                        <PlayerIcon name="repeat" />
+                        {state.repeat === "one" && <small>1</small>}
+                      </span>
+                    )}
+                  </span>
+                  {current ? (
+                    <button
+                      className="screen-playing-link"
+                      aria-label="返回正在播放"
+                      onClick={() => open("playing")}
+                    >
+                      <span aria-hidden="true">
+                        {busy ? (
+                          <i className="lcd-loading" />
+                        ) : (
+                          <PlayerIcon
+                            name={active ? "play" : "pause"}
+                            filled={active}
+                          />
+                        )}
+                      </span>
+                    </button>
+                  ) : (
+                    <span className="screen-header-spacer" />
+                  )}
+                </div>
                 {page === "search" && (
                   <form
                     className="lcd-text-entry"

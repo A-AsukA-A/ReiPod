@@ -105,10 +105,6 @@ export function AlbumPreview({
               />
             </div>
           </div>
-          <div className="album-preview-caption">
-            <strong title={album.title}>{album.title}</strong>
-            <span>{album.artist}</span>
-          </div>
         </>
       ) : (
         <div className="album-preview-empty">

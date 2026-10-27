@@ -280,6 +280,26 @@ test("right-hand album preview rotates independently, pauses, and opens an album
   await page.goto("/");
   const preview = live(page).getByLabel("专辑封面轮播", { exact: true });
   await expect(preview).toHaveAttribute("data-album-id", /Carefree/);
+  const layout = await live(page).evaluate((content) => {
+    const screen = content.getBoundingClientRect();
+    const header = content
+      .querySelector(".screen-status")!
+      .getBoundingClientRect();
+    const cover = content
+      .querySelector(".album-preview-stage")!
+      .getBoundingClientRect();
+    return {
+      top: cover.top - screen.top,
+      bottom: cover.bottom - screen.bottom,
+      split: header.right - cover.left,
+      headerWidth: header.width / screen.width,
+    };
+  });
+  expect(Math.abs(layout.top)).toBeLessThan(1);
+  expect(Math.abs(layout.bottom)).toBeLessThan(1);
+  expect(Math.abs(layout.split)).toBeLessThan(1);
+  expect(layout.headerWidth).toBeCloseTo(0.5, 2);
+  await expect(preview.locator(".album-preview-caption")).toHaveCount(0);
   const initial = await preview.getAttribute("data-album-id");
   await page.clock.runFor(2000);
   await page.locator(".click-wheel").focus();
@@ -326,9 +346,9 @@ test("right-hand album preview rotates independently, pauses, and opens an album
   await expect(preview).toHaveAttribute("data-paused", "false");
   await page.clock.runFor(4500);
   await expect(preview).not.toHaveAttribute("data-album-id", rotated!);
-  const album = await preview
-    .locator(".album-preview-caption strong")
-    .textContent();
+  const album = (await preview
+    .getByRole("button")
+    .getAttribute("aria-label"))!.replace("打开专辑 ", "");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await preview
     .getByRole("button", { name: `打开专辑 ${album}`, exact: true })
@@ -355,17 +375,45 @@ test("the album preview handles an empty library and holds a single cover withou
   await page.goto("/");
   const preview = live(page).getByLabel("专辑封面轮播", { exact: true });
   await expect(preview).toContainText("导入音乐后在这里自动展示");
-  await page
-    .locator("#audio-files")
-    .setInputFiles({
-      name: "One album.wav",
-      mimeType: "audio/wav",
-      buffer: silentWav(),
-    });
+  await page.locator("#audio-files").setInputFiles({
+    name: "One album.wav",
+    mimeType: "audio/wav",
+    buffer: silentWav(),
+  });
   await home(page);
   await expect(preview.locator(".generated-cover")).toHaveCount(1);
   const album = await preview.getAttribute("data-album-id");
   await page.clock.runFor(18000);
   await expect(preview).toHaveAttribute("data-album-id", album!);
   await expect(preview.locator(".preview-cover-outgoing")).toHaveCount(0);
+});
+
+test("the split menu scrolls selected rows below its header on a narrow screen", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await row(page, "音乐").click();
+  await page.locator(".click-wheel").focus();
+  for (let index = 0; index < 10; index++)
+    await page.keyboard.press("ArrowDown");
+  const within = () =>
+    live(page).evaluate((content) => {
+      const selected = content
+        .querySelector('.screen-menu [aria-current="true"]')!
+        .getBoundingClientRect();
+      const menu = content
+        .querySelector(".screen-menu")!
+        .getBoundingClientRect();
+      const header = content
+        .querySelector(".screen-status")!
+        .getBoundingClientRect();
+      return (
+        selected.top >= header.bottom - 1 && selected.bottom <= menu.bottom + 1
+      );
+    });
+  expect(await within()).toBe(true);
+  for (let index = 0; index < 10; index++) await page.keyboard.press("ArrowUp");
+  expect(await within()).toBe(true);
 });

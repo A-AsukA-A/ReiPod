@@ -8,7 +8,7 @@ A classic-style local music player built with React and TypeScript. The interfac
 
 Choose **导入音乐** on the player's screen and select audio files from your device. The player reads song titles, artists, albums, track numbers and embedded artwork. Browse albums in **Cover Flow**, or open **音乐** for artists, albums, songs, favorites and recently added music. Selecting a song plays the corresponding list; playing an album keeps its own queue.
 
-The main and music menus automatically cycle album covers in the right pane every 4.5 seconds, with a slow pan and crossfade. Moving the wheel does not restart the carousel. Tap a cover to browse its album without starting playback. A single album stays on screen; the carousel pauses in background tabs and when reduced motion is enabled.
+The main and music menus automatically cycle album covers in the right pane every 4.5 seconds, with a slow pan and crossfade. The enlarged artwork fills the right half of the LCD from top to bottom, with the status bar confined to the left menu and no caption strip. Moving the wheel does not restart the carousel. Tap a cover to browse its album without starting playback. A single album stays on screen; the carousel pauses in background tabs and when reduced motion is enabled.
 
 Open **音乐 → 搜索** to match song titles, artists, albums or filenames. Multiple words narrow the results together. Press Enter in the search field to move focus to the wheel; select a result to play the matching list.
 
