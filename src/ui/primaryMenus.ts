@@ -83,7 +83,7 @@ export function createPrimaryMenus({
     {
       key: "extras",
       label: "附加功能",
-      detail: "时钟",
+      detail: "时钟与文本阅读",
       action: () => open("extras", "clock"),
     },
     ...(current
@@ -241,6 +241,16 @@ export function createPrimaryMenus({
       key: "credits",
       label: "试听曲目版权",
       action: () => openDocument("music/credits.txt"),
+    },
+    {
+      key: "metadata-license",
+      label: "音频解析器许可",
+      action: () => openDocument("music-metadata-license.txt"),
+    },
+    {
+      key: "font-license",
+      label: "字体许可",
+      action: () => openDocument("fonts/OFL-NotoSansSC.txt"),
     },
   ];
   return {

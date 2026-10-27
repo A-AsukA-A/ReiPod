@@ -6,21 +6,39 @@ export function FileImports({
   audio,
   photos,
   podcasts,
+  texts,
   locked,
   onAudio,
   onPhotos,
   onPodcasts,
+  onTexts,
 }: {
   audio: InputRef;
   photos: InputRef;
   podcasts: InputRef;
+  texts: InputRef;
   locked: boolean;
   onAudio: (files: File[]) => void;
   onPhotos: (result: { added: number; persisted: boolean }) => void;
   onPodcasts: (persisted: boolean) => void;
+  onTexts: (files: File[]) => void;
 }) {
   return (
     <>
+      <input
+        ref={texts}
+        id="text-files"
+        className="sr-only"
+        type="file"
+        accept=".txt,.md,.text,text/plain,text/markdown"
+        multiple
+        aria-label="选择文本文件"
+        disabled={locked}
+        onChange={(event) => {
+          if (!locked) onTexts(Array.from(event.target.files ?? []));
+          event.target.value = "";
+        }}
+      />
       <input
         ref={audio}
         id="audio-files"

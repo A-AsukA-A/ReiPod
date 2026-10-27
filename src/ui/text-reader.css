@@ -1,0 +1,52 @@
+.text-reader {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #111;
+  background: #fff;
+}
+.text-reader-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  font-size: calc(var(--lcd-unit) * 14);
+  line-height: calc(var(--lcd-unit) * 21);
+}
+.text-reader-viewport::-webkit-scrollbar {
+  display: none;
+}
+.text-reader pre {
+  margin: 0;
+  padding: calc(var(--lcd-unit) * 6) calc(var(--lcd-unit) * 8);
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+.text-reader-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: calc(var(--lcd-unit) * 4);
+  padding: calc(var(--lcd-unit) * 2) calc(var(--lcd-unit) * 6);
+  border-top: 1px solid #b6bcc2;
+  background: linear-gradient(#fafafa, #e6e7e9);
+  font-size: calc(var(--lcd-unit) * 10);
+  line-height: calc(var(--lcd-unit) * 16);
+}
+.text-reader-message {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--lcd-unit) * 8);
+  font-size: calc(var(--lcd-unit) * 14);
+}
+.text-reader-message small {
+  font-size: calc(var(--lcd-unit) * 11);
+}

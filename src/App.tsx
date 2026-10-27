@@ -72,6 +72,16 @@ import { restorePhotos, usePhotos } from "./media/photos";
 import { usePodcastIds, playPodcast } from "./media/podcasts";
 import { PhotoScreen } from "./ui/PhotoScreen";
 import { useWheelTextEntry, WheelTextEntry } from "./ui/WheelTextEntry";
+import {
+  builtinDocuments,
+  deleteText,
+  importTexts,
+  restoreTexts,
+  saveReadingPosition,
+  useTexts,
+} from "./media/textDocuments";
+import { TextReader } from "./ui/TextReader";
+import type { TextReaderHandle } from "./ui/TextReader";
 
 export function App() {
   const state = usePlayer();
@@ -79,6 +89,7 @@ export function App() {
   const playlists = usePlaylists();
   const ratings = useRatings();
   const photos = usePhotos();
+  const texts = useTexts();
   const podcastIds = usePodcastIds();
   const musicTracks = useMemo(
     () => state.tracks.filter((track) => !podcastIds.includes(track.id)),
@@ -104,6 +115,12 @@ export function App() {
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
   const { page, groupKey, artist: browseArtist } = navigation.screen;
+  const textDocument =
+    texts.find((doc) => doc.id === groupKey) ??
+    builtinDocuments[groupKey ?? ""];
+  const isLocalText = texts.some((doc) => doc.id === groupKey);
+  const reader = useRef<TextReaderHandle>(null);
+  const [importingTexts, setImportingTexts] = useState(false);
   const browseTracks = useMemo(
     () =>
       browseArtist !== undefined
@@ -139,6 +156,7 @@ export function App() {
   const input = useRef<HTMLInputElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
   const podcastInput = useRef<HTMLInputElement>(null);
+  const textInput = useRef<HTMLInputElement>(null);
   const selectedRow = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const capture = useLcdMotion(
@@ -354,11 +372,28 @@ export function App() {
       );
   };
   const openDocument = (path: string) => {
-    window.open(
-      `${import.meta.env.BASE_URL}${path}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    open("text-reader", undefined, path);
+  };
+  const addTextFiles = async (files: File[]) => {
+    if (!files.length || importingTexts) return;
+    setImportingTexts(true);
+    try {
+      const result = await importTexts(files);
+      // Imports may finish after the user leaves the list; keep that navigation.
+      if (result.firstId && navigationRef.current.screen.page === "notes")
+        dispatch({ type: "select", key: result.firstId });
+      setNotice(
+        !result.persisted
+          ? "文本未能保存，本次仍可阅读"
+          : result.rejected
+            ? `已导入 ${result.added} 篇；${result.rejected} 个文件不支持或超过 2 MB`
+            : result.added
+              ? `已导入 ${result.added} 篇文本`
+              : "文本已在阅读列表中",
+      );
+    } finally {
+      setImportingTexts(false);
+    }
   };
   const shuffleAll = () => {
     const tracks = musicTracks;
@@ -572,6 +607,81 @@ export function App() {
     "volume-limit": [{ key: "done", label: "完成", action: () => back() }],
     extras: [
       { key: "clock", label: "时钟", action: () => open("clock", "done") },
+      {
+        key: "notes",
+        label: "文本阅读",
+        action: () => open("notes", texts[0]?.id ?? "reader-guide"),
+      },
+    ],
+    notes: [
+      ...texts.map((doc) => ({
+        key: doc.id,
+        label: doc.title,
+        action: () => open("text-reader", undefined, doc.id),
+      })),
+      {
+        key: "reader-guide",
+        label: "阅读说明",
+        action: () => open("text-reader", undefined, "reader-guide"),
+      },
+      {
+        key: "text-import",
+        label: importingTexts ? "正在导入…" : "导入文本",
+        disabled: importingTexts,
+        action: () => textInput.current?.click(),
+      },
+    ],
+    "text-options": [
+      { key: "resume", label: "继续阅读", action: () => back() },
+      {
+        key: "start",
+        label: "回到开头",
+        action: () => {
+          if (groupKey) saveReadingPosition(groupKey, 0);
+          back();
+        },
+      },
+      ...(isLocalText
+        ? [
+            {
+              key: "delete",
+              label: "删除文本…",
+              action: () => open("confirm-delete-text", "cancel", groupKey),
+            },
+          ]
+        : []),
+    ],
+    "confirm-delete-text": [
+      { key: "cancel", label: "取消", action: () => back() },
+      {
+        key: "delete",
+        label: "删除文本",
+        action: () => {
+          if (!groupKey || deleting) return;
+          setDeleting(true);
+          void deleteText(groupKey)
+            .then((persisted) => {
+              if (persisted) {
+                const latest = navigationRef.current;
+                if (
+                  latest.screen.groupKey === groupKey &&
+                  [
+                    "text-reader",
+                    "text-options",
+                    "confirm-delete-text",
+                  ].includes(latest.screen.page)
+                ) {
+                  // Also handle MENU while deletion was still saving.
+                  const listIndex = latest.history
+                    .map((screen) => screen.page)
+                    .lastIndexOf("notes");
+                  back(latest.history.length - listIndex);
+                }
+              } else setNotice("删除失败，请重试");
+            })
+            .finally(() => setDeleting(false));
+        },
+      },
     ],
     clock: [{ key: "done", label: "返回", action: () => back() }],
     ...createLibraryMenus({
@@ -718,6 +828,10 @@ export function App() {
       textEntry.rotate(steps);
       return;
     }
+    if (page === "text-reader") {
+      reader.current?.scroll(steps);
+      return;
+    }
     if (page === "photo-grid" || page === "photo-full") {
       const destination = Math.max(
         0,
@@ -859,6 +973,20 @@ export function App() {
       setSleeping(true);
       return;
     }
+    if (page === "text-reader") {
+      if (value === "next" || value === "previous") {
+        reader.current?.scroll(value === "next" ? 1 : -1, true);
+        return;
+      }
+      if (value === "seek-forward" || value === "seek-backward") {
+        reader.current?.edge(value === "seek-forward");
+        return;
+      }
+      if (value === "select" || value === "options") {
+        if (!reader.current?.retry()) open("text-options", "resume", groupKey);
+        return;
+      }
+    }
     if (value === "seek-forward" || value === "seek-backward") {
       setTransportHint(value);
       if (transportTimer.current) clearTimeout(transportTimer.current);
@@ -975,6 +1103,7 @@ export function App() {
   );
   useEffect(() => {
     void restorePhotos();
+    void restoreTexts();
     void initializeLibrary();
     return onLibraryNotice(setNotice);
   }, []);
@@ -1048,6 +1177,10 @@ export function App() {
               "volume-limit": "音量上限",
               extras: "附加功能",
               clock: "时钟",
+              notes: "文本阅读",
+              "text-reader": textDocument?.title ?? "文本阅读",
+              "text-options": "阅读选项",
+              "confirm-delete-text": "删除文本",
               home: "ReiPod",
               music: "音乐",
               songs: "歌曲",
@@ -1120,8 +1253,12 @@ export function App() {
         audio={input}
         photos={photoInput}
         podcasts={podcastInput}
+        texts={textInput}
         locked={held || sleeping}
         onAudio={addFiles}
+        onTexts={(files) => {
+          void addTextFiles(files);
+        }}
         onPhotos={(result) => {
           const latest = navigationRef.current.screen;
           if (
@@ -1295,6 +1432,13 @@ export function App() {
                     <nav>{renderRows()}</nav>
                   </div>
                 )}
+                {page === "text-reader" && textDocument && (
+                  <TextReader
+                    source={textDocument}
+                    ref={reader}
+                    key={textDocument.id}
+                  />
+                )}
                 {(page === "home" || page === "music") && (
                   <div className="home-screen">
                     <nav
@@ -1372,6 +1516,9 @@ export function App() {
                     </div>
                   ))}
                 {(page === "settings" ||
+                  page === "notes" ||
+                  page === "text-options" ||
+                  page === "confirm-delete-text" ||
                   page === "confirm-clear" ||
                   page === "artists" ||
                   page === "albums" ||
@@ -1391,6 +1538,12 @@ export function App() {
                   <div
                     className={`settings-screen ${splitMenu ? "split-settings-screen" : ""} ${page === "photos" ? "photo-album-list" : ""}`}
                   >
+                    {page === "confirm-delete-text" && (
+                      <p className="clear-question">
+                        删除「{textDocument?.title ?? "此文本"}」？
+                        <span>不会删除设备上的原始文件</span>
+                      </p>
+                    )}
                     {(page === "confirm-delete-track" ||
                       page === "confirm-delete-playlist") && (
                       <p className="clear-question">
