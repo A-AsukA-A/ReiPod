@@ -218,7 +218,7 @@ export function App() {
           : target === "confirm-clear"
             ? "cancel"
             : target === "music"
-              ? "playlists"
+              ? "coverflow"
               : target === "coverflow" || target === "albums"
                 ? (albums.find((album) =>
                     album.tracks.some((track) => track.id === latest.currentId),

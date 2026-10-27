@@ -52,7 +52,10 @@ test("Cover Flow opens a dedicated album menu and returns to the same cover", as
 }) => {
   await page.goto("/");
   await choose(page, "音乐");
-  await choose(page, "Cover Flow");
+  await expect(live(page).locator(".screen-row.selected")).toContainText(
+    "Cover Flow",
+  );
+  await key(page, "Enter");
   await key(page, "ArrowDown");
   await key(page, "Enter");
   await expect(page.locator(".lcd-screen")).toHaveAttribute(
