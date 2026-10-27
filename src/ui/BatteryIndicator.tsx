@@ -1,57 +1,88 @@
 import { useEffect, useState } from "react";
-type Battery = EventTarget & { level: number; charging: boolean };
+import { batteryLabel, readDeviceBattery } from "./battery";
+import type { DeviceBattery } from "./battery";
+type BatterySource = EventTarget & DeviceBattery;
 
-/** Unknown means unknown: never invent an iPod charge level on unsupported hosts. */
+/** Event-driven device sync; returning from the background also refreshes the reading. */
 export function BatteryIndicator() {
-  const [battery, setBattery] = useState<{
-    level: number;
-    charging: boolean;
-  } | null>(null);
+  const [battery, setBattery] = useState<DeviceBattery | null>(null);
   useEffect(() => {
     let disposed = false;
-    let source: Battery | null = null;
+    let pending = false;
+    let source: BatterySource | null = null;
     const update = () => {
-      if (!disposed && source)
-        setBattery({ level: source.level, charging: source.charging });
+      if (!disposed) setBattery(readDeviceBattery(source));
     };
-    const navigatorWithBattery = navigator as Navigator & {
-      getBattery?: () => Promise<Battery>;
-    };
-    void navigatorWithBattery
-      .getBattery?.()
-      .then((value) => {
-        if (disposed) return;
-        source = value;
-        source.addEventListener("levelchange", update);
-        source.addEventListener("chargingchange", update);
+    const refresh = () => {
+      if (disposed) return;
+      if (source) {
         update();
-      })
-      .catch(() => {});
+        return;
+      }
+      if (pending) return;
+      try {
+        const getBattery = (
+          navigator as Navigator & { getBattery?: () => Promise<BatterySource> }
+        ).getBattery;
+        if (typeof getBattery !== "function") {
+          setBattery(null);
+          return;
+        }
+        pending = true;
+        void Promise.resolve(getBattery.call(navigator))
+          .then((value) => {
+            if (disposed) return;
+            if (!value || typeof value.addEventListener !== "function") {
+              setBattery(null);
+              return;
+            }
+            source = value;
+            source.addEventListener("levelchange", update);
+            source.addEventListener("chargingchange", update);
+            update();
+          })
+          .catch(() => {
+            if (!disposed) setBattery(null);
+          })
+          .finally(() => {
+            pending = false;
+          });
+      } catch {
+        pending = false;
+        setBattery(null);
+      }
+    };
+    const resume = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", resume);
+    window.addEventListener("focus", resume);
+    window.addEventListener("pageshow", resume);
+    refresh();
     return () => {
       disposed = true;
       source?.removeEventListener("levelchange", update);
       source?.removeEventListener("chargingchange", update);
+      document.removeEventListener("visibilitychange", resume);
+      window.removeEventListener("focus", resume);
+      window.removeEventListener("pageshow", resume);
     };
   }, []);
-  const level = battery ? Math.max(0, Math.min(1, battery.level)) : null;
-  const label =
-    level === null
-      ? "电量不可用"
-      : `${battery?.charging ? "正在充电，" : ""}电量 ${Math.round(level * 100)}%`;
+  const label = batteryLabel(battery);
   return (
     <span
-      className={`classic-battery ${level === null ? "is-unknown" : level < 0.2 ? "is-low" : ""}`}
+      className={`classic-battery ${battery === null ? "is-fallback" : battery.level <= 0.2 && !battery.charging ? "is-low" : ""}`}
       role="img"
       aria-label={label}
       title={label}
+      data-source={battery === null ? "fallback" : "device"}
     >
-      <i style={{ width: level === null ? "0%" : `${level * 100}%` }} />
+      <i style={{ width: `${(battery?.level ?? 1) * 100}%` }} />
       {battery?.charging && (
         <svg viewBox="0 0 12 16" aria-hidden="true">
           <path d="M7 0 1 9h4l-1 7 7-10H7Z" />
         </svg>
       )}
-      {level === null && <span>—</span>}
     </span>
   );
 }

@@ -28,7 +28,7 @@ MENU keeps the selected row when returning. The screen header also provides back
 
 Music stays on your device: imports are stored in this browser's IndexedDB and restored after a refresh. Favorites, playlists and settings are stored locally too. Refreshing restores the previous song, playback queue, volume and position (to the last saved second), paused until you choose to play. A song selected during library restoration takes priority over the saved session. Browser data clearing, private browsing or storage eviction can remove them; keep your original files. MP3, AAC/M4A and PCM WAV are suggested; decoding depends on the browser. The web player does not provide native iPhone haptics or guarantee background playback.
 
-The recreation references and calibrated parameters are documented in [REPLICA.md](REPLICA.md). Battery and storage indicators use browser data where supported; the web app does not invent an iPod battery level or disk capacity. Volume limits apply where the browser supports software volume control; iPhone audio still uses its hardware side buttons.
+The recreation references and calibrated parameters are documented in [REPLICA.md](REPLICA.md). The battery icon follows device charge and charging events when the browser provides them, and refreshes when returning from the background. Unsupported or failed readings show a full battery icon by default, without claiming a numeric 100% reading or showing a charging bolt. Storage capacity uses browser data where available. Volume limits apply where the browser supports software volume control; iPhone audio still uses its hardware side buttons.
 
 ## Develop
 

@@ -17,4 +17,4 @@ Apple does not publish the transition curves or button-hold thresholds in these 
 
 ## Web-specific behavior
 
-Imports and browser-local playlists remain available. Photos, video, podcasts, Genius and iTunes synchronization are not represented by nonfunctional menu items. Storage and battery indicators use browser capabilities where available; a firmware-like icon is not evidence of hardware equivalence. No fake capacity or invented battery percentage is shown. Original vectors are authored for this project.
+Imports and browser-local playlists remain available. Photos, video, podcasts, Genius and iTunes synchronization are not represented by nonfunctional menu items. Storage and battery indicators use browser capabilities where available; a firmware-like icon is not evidence of hardware equivalence. Unavailable battery readings use a full icon by request; its accessible label identifies it as a default display. No numeric battery percentage or charging state is fabricated, and no disk capacity is invented. Original vectors are authored for this project.
