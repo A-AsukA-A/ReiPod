@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { albumsFor, artistsFor, parseLyrics } from "./library";
+import {
+  albumsFor,
+  artistsFor,
+  parseLyrics,
+  tracksForArtist,
+  coverFlowOrder,
+  songsByTitle,
+} from "./library";
 import type { Track } from "./Player";
 const song = (id: string, patch: Partial<Track> = {}): Track => ({
   id,
@@ -11,6 +18,58 @@ const song = (id: string, patch: Partial<Track> = {}): Track => ({
 });
 
 describe("real library metadata", () => {
+  it("keeps artist browsing scoped inside a compilation while the album browser includes all its tracks", () => {
+    const tracks = [
+      song("guest", {
+        title: "Second",
+        artist: "Guest",
+        albumArtist: "Various",
+        album: "Shared",
+        trackNumber: 2,
+      }),
+      song("other", {
+        title: "First",
+        artist: "Other",
+        albumArtist: "Various",
+        album: "Shared",
+        trackNumber: 1,
+      }),
+      song("single", { title: "Another", artist: "Guest", album: "Solo" }),
+    ];
+    const scoped = albumsFor(tracksForArtist(tracks, "Guest"));
+    expect(
+      scoped
+        .find((album) => album.title === "Shared")
+        ?.tracks.map((track) => track.id),
+    ).toEqual(["guest"]);
+    expect(
+      albumsFor(tracks)
+        .find((album) => album.title === "Shared")
+        ?.tracks.map((track) => track.id),
+    ).toEqual(["other", "guest"]);
+    expect(
+      songsByTitle(tracksForArtist(tracks, "Guest")).map((track) => track.id),
+    ).toEqual(["single", "guest"]);
+    expect(tracksForArtist([song("untagged")], "未知艺人")).toHaveLength(1);
+  });
+  it("sorts Cover Flow by artist without changing the alphabetical Albums browser", () => {
+    const albums = albumsFor([
+      song("z", { artist: "Zulu", album: "A Album" }),
+      song("a", { artist: "Alpha", album: "Z Album" }),
+      song("b", { artist: "Alpha", album: "B Album" }),
+    ]);
+    expect(albums.map((album) => album.title)).toEqual([
+      "A Album",
+      "B Album",
+      "Z Album",
+    ]);
+    expect(coverFlowOrder(albums).map((album) => album.title)).toEqual([
+      "B Album",
+      "Z Album",
+      "A Album",
+    ]);
+    expect(albums[0].title).toBe("A Album");
+  });
   it("keeps albums by different album artists distinct and respects track numbers", () => {
     const tracks = [
       song("later", {

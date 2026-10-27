@@ -6,12 +6,20 @@
   pointer-events: none !important;
 }
 .lcd-screen {
-  --lcd-page-duration: 280ms;
-  --lcd-view-duration: 200ms;
-  --lcd-ease: cubic-bezier(0.32, 0.72, 0, 1);
-  font-family:
-    "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-lcd);
+  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
+}
+.album-all-art {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: calc(var(--lcd-unit) * 36);
+  height: calc(var(--lcd-unit) * 36);
+  background: linear-gradient(145deg, #5b82b5, #173a75);
+  color: #9fceff;
+  font-size: calc(var(--lcd-unit) * 30);
+  line-height: 1;
 }
 .screen-row .row-value {
   font-family: inherit;
@@ -67,11 +75,7 @@
   scrollbar-width: none;
 }
 
-/* Calibrated against the supplied recording, on the original 320×240 grid. */
-.lcd-screen {
-  --lcd-album-duration: 560ms;
-  --lcd-album-ease: cubic-bezier(0.77, 0, 0.175, 1);
-}
+/* Geometry stays on the 320×240 grid; motion tokens come from motion.ts. */
 .coverflow-screen {
   position: relative;
   perspective: calc(var(--lcd-unit) * 550);

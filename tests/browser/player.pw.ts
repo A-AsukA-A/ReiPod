@@ -2,6 +2,57 @@ import { test, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { live, key, home, choose, holdCenter, text } from "./dial";
+import { taggedAudio } from "./taggedAudio";
+
+test("Now Playing home preview follows the current artwork and metadata while paused or changing tracks", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await key(page, "Space");
+  await expect(live(page).locator(".np-cover img").first()).toHaveAttribute(
+    "src",
+    /carefree/,
+  );
+  await home(page);
+  await choose(page, "正在播放");
+  await expect(live(page).locator(".np-cover img").first()).toHaveAttribute(
+    "src",
+    /carefree/,
+  );
+  await key(page, "Escape");
+  const preview = live(page).locator(".is-playing-preview");
+  await expect(preview.locator(".glyph-music")).toHaveCount(0);
+  await expect(preview.locator(".preview-now-art img")).toHaveAttribute(
+    "src",
+    /carefree/,
+  );
+  await expect(preview.locator("strong")).toHaveText("Carefree");
+  await expect(preview.locator(":scope > span")).toHaveText([
+    "Kevin MacLeod",
+    "Carefree",
+  ]);
+  await key(page, "ArrowRight");
+  await expect(preview.locator("strong")).toHaveText(
+    "Monkeys Spinning Monkeys",
+  );
+  await expect(preview.locator(":scope > span").last()).toHaveText(
+    "Monkeys Spinning Monkeys",
+  );
+  await expect(preview.locator(".preview-now-art img")).toHaveAttribute(
+    "src",
+    /monkeys-spinning-monkeys/,
+  );
+  await key(page, "Space");
+  await expect(preview).toBeVisible();
+  await expect(preview.locator(".preview-now-art img")).toHaveAttribute(
+    "src",
+    /monkeys-spinning-monkeys/,
+  );
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await page
+    .locator(".screen-glass")
+    .screenshot({ path: ".local/screenshots/now-playing-home-preview.png" });
+});
 
 test("the LCD ignores clicks, hover and direct screen commands; wheel notches move one row", async ({
   page,
@@ -80,6 +131,139 @@ test("Cover Flow opens a dedicated album menu and returns to the same cover", as
   await expect(live(page).locator(".track-row")).toHaveCount(1);
 });
 
+test("artist browsing drills into scoped albums, keeps its focus and plays only that scope", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("reipod-demos", "hidden"),
+  );
+  await page.goto("/");
+  await choose(page, "音乐");
+  const choosing = page.waitForEvent("filechooser");
+  await choose(page, "导入音乐");
+  await (
+    await choosing
+  ).setFiles([
+    taggedAudio("Second Song", "Alpha", "Z Album"),
+    taggedAudio("First Song", "Alpha", "Z Album"),
+    taggedAudio("Other Song", "Alpha", "Y Album"),
+    taggedAudio("Outsider", "Zulu", "A Album"),
+  ]);
+  await expect(page.locator(".lcd-screen")).toHaveAttribute(
+    "data-page",
+    "songs",
+  );
+  await key(page, "Escape");
+  await choose(page, "艺人");
+  await choose(page, "Alpha");
+  await expect(live(page).locator(".screen-status > strong")).toHaveText(
+    "Alpha",
+  );
+  await expect(live(page).locator(".row-title")).toHaveText([
+    "全部歌曲",
+    "Y Album",
+    "Z Album",
+  ]);
+  await expect(live(page).locator(".row-label small")).toHaveText([
+    "3 首歌曲",
+    "1 首歌曲",
+    "2 首歌曲",
+  ]);
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await page
+    .locator(".screen-glass")
+    .screenshot({ path: ".local/screenshots/artist-album-browser.png" });
+  await choose(page, "Z Album");
+  await expect(live(page).locator(".track-row")).toHaveCount(2);
+  await choose(page, "Second Song");
+  await expect(live(page).locator(".now-playing-top")).toHaveAttribute(
+    "aria-label",
+    "播放队列第 2 首，共 2 首",
+  );
+  await key(page, "Space");
+  await key(page, "Escape");
+  await expect(live(page).locator(".screen-row.selected")).toContainText(
+    "Second Song",
+  );
+  await key(page, "Escape");
+  await expect(live(page).locator(".screen-row.selected")).toContainText(
+    "Z Album",
+  );
+  await choose(page, "全部歌曲");
+  await expect(live(page).locator(".row-title")).toHaveText([
+    "First Song",
+    "Other Song",
+    "Second Song",
+  ]);
+  await key(page, "Escape");
+  await key(page, "Space");
+  await expect(live(page).locator(".now-playing-top")).toHaveAttribute(
+    "aria-label",
+    "播放队列第 1 首，共 3 首",
+  );
+  await key(page, "Space");
+  await holdCenter(page);
+  await choose(page, "浏览专辑");
+  await expect(live(page).locator(".track-row")).toHaveCount(2);
+  await expect(live(page).locator(".screen-row.selected")).toContainText(
+    "First Song",
+  );
+  await key(page, "Escape");
+  await choose(page, "浏览艺人");
+  await expect(live(page).locator(".track-row")).toHaveCount(3);
+  await home(page);
+  await choose(page, "音乐");
+  await choose(page, "专辑");
+  await expect(live(page).locator(".row-title")).toHaveText([
+    "全部歌曲",
+    "A Album",
+    "Y Album",
+    "Z Album",
+  ]);
+  await choose(page, "A Album");
+  await expect(live(page).locator(".row-title")).toHaveText(["Outsider"]);
+});
+
+test("Cover Flow uses artist order while Albums retains title order", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("reipod-demos", "hidden"),
+  );
+  await page.goto("/");
+  await choose(page, "音乐");
+  const choosing = page.waitForEvent("filechooser");
+  await choose(page, "导入音乐");
+  await (
+    await choosing
+  ).setFiles([
+    taggedAudio("One", "Zulu", "A Album"),
+    taggedAudio("Two", "Alpha", "Z Album"),
+  ]);
+  await expect(page.locator(".lcd-screen")).toHaveAttribute(
+    "data-page",
+    "songs",
+  );
+  await key(page, "Escape");
+  await choose(page, "专辑");
+  await expect(live(page).locator(".row-title")).toHaveText([
+    "全部歌曲",
+    "A Album",
+    "Z Album",
+  ]);
+  await key(page, "Escape");
+  await choose(page, "Cover Flow");
+  await expect(live(page).locator(".cf-caption strong")).toHaveText("Z Album");
+  await expect(live(page).locator(".cf-caption > span")).toHaveText("Alpha");
+  await key(page, "ArrowDown");
+  await expect(live(page).locator(".cf-caption strong")).toHaveText("A Album");
+  await key(page, "Enter");
+  await expect(live(page).locator(".coverflow-album-heading")).toContainText(
+    "A Album",
+  );
+  await expect(live(page).locator(".row-title")).toHaveText(["One"]);
+});
+
 test("settings use real choice pages, matched fonts, checkmarks and persisted choices", async ({
   page,
 }) => {
@@ -102,6 +286,115 @@ test("settings use real choice pages, matched fonts, checkmarks and persisted ch
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
   await page.reload();
   await expect(page.locator("main")).toHaveAttribute("data-finish", "black");
+});
+
+test("classic menu order and Music customization survive legacy settings and reload", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("menu-migration-tested")) {
+      localStorage.setItem(
+        "reipod-appearance",
+        JSON.stringify({
+          menuVersion: 2,
+          mainMenu: [
+            "photos",
+            "podcasts",
+            "extras",
+            "coverflow",
+            "import",
+            "demo",
+            "shuffle-all",
+            "playing",
+          ],
+        }),
+      );
+      localStorage.setItem("menu-migration-tested", "true");
+    }
+  });
+  await page.goto("/");
+  const labels = () => live(page).locator(".row-title").allTextContents();
+  expect(await labels()).toEqual([
+    "音乐",
+    "照片",
+    "播客",
+    "附加功能",
+    "设置",
+    "随机播放歌曲",
+  ]);
+  await choose(page, "音乐");
+  expect(await labels()).toEqual([
+    "Cover Flow",
+    "播放列表",
+    "艺人",
+    "专辑",
+    "歌曲",
+    "风格",
+    "作曲者",
+    "搜索",
+    "导入音乐",
+    "试听音乐",
+  ]);
+  await home(page);
+  await choose(page, "设置");
+  expect((await labels()).slice(0, 8)).toEqual([
+    "关于本机",
+    "随机播放",
+    "重复播放",
+    "主菜单",
+    "音乐菜单",
+    "音量上限",
+    "背光时间",
+    "亮度",
+  ]);
+  await choose(page, "音乐菜单");
+  await choose(page, "Cover Flow");
+  await page.reload();
+  await choose(page, "音乐");
+  expect(await labels()).not.toContain("Cover Flow");
+  await expect(live(page).locator(".screen-row.selected")).toContainText(
+    "播放列表",
+  );
+});
+
+test("desktop and phone layouts render the bundled LCD typeface and keep HOLD touchable", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/");
+  for (const viewport of [
+    { width: 1280, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.evaluate(() => document.fonts.ready);
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("DOM.enable");
+    await cdp.send("CSS.enable");
+    const { root } = await cdp.send("DOM.getDocument");
+    const { nodeId } = await cdp.send("DOM.querySelector", {
+      nodeId: root.nodeId,
+      selector: ".screen-viewport .screen-row.selected .marquee-text",
+    });
+    const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", { nodeId });
+    expect(fonts.length).toBeGreaterThan(0);
+    expect(fonts.every((font) => font.isCustomFont)).toBe(true);
+    await cdp.detach();
+    const bounds = await page.locator(".top-hold").boundingBox();
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
+    await page.getByRole("switch", { name: "HOLD 锁定" }).click();
+    await expect(page.getByRole("switch")).toBeChecked();
+    await expect(live(page).getByRole("img", { name: "已锁定" })).toHaveCount(
+      1,
+    );
+    await page.getByRole("switch").click();
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  expect(
+    await page
+      .locator(".hold-track > i")
+      .evaluate((el) => getComputedStyle(el).transitionDuration),
+  ).toBe("0s");
 });
 
 test("search and playlist naming can be entered entirely on the click wheel", async ({
@@ -466,7 +759,7 @@ test("Cover Flow flips the selected cover into an overlaid album sheet, includin
         .getAnimations().length,
     };
   });
-  expect(motion.duration).toBe(560);
+  expect(motion.duration).toBe(360);
   expect(motion.frames[0]).toContain("rotateY(-90deg)");
   expect(motion.frames.at(-1)).toContain("rotateY(0deg)");
   expect(motion.layoutWidth / motion.viewportWidth).toBeCloseTo(0.8, 2);
@@ -485,6 +778,63 @@ test("Cover Flow flips the selected cover into an overlaid album sheet, includin
   await key(page, "Enter");
   await expect(panel).toBeVisible();
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+});
+
+test("hardware-calibrated travel keeps the menu readable and Cover Flow closes from both edges", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await choose(page, "音乐");
+  const travel = await live(page).evaluate((element) => {
+    const animation = element.getAnimations()[0];
+    animation.pause();
+    const duration = Number(animation.effect!.getTiming().duration);
+    animation.currentTime = duration / 4;
+    return {
+      duration,
+      progress: animation.effect!.getComputedTiming().progress,
+    };
+  });
+  expect(travel.duration).toBe(360);
+  expect(travel.progress).toBeLessThan(0.2);
+  await live(page).evaluate((element) => element.getAnimations()[0].finish());
+  await choose(page, "Cover Flow");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await key(page, "Escape");
+  await expect(page.locator("[data-flow-half]")).toHaveCount(2);
+  const halves = await page.locator("[data-flow-half]").evaluateAll((items) =>
+    items.map((item) => {
+      const animation = item.getAnimations()[0];
+      animation.pause();
+      animation.currentTime =
+        Number(animation.effect!.getTiming().duration) / 2;
+      return {
+        side: (item as HTMLElement).dataset.flowHalf,
+        duration: animation.effect!.getTiming().duration,
+        transform: getComputedStyle(item).transform,
+        inert: (item as HTMLElement).inert,
+      };
+    }),
+  );
+  expect(halves.map((half) => half.duration)).toEqual([480, 480]);
+  expect(halves.every((half) => half.inert)).toBe(true);
+  expect(Number(halves[0].transform.split(",")[4])).toBeLessThan(0);
+  expect(Number(halves[1].transform.split(",")[4])).toBeGreaterThan(0);
+  await page
+    .locator(".screen-glass")
+    .screenshot({ path: ".local/screenshots/flow-close-midpoint.png" });
+  // Reverse midway: stale half-surfaces must disappear and the fan remains navigable.
+  await key(page, "Enter");
+  await expect(page.locator(".lcd-screen")).toHaveAttribute(
+    "data-page",
+    "coverflow",
+  );
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await key(page, "Escape");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await expect(live(page).locator(".screen-row.selected")).toContainText(
+    "Cover Flow",
+  );
 });
 
 test("playback controls share one bottom bay without moving the cover or creating LCD buttons", async ({

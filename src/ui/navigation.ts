@@ -18,6 +18,7 @@ export type Page =
   | "podcast-episodes"
   | "about"
   | "main-menu"
+  | "music-menu"
   | "backlight"
   | "brightness"
   | "volume-limit"
@@ -52,6 +53,7 @@ export type Screen = {
   page: Page;
   selectedKey: string | null;
   groupKey?: string;
+  artist?: string;
 };
 export const splitPages = new Set<Page>([
   "home",
@@ -81,6 +83,7 @@ export type NavigationAction =
       selectedKey?: string;
       defaultKey?: string;
       groupKey?: string;
+      artist?: string;
     }
   | { type: "select"; key: string }
   | { type: "move"; keys: string[]; steps: number }
@@ -88,7 +91,15 @@ export type NavigationAction =
   | { type: "home" }
   | { type: "reset" };
 
-/** Keep selection and navigation in one transaction, including direct row clicks. */
+function screenKey(screen: { page: Page; groupKey?: string; artist?: string }) {
+  return screen.artist !== undefined
+    ? JSON.stringify([screen.page, screen.groupKey ?? null, screen.artist])
+    : screen.groupKey
+      ? `${screen.page}:${screen.groupKey}`
+      : screen.page;
+}
+
+/** Keep selection and browse scope in one transaction. */
 export function navigationReducer(
   state: NavigationState,
   action: NavigationAction,
@@ -96,9 +107,7 @@ export function navigationReducer(
   if (action.type === "reset") return initialNavigation;
   const remembered = {
     ...state.remembered,
-    [state.screen.groupKey
-      ? `${state.screen.page}:${state.screen.groupKey}`
-      : state.screen.page]: state.screen.selectedKey,
+    [screenKey(state.screen)]: state.screen.selectedKey,
   };
   if (action.type === "home")
     return {
@@ -124,17 +133,17 @@ export function navigationReducer(
   if (action.type === "open") {
     const same =
       action.page === state.screen.page &&
-      action.groupKey === state.screen.groupKey;
+      action.groupKey === state.screen.groupKey &&
+      action.artist === state.screen.artist;
     if (same && action.selectedKey === undefined) return state;
     return {
       screen: {
         page: action.page,
         ...(action.groupKey ? { groupKey: action.groupKey } : {}),
+        ...(action.artist !== undefined ? { artist: action.artist } : {}),
         selectedKey:
           action.selectedKey ??
-          remembered[
-            action.groupKey ? `${action.page}:${action.groupKey}` : action.page
-          ] ??
+          remembered[screenKey(action)] ??
           action.defaultKey ??
           null,
       },

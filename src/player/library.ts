@@ -50,6 +50,30 @@ export function artistsFor(tracks: Track[]) {
   ].sort(collator.compare);
 }
 
+/** The stock Artists browser uses track artist; Album Artists is a separate feature. */
+export function tracksForArtist(tracks: Track[], artist: string) {
+  return tracks.filter(
+    (track) => (track.artist?.trim() || "未知艺人") === artist,
+  );
+}
+
+export function songsByTitle(tracks: Track[]) {
+  return [...tracks].sort(
+    (a, b) =>
+      collator.compare(a.title, b.title) ||
+      collator.compare(a.artist ?? "", b.artist ?? ""),
+  );
+}
+
+/** Apple User Guide p26: Cover Flow sorts by artist; Albums sorts by title. */
+export function coverFlowOrder(albums: Album[]) {
+  return [...albums].sort(
+    (a, b) =>
+      collator.compare(a.artist, b.artist) ||
+      collator.compare(a.title, b.title),
+  );
+}
+
 export function parseLyrics(text: string): NonNullable<Track["lyrics"]> {
   const result: NonNullable<Track["lyrics"]> = [];
   const offset = Number(text.match(/\[offset:([+-]?\d+)\]/i)?.[1] ?? 0) / 1000;

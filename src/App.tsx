@@ -18,7 +18,13 @@ import {
   player,
   usePlayer,
 } from "./player/store";
-import { albumsFor, artistsFor } from "./player/library";
+import {
+  albumsFor,
+  artistsFor,
+  tracksForArtist,
+  songsByTitle,
+  coverFlowOrder,
+} from "./player/library";
 import {
   initialNavigation,
   navigationReducer,
@@ -29,13 +35,20 @@ import { CoverFlow } from "./ui/CoverFlow";
 import { MenuPreview } from "./ui/MenuPreview";
 import { menuPreview } from "./ui/menuPreviewModel";
 import { BatteryIndicator } from "./ui/BatteryIndicator";
-import { backlightTimes, optionalMainItems } from "./ui/classicSettings";
+import {
+  backlightTimes,
+  optionalMainItems,
+  optionalMusicItems,
+  mainMenuOrder,
+} from "./ui/classicSettings";
+import { HoldSwitch } from "./ui/HoldSwitch";
 import { useBacklight } from "./ui/useBacklight";
 import { ClassicClock } from "./ui/ClassicClock";
 import { ClassicGlyph } from "./ui/ClassicGlyph";
 import { setPreferences, usePreferences } from "./ui/preferences";
 import { PlayerIcon } from "./ui/PlayerIcon";
 import { useLcdMotion } from "./ui/useLcdMotion";
+import { lcdMotionStyle } from "./ui/motion";
 import { searchTracks } from "./player/search";
 import { useRatings, setRating } from "./player/ratings";
 import {
@@ -82,6 +95,7 @@ export function App() {
   );
   const current = state.currentId ? trackById.get(state.currentId) : undefined;
   const albums = useMemo(() => albumsFor(musicTracks), [musicTracks]);
+  const flowAlbums = useMemo(() => coverFlowOrder(albums), [albums]);
   const artists = useMemo(() => artistsFor(musicTracks), [musicTracks]);
   const [navigation, dispatch] = useReducer(
     navigationReducer,
@@ -89,7 +103,18 @@ export function App() {
   );
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
-  const { page, groupKey } = navigation.screen;
+  const { page, groupKey, artist: browseArtist } = navigation.screen;
+  const browseTracks = useMemo(
+    () =>
+      browseArtist !== undefined
+        ? tracksForArtist(musicTracks, browseArtist)
+        : musicTracks,
+    [musicTracks, browseArtist],
+  );
+  const browseAlbums = useMemo(
+    () => (browseArtist !== undefined ? albumsFor(browseTracks) : albums),
+    [albums, browseTracks, browseArtist],
+  );
   const [notice, setNotice] = useState("");
   const [held, setHeld] = useState(false);
   const [sleeping, setSleeping] = useState(false);
@@ -118,11 +143,11 @@ export function App() {
   const content = useRef<HTMLDivElement>(null);
   const capture = useLcdMotion(
     content,
-    `${page}:${groupKey ?? ""}:${page === "playing" && playView === "lyrics" ? "lyrics" : page === "photo-full" ? navigation.screen.selectedKey : "page"}`,
+    `${page}:${groupKey ?? ""}:${browseArtist ?? ""}:${page === "playing" && playView === "lyrics" ? "lyrics" : page === "photo-full" ? navigation.screen.selectedKey : "page"}`,
   );
   const active = state.status === "playing";
   const busy = state.status === "loading" || state.status === "buffering";
-  const selectedAlbum = albums.find((album) => album.id === groupKey);
+  const selectedAlbum = browseAlbums.find((album) => album.id === groupKey);
   const selectedPlaylist = playlists.find((item) => item.id === groupKey);
   const activePhotos = useMemo(
     () =>
@@ -180,12 +205,12 @@ export function App() {
       return state.queue.flatMap((id) => trackById.get(id) ?? []);
     if (page === "demos")
       return state.tracks.filter((track) => track.kind === "demo");
-    if (page === "album-tracks" || page === "coverflow-album")
+    if (page === "album-tracks") return selectedAlbum?.tracks ?? [];
+    if (page === "coverflow-album")
       return albums.find((album) => album.id === groupKey)?.tracks ?? [];
     if (page === "artist-tracks")
-      return state.tracks.filter(
-        (track) => (track.artist?.trim() || "未知艺人") === groupKey,
-      );
+      return songsByTitle(tracksForArtist(musicTracks, groupKey ?? ""));
+    if (page === "songs") return songsByTitle(musicTracks);
     if (page === "favorites")
       return state.tracks.filter((track) => state.favorites.includes(track.id));
     if (page === "recent")
@@ -200,6 +225,7 @@ export function App() {
     state.favorites,
     state.queue,
     albums,
+    selectedAlbum,
     query,
     selectedPlaylist,
     trackById,
@@ -211,7 +237,12 @@ export function App() {
     [visibleTracks],
   );
 
-  const open = (target: Page, selectedKey?: string, group?: string) => {
+  const open = (
+    target: Page,
+    selectedKey?: string,
+    group?: string,
+    artist?: string,
+  ) => {
     const latest = player.getSnapshot();
     const defaultKey =
       target === "home"
@@ -222,20 +253,24 @@ export function App() {
             ? "cancel"
             : target === "music"
               ? "coverflow"
-              : target === "coverflow" || target === "albums"
-                ? (albums.find((album) =>
+              : target === "coverflow"
+                ? (flowAlbums.find((album) =>
                     album.tracks.some((track) => track.id === latest.currentId),
-                  )?.id ?? albums[0]?.id)
-                : target === "artists"
-                  ? artists[0]
-                  : target === "playlists"
-                    ? "all"
-                    : (latest.currentId ?? latest.tracks[0]?.id ?? "import");
-    if (target !== page || group !== groupKey)
+                  )?.id ?? flowAlbums[0]?.id)
+                : target === "albums"
+                  ? "all-songs"
+                  : target === "artists"
+                    ? "all-albums"
+                    : target === "playlists"
+                      ? "all"
+                      : (latest.currentId ?? latest.tracks[0]?.id ?? "import");
+    if (target !== page || group !== groupKey || artist !== browseArtist)
       capture(
         page === "coverflow" && target === "coverflow-album"
           ? "album-open"
-          : "forward",
+          : target === "coverflow" && splitPages.has(page)
+            ? "flow-open"
+            : "forward",
         splitPages.has(page) && splitPages.has(target),
       );
     dispatch({
@@ -244,6 +279,7 @@ export function App() {
       selectedKey,
       defaultKey,
       groupKey: group,
+      artist,
     });
     setNotice("");
   };
@@ -254,7 +290,10 @@ export function App() {
         page === "coverflow-album" &&
           navigation.history.at(-levels)?.page === "coverflow"
           ? "album-close"
-          : "back",
+          : page === "coverflow" &&
+              splitPages.has(navigation.history.at(-levels)?.page ?? "home")
+            ? "flow-close"
+            : "back",
         splitPages.has(page) &&
           splitPages.has(navigation.history.at(-levels)?.page ?? "home"),
       );
@@ -305,7 +344,9 @@ export function App() {
     open("playing");
   };
   const playAlbum = (albumId: string) => {
-    const album = albums.find((item) => item.id === albumId);
+    const album = (page === "albums" ? browseAlbums : flowAlbums).find(
+      (item) => item.id === albumId,
+    );
     if (album?.tracks[0])
       playTrack(
         album.tracks[0].id,
@@ -375,7 +416,6 @@ export function App() {
       state,
       prefs,
       albums,
-      artists,
       photoCount: photos.length,
       podcastShows,
       musicCount: musicTracks.length,
@@ -504,7 +544,20 @@ export function App() {
               : [...prefs.mainMenu, item.key],
           }),
       })),
-    ],
+    ].sort(
+      (a, b) => mainMenuOrder.indexOf(a.key) - mainMenuOrder.indexOf(b.key),
+    ),
+    "music-menu": optionalMusicItems.map((item) => ({
+      ...item,
+      value: prefs.musicMenu.includes(item.key) ? "✓" : "—",
+      leaf: true,
+      action: () =>
+        setPreferences({
+          musicMenu: prefs.musicMenu.includes(item.key)
+            ? prefs.musicMenu.filter((key) => key !== item.key)
+            : [...prefs.musicMenu, item.key],
+        }),
+    })),
     backlight: backlightTimes.map((seconds) => ({
       key: `backlight-${seconds}`,
       label: seconds ? `${seconds} 秒` : "始终开启",
@@ -526,6 +579,7 @@ export function App() {
       groupKey,
       playlists,
       state,
+      musicTracks,
       visibleTracks,
       playlistTrackIds,
       optionTrack,
@@ -544,18 +598,21 @@ export function App() {
     }),
   };
   const albumRows: MenuItem[] = (
-    page === "coverflow" || page === "albums" ? albums : []
+    page === "coverflow" ? flowAlbums : page === "albums" ? browseAlbums : []
   ).map((album) => ({
     key: album.id,
     label: album.title,
-    detail: album.artist,
-    value: `${album.tracks.length}`,
+    detail:
+      browseArtist !== undefined
+        ? `${album.tracks.length} 首歌曲`
+        : album.artist,
     artwork: album.artwork,
     action: () =>
       open(
         page === "coverflow" ? "coverflow-album" : "album-tracks",
         album.tracks[0]?.id,
         album.id,
+        page === "albums" ? browseArtist : undefined,
       ),
   }));
   const rows: MenuItem[] =
@@ -571,16 +628,38 @@ export function App() {
             : page === "confirm-clear"
               ? confirmItems
               : page === "coverflow" || page === "albums"
-                ? albums.length
-                  ? albumRows
+                ? (page === "albums" ? browseAlbums : flowAlbums).length
+                  ? page === "albums"
+                    ? [
+                        {
+                          key: "all-songs",
+                          label: "全部歌曲",
+                          detail: `${browseTracks.length} 首歌曲`,
+                          aggregate: true,
+                          action: () =>
+                            browseArtist !== undefined
+                              ? open("artist-tracks", undefined, browseArtist)
+                              : open("songs"),
+                        },
+                        ...albumRows,
+                      ]
+                    : albumRows
                   : emptyItems
                 : page === "artists"
                   ? artists.length
-                    ? artists.map((artist) => ({
-                        key: artist,
-                        label: artist,
-                        action: () => open("artist-tracks", undefined, artist),
-                      }))
+                    ? [
+                        {
+                          key: "all-albums",
+                          label: "全部专辑",
+                          action: () => open("albums"),
+                        },
+                        ...artists.map((artist) => ({
+                          key: artist,
+                          label: artist,
+                          action: () =>
+                            open("albums", undefined, undefined, artist),
+                        })),
+                      ]
                     : emptyItems
                   : isTrackList && visibleTracks.length
                     ? [
@@ -802,7 +881,11 @@ export function App() {
     if (value === "home") {
       textEntry.setEditing(false);
       setSlideshow(false);
-      if (page !== "home") capture("back", splitPages.has(page));
+      if (page !== "home")
+        capture(
+          page === "coverflow" ? "flow-close" : "back",
+          splitPages.has(page),
+        );
       dispatch({ type: "home" });
       setNotice("");
     }
@@ -832,8 +915,26 @@ export function App() {
           state.tracks.map((track) => track.id),
         );
       } else if (page === "coverflow" || page === "albums") {
-        if (albums.length && focusedRow) playAlbum(focusedRow.key);
+        if (page === "albums" && focusedRow?.key === "all-songs") {
+          const tracks = songsByTitle(browseTracks);
+          if (tracks[0])
+            playTrack(
+              tracks[0].id,
+              tracks.map((track) => track.id),
+            );
+        } else if (albums.length && focusedRow) playAlbum(focusedRow.key);
         else if (focusedRow) chooseRow(focusedRow);
+      } else if (page === "artists" && focusedRow) {
+        const tracks = songsByTitle(
+          focusedRow.key === "all-albums"
+            ? musicTracks
+            : tracksForArtist(musicTracks, focusedRow.key),
+        );
+        if (tracks[0])
+          playTrack(
+            tracks[0].id,
+            tracks.map((track) => track.id),
+          );
       } else if (isTrackList && visibleIds.has(focusedRow?.key ?? "")) {
         if (focusedRow!.key === player.getSnapshot().currentId) player.toggle();
         else chooseRow(focusedRow!);
@@ -941,6 +1042,7 @@ export function App() {
           : {
               about: "关于本机",
               "main-menu": "主菜单",
+              "music-menu": "音乐菜单",
               backlight: "背光时间",
               brightness: "亮度",
               "volume-limit": "音量上限",
@@ -969,7 +1071,7 @@ export function App() {
               artists: "艺人",
               genres: "风格",
               composers: "作曲者",
-              albums: "专辑",
+              albums: browseArtist ?? "专辑",
               favorites: "我的收藏",
               recent: "最近添加",
               playlists: "播放列表",
@@ -1042,20 +1144,13 @@ export function App() {
         }}
       />
       <section className="classic-device" aria-label="classic 播放器">
-        <button
-          type="button"
-          className="top-hold"
-          role="switch"
-          aria-label="HOLD 锁定"
-          aria-checked={held}
-          data-held={held}
-          onClick={() => {
+        <HoldSwitch
+          held={held}
+          onToggle={() => {
             activate();
             setHeld(!held);
           }}
-        >
-          <i />
-        </button>
+        />
         <ReadOnlyScreen scene={page}>
           <div
             className="lcd-screen"
@@ -1066,7 +1161,10 @@ export function App() {
                 : undefined
             }
             data-sleeping={sleeping}
-            style={{ filter: `brightness(${prefs.brightness})` }}
+            style={{
+              ...lcdMotionStyle,
+              filter: `brightness(${prefs.brightness})`,
+            }}
             data-view={page === "playing" ? playView : undefined}
           >
             <div className="screen-viewport" inert={held || sleeping}>
@@ -1241,12 +1339,12 @@ export function App() {
                 {(page === "coverflow" || page === "coverflow-album") &&
                   (albums.length ? (
                     <CoverFlow
-                      albums={albums}
+                      albums={flowAlbums}
                       index={
                         page === "coverflow-album"
                           ? Math.max(
                               0,
-                              albums.findIndex(
+                              flowAlbums.findIndex(
                                 (album) => album.id === groupKey,
                               ),
                             )
@@ -1354,7 +1452,9 @@ export function App() {
                     )}
                     {(page === "albums" || page === "artists") && (
                       <div className="screen-footer">
-                        {page === "albums" ? albums.length : artists.length}{" "}
+                        {page === "albums"
+                          ? browseAlbums.length
+                          : artists.length}{" "}
                         {page === "albums" ? "张专辑" : "位艺人"}
                       </div>
                     )}

@@ -1,12 +1,8 @@
 /* The LCD has one visual scale and one motion vocabulary, independent of the shell. */
 .lcd-screen {
-  --lcd-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --lcd-page-duration: 220ms;
-  --lcd-view-duration: 120ms;
   --lcd-blue: #0876cb;
   --lcd-header-height: 24px;
-  font-family:
-    Arial, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-lcd);
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums;
 }
@@ -792,7 +788,7 @@
 .preview-cover-outgoing {
   z-index: 1;
   pointer-events: none;
-  animation: preview-leave 360ms ease-out both;
+  animation: preview-leave var(--lcd-preview-fade) linear both;
 }
 .preview-cover > .album-art {
   position: absolute;
@@ -800,7 +796,7 @@
   width: calc(100% + 16px);
   height: calc(100% + 16px);
   aspect-ratio: auto;
-  animation: preview-drift 4500ms linear both;
+  animation: preview-drift var(--lcd-preview-interval) linear both;
 }
 .preview-cover img {
   object-fit: cover;
@@ -871,9 +867,7 @@
 .lcd-screen {
   --lcd-header-height: calc(var(--lcd-unit) * 20);
   border-radius: 1px;
-  font-family:
-    "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei",
-    sans-serif;
+  font-family: var(--font-lcd);
   -webkit-font-smoothing: auto;
 }
 .screen-status {
@@ -954,7 +948,7 @@
   color: white;
   text-align: center;
   background: linear-gradient(150deg, #97aab7 0%, #71838f 44%, #46535c 100%);
-  animation: preview-card-in 130ms ease-out both;
+  animation: preview-card-in var(--lcd-preview-card-duration) linear both;
 }
 .menu-preview-card > strong {
   font-size: calc(var(--lcd-unit) * 15);
@@ -976,17 +970,26 @@
   margin-bottom: calc(var(--lcd-unit) * 8);
   filter: drop-shadow(0 1px 0 #eff6ffa6) drop-shadow(0 3px 2px #24374769);
 }
+.is-playing-preview {
+  padding-top: calc(var(--lcd-unit) * 24);
+  gap: calc(var(--lcd-unit) * 6);
+}
 .preview-now-art {
+  flex-shrink: 0;
   width: calc(var(--lcd-unit) * 110);
   height: calc(var(--lcd-unit) * 110);
-  margin-top: calc(var(--lcd-unit) * -12);
-  margin-bottom: calc(var(--lcd-unit) * 5);
-  box-shadow: 0 4px 8px #1c303947;
-  transform: rotate(-5deg);
+  margin-bottom: calc(var(--lcd-unit) * 8);
 }
 .preview-now-art > .album-art {
   width: 100%;
   height: 100%;
+}
+.is-playing-preview > :is(strong, span) {
+  width: 100%;
+  min-width: 0;
+}
+.is-playing-preview .marquee-window {
+  display: block;
 }
 .preview-storage {
   height: calc(var(--lcd-unit) * 9);
@@ -1106,38 +1109,6 @@
 }
 .screen-row.album-row {
   height: calc(var(--lcd-unit) * 44);
-}
-.top-hold {
-  left: calc(var(--device-width) * 0.13);
-  top: -9px;
-  width: calc(var(--device-width) * 0.105);
-  height: 17px;
-  padding: 6px 0;
-  background: transparent;
-  z-index: 5;
-  border-radius: 0;
-}
-.top-hold::before {
-  content: "";
-  position: absolute;
-  inset: 6px 0;
-  background: #8b9499;
-  border-radius: 4px;
-}
-.top-hold i {
-  position: relative;
-  width: 55%;
-  height: 5px;
-  margin: 0 2px;
-  border-radius: 3px;
-  background: #d6d8d8;
-  box-shadow: inset 0 1px #fff9;
-}
-.top-hold[data-held="true"]::before {
-  background: #e48b36;
-}
-.top-hold[data-held="true"] i {
-  margin-left: calc(45% - 2px);
 }
 .hold-icon {
   width: calc(var(--lcd-unit) * 8);
@@ -1334,5 +1305,3 @@
   border: 1px solid #5983a7;
   background: #e7f4fc;
 }
-
-.lcd-screen { font-synthesis: weight; }

@@ -10,6 +10,7 @@ export type MenuItem = {
   detail?: string;
   value?: string;
   artwork?: string;
+  aggregate?: boolean;
   disabled?: boolean;
   leaf?: boolean;
   action: () => void;
@@ -55,9 +56,14 @@ export function MenuRows({
           )}
         </span>
       )}
-      {page === "albums" && (
-        <AlbumArt src={row.artwork} title={row.label} artist={row.detail} />
-      )}
+      {page === "albums" &&
+        (row.aggregate ? (
+          <span className="album-all-art" aria-hidden="true">
+            ♫
+          </span>
+        ) : (
+          <AlbumArt src={row.artwork} title={row.label} artist={row.detail} />
+        ))}
       <span className="row-label">
         <span className="row-title">
           {trackIds.has(row.key) && currentId === row.key && (

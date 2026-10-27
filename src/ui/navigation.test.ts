@@ -2,6 +2,47 @@ import { describe, expect, it } from "vitest";
 import { initialNavigation, navigationReducer as reduce } from "./navigation";
 
 describe("player navigation", () => {
+  it("keeps album selection and history separate for each artist browse scope", () => {
+    let nav = reduce(initialNavigation, {
+      type: "open",
+      page: "albums",
+      artist: "Alpha",
+      defaultKey: "all-songs",
+    });
+    nav = reduce(nav, { type: "select", key: "shared" });
+    nav = reduce(nav, {
+      type: "open",
+      page: "album-tracks",
+      artist: "Alpha",
+      groupKey: "shared",
+      defaultKey: "a1",
+    });
+    nav = reduce(nav, { type: "select", key: "a2" });
+    nav = reduce(nav, { type: "back" });
+    expect(nav.screen).toMatchObject({
+      page: "albums",
+      artist: "Alpha",
+      selectedKey: "shared",
+    });
+    nav = reduce(nav, {
+      type: "open",
+      page: "album-tracks",
+      artist: "Other",
+      groupKey: "shared",
+      defaultKey: "b1",
+    });
+    expect(nav.screen.selectedKey).toBe("b1");
+    nav = reduce(nav, {
+      type: "open",
+      page: "album-tracks",
+      artist: "Alpha",
+      groupKey: "shared",
+      defaultKey: "a1",
+    });
+    expect(nav.screen.selectedKey).toBe("a2");
+    nav = reduce(nav, { type: "home" });
+    expect(nav.screen.artist).toBeUndefined();
+  });
   it("remembers track focus separately for each album, including back navigation", () => {
     let nav = reduce(initialNavigation, {
       type: "open",

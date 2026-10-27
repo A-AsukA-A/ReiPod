@@ -52,6 +52,7 @@ export function menuPreview(
     licenses: "info",
     extras: "clock",
     "main-menu": "playlists",
+    "music-menu": "music",
     backlight: "background",
     brightness: "background",
     "volume-limit": "speaker",

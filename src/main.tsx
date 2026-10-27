@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import "./fonts.css";
 import "./style.css";
 import "./ui/classic-lcd.css";
 import "./ui/firmware-display.css";

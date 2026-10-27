@@ -129,24 +129,6 @@ button:disabled {
   opacity: 0.7;
 }
 
-.top-hold {
-  position: absolute;
-  top: -3px;
-  left: 47px;
-  width: 43px;
-  height: 3px;
-  background: #838b80;
-  border-radius: 4px;
-}
-
-.top-hold i {
-  display: block;
-  width: 23px;
-  height: 3px;
-  background: #bec3ba;
-  margin-left: 2px;
-}
-
 .screen-glass {
   height: 215px;
   border: 3px solid #242925;
@@ -1115,41 +1097,17 @@ button:disabled {
 .generated-cover {
   height: 100%;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 10%;
-  background: linear-gradient(
-    140deg,
-    hsl(var(--cover-hue) 32% 68%),
-    hsl(calc(var(--cover-hue) + 35) 35% 25%)
-  );
-  color: #fff;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #edf1f5, #b7c1ce);
+  color: #6f88a9;
   overflow: hidden;
 }
-.generated-cover strong {
-  position: relative;
-  font-size: clamp(10px, 1.3vw, 16px);
-  overflow-wrap: anywhere;
-  line-height: 1.2;
-  text-shadow: 0 1px 3px #0003;
-}
-.generated-cover small {
-  font-size: 8px;
-  position: relative;
-  letter-spacing: 0.5px;
-}
-.cover-orbit {
-  position: absolute;
-  width: 75%;
-  aspect-ratio: 1;
-  border: 1px solid #ffffff48;
-  border-radius: 50%;
-  right: -15%;
-  top: 26%;
-  box-shadow:
-    0 0 0 12px #ffffff0d,
-    0 0 0 26px #ffffff0a;
+.generated-cover svg {
+  width: 65%;
+  height: 65%;
+  fill: currentColor;
+  filter: drop-shadow(0 1px 0 #fff9);
 }
 .album-row {
   height: 48px;

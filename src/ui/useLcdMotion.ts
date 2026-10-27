@@ -2,7 +2,14 @@ import { useLayoutEffect, useRef } from "react";
 import type { RefObject } from "react";
 import { durationInMilliseconds } from "./motion";
 
-type Direction = "forward" | "back" | "replace" | "album-open" | "album-close";
+type Direction =
+  | "forward"
+  | "back"
+  | "replace"
+  | "album-open"
+  | "album-close"
+  | "flow-open"
+  | "flow-close";
 let snapshotSequence = 0;
 
 /** Freeze the pixels currently on the LCD, including an interrupted slide. */
@@ -201,9 +208,13 @@ export function useLcdMotion(
       tokens.getPropertyValue(
         direction.startsWith("album-")
           ? "--lcd-album-duration"
-          : direction === "replace"
-            ? "--lcd-view-duration"
-            : "--lcd-page-duration",
+          : direction === "flow-open"
+            ? "--lcd-flow-enter-duration"
+            : direction === "flow-close"
+              ? "--lcd-flow-exit-duration"
+              : direction === "replace"
+                ? "--lcd-view-duration"
+                : "--lcd-page-duration",
       ),
     );
     ghost.current = node;
@@ -216,6 +227,73 @@ export function useLcdMotion(
       easing: tokens.getPropertyValue("--lcd-ease").trim(),
       fill: "both",
     };
+    if (direction === "flow-open") {
+      // Retail footage cuts to the fan, then brings back its caption and status.
+      // It does not push a full page horizontally like an ordinary submenu.
+      running.current = [
+        node.animate([{ opacity: 0 }, { opacity: 0 }], options),
+      ];
+      for (const region of element.querySelectorAll<HTMLElement>(
+        ".screen-status, .cf-caption",
+      ))
+        running.current.push(
+          region.animate(
+            [{ opacity: 0 }, { opacity: 0, offset: 0.45 }, { opacity: 1 }],
+            options,
+          ),
+        );
+      running.current.at(-1)!.onfinish = stop;
+      return;
+    }
+    if (direction === "flow-close") {
+      // The two retained menu surfaces meet in the center over the fading fan.
+      // Freeze each incoming half so interruptions can capture the visible pixels.
+      const oldLayers = [...node.children] as HTMLElement[];
+      running.current = [
+        element.animate([{ opacity: 0 }, { opacity: 0 }], options),
+      ];
+      for (const layer of oldLayers)
+        running.current.push(
+          layer.animate(
+            [{ opacity: 1 }, { opacity: 0.65, offset: 0.3 }, { opacity: 0 }],
+            options,
+          ),
+        );
+      for (const side of ["left", "right"] as const) {
+        const half = snapshot(element);
+        const clip =
+          side === "left"
+            ? [0, element.clientWidth / 2, 0, 0]
+            : [0, 0, 0, element.clientWidth / 2];
+        Object.assign(half.copy.style, {
+          inset: "0",
+          width: "100%",
+          height: "100%",
+          opacity: "1",
+          transform: "none",
+          clipPath: `inset(${clip.map((v) => `${v}px`).join(" ")})`,
+        });
+        half.copy.dataset.motionClip = JSON.stringify(clip);
+        half.copy.dataset.flowHalf = side;
+        half.copy.inert = true;
+        half.copy.setAttribute("aria-hidden", "true");
+        node.append(half.copy);
+        half.restore();
+        const edge = `translateX(${side === "left" ? "-50%" : "50%"})`;
+        running.current.push(
+          half.copy.animate(
+            [
+              { transform: edge },
+              { transform: edge, offset: 0.25 },
+              { transform: "translateX(0)" },
+            ],
+            options,
+          ),
+        );
+      }
+      running.current.at(-1)!.onfinish = stop;
+      return;
+    }
     if (direction === "album-open" || direction === "album-close") {
       const opening = direction === "album-open";
       const front = node.querySelector<HTMLElement>(

@@ -4,12 +4,12 @@ import type { Playlist } from "../player/playlists";
 import type { Preferences } from "./preferences";
 import type { Page } from "./navigation";
 import type { MenuItem } from "./MenuRows";
+import { mainMenuOrder } from "./classicSettings";
 export const repeatText = { off: "关闭", all: "全部", one: "单曲" };
 type PrimaryMenuContext = {
   state: PlayerState;
   prefs: Preferences;
   albums: Album[];
-  artists: string[];
   photoCount: number;
   podcastShows: Album[];
   musicCount: number;
@@ -28,7 +28,6 @@ export function createPrimaryMenus({
   state,
   prefs,
   albums,
-  artists,
   photoCount,
   podcastShows,
   musicCount,
@@ -82,19 +81,6 @@ export function createPrimaryMenus({
       action: shuffleAll,
     },
     {
-      key: "import",
-      label: "导入音乐",
-      detail: "音频 / LRC",
-      leaf: true,
-      action: openFiles,
-    },
-    {
-      key: "demo",
-      label: "试听音乐",
-      detail: "内置音乐精选",
-      action: loadDemos,
-    },
-    {
       key: "extras",
       label: "附加功能",
       detail: "时钟",
@@ -111,35 +97,36 @@ export function createPrimaryMenus({
         ]
       : []),
   ];
-  const homeItems = allHomeItems.filter(
-    (item) =>
-      item.key === "music" ||
-      item.key === "settings" ||
-      prefs.mainMenu.includes(item.key),
-  );
+  const homeItems = allHomeItems
+    .filter(
+      (item) =>
+        item.key === "music" ||
+        item.key === "settings" ||
+        prefs.mainMenu.includes(item.key),
+    )
+    .sort(
+      (a, b) => mainMenuOrder.indexOf(a.key) - mainMenuOrder.indexOf(b.key),
+    );
   const musicItems: MenuItem[] = [
     { key: "coverflow", label: "Cover Flow", action: () => open("coverflow") },
     { key: "playlists", label: "播放列表", action: () => open("playlists") },
     {
       key: "artists",
       label: "艺人",
-      value: `${artists.length}`,
       action: () => open("artists"),
     },
     {
       key: "albums",
       label: "专辑",
-      value: `${albums.length}`,
       action: () => open("albums"),
     },
-    { key: "genres", label: "风格", action: () => open("genres") },
-    { key: "composers", label: "作曲者", action: () => open("composers") },
     {
       key: "songs",
       label: "歌曲",
-      value: `${musicCount}`,
       action: () => open("songs"),
     },
+    { key: "genres", label: "风格", action: () => open("genres") },
+    { key: "composers", label: "作曲者", action: () => open("composers") },
     {
       key: "search",
       label: "搜索",
@@ -148,14 +135,14 @@ export function createPrimaryMenus({
         open("search");
       },
     },
-    {
-      key: "shuffle-all",
-      label: "随机播放所有",
-      leaf: true,
-      action: shuffleAll,
-    },
     { key: "import", label: "导入音乐", action: openFiles },
+    { key: "demo", label: "试听音乐", action: loadDemos },
   ];
+  const visibleMusicItems = musicItems.filter(
+    (item) =>
+      ["import", "demo"].includes(item.key) ||
+      prefs.musicMenu.includes(item.key),
+  );
   const playlistItems: MenuItem[] = [
     {
       key: "all",
@@ -197,6 +184,11 @@ export function createPrimaryMenus({
       key: "main-menu",
       label: "主菜单",
       action: () => open("main-menu", "coverflow"),
+    },
+    {
+      key: "music-menu",
+      label: "音乐菜单",
+      action: () => open("music-menu", "coverflow"),
     },
     {
       key: "volume-limit",
@@ -251,5 +243,10 @@ export function createPrimaryMenus({
       action: () => openDocument("music/credits.txt"),
     },
   ];
-  return { homeItems, musicItems, playlistItems, settingsItems };
+  return {
+    homeItems,
+    musicItems: visibleMusicItems,
+    playlistItems,
+    settingsItems,
+  };
 }

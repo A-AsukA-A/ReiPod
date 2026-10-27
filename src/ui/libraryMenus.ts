@@ -8,6 +8,7 @@ import {
   addToOnTheGo,
 } from "../player/playlists";
 import { player, removeTrack } from "../player/store";
+import { albumsFor } from "../player/library";
 import type { Page, NavigationState } from "./navigation";
 import type { MenuItem } from "./MenuRows";
 type LibraryMenuContext = {
@@ -15,6 +16,7 @@ type LibraryMenuContext = {
   groupKey?: string;
   playlists: Playlist[];
   state: PlayerState;
+  musicTracks: Track[];
   visibleTracks: Track[];
   playlistTrackIds: Set<string>;
   optionTrack?: Track;
@@ -25,7 +27,7 @@ type LibraryMenuContext = {
   beginText: () => void;
   setDeleting: (value: boolean) => void;
   setNotice: (value: string) => void;
-  open: (page: Page, key?: string, group?: string) => void;
+  open: (page: Page, key?: string, group?: string, artist?: string) => void;
   back: (levels?: number) => void;
   navigationRef: RefObject<NavigationState>;
   playTrack: (id: string, queue?: string[]) => void;
@@ -36,6 +38,7 @@ export function createLibraryMenus({
   groupKey,
   playlists,
   state,
+  musicTracks,
   visibleTracks,
   playlistTrackIds,
   optionTrack,
@@ -137,6 +140,30 @@ export function createLibraryMenus({
     ],
     "track-options": optionTrack
       ? [
+          ...(musicTracks.some((track) => track.id === optionTrack.id)
+            ? [
+                {
+                  key: "browse-artist",
+                  label: "浏览艺人",
+                  action: () =>
+                    open(
+                      "artist-tracks",
+                      optionTrack.id,
+                      optionTrack.artist?.trim() || "未知艺人",
+                    ),
+                },
+                {
+                  key: "browse-album",
+                  label: "浏览专辑",
+                  action: () => {
+                    const album = albumsFor(musicTracks).find((entry) =>
+                      entry.tracks.some((track) => track.id === optionTrack.id),
+                    );
+                    if (album) open("album-tracks", optionTrack.id, album.id);
+                  },
+                },
+              ]
+            : []),
           {
             key: "queue",
             label: "查看播放队列",

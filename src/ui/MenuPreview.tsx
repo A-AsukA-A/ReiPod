@@ -4,6 +4,7 @@ import type { Track } from "../player/Player";
 import type { MenuPreviewSpec } from "./menuPreviewModel";
 import { AlbumPreview } from "./AlbumPreview";
 import { ClassicGlyph } from "./ClassicGlyph";
+import { MarqueeText } from "./MarqueeText";
 import { AlbumArt } from "./AlbumArt";
 
 export function MenuPreview({
@@ -24,6 +25,11 @@ export function MenuPreview({
   bytes: number;
 }) {
   const covers = spec.kind === "covers";
+  const playingArtwork =
+    current?.artwork ||
+    albums.find((album) =>
+      album.tracks.some((track) => track.id === current?.id),
+    )?.artwork;
   const [storage, setStorage] = useState<{
     quota: number;
     usage: number;
@@ -66,13 +72,20 @@ export function MenuPreview({
             <>
               <div className="preview-now-art">
                 <AlbumArt
-                  src={current.artwork}
-                  title={current.album ?? current.title}
+                  src={playingArtwork}
+                  title={current.album || current.title}
                   artist={current.artist}
                 />
               </div>
-              <strong>{current.title}</strong>
-              <span>{current.artist || "未知艺人"}</span>
+              <strong>
+                <MarqueeText text={current.title} active />
+              </strong>
+              <span>
+                <MarqueeText text={current.artist || "未知艺人"} active />
+              </span>
+              <span>
+                <MarqueeText text={current.album || "未知专辑"} active />
+              </span>
             </>
           ) : (
             <>

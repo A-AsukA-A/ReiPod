@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { Album } from "../player/library";
 import { AlbumArt } from "./AlbumArt";
+import { classicMotion } from "./motion";
 
-const INTERVAL = 4500;
-const CROSSFADE = 360;
+const INTERVAL = classicMotion.previewInterval;
+const CROSSFADE = classicMotion.previewFade;
 
 /** The classic menu's right pane runs independently of the wheel selection. */
 export function AlbumPreview({

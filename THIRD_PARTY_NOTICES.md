@@ -17,7 +17,9 @@ React / React DOM / Scheduler：Meta Platforms, Inc. and affiliates，MIT。运�
 
 ## 视觉与测试音频
 
-机身、屏幕、唱片图形、按钮 SVG、favicon 全部由本项目 CSS / SVG 绘制；使用系统字体，不载入远程字体或图片。未使用 `analysis/` 下的 My Classic 私有素材、Apple 网页图片、艺术家封面或签名。
+机身、屏幕、唱片图形、按钮 SVG、favicon 全部由本项目 CSS / SVG 绘制；LCD 使用本地提供的 Noto Sans SC 字体，不请求远程字体服务。未使用 `analysis/` 下的 My Classic 私有素材、Apple 网页图片、艺术家封面或签名。
+
+Noto Sans SC：Google / Adobe，SIL Open Font License 1.1；源文件来自 [google/fonts](https://github.com/google/fonts/tree/main/ofl/notosanssc)。使用 FontTools 限制字重为 400–700 并按字符覆盖拆分为 WOFF2，生成脚本为 `scripts/subset-font.py`。完整字体许可随站点提供于 [public/fonts/OFL-NotoSansSC.txt](public/fonts/OFL-NotoSansSC.txt)。不是 Apple 原机字体。
 
 `scripts/create-test-audio.mjs` 合成三段原创 12 秒 PCM WAV，用于解码 / 连播检查；输出保存在忽略目录 `.local/`。
 

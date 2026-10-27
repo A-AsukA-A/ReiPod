@@ -1,0 +1,85 @@
+/* A top-edge hardware switch inside a generous, invisible touch target. */
+.classic-device .top-hold {
+  position: absolute;
+  left: calc(var(--device-width) * 0.13 - 10px);
+  top: -24px;
+  width: 54px;
+  height: 44px;
+  padding: 0;
+  z-index: 5;
+  border-radius: 0;
+  background: transparent;
+  touch-action: manipulation;
+  filter: none;
+}
+.hold-track {
+  position: absolute;
+  left: 10px;
+  top: 21px;
+  width: 34px;
+  height: 7px;
+  border: 1px solid #717779;
+  border-radius: 3px;
+  background: #676d6e;
+  box-shadow:
+    inset 0 1px 2px #0008,
+    0 1px #fff9;
+}
+.hold-track::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  background: linear-gradient(#d77724, #f0a052);
+  opacity: 0;
+  transition: opacity 160ms var(--hold-ease);
+}
+.hold-track > i {
+  position: absolute;
+  left: 1px;
+  top: -2px;
+  width: 19px;
+  height: 7px;
+  border: 1px solid #93999c;
+  border-radius: 2px;
+  background: linear-gradient(#f7f7f5, #c5cbce 55%, #a8b0b4);
+  box-shadow:
+    inset 0 1px #fff,
+    0 1px 2px #0005;
+  transition: transform 160ms var(--hold-ease);
+}
+.hold-track > i::after {
+  content: "";
+  position: absolute;
+  inset: 1px 5px;
+  background: repeating-linear-gradient(90deg, #69778077 0 1px, #fff7 1px 2px);
+}
+.top-hold {
+  --hold-ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+.top-hold[data-held="true"] .hold-track::before {
+  opacity: 1;
+}
+.top-hold[data-held="true"] .hold-track > i {
+  transform: translateX(12px);
+}
+.top-hold:active .hold-track > i {
+  top: -1px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .top-hold:hover .hold-track > i {
+    border-color: #66747c;
+  }
+}
+.top-hold[data-keyboard="true"] .hold-track::before,
+.top-hold[data-keyboard="true"] .hold-track > i {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hold-track > i {
+    transition: none;
+  }
+  .hold-track::before {
+    transition-duration: 100ms;
+  }
+}

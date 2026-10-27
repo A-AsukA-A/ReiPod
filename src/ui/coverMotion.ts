@@ -1,3 +1,5 @@
+import { classicMotion } from "./motion";
+
 /** Critically damped motion: continuous position and velocity when the wheel reverses. */
 export function advanceCover(
   position: number,
@@ -5,7 +7,7 @@ export function advanceCover(
   target: number,
   seconds: number,
 ) {
-  const frequency = 24;
+  const frequency = classicMotion.coverFrequency;
   const displacement = position - target;
   const impulse = velocity + frequency * displacement;
   const decay = Math.exp(-frequency * seconds);

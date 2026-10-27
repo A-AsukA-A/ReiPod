@@ -2,6 +2,8 @@
 
 ReiPod targets the color split-screen iPod classic interface. It is a web implementation, not original firmware.
 
+Original hardware is the authority: prefer the same model/firmware's observed behavior and verified firmware analysis over My Classic, iPod.js or general modern UI recommendations. The source catalog, acquired original IPSW checks and timing observations are in [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md). Calibration choices are labelled rather than presented as recovered Apple constants.
+
 ## Verified references
 
 - [Apple technical specifications](https://support.apple.com/en-us/112321): 103.5 × 61.8 mm body; 2.5-inch, 320 × 240 color LCD. The body ratio and LCD aspect ratio follow those measurements. The LCD width/body width ratio is derived from the diagonal and resolution: 50.8 / 61.8.
@@ -11,9 +13,21 @@ ReiPod targets the color split-screen iPod classic interface. It is a web implem
 
 ## Calibrated, rather than manufacturer-specified
 
-The 20-pixel header, 24-pixel menu rows and 16-pixel menu type at a 320-pixel LCD width are visual calibrations. Chinese system sans-serif fonts (Microsoft YaHei / PingFang SC) are preferred, with Helvetica Neue / Arial fallbacks; proprietary font files are not bundled. The split is 160/160. The blue selection gradient, filled arrow silhouettes, embossed contextual icons, wheel proportions and reflections are redrawn in CSS/SVG.
+The 20-pixel header, 24-pixel menu rows and 16-pixel menu type at a 320-pixel LCD width are visual calibrations. The LCD uses bundled Noto Sans SC (SIL OFL 1.1), with real weights 400–700 and font synthesis disabled, so Windows, Android and iOS use the same glyph shapes and metrics. UI glyphs preload (99 kB); common library characters and extended characters load on demand (1.83 MB / 5.93 MB). This is a redistributable substitute, not Apple's firmware font; OS rasterization can still vary. `scripts/subset-font.py` reproduces the font shards from Google's source TTF. The split is 160/160. The blue selection gradient, filled arrow silhouettes, embossed contextual icons, wheel proportions and reflections are redrawn in CSS/SVG.
 
-Apple does not publish the transition curves or button-hold thresholds in these references. ReiPod's 280 ms page transition, 200 ms playback-view transition, 360 ms cover fade, 4.5 s artwork interval, 600 ms Menu/Center hold, 350 ms seek hold and 800 ms sleep hold are implementation choices, not claimed measurements from an original device. Cover Flow's album flip uses 560 ms and a symmetric ease-in-out curve, calibrated against the roughly 0.6-second flip visible in the second supplied recording. Reduced motion skips it.
+## Menu hierarchy and HOLD
+
+The menu baseline is the **2007 iPod classic (6th generation)**, cross-checked with the contemporary first-hand photographs linked above: [main menu](https://the-gadgeteer.com/assets/apple-ipod-classic-10.jpg), [Music](https://the-gadgeteer.com/assets/apple-ipod-classic-7.jpg), and [Settings](https://the-gadgeteer.com/assets/apple-ipod-classic-42.jpg). The Apple guide, page 26, explicitly places Cover Flow in Music; page 8 describes optional main-menu shortcuts. Main-menu placement alone therefore does not identify a faithful default.
+
+- Main menu: Music → Photos → Podcasts → Extras → Settings → Shuffle Songs → Now Playing (when a current track exists). Unsupported Videos is omitted.
+- Highlighting Now Playing displays the current song's artwork, falling back to the matching album's artwork, with live song, artist and album metadata. This is the user's explicit preference over reported stock Classic placeholder behavior. The preview stays on the current track when paused and updates on track changes; it does not cycle unrelated covers. Only missing or failed artwork uses the music-note placeholder.
+- Music: Cover Flow → Playlists → Artists → Albums → Songs → Genres → Composers → Search. Unsupported Audiobooks is omitted. Web import and demo actions follow the original categories.
+- The Artists browser drills into a scoped album list with All Songs at the top, matching the [2007 hardware photograph](https://the-gadgeteer.com/assets/apple-ipod-classic-26.jpg). Artists also has an All Albums aggregate. Back navigation remembers focus separately for each artist scope, and playback uses only that scope's tracks, including within compilations. Albums sorts by title; Cover Flow separately sorts by artist then title, as specified on page 26 of the Apple guide. Missing or failed artwork uses a neutral music-note placeholder.
+- Settings starts with About → Shuffle → Repeat → Main Menu → Music Menu → Volume Limit → Backlight → Brightness. The Music Menu page controls visibility of existing music categories. Web appearance, library management and credits follow the implemented device settings.
+- Version 3 preferences remove the old automatically enabled Cover Flow/import/demo home shortcuts. Explicitly adding Cover Flow in the new Main Menu settings remains possible. Appearance and playback preferences are retained.
+- The top-left switch is **HOLD**, not mute: the guide's pages 6–7 specify an orange bar and disabled controls while audio continues. Its 34 × 7 px top-edge slot has a 54 × 44 px touch target, a metal thumb and 160 ms transform/opacity transitions. Keyboard toggles and reduced motion skip the thumb animation. These dimensions and timing are web adaptations, not measured firmware values.
+
+Apple does not publish the transition curves or button-hold thresholds in these references. Motion timing now comes from `src/ui/motion.ts`: 360 ms menu travel with a symmetric curve, 300 ms playback-view fade, 360 ms album flip, a 320 ms Cover Flow title/caption entrance, and a 480 ms exit in which the two menu halves meet from opposite edges. The 25 fps 2007 hardware review informs the menu/flip/exit calibration; this is a visual measurement with at least one-frame boundary uncertainty, not recovered firmware constants. The previous My Classic-derived 560 ms flip is superseded. Artwork uses a 6 s interval and 650 ms fade; these remain provisional web calibration values. Menu/Center hold remains 600 ms, seek hold 350 ms, sleep hold 800 ms. Reduced motion skips navigation movement.
 
 ## Web-specific behavior
 
