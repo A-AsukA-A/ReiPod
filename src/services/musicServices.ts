@@ -1,0 +1,534 @@
+import { useSyncExternalStore } from "react";
+import type { Track } from "../player/Player";
+import type { Playlist } from "../player/playlists";
+import { player as localPlayer } from "../player/store";
+import { readSession } from "../player/session";
+import { applePlayer, setMusicKitPlayer } from "./applePlayer";
+import { loadMusicKit, validDeveloperToken } from "./musicKit";
+import type { MusicKitInstance } from "./musicKit";
+
+export type MusicService = "local" | "apple-music";
+type ServiceState = {
+  selected: MusicService;
+  playback: MusicService;
+  auth: "unconfigured" | "loading" | "signed-out" | "authorized" | "error";
+  ready: boolean;
+  syncing: boolean;
+  error: string;
+  libraryTracks: Track[];
+  playlists: Playlist[];
+  searchResults: Track[];
+};
+const read = (key: string) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+const save = (key: string, value: string | null) => {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    /* Session works without persistence. */
+  }
+};
+let state: ServiceState = {
+  selected:
+    read("reipod-music-service") === "apple-music" ? "apple-music" : "local",
+  playback: "local",
+  auth: "unconfigured",
+  ready: false,
+  syncing: false,
+  error: "",
+  libraryTracks: [],
+  playlists: [],
+  searchResults: [],
+};
+const listeners = new Set<() => void>();
+function update(patch: Partial<ServiceState>) {
+  state = { ...state, ...patch };
+  listeners.forEach((fn) => fn());
+}
+export const useMusicServices = () =>
+  useSyncExternalStore(
+    (fn) => {
+      listeners.add(fn);
+      return () => {
+        listeners.delete(fn);
+      };
+    },
+    () => state,
+  );
+export const getMusicServices = () => state;
+export const useApplePlayer = () =>
+  useSyncExternalStore(applePlayer.subscribe, applePlayer.getSnapshot);
+let instance: MusicKitInstance | undefined;
+let developerToken = "";
+let tokenUrl = "";
+let storefront = "us";
+let generation = 0;
+let preparing: Promise<void> | undefined;
+let initialized = false;
+let sessionReady = false;
+const loadedPlaylists = new Set<string>();
+
+export function selectMusicService(service: MusicService) {
+  save("reipod-music-service", service);
+  update({ selected: service });
+  if (service === "apple-music") void prepareAppleMusic();
+}
+export function playbackFrom(service: MusicService) {
+  if (state.playback !== service) {
+    (state.playback === "local" ? localPlayer : applePlayer).pause();
+    update({ playback: service });
+  }
+  save("reipod-playback-source", service);
+}
+
+async function configuration() {
+  let config: { developerToken?: string; tokenUrl?: string } = {};
+  try {
+    const response = await fetch(
+      `${import.meta.env.BASE_URL}music-services.json`,
+      { signal: AbortSignal.timeout(8000) },
+    );
+    if (response.ok) config = (await response.json()).appleMusic ?? {};
+  } catch {
+    /* Build-time configuration can work independently of this optional file. */
+  }
+  tokenUrl =
+    import.meta.env.VITE_APPLE_MUSIC_TOKEN_URL || config.tokenUrl || "";
+  developerToken =
+    import.meta.env.VITE_APPLE_MUSIC_DEVELOPER_TOKEN ||
+    config.developerToken ||
+    "";
+}
+async function freshDeveloperToken() {
+  if (tokenUrl) {
+    const url = new URL(tokenUrl, location.href);
+    if (
+      url.protocol !== "https:" &&
+      !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+    )
+      throw new Error("Apple Music 配置地址需要 HTTPS");
+    const response = await fetch(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) throw new Error("Apple Music 配置服务暂不可用");
+    const value = await response.json();
+    developerToken = value.developerToken ?? value.token ?? "";
+  }
+  if (!validDeveloperToken(developerToken))
+    throw new Error("Apple Music 网站授权配置无效或已到期，请联系网站维护者");
+  return developerToken;
+}
+export async function initializeMusicServices() {
+  if (initialized) return;
+  initialized = true;
+  await configuration();
+  if (!read("reipod-music-service") && (developerToken || tokenUrl))
+    update({ selected: "apple-music" });
+  if (state.selected === "apple-music" || read("reipod-apple-user"))
+    await prepareAppleMusic();
+}
+export function prepareAppleMusic() {
+  return (preparing ??= (async () => {
+    await configuration();
+    if (!developerToken && !tokenUrl) {
+      update({ auth: "unconfigured", ready: false });
+      return;
+    }
+    if (instance) return;
+    update({ auth: "loading", error: "" });
+    try {
+      const token = await freshDeveloperToken();
+      const sdk = await loadMusicKit();
+      instance = await sdk.configure({
+        developerToken: token,
+        app: { name: "ReiPod", build: "0.2.0" },
+      });
+      setMusicKitPlayer(instance);
+      update({ ready: true, auth: "signed-out" });
+      const stored = read("reipod-apple-user");
+      if (stored && !instance.musicUserToken) instance.musicUserToken = stored;
+      if (instance.musicUserToken)
+        await completeAuthorization(instance.musicUserToken);
+      instance.addEventListener("authorizationStatusDidChange", () => {
+        if (!instance?.musicUserToken && state.auth === "authorized")
+          invalidateAuthorization();
+      });
+    } catch (error) {
+      update({ auth: "error", error: message(error) });
+    }
+  })().finally(() => {
+    preparing = undefined;
+  }));
+}
+function message(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : "Apple Music 请求失败，请重试";
+}
+class AppleApiError extends Error {
+  constructor(public status: number) {
+    super(
+      status === 401
+        ? "Apple Music 授权已失效，请重新登录"
+        : status === 403
+          ? "Apple Music 未允许此操作，请检查订阅或资料库权限"
+          : `Apple Music 暂不可用（${status}），请重试`,
+    );
+  }
+}
+function invalidateAuthorization() {
+  generation++;
+  sessionReady = false;
+  save("reipod-apple-user", null);
+  update({
+    auth: "signed-out",
+    syncing: false,
+    libraryTracks: [],
+    playlists: [],
+    searchResults: [],
+  });
+  if (instance) instance.musicUserToken = "";
+  applePlayer.clear();
+  loadedPlaylists.clear();
+  if (state.playback === "apple-music") playbackFrom("local");
+}
+async function request(path: string) {
+  if (!instance?.musicUserToken) throw new Error("请先登录 Apple Music");
+  const url = new URL(path, "https://api.music.apple.com");
+  if (
+    url.origin !== "https://api.music.apple.com" ||
+    !url.pathname.startsWith("/v1/")
+  )
+    throw new Error("Apple Music 返回了无效的分页地址");
+  if (!validDeveloperToken(developerToken)) await freshDeveloperToken();
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${developerToken}`,
+      "Music-User-Token": instance.musicUserToken,
+    },
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!response.ok) {
+    const error = new AppleApiError(response.status);
+    if (response.status === 401) {
+      invalidateAuthorization();
+      update({ error: error.message });
+    }
+    throw error;
+  }
+  return response.json();
+}
+type Resource = {
+  id: string;
+  type: string;
+  attributes?: {
+    name?: string;
+    artistName?: string;
+    albumName?: string;
+    durationInMillis?: number;
+    genreNames?: string[];
+    trackNumber?: number;
+    artwork?: { url?: string };
+  };
+};
+async function allPages(path: string) {
+  const result: Resource[] = [],
+    seen = new Set<string>();
+  let next: string | undefined = path;
+  while (next) {
+    if (seen.has(next))
+      throw new Error("Apple Music 分页未能完成，请刷新资料库");
+    seen.add(next);
+    const response = await request(next);
+    result.push(...(response.data ?? []));
+    next = response.next;
+  }
+  return result;
+}
+export function appleTrack(resource: Resource): Track {
+  const attributes = resource.attributes ?? {};
+  const type = resource.type === "library-songs" ? "library-songs" : "songs";
+  const artwork = attributes.artwork?.url
+    ?.replaceAll("{w}", "600")
+    .replaceAll("{h}", "600")
+    .replaceAll("{f}", "jpg");
+  const duration = (attributes.durationInMillis ?? 0) / 1000;
+  return {
+    id: `apple:${type}:${resource.id}`,
+    title: attributes.name || "未知歌曲",
+    artist: attributes.artistName,
+    album: attributes.albumName,
+    artwork,
+    duration,
+    genres: attributes.genreNames,
+    trackNumber: attributes.trackNumber,
+    kind: "apple-music",
+    filename: "",
+    size: 0,
+    url: `musickit://${type}/${encodeURIComponent(resource.id)}?duration=${duration}`,
+  };
+}
+async function completeAuthorization(token: string) {
+  const epoch = ++generation;
+  try {
+    const response = await request("/v1/me/storefront");
+    if (epoch !== generation) return;
+    const region = response.data?.[0]?.id;
+    if (typeof region !== "string" || !/^[a-z]{2}$/.test(region))
+      throw new Error("未能读取 Apple Music 账户地区，请重试");
+    storefront = region;
+    instance!.storefrontId = storefront;
+    save("reipod-apple-user", token);
+    update({ auth: "authorized", error: "" });
+    await refreshAppleLibrary();
+    if (epoch !== generation) return;
+    if (!sessionReady && read("reipod-playback-source") === "apple-music") {
+      let saved = null;
+      try {
+        saved = readSession(JSON.parse(read("reipod-apple-session") || "null"));
+      } catch {
+        save("reipod-apple-session", null);
+      }
+      if (
+        saved &&
+        applePlayer
+          .getSnapshot()
+          .tracks.some((track) => track.id === saved.currentId)
+      ) {
+        // Only resume the display/position; browsers require a gesture for sound.
+        playbackFrom("apple-music");
+        applePlayer.restoreSession(saved);
+      }
+    }
+    sessionReady = true;
+  } catch (error) {
+    if (epoch !== generation) return;
+    if (error instanceof AppleApiError && error.status === 401)
+      invalidateAuthorization();
+    else update({ auth: "error" });
+    update({ error: message(error) });
+  }
+}
+export async function authorizeAppleMusic() {
+  if (!instance || !state.ready) {
+    await prepareAppleMusic();
+    return;
+  }
+  const epoch = generation;
+  try {
+    // Called before any await so the official login popup retains the user gesture.
+    const promise = instance.authorize();
+    update({ auth: "loading", error: "" });
+    const token = await promise;
+    if (epoch !== generation) return;
+    if (!token) throw new Error("Apple Music 登录已取消");
+    await completeAuthorization(token);
+  } catch {
+    if (epoch !== generation) return;
+    update({ auth: "signed-out", error: "Apple Music 登录未完成，可重试" });
+  }
+}
+export async function signOutAppleMusic() {
+  invalidateAuthorization();
+  update({ auth: "loading" });
+  save("reipod-apple-session", null);
+  try {
+    await instance?.unauthorize();
+  } catch {
+    if (instance) instance.musicUserToken = "";
+  } finally {
+    update({ auth: "signed-out" });
+  }
+}
+export async function refreshAppleLibrary() {
+  if (state.auth !== "authorized") return;
+  const epoch = generation;
+  update({ syncing: true, error: "" });
+  try {
+    const [songs, lists] = await Promise.all([
+      allPages("/v1/me/library/songs?limit=100"),
+      allPages("/v1/me/library/playlists?limit=100"),
+    ]);
+    if (epoch !== generation) return;
+    const tracks = songs
+      .filter((song) => song.type === "library-songs")
+      .map(appleTrack);
+    applePlayer.add(tracks);
+    tracks.forEach((track) => applePlayer.updateTrack(track.id, track));
+    loadedPlaylists.clear();
+    update({
+      libraryTracks: tracks,
+      playlists: lists.map((list) => ({
+        id: `apple-playlist:${list.id}`,
+        name: list.attributes?.name || "未命名歌单",
+        trackIds: [],
+      })),
+    });
+  } catch (error) {
+    if (epoch !== generation) return;
+    if (error instanceof AppleApiError && error.status === 401)
+      invalidateAuthorization();
+    update({ error: message(error) });
+  } finally {
+    if (epoch === generation) update({ syncing: false });
+  }
+}
+export async function loadApplePlaylist(id: string) {
+  if (loadedPlaylists.has(id)) return true;
+  const playlist = state.playlists.find((entry) => entry.id === id);
+  if (!playlist) return false;
+  const epoch = generation;
+  update({ syncing: true, error: "" });
+  try {
+    const items = await allPages(
+      `/v1/me/library/playlists/${encodeURIComponent(id.slice("apple-playlist:".length))}/tracks?limit=100`,
+    );
+    if (epoch !== generation) return false;
+    const tracks = items
+      .filter((item) => ["songs", "library-songs"].includes(item.type))
+      .map(appleTrack);
+    applePlayer.add(tracks);
+    loadedPlaylists.add(id);
+    update({
+      playlists: state.playlists.map((entry) =>
+        entry.id === id
+          ? { ...entry, trackIds: tracks.map((track) => track.id) }
+          : entry,
+      ),
+    });
+    return true;
+  } catch (error) {
+    if (epoch === generation) update({ error: message(error) });
+    return false;
+  } finally {
+    if (epoch === generation) update({ syncing: false });
+  }
+}
+let searchVersion = 0;
+export async function searchAppleMusic(term: string) {
+  const version = ++searchVersion,
+    epoch = generation;
+  update({ searchResults: [], error: "" });
+  if (!term.trim() || state.auth !== "authorized") return;
+  try {
+    const result = await request(
+      `/v1/catalog/${encodeURIComponent(storefront)}/search?types=songs&limit=25&term=${encodeURIComponent(term.trim())}`,
+    );
+    if (version !== searchVersion || epoch !== generation) return;
+    const tracks = ((result.results?.songs?.data ?? []) as Resource[]).map(
+      appleTrack,
+    );
+    applePlayer.add(tracks);
+    update({ searchResults: tracks });
+  } catch (error) {
+    if (version === searchVersion && epoch === generation)
+      update({ error: message(error) });
+  }
+}
+let lastSession = "";
+applePlayer.subscribe(() => {
+  if (!sessionReady || state.auth !== "authorized") return;
+  const session = applePlayer.getSession();
+  session.position = Math.floor(session.position);
+  const value = JSON.stringify(session);
+  if (value !== lastSession) {
+    lastSession = value;
+    save("reipod-apple-session", value);
+  }
+});
+
+// Route lock-screen controls to the active engine, including local music while
+// browsing Apple Music. Never start both players from a media-session command.
+function activePlayer() {
+  return state.playback === "apple-music" ? applePlayer : localPlayer;
+}
+if ("mediaSession" in navigator) {
+  const handlers: Partial<
+    Record<MediaSessionAction, MediaSessionActionHandler>
+  > = {
+    play: () => activePlayer().play(),
+    pause: () => activePlayer().pause(),
+    nexttrack: () => activePlayer().next(),
+    previoustrack: () => activePlayer().previous(),
+    seekto: (event) => {
+      if (event.seekTime !== undefined) activePlayer().seek(event.seekTime);
+    },
+    seekforward: (event) =>
+      activePlayer().seek(
+        activePlayer().getSnapshot().position + (event.seekOffset ?? 10),
+      ),
+    seekbackward: (event) =>
+      activePlayer().seek(
+        activePlayer().getSnapshot().position - (event.seekOffset ?? 10),
+      ),
+    stop: () => activePlayer().pause(),
+  };
+  for (const [name, handler] of Object.entries(handlers))
+    try {
+      navigator.mediaSession.setActionHandler(
+        name as MediaSessionAction,
+        handler!,
+      );
+    } catch {
+      /* Optional browser support. */
+    }
+  let lastMetadata = "";
+  const sync = () => {
+    const current = activePlayer().getSnapshot();
+    const track = current.tracks.find(
+      (entry) => entry.id === current.currentId,
+    );
+    const key = JSON.stringify([
+      track?.id,
+      track?.title,
+      track?.artist,
+      track?.artwork,
+    ]);
+    // Local store may also publish metadata; always restore the active engine's.
+    if (
+      key !== lastMetadata ||
+      navigator.mediaSession.metadata?.title !== (track?.title ?? "")
+    ) {
+      lastMetadata = key;
+      if (typeof MediaMetadata !== "undefined")
+        navigator.mediaSession.metadata = track
+          ? new MediaMetadata({
+              title: track.title,
+              artist: track.artist || "",
+              album: track.album || "",
+              artwork: track.artwork
+                ? [{ src: new URL(track.artwork, location.href).href }]
+                : [],
+            })
+          : null;
+    }
+    navigator.mediaSession.playbackState =
+      current.status === "playing"
+        ? "playing"
+        : current.currentId
+          ? "paused"
+          : "none";
+    if (typeof navigator.mediaSession.setPositionState === "function")
+      try {
+        if (current.duration > 0 && Number.isFinite(current.duration))
+          navigator.mediaSession.setPositionState({
+            duration: current.duration,
+            position: Math.max(0, Math.min(current.position, current.duration)),
+            playbackRate: 1,
+          });
+        else navigator.mediaSession.setPositionState();
+      } catch {
+        /* Optional browser support. */
+      }
+  };
+  localPlayer.subscribe(sync);
+  applePlayer.subscribe(sync);
+  listeners.add(sync);
+}

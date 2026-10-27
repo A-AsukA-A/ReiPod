@@ -14,7 +14,7 @@ export type Track = {
   duration?: number;
   importedAt?: number;
   lyrics?: { time: number; text: string }[];
-  kind?: "local" | "demo";
+  kind?: "local" | "demo" | "apple-music";
   filename: string;
   size: number;
   url: string;
@@ -299,11 +299,13 @@ export class Player {
       this.update({
         status: "error",
         error:
-          audio.error?.code === 2
-            ? track.kind === "demo"
-              ? "试听音乐读取中断，请检查网络后重试。"
-              : "文件读取中断，请重新导入这首歌。"
-            : "这首歌无法解码或文件已损坏。请换用 MP3、AAC / M4A 或 PCM WAV。",
+          track.kind === "apple-music"
+            ? "Apple Music 播放失败，请检查订阅、地区或网络后重试。"
+            : audio.error?.code === 2
+              ? track.kind === "demo"
+                ? "试听音乐读取中断，请检查网络后重试。"
+                : "文件读取中断，请重新导入这首歌。"
+              : "这首歌无法解码或文件已损坏。请换用 MP3、AAC / M4A 或 PCM WAV。",
       });
     });
     audio.src = track.url;

@@ -355,13 +355,13 @@ test("classic menu order and Music customization survive legacy settings and rel
   await choose(page, "设置");
   expect((await labels()).slice(0, 8)).toEqual([
     "关于本机",
+    "音乐服务",
     "随机播放",
     "重复播放",
     "主菜单",
     "音乐菜单",
     "音量上限",
     "背光时间",
-    "亮度",
   ]);
   await choose(page, "音乐菜单");
   await choose(page, "Cover Flow");

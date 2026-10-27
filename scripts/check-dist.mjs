@@ -12,14 +12,17 @@ const files = await readdir("dist", { recursive: true });
 for (const file of files) {
   const path = file.replaceAll("\\", "/");
   if (
-    (/\.(m4a|mp3|wav|flac|ipa|mp4|mov|webm|m4v|aac)$/i.test(path) &&
+    (/\.(m4a|mp3|wav|flac|ipa|mp4|mov|webm|m4v|aac|p8)$/i.test(path) &&
       !approvedMusic.has(path)) ||
     /(?:^|\/)(?:analysis|\.local|docs)\//.test(path)
   ) {
     throw new Error(`Private or unexpected file in public build: ${file}`);
   }
-  if (/\.(html|js)$/.test(file)) {
+  if (/\.(html|js|json)$/.test(file)) {
     const content = await readFile(`dist/${file}`, "utf8");
+    if (/-----BEGIN (?:EC |RSA |ENCRYPTED )?PRIVATE KEY-----/.test(content)) {
+      throw new Error(`Private signing key in public build: ${file}`);
+    }
     if (/__test-music|告白气球|千山万水/.test(content)) {
       throw new Error(
         `Private development music entry in public build: ${file}`,

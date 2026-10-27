@@ -32,7 +32,17 @@ jobs:
         run: npm ci
       - name: Test playback and wheel input
         run: npm test
+      - name: Prepare Apple Music configuration when available
+        env:
+          APPLE_MUSIC_TEAM_ID: ${{ secrets.APPLE_MUSIC_TEAM_ID }}
+          APPLE_MUSIC_KEY_ID: ${{ secrets.APPLE_MUSIC_KEY_ID }}
+          APPLE_MUSIC_PRIVATE_KEY: ${{ secrets.APPLE_MUSIC_PRIVATE_KEY }}
+          APPLE_MUSIC_ORIGINS: https://a-asuka-a.github.io
+          VITE_APPLE_MUSIC_DEVELOPER_TOKEN: ${{ secrets.APPLE_MUSIC_DEVELOPER_TOKEN }}
+        run: node scripts/apple-music-token.mjs
       - name: Build
+        env:
+          VITE_APPLE_MUSIC_TOKEN_URL: ${{ vars.APPLE_MUSIC_TOKEN_URL }}
         run: npm run build
       - name: Check public artifact
         run: node scripts/check-dist.mjs

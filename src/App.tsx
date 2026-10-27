@@ -15,8 +15,8 @@ import {
   importFiles,
   initializeLibrary,
   onLibraryNotice,
-  player,
-  usePlayer,
+  player as localPlayer,
+  usePlayer as useLocalPlayer,
 } from "./player/store";
 import {
   albumsFor,
@@ -82,27 +82,56 @@ import {
 } from "./media/textDocuments";
 import { TextReader } from "./ui/TextReader";
 import type { TextReaderHandle } from "./ui/TextReader";
+import { applePlayer } from "./services/applePlayer";
+import {
+  authorizeAppleMusic,
+  getMusicServices,
+  initializeMusicServices,
+  loadApplePlaylist,
+  playbackFrom,
+  prepareAppleMusic,
+  refreshAppleLibrary,
+  searchAppleMusic,
+  selectMusicService,
+  signOutAppleMusic,
+  useApplePlayer,
+  useMusicServices,
+} from "./services/musicServices";
 
 export function App() {
-  const state = usePlayer();
+  const localState = useLocalPlayer();
+  const appleState = useApplePlayer();
+  const services = useMusicServices();
+  const cloud = services.selected === "apple-music";
+  const player =
+    services.playback === "apple-music" ? applePlayer : localPlayer;
+  const state = services.playback === "apple-music" ? appleState : localState;
   const prefs = usePreferences();
-  const playlists = usePlaylists();
+  const localPlaylists = usePlaylists();
+  const playlists = cloud ? services.playlists : localPlaylists;
   const ratings = useRatings();
   const photos = usePhotos();
   const texts = useTexts();
   const podcastIds = usePodcastIds();
-  const musicTracks = useMemo(
-    () => state.tracks.filter((track) => !podcastIds.includes(track.id)),
-    [state.tracks, podcastIds],
+  const localMusicTracks = useMemo(
+    () => localState.tracks.filter((track) => !podcastIds.includes(track.id)),
+    [localState.tracks, podcastIds],
   );
+  const musicTracks = cloud ? services.libraryTracks : localMusicTracks;
   const podcastTracks = useMemo(
-    () => state.tracks.filter((track) => podcastIds.includes(track.id)),
-    [state.tracks, podcastIds],
+    () => localState.tracks.filter((track) => podcastIds.includes(track.id)),
+    [localState.tracks, podcastIds],
   );
   const podcastShows = useMemo(() => albumsFor(podcastTracks), [podcastTracks]);
   const trackById = useMemo(
-    () => new Map(state.tracks.map((track) => [track.id, track])),
-    [state.tracks],
+    () =>
+      new Map(
+        [...localState.tracks, ...appleState.tracks].map((track) => [
+          track.id,
+          track,
+        ]),
+      ),
+    [localState.tracks, appleState.tracks],
   );
   const current = state.currentId ? trackById.get(state.currentId) : undefined;
   const albums = useMemo(() => albumsFor(musicTracks), [musicTracks]);
@@ -181,6 +210,7 @@ export function App() {
   );
   const trackPages: Page[] = [
     "songs",
+    "local-songs",
     "demos",
     "album-tracks",
     "artist-tracks",
@@ -213,7 +243,11 @@ export function App() {
           ?.tracks.slice()
           .sort((a, b) => (b.importedAt ?? 0) - (a.importedAt ?? 0)) ?? []
       );
-    if (page === "search") return searchTracks(state.tracks, query);
+    if (page === "local-songs") return songsByTitle(localMusicTracks);
+    if (page === "search")
+      return cloud
+        ? services.searchResults
+        : searchTracks(localMusicTracks, query);
     if (page === "playlist-tracks") {
       return (selectedPlaylist?.trackIds ?? []).flatMap(
         (id) => trackById.get(id) ?? [],
@@ -222,7 +256,7 @@ export function App() {
     if (page === "queue")
       return state.queue.flatMap((id) => trackById.get(id) ?? []);
     if (page === "demos")
-      return state.tracks.filter((track) => track.kind === "demo");
+      return localState.tracks.filter((track) => track.kind === "demo");
     if (page === "album-tracks") return selectedAlbum?.tracks ?? [];
     if (page === "coverflow-album")
       return albums.find((album) => album.id === groupKey)?.tracks ?? [];
@@ -249,6 +283,10 @@ export function App() {
     trackById,
     musicTracks,
     podcastShows,
+    localState.tracks,
+    localMusicTracks,
+    services.searchResults,
+    cloud,
   ]);
   const visibleIds = useMemo(
     () => new Set(visibleTracks.map((track) => track.id)),
@@ -322,13 +360,14 @@ export function App() {
   const addFiles = (files: File[]) => {
     if (!files.length) return;
     const before = new Set(
-      player.getSnapshot().tracks.map((track) => track.id),
+      localPlayer.getSnapshot().tracks.map((track) => track.id),
     );
     const { added, rejected, lyrics } = importFiles(files);
     if (added) {
       open(
-        "songs",
-        player.getSnapshot().tracks.find((track) => !before.has(track.id))?.id,
+        cloud ? "local-songs" : "songs",
+        localPlayer.getSnapshot().tracks.find((track) => !before.has(track.id))
+          ?.id,
       );
       if (rejected) setNotice(`${rejected} 个文件未加入`);
     } else
@@ -349,12 +388,20 @@ export function App() {
     queue = visibleTracks.map((track) => track.id),
   ) => {
     if (podcastIds.includes(id)) {
+      playbackFrom("local");
       playPodcast(id, queue);
       setPlayView("art");
       open("playing");
       return;
     }
-    player.activate(
+    const remote = trackById.get(id)?.kind === "apple-music";
+    if (remote && services.auth !== "authorized") {
+      open("music-account", "login");
+      return;
+    }
+    const target = remote ? applePlayer : localPlayer;
+    playbackFrom(remote ? "apple-music" : "local");
+    target.activate(
       id,
       page === "queue" ? undefined : queue.length ? queue : undefined,
     );
@@ -398,24 +445,31 @@ export function App() {
   const shuffleAll = () => {
     const tracks = musicTracks;
     if (!tracks.length) {
-      openFiles();
+      if (cloud) open("music-account", "login");
+      else openFiles();
       return;
     }
     const first = tracks[Math.floor(Math.random() * tracks.length)];
-    player.setShuffle(true);
-    player.setQueue(
+    const target = cloud ? applePlayer : localPlayer;
+    playbackFrom(cloud ? "apple-music" : "local");
+    target.setShuffle(true);
+    target.setQueue(
       tracks.map((track) => track.id),
       first.id,
     );
-    player.activate(first.id);
+    target.activate(first.id);
     setPlayView("art");
     open("playing");
   };
   const toggleFavorite = (id?: string) => {
     if (!id || !trackById.has(id)) return;
-    player.toggleFavorite(id);
+    if (trackById.get(id)?.kind === "apple-music") {
+      setNotice("Apple Music 歌曲不加入本地收藏");
+      return;
+    }
+    localPlayer.toggleFavorite(id);
     setNotice(
-      player.getSnapshot().favorites.includes(id)
+      localPlayer.getSnapshot().favorites.includes(id)
         ? "已加入我的收藏"
         : "已从收藏移除",
     );
@@ -446,29 +500,146 @@ export function App() {
     setContextPlaylist(page === "playlist-tracks" ? (groupKey ?? null) : null);
     open("track-options", "favorite", id);
   };
-  const { homeItems, musicItems, playlistItems, settingsItems } =
-    createPrimaryMenus({
-      state,
-      prefs,
-      albums,
-      photoCount: photos.length,
-      podcastShows,
-      musicCount: musicTracks.length,
-      current,
-      playlists,
-      trackById,
-      open,
-      shuffleAll,
-      openFiles,
-      loadDemos,
-      editName,
-      openDocument,
-      beginText: textEntry.begin,
-    });
-  const emptyItems: MenuItem[] = [
-    { key: "import", label: "导入音乐", action: openFiles },
-    { key: "demo", label: "试听音乐", action: loadDemos },
+  const {
+    homeItems,
+    musicItems: localMusicItems,
+    playlistItems: localPlaylistItems,
+    settingsItems: originalSettingsItems,
+  } = createPrimaryMenus({
+    state: cloud
+      ? { ...appleState, tracks: services.libraryTracks }
+      : localState,
+    prefs,
+    albums,
+    photoCount: photos.length,
+    podcastShows,
+    musicCount: musicTracks.length,
+    current,
+    playlists,
+    trackById,
+    open,
+    shuffleAll,
+    openFiles,
+    loadDemos,
+    editName,
+    openDocument,
+    beginText: textEntry.begin,
+  });
+  const settingsItems: MenuItem[] = [
+    originalSettingsItems[0],
+    {
+      key: "music-services",
+      label: "音乐服务",
+      value: cloud ? "Apple Music" : "本地音乐",
+      action: () => open("music-services", services.selected),
+    },
+    ...originalSettingsItems
+      .slice(1)
+      .map((item) =>
+        item.key === "clear"
+          ? {
+              ...item,
+              label: "清空本地音乐资料库",
+              disabled: !localMusicTracks.length,
+            }
+          : item,
+      ),
   ];
+  const account = () =>
+    open("music-account", services.auth === "authorized" ? "refresh" : "login");
+  const cloudAccess: MenuItem[] = [
+    {
+      key: "music-account",
+      label:
+        services.auth === "authorized"
+          ? "Apple Music 账户"
+          : "登录 Apple Music",
+      action: account,
+    },
+  ];
+  const musicItems: MenuItem[] = cloud
+    ? [
+        ...(services.auth === "authorized"
+          ? [
+              {
+                key: "coverflow",
+                label: "Cover Flow",
+                action: () => open("coverflow"),
+              },
+              {
+                key: "playlists",
+                label: "播放列表",
+                action: () => open("playlists"),
+              },
+              { key: "artists", label: "艺人", action: () => open("artists") },
+              { key: "albums", label: "专辑", action: () => open("albums") },
+              { key: "songs", label: "歌曲", action: () => open("songs") },
+              {
+                key: "search",
+                label: "搜索 Apple Music",
+                action: () => {
+                  setQuery("");
+                  textEntry.begin();
+                  open("search");
+                },
+              },
+            ]
+          : []),
+        ...cloudAccess,
+        {
+          key: "local-songs",
+          label: "本地音乐",
+          action: () =>
+            open("local-songs", localMusicTracks[0]?.id ?? "import"),
+        },
+      ]
+    : localMusicItems;
+  const playlistItems: MenuItem[] = cloud
+    ? [
+        ...services.playlists.map((list) => ({
+          key: list.id,
+          label: list.name,
+          action: () => {
+            void loadApplePlaylist(list.id).then((loaded) => {
+              if (
+                navigationRef.current.screen.page !== "playlists" ||
+                navigationRef.current.screen.selectedKey !== list.id
+              )
+                return;
+              if (loaded) open("playlist-tracks", undefined, list.id);
+              else
+                setNotice(getMusicServices().error || "歌单未能载入，请重试");
+            });
+          },
+        })),
+        {
+          key: "refresh",
+          label: services.syncing ? "正在同步…" : "刷新 Apple Music 歌单",
+          disabled: services.syncing,
+          action: () => {
+            void refreshAppleLibrary();
+          },
+        },
+        ...cloudAccess,
+      ]
+    : localPlaylistItems;
+  const emptyItems: MenuItem[] = cloud
+    ? [
+        ...(page === "search"
+          ? [
+              {
+                key: "edit-search",
+                label: "修改搜索…",
+                action: textEntry.begin,
+              },
+            ]
+          : []),
+        ...cloudAccess,
+      ]
+    : [
+        { key: "import", label: "导入音乐", action: openFiles },
+        { key: "demo", label: "试听音乐", action: loadDemos },
+      ];
   const confirmItems: MenuItem[] = [
     { key: "cancel", label: "取消", action: () => back() },
     {
@@ -497,6 +668,95 @@ export function App() {
     ),
   );
   const managedRows: Partial<Record<Page, MenuItem[]>> = {
+    "music-services": [
+      {
+        key: "apple-music",
+        label: "Apple Music",
+        value: cloud ? "✓" : "",
+        action: () => {
+          selectMusicService("apple-music");
+          back();
+        },
+      },
+      {
+        key: "local",
+        label: "本地音乐",
+        value: !cloud ? "✓" : "",
+        action: () => {
+          selectMusicService("local");
+          back();
+        },
+      },
+      {
+        key: "netease",
+        label: "网易云音乐",
+        value: "待接入",
+        disabled: true,
+        action: () => {},
+      },
+      {
+        key: "qq",
+        label: "QQ 音乐",
+        value: "待接入",
+        disabled: true,
+        action: () => {},
+      },
+    ],
+    "music-account":
+      services.auth === "authorized"
+        ? [
+            {
+              key: "refresh",
+              label: services.syncing ? "正在同步…" : "刷新资料库",
+              disabled: services.syncing,
+              action: () => {
+                void refreshAppleLibrary();
+              },
+            },
+            {
+              key: "logout",
+              label: "退出 Apple Music",
+              action: () => {
+                void signOutAppleMusic();
+              },
+            },
+          ]
+        : [
+            {
+              key: "login",
+              label:
+                services.auth === "loading"
+                  ? "正在连接…"
+                  : services.ready
+                    ? "登录 Apple Music"
+                    : "重新检查连接",
+              disabled: services.auth === "loading",
+              action: () => {
+                void (services.ready
+                  ? authorizeAppleMusic()
+                  : prepareAppleMusic());
+              },
+            },
+            {
+              key: "local-songs",
+              label: "本地音乐",
+              action: () =>
+                open("local-songs", localMusicTracks[0]?.id ?? "import"),
+            },
+          ],
+    "local-songs": [
+      ...songsByTitle(localMusicTracks).map((track) => ({
+        key: track.id,
+        label: track.title,
+        detail: track.artist || track.filename,
+        action: () =>
+          playTrack(
+            track.id,
+            songsByTitle(localMusicTracks).map((item) => item.id),
+          ),
+      })),
+      { key: "import", label: "导入音乐", action: openFiles },
+    ],
     genres: [
       ...new Set(
         musicTracks.flatMap((track) =>
@@ -687,7 +947,7 @@ export function App() {
     ...createLibraryMenus({
       page,
       groupKey,
-      playlists,
+      playlists: localPlaylists,
       state,
       musicTracks,
       visibleTracks,
@@ -706,6 +966,71 @@ export function App() {
       playTrack,
       toggleFavorite,
     }),
+    ...(cloud
+      ? {
+          "playlist-tracks": [
+            ...visibleTracks.map((track) => ({
+              key: track.id,
+              label: track.title,
+              detail: track.artist,
+              action: () => playTrack(track.id),
+            })),
+            ...(!visibleTracks.length
+              ? [
+                  {
+                    key: "empty",
+                    label: "此歌单暂无可播放歌曲",
+                    disabled: true,
+                    action: () => {},
+                  },
+                ]
+              : []),
+          ],
+        }
+      : {}),
+    ...(cloud && optionTrack && optionTrack.kind !== "apple-music"
+      ? {
+          "track-options": [
+            {
+              key: "favorite",
+              label: localState.favorites.includes(optionTrack.id)
+                ? "取消本地收藏"
+                : "加入本地收藏",
+              action: () => toggleFavorite(optionTrack.id),
+            },
+            { key: "queue", label: "播放队列", action: () => open("queue") },
+            {
+              key: "play-next",
+              label: "下一首播放",
+              action: () => {
+                localPlayer.playNext(optionTrack.id);
+                back();
+              },
+            },
+            {
+              key: "delete",
+              label: "删除歌曲…",
+              action: () =>
+                open("confirm-delete-track", "cancel", optionTrack.id),
+            },
+          ],
+        }
+      : {}),
+    ...(optionTrack?.kind === "apple-music"
+      ? {
+          "track-options": [
+            { key: "queue", label: "播放队列", action: () => open("queue") },
+            {
+              key: "play-next",
+              label: "下一首播放",
+              action: () => {
+                applePlayer.playNext(optionTrack.id);
+                back();
+              },
+            },
+          ],
+        }
+      : {}),
   };
   const albumRows: MenuItem[] = (
     page === "coverflow" ? flowAlbums : page === "albums" ? browseAlbums : []
@@ -1068,13 +1393,18 @@ export function App() {
         else chooseRow(focusedRow!);
       } else if (player.getSnapshot().currentId) player.toggle();
       else {
-        if (!player.getSnapshot().tracks.length) addDemos();
-        const first = player.getSnapshot().tracks[0];
+        const local = page === "local-songs" || !cloud;
+        if (local && !localPlayer.getSnapshot().tracks.length) addDemos();
+        const tracks = local
+          ? localPlayer.getSnapshot().tracks
+          : services.libraryTracks;
+        const first = tracks[0];
         if (first)
           playTrack(
             first.id,
-            player.getSnapshot().tracks.map((track) => track.id),
+            tracks.map((track) => track.id),
           );
+        else if (!local) account();
       }
     }
     if (value === "next" || value === "previous") {
@@ -1093,8 +1423,13 @@ export function App() {
   };
 
   useEffect(() => {
-    player.setVolumeLimit(prefs.volumeLimit);
+    localPlayer.setVolumeLimit(prefs.volumeLimit);
+    applePlayer.setVolumeLimit(prefs.volumeLimit);
   }, [prefs.volumeLimit]);
+  useEffect(() => {
+    if (page === "search" && cloud && !textEntry.editing)
+      void searchAppleMusic(query);
+  }, [page, cloud, textEntry.editing, query]);
   useEffect(
     () => () => {
       if (transportTimer.current) clearTimeout(transportTimer.current);
@@ -1105,6 +1440,7 @@ export function App() {
     void restorePhotos();
     void restoreTexts();
     void initializeLibrary();
+    void initializeMusicServices();
     return onLibraryNotice(setNotice);
   }, []);
   useEffect(() => {
@@ -1183,6 +1519,9 @@ export function App() {
               "confirm-delete-text": "删除文本",
               home: "ReiPod",
               music: "音乐",
+              "music-services": "音乐服务",
+              "music-account": "Apple Music",
+              "local-songs": "本地音乐",
               songs: "歌曲",
               demos: "试听音乐",
               playing: playView === "lyrics" ? "歌词" : "正在播放",
@@ -1248,6 +1587,8 @@ export function App() {
           activate();
       }}
       data-background={prefs.background}
+      data-music-service={services.selected}
+      data-playback-source={services.playback}
     >
       <FileImports
         audio={input}
@@ -1516,6 +1857,8 @@ export function App() {
                     </div>
                   ))}
                 {(page === "settings" ||
+                  page === "music-services" ||
+                  page === "music-account" ||
                   page === "notes" ||
                   page === "text-options" ||
                   page === "confirm-delete-text" ||
@@ -1538,6 +1881,27 @@ export function App() {
                   <div
                     className={`settings-screen ${splitMenu ? "split-settings-screen" : ""} ${page === "photos" ? "photo-album-list" : ""}`}
                   >
+                    {page === "music-account" && (
+                      <p className="clear-question" role="status">
+                        {services.auth === "unconfigured"
+                          ? "网站尚未配置 Apple Music"
+                          : services.auth === "authorized"
+                            ? "已连接 Apple Music"
+                            : services.auth === "loading"
+                              ? "正在连接 Apple Music…"
+                              : "连接你的 Apple Music"}
+                        <span>
+                          {services.error ||
+                            (services.auth === "unconfigured"
+                              ? "配置完成后，即可在这里登录并同步资料库。"
+                              : services.syncing
+                                ? "正在同步资料库…"
+                                : services.auth === "authorized"
+                                  ? `${services.libraryTracks.length} 首歌曲 · ${services.playlists.length} 个歌单`
+                                  : "登录后显示 Apple Music 歌单，本地音乐独立保留。")}
+                        </span>
+                      </p>
+                    )}
                     {page === "confirm-delete-text" && (
                       <p className="clear-question">
                         删除「{textDocument?.title ?? "此文本"}」？
@@ -1562,7 +1926,7 @@ export function App() {
                     )}
                     {page === "confirm-clear" && (
                       <p className="clear-question">
-                        清空音乐资料库及已保存的音频？
+                        清空本地资料库及已保存的音频？
                         <span>不会删除设备上的原始文件</span>
                       </p>
                     )}

@@ -1,10 +1,12 @@
 # ReiPod
 
-A classic-style local music player built with React and TypeScript. The interface is just the player: import audio, browse songs with the click wheel, and listen.
+A classic-style music player built with React and TypeScript, with local playback and an Apple Music integration that requires the site's own MusicKit developer configuration.
 
 **Website:** [Open ReiPod](https://a-asuka-a.github.io/ReiPod/)
 
 ## Use
+
+**设置 → 音乐服务** selects Apple Music or local music. With a configured Apple Music connection, Music and Playlists show that account's library and playlists; **音乐 → 本地音乐** keeps imported files separate. Service choice and verified authorization restore in this browser. Apple Music is the first integration target; NetEase Cloud Music and QQ Music are labeled as pending. Production Apple credentials and real-account/DRM verification are not yet available. See [MUSIC_SERVICES.md](MUSIC_SERVICES.md) for implemented behavior, setup and verification limits.
 
 Use the wheel to choose **音乐 → 导入音乐** and select audio files from your device. The LCD is display-only: tapping, hovering or dragging on it does not operate the player. The player reads song titles, artists, albums, track numbers and embedded artwork. Browse albums in **Cover Flow**, or open **音乐** for artists, albums, songs, favorites and recently added music. Selecting a song plays the corresponding list; playing an album keeps its own queue.
 
@@ -80,7 +82,7 @@ Pull requests run the unit tests, Chromium browser tests and public-artifact che
 
 Pushes to `main` run the playback/input tests, build the static player and deploy `dist/` to GitHub Pages. In repository Settings → Pages, the source is **GitHub Actions**. Relative asset paths support hosting under `/ReiPod/`.
 
-The published site needs no server, account, music-service credentials or upload endpoint.
+Local playback needs no server, account or upload endpoint. Apple Music requires the site's own developer configuration and the listener's Apple Music authorization; private signing keys stay outside the site build.
 
 ## Stock library browsing
 
