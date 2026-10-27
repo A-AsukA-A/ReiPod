@@ -349,3 +349,23 @@ it("moves a requested song immediately after the current one without restarting 
   player.setShuffle(false);
   expect(player.getSnapshot().queue).toEqual(["1", "2", "3"]);
 });
+
+it("enforces the volume cap on wheel changes and session restoration", () => {
+  const { player, audios } = setup();
+  player.setVolumeLimit(0.35);
+  player.restoreSession({
+    currentId: "1",
+    position: 3,
+    volume: 0.9,
+    queue: ["1"],
+    naturalOrder: ["1"],
+  });
+  expect(player.getSnapshot().volume).toBe(0.35);
+  expect(audios[0].volume).toBe(0.35);
+  player.setVolume(1);
+  expect(audios[0].volume).toBe(0.35);
+  player.setVolumeLimit(0.2);
+  expect(player.getSnapshot().volume).toBe(0.2);
+  player.setVolume(NaN);
+  expect(player.getSnapshot().volume).toBe(0.2);
+});

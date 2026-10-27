@@ -14,7 +14,9 @@ export function MenuPreview({
   onChoose,
   count,
   bytes,
+  suspended = false,
 }: {
+  suspended?: boolean;
   spec: MenuPreviewSpec;
   albums: Album[];
   current?: Track;
@@ -55,6 +57,7 @@ export function MenuPreview({
         albums={albums}
         initialAlbumId={initialAlbumId}
         enabled={covers}
+        suspended={suspended}
         onChoose={onChoose}
       />
       {!covers && (

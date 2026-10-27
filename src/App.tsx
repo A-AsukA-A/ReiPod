@@ -29,12 +29,17 @@ import { CoverFlow } from "./ui/CoverFlow";
 import { MenuPreview } from "./ui/MenuPreview";
 import { menuPreview } from "./ui/menuPreview";
 import { BatteryIndicator } from "./ui/BatteryIndicator";
+import { backlightTimes, optionalMainItems } from "./ui/classicSettings";
+import { useBacklight } from "./ui/useBacklight";
+import { ClassicClock } from "./ui/ClassicClock";
+import { ClassicGlyph } from "./ui/ClassicGlyph";
 import { Lyrics } from "./ui/Lyrics";
 import { setPreferences, usePreferences } from "./ui/preferences";
 import { PlayerIcon } from "./ui/PlayerIcon";
 import { MarqueeText } from "./ui/MarqueeText";
 import { useLcdMotion } from "./ui/useLcdMotion";
 import { searchTracks } from "./player/search";
+import { useRatings, setRating } from "./player/ratings";
 import {
   usePlaylists,
   createPlaylist,
@@ -42,6 +47,7 @@ import {
   deletePlaylist,
   togglePlaylistTrack,
   removePlaylistTrack,
+  addToOnTheGo,
 } from "./player/playlists";
 
 type MenuItem = {
@@ -54,7 +60,14 @@ type MenuItem = {
   leaf?: boolean;
   action: () => void;
 };
-type PlayView = "art" | "seek" | "lyrics";
+type PlayView = "art" | "seek" | "shuffle" | "rating" | "lyrics";
+const playViewLabels: Record<PlayView, string> = {
+  art: "封面",
+  seek: "进度",
+  shuffle: "随机播放",
+  rating: "歌曲评分",
+  lyrics: "歌词",
+};
 const statusText: Record<PlaybackStatus, string> = {
   idle: "未播放",
   loading: "正在载入",
@@ -70,6 +83,7 @@ export function App() {
   const state = usePlayer();
   const prefs = usePreferences();
   const playlists = usePlaylists();
+  const ratings = useRatings();
   const trackById = useMemo(
     () => new Map(state.tracks.map((track) => [track.id, track])),
     [state.tracks],
@@ -87,6 +101,7 @@ export function App() {
   const [notice, setNotice] = useState("");
   const [held, setHeld] = useState(false);
   const [sleeping, setSleeping] = useState(false);
+  const { dimmed, activate } = useBacklight(prefs.backlight, sleeping);
   const [query, setQuery] = useState("");
   const [playlistName, setPlaylistName] = useState("");
   const [contextPlaylist, setContextPlaylist] = useState<string | null>(null);
@@ -171,7 +186,7 @@ export function App() {
       target === "home"
         ? "music"
         : target === "settings"
-          ? "shuffle"
+          ? "about"
           : target === "confirm-clear"
             ? "cancel"
             : target === "music"
@@ -302,7 +317,7 @@ export function App() {
     setContextPlaylist(page === "playlist-tracks" ? (groupKey ?? null) : null);
     open("track-options", "favorite", id);
   };
-  const homeItems: MenuItem[] = [
+  const allHomeItems: MenuItem[] = [
     {
       key: "music",
       label: "音乐",
@@ -341,6 +356,12 @@ export function App() {
       detail: "内置音乐精选",
       action: loadDemos,
     },
+    {
+      key: "extras",
+      label: "附加功能",
+      detail: "时钟",
+      action: () => open("extras", "clock"),
+    },
     ...(current
       ? [
           {
@@ -352,6 +373,12 @@ export function App() {
         ]
       : []),
   ];
+  const homeItems = allHomeItems.filter(
+    (item) =>
+      item.key === "music" ||
+      item.key === "settings" ||
+      prefs.mainMenu.includes(item.key),
+  );
   const musicItems: MenuItem[] = [
     { key: "playlists", label: "播放列表", action: () => open("playlists") },
     {
@@ -405,14 +432,17 @@ export function App() {
     { key: "new-playlist", label: "新建歌单…", action: () => editName() },
   ];
   const settingsItems: MenuItem[] = [
+    { key: "about", label: "关于本机", action: () => open("about", "done") },
     {
       key: "shuffle",
+      leaf: true,
       label: "随机播放",
       value: state.shuffle ? "开启" : "关闭",
       action: () => player.setShuffle(!player.getSnapshot().shuffle),
     },
     {
       key: "repeat",
+      leaf: true,
       label: "重复播放",
       value: repeatText[state.repeat],
       action: () =>
@@ -425,13 +455,38 @@ export function App() {
         ),
     },
     {
+      key: "main-menu",
+      label: "主菜单",
+      action: () => open("main-menu", "coverflow"),
+    },
+    {
+      key: "volume-limit",
+      label: "音量上限",
+      value: `${Math.round(prefs.volumeLimit * 100)}%`,
+      action: () => open("volume-limit", "done"),
+    },
+    {
+      key: "backlight",
+      label: "背光时间",
+      value: prefs.backlight ? `${prefs.backlight} 秒` : "始终开启",
+      action: () => open("backlight", `backlight-${prefs.backlight}`),
+    },
+    {
+      key: "brightness",
+      label: "亮度",
+      value: `${Math.round(prefs.brightness * 100)}%`,
+      action: () => open("brightness", "done"),
+    },
+    {
       key: "click",
+      leaf: true,
       label: "转轮声音",
       value: prefs.clickSound ? "开启" : "关闭",
       action: () => setPreferences({ clickSound: !prefs.clickSound }),
     },
     {
       key: "finish",
+      leaf: true,
       label: "机身颜色",
       value: prefs.finish === "silver" ? "银色" : "黑色",
       action: () =>
@@ -441,6 +496,7 @@ export function App() {
     },
     {
       key: "background",
+      leaf: true,
       label: "背景",
       value: prefs.background === "warm" ? "浅色" : "深色",
       action: () =>
@@ -483,6 +539,51 @@ export function App() {
     },
   ];
   const managedRows: Partial<Record<Page, MenuItem[]>> = {
+    about: [{ key: "done", label: "返回", action: () => back() }],
+    "main-menu": [
+      {
+        key: "music",
+        label: "音乐",
+        value: "固定",
+        disabled: true,
+        action: () => {},
+      },
+      {
+        key: "settings",
+        label: "设置",
+        value: "固定",
+        disabled: true,
+        action: () => {},
+      },
+      ...optionalMainItems.map((item) => ({
+        key: item.key,
+        label: item.label,
+        value: prefs.mainMenu.includes(item.key) ? "✓" : "—",
+        leaf: true,
+        action: () =>
+          setPreferences({
+            mainMenu: prefs.mainMenu.includes(item.key)
+              ? prefs.mainMenu.filter((key) => key !== item.key)
+              : [...prefs.mainMenu, item.key],
+          }),
+      })),
+    ],
+    backlight: backlightTimes.map((seconds) => ({
+      key: `backlight-${seconds}`,
+      label: seconds ? `${seconds} 秒` : "始终开启",
+      value: prefs.backlight === seconds ? "✓" : undefined,
+      leaf: true,
+      action: () => {
+        setPreferences({ backlight: seconds });
+        back();
+      },
+    })),
+    brightness: [{ key: "done", label: "完成", action: () => back() }],
+    "volume-limit": [{ key: "done", label: "完成", action: () => back() }],
+    extras: [
+      { key: "clock", label: "时钟", action: () => open("clock", "done") },
+    ],
+    clock: [{ key: "done", label: "返回", action: () => back() }],
     "playlist-name": [
       {
         key: "save",
@@ -580,6 +681,21 @@ export function App() {
             action: () => {
               player.playNext(optionTrack.id);
               setNotice("已设为下一首播放");
+            },
+          },
+          {
+            key: "on-the-go",
+            label: "添加到 On-The-Go",
+            leaf: true,
+            action: () => {
+              const result = addToOnTheGo(optionTrack.id);
+              setNotice(
+                result.persisted
+                  ? result.added
+                    ? "已加入 On-The-Go"
+                    : "歌曲已在 On-The-Go 中"
+                  : "本次已添加，歌单未能保存",
+              );
             },
           },
           {
@@ -719,14 +835,27 @@ export function App() {
     _source: "pointer" | "wheel" | "keyboard" = "pointer",
   ) => {
     if (held) return;
+    activate();
     if (sleeping) {
       setSleeping(false);
+      return;
+    }
+    if (page === "brightness") {
+      setPreferences({ brightness: prefs.brightness + steps * 0.05 });
+      return;
+    }
+    if (page === "volume-limit") {
+      setPreferences({ volumeLimit: prefs.volumeLimit + steps * 0.05 });
       return;
     }
     if (page === "playing" && current) {
       if (playView === "seek")
         player.seek(player.getSnapshot().position + steps * 2);
-      else if (playView === "lyrics") setLyricWheel((value) => value + steps);
+      else if (playView === "shuffle") player.setShuffle(steps > 0);
+      else if (playView === "rating") {
+        if (!setRating(current.id, (ratings[current.id] ?? 0) + steps))
+          setNotice("评分未能保存，本次仍生效");
+      } else if (playView === "lyrics") setLyricWheel((value) => value + steps);
       else if (state.volumeControl) {
         player.setVolume(player.getSnapshot().volume + steps * 0.025);
         setVolumeOverlay(true);
@@ -754,12 +883,20 @@ export function App() {
     setPlayView(view);
     setVolumeOverlay(false);
   };
+  const playViews: PlayView[] = [
+    "art",
+    "seek",
+    "shuffle",
+    "rating",
+    ...(current?.lyrics?.length ? ["lyrics" as const] : []),
+  ];
   const cyclePlayView = () =>
     changePlayView(
-      playView === "art" ? "seek" : playView === "seek" ? "lyrics" : "art",
+      playViews[(playViews.indexOf(playView) + 1) % playViews.length],
     );
   const command = (value: WheelCommand) => {
     if (held) return;
+    activate();
     if (sleeping) {
       setSleeping(false);
       return;
@@ -842,6 +979,9 @@ export function App() {
   };
 
   useEffect(() => {
+    player.setVolumeLimit(prefs.volumeLimit);
+  }, [prefs.volumeLimit]);
+  useEffect(() => {
     void initializeLibrary();
     return onLibraryNotice(setNotice);
   }, []);
@@ -885,6 +1025,13 @@ export function App() {
       : page === "artist-tracks"
         ? (groupKey ?? "艺人")
         : {
+            about: "关于本机",
+            "main-menu": "主菜单",
+            backlight: "背光时间",
+            brightness: "亮度",
+            "volume-limit": "音量上限",
+            extras: "附加功能",
+            clock: "时钟",
             home: "ReiPod",
             music: "音乐",
             songs: "歌曲",
@@ -967,6 +1114,15 @@ export function App() {
       className="app-shell"
       aria-label="ReiPod 音乐播放器"
       data-finish={prefs.finish}
+      onPointerDownCapture={() => {
+        if (!held) activate();
+      }}
+      onKeyDownCapture={() => {
+        if (!held) activate();
+      }}
+      onWheelCapture={() => {
+        if (!held) activate();
+      }}
       data-background={prefs.background}
       onDragEnter={(event) => {
         event.preventDefault();
@@ -1018,7 +1174,10 @@ export function App() {
           aria-label="HOLD 锁定"
           aria-checked={held}
           data-held={held}
-          onClick={() => setHeld(!held)}
+          onClick={() => {
+            activate();
+            setHeld(!held);
+          }}
         >
           <i />
         </button>
@@ -1027,6 +1186,7 @@ export function App() {
             className="lcd-screen"
             data-page={page}
             data-sleeping={sleeping}
+            style={{ filter: `brightness(${prefs.brightness})` }}
             data-view={page === "playing" ? playView : undefined}
           >
             <div className="screen-viewport" inert={held || sleeping}>
@@ -1165,6 +1325,71 @@ export function App() {
                     </button>
                   </div>
                 )}
+                {page === "about" && (
+                  <div className="classic-about">
+                    <strong>ReiPod</strong>
+                    <span>Classic 音乐播放器</span>
+                    <dl>
+                      <dt>歌曲</dt>
+                      <dd>{state.tracks.length}</dd>
+                      <dt>专辑</dt>
+                      <dd>{albums.length}</dd>
+                      <dt>艺人</dt>
+                      <dd>{artists.length}</dd>
+                      <dt>版本</dt>
+                      <dd>0.1.0</dd>
+                    </dl>
+                    <nav>{renderRows()}</nav>
+                  </div>
+                )}
+                {(page === "brightness" || page === "volume-limit") && (
+                  <div className="classic-adjustment">
+                    <ClassicGlyph
+                      name={page === "brightness" ? "background" : "speaker"}
+                    />
+                    <input
+                      type="range"
+                      min={page === "brightness" ? 0.25 : 0.1}
+                      max={1}
+                      step={0.05}
+                      aria-label={
+                        page === "brightness" ? "屏幕亮度" : "最高音量"
+                      }
+                      value={
+                        page === "brightness"
+                          ? prefs.brightness
+                          : prefs.volumeLimit
+                      }
+                      onChange={(event) =>
+                        setPreferences(
+                          page === "brightness"
+                            ? { brightness: Number(event.target.value) }
+                            : { volumeLimit: Number(event.target.value) },
+                        )
+                      }
+                    />
+                    <strong>
+                      {Math.round(
+                        (page === "brightness"
+                          ? prefs.brightness
+                          : prefs.volumeLimit) * 100,
+                      )}
+                      %
+                    </strong>
+                    <small>
+                      {page === "volume-limit" && !state.volumeControl
+                        ? "此设备使用侧键调节音量"
+                        : "转动转轮调整，中心键完成"}
+                    </small>
+                    <nav>{renderRows()}</nav>
+                  </div>
+                )}
+                {page === "clock" && (
+                  <div className="clock-screen">
+                    <ClassicClock />
+                    <nav>{renderRows()}</nav>
+                  </div>
+                )}
                 {(page === "home" || page === "music") && (
                   <div className="home-screen">
                     <nav
@@ -1192,6 +1417,7 @@ export function App() {
                       onChoose={(album) =>
                         open("album-tracks", album.tracks[0]?.id, album.id)
                       }
+                      suspended={sleeping}
                       count={state.tracks.length}
                       bytes={state.tracks.reduce(
                         (sum, track) => sum + track.size,
@@ -1224,7 +1450,10 @@ export function App() {
                   page === "playlists" ||
                   (managedRows[page] !== undefined &&
                     page !== "playlist-add-tracks" &&
-                    page !== "playlist-tracks")) && (
+                    page !== "playlist-tracks" &&
+                    !["about", "brightness", "volume-limit", "clock"].includes(
+                      page,
+                    ))) && (
                   <div
                     className={`settings-screen ${page === "settings" ? "split-settings-screen" : ""}`}
                   >
@@ -1282,6 +1511,7 @@ export function App() {
                         onChoose={(album) =>
                           open("album-tracks", album.tracks[0]?.id, album.id)
                         }
+                        suspended={sleeping}
                         count={state.tracks.length}
                         bytes={state.tracks.reduce(
                           (sum, track) => sum + track.size,
@@ -1355,7 +1585,10 @@ export function App() {
                     </div>
                   ))}
                 {page === "playing" && current && (
-                  <div className={`now-playing-screen view-${playView}`}>
+                  <div
+                    className={`now-playing-screen view-${playView}`}
+                    data-volume={volumeOverlay && playView === "art"}
+                  >
                     {playView === "lyrics" ? (
                       <Lyrics
                         track={current}
@@ -1403,6 +1636,59 @@ export function App() {
                               active
                             />
                           </span>
+                          {playView === "shuffle" && (
+                            <div className="np-firmware-control">
+                              <small>随机播放</small>
+                              <div className="np-shuffle-options">
+                                <button
+                                  aria-pressed={!state.shuffle}
+                                  onClick={() => player.setShuffle(false)}
+                                >
+                                  关闭
+                                </button>
+                                <button
+                                  aria-pressed={state.shuffle}
+                                  onClick={() => player.setShuffle(true)}
+                                >
+                                  歌曲
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          {playView === "rating" && (
+                            <div className="np-firmware-control">
+                              <small>歌曲评分</small>
+                              <div className="classic-rating">
+                                {[1, 2, 3, 4, 5].map((value) => (
+                                  <button
+                                    key={value}
+                                    aria-label={`评分 ${value} 星`}
+                                    aria-pressed={
+                                      (ratings[current.id] ?? 0) >= value
+                                    }
+                                    onClick={() => {
+                                      if (
+                                        !setRating(
+                                          current.id,
+                                          ratings[current.id] === value
+                                            ? 0
+                                            : value,
+                                        )
+                                      )
+                                        setNotice("评分未能保存，本次仍生效");
+                                    }}
+                                  >
+                                    <PlayerIcon
+                                      name="star"
+                                      filled={
+                                        (ratings[current.id] ?? 0) >= value
+                                      }
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           {state.status !== "playing" && (
                             <small>{statusText[state.status]}</small>
                           )}
@@ -1410,6 +1696,19 @@ export function App() {
                       </div>
                     )}
                     <SeekSlider state={state} />
+                    {volumeOverlay && playView === "art" && (
+                      <div
+                        className="classic-volume"
+                        role="status"
+                        aria-label={`音量 ${Math.round(state.volume * 100)}%`}
+                      >
+                        <PlayerIcon name="volume" />
+                        <div className="classic-volume-track">
+                          <i style={{ width: `${state.volume * 100}%` }} />
+                        </div>
+                        <PlayerIcon name="volume" />
+                      </div>
+                    )}
                     <div className="np-actions">
                       <button
                         aria-label="歌曲选项"
@@ -1433,13 +1732,14 @@ export function App() {
                       </button>
                       <span
                         className="play-view-dots"
-                        aria-label={
-                          playView === "seek" ? "进度视图" : "封面视图"
-                        }
+                        aria-label={`${playViewLabels[playView]}视图`}
                       >
-                        <i className={playView === "art" ? "active" : ""} />
-                        <i className={playView === "seek" ? "active" : ""} />
-                        <i />
+                        {playViews.map((view) => (
+                          <i
+                            key={view}
+                            className={playView === view ? "active" : ""}
+                          />
+                        ))}
                       </span>
                       <button
                         aria-label="查看播放队列"
@@ -1471,13 +1771,7 @@ export function App() {
                 )}
               </div>
             </div>
-            {volumeOverlay && (
-              <div className="volume-overlay">
-                <span>音量</span>
-                <progress value={state.volume} max={1} />
-                <strong>{Math.round(state.volume * 100)}%</strong>
-              </div>
-            )}
+            {dimmed && <div className="lcd-backlight-dim" aria-hidden="true" />}
             {(notice || dragging) && (
               <div className="screen-notice" role="status">
                 {dragging ? "松开以导入音乐" : notice}

@@ -1,4 +1,11 @@
 export type Page =
+  | "about"
+  | "main-menu"
+  | "backlight"
+  | "brightness"
+  | "volume-limit"
+  | "extras"
+  | "clock"
   | "home"
   | "music"
   | "songs"

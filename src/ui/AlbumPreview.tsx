@@ -11,8 +11,10 @@ export function AlbumPreview({
   initialAlbumId,
   onChoose,
   enabled = true,
+  suspended = false,
 }: {
   enabled?: boolean;
+  suspended?: boolean;
   albums: Album[];
   initialAlbumId?: string;
   onChoose: (album: Album) => void;
@@ -47,7 +49,8 @@ export function AlbumPreview({
     if (initialAlbumId) setId(initialAlbumId);
   }, [initialAlbumId]);
   useEffect(() => {
-    if (!enabled || !visible || reduced || albums.length < 2) return;
+    if (!enabled || suspended || !visible || reduced || albums.length < 2)
+      return;
     const timer = setTimeout(() => {
       const latest = catalog.current;
       const index = latest.findIndex((entry) => entry.id === albumId);
@@ -57,7 +60,7 @@ export function AlbumPreview({
       setId(next.id);
     }, INTERVAL);
     return () => clearTimeout(timer);
-  }, [albumIds, albumId, visible, reduced, albums.length, enabled]);
+  }, [albumIds, albumId, visible, reduced, albums.length, enabled, suspended]);
   useEffect(() => {
     if (!previous) return;
     const timer = setTimeout(() => setPrevious(null), CROSSFADE);
@@ -76,7 +79,7 @@ export function AlbumPreview({
       className="screen-preview album-preview"
       aria-label="专辑封面轮播"
       data-album-id={albumId}
-      data-paused={!enabled || !visible || reduced}
+      data-paused={!enabled || suspended || !visible || reduced}
       aria-hidden={!enabled}
       inert={!enabled}
     >

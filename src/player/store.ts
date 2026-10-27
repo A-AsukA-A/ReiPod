@@ -5,6 +5,7 @@ import { parseLyrics } from "./library";
 import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
 
 import { readSession } from "./session";
+import { clearRatings, setRating } from "./ratings";
 import { clearPlaylists, removeFromPlaylists } from "./playlists";
 export const player = new Player();
 let removedDemos: string[] = [];
@@ -224,6 +225,7 @@ export async function removeTrack(id: string) {
     return false;
   }
   player.remove(id);
+  setRating(id, 0);
   if (!removeFromPlaylists(id)) notify("歌单更改未能保存，本次仍生效");
   return true;
 }
@@ -233,6 +235,7 @@ export function clearLibrary() {
   savedSession = null;
   sessionReady = true;
   clearPlaylists();
+  clearRatings();
   try {
     localStorage.setItem("reipod-demos", "hidden");
   } catch {

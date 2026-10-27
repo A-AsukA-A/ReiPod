@@ -15,7 +15,7 @@ const paths: Record<IconName, string> = {
   back: "M14 4 6 12l8 8",
   chevron: "m9 5 7 7-7 7",
   play: "m7 4 13 8-13 8Z",
-  pause: "M8 5v14M16 5v14",
+  pause: "M6 4h4v16H6Zm8 0h4v16h-4Z",
   shuffle:
     "M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4",
   repeat:
@@ -38,9 +38,9 @@ export function PlayerIcon({
       className={`player-icon icon-${name}`}
       viewBox="0 0 24 24"
       aria-hidden="true"
-      fill={filled ? "currentColor" : "none"}
+      fill={filled || name === "pause" ? "currentColor" : "none"}
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth={name === "pause" ? 0 : 1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
     >

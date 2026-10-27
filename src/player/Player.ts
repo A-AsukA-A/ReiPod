@@ -81,6 +81,7 @@ export class Player {
   private cleanups: (() => void)[] = [];
   private naturalOrder: string[] = [];
   private queueIsLibrary = true;
+  private volumeLimit = 1;
 
   constructor(
     private createAudio: () => AudioPort = () => new Audio(),
@@ -411,8 +412,14 @@ export class Player {
       /* A not-yet-seekable resource will report its next real timeupdate. */
     }
   }
+  setVolumeLimit(limit: number) {
+    if (!Number.isFinite(limit)) return;
+    this.volumeLimit = Math.max(0.1, Math.min(1, limit));
+    if (this.state.volume > this.volumeLimit) this.setVolume(this.volumeLimit);
+  }
   setVolume(volume: number) {
-    const value = Math.max(0, Math.min(1, volume));
+    if (!Number.isFinite(volume)) return;
+    const value = Math.max(0, Math.min(this.volumeLimit, volume));
     if (this.audio) this.audio.volume = value;
     this.update({
       volume: this.audio ? this.audio.volume : value,
