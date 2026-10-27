@@ -26,6 +26,7 @@ import type { Page } from "./ui/navigation";
 import { SeekSlider } from "./ui/SeekSlider";
 import { AlbumArt } from "./ui/AlbumArt";
 import { CoverFlow } from "./ui/CoverFlow";
+import { AlbumPreview } from "./ui/AlbumPreview";
 import { Lyrics } from "./ui/Lyrics";
 import { setPreferences, usePreferences } from "./ui/preferences";
 import { PlayerIcon } from "./ui/PlayerIcon";
@@ -897,7 +898,6 @@ export function App() {
         </span>
       </button>
     ));
-  const previewTrack = current ?? state.tracks[0];
   return (
     <main
       className="app-shell"
@@ -1083,34 +1083,19 @@ export function App() {
                     >
                       {renderRows()}
                     </nav>
-                    <div className="screen-preview">
-                      {page === "home" && focusedRow?.key === "coverflow" ? (
-                        <div className="preview-stack">
-                          {albums.slice(0, 3).map((album) => (
-                            <AlbumArt
-                              key={album.id}
-                              src={album.artwork}
-                              title={album.title}
-                              artist={album.artist}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <AlbumArt
-                          src={previewTrack?.artwork}
-                          title={previewTrack?.album ?? "ReiPod"}
-                          artist={previewTrack?.artist}
-                        />
-                      )}
-                      <strong>
-                        {page === "home" && focusedRow?.key === "playing"
-                          ? current?.title
-                          : focusedRow?.label}
-                      </strong>
-                      <span>
-                        {focusedRow?.detail ?? `${state.tracks.length} 首歌曲`}
-                      </span>
-                    </div>
+                    <AlbumPreview
+                      albums={albums}
+                      initialAlbumId={
+                        albums.find((album) =>
+                          album.tracks.some(
+                            (track) => track.id === current?.id,
+                          ),
+                        )?.id
+                      }
+                      onChoose={(album) =>
+                        open("album-tracks", album.tracks[0]?.id, album.id)
+                      }
+                    />
                   </div>
                 )}
                 {page === "coverflow" &&

@@ -733,3 +733,120 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* The classic split menu keeps its cover carousel running while the wheel moves. */
+.screen-preview.album-preview {
+  padding: 0;
+  gap: 0;
+  min-width: 0;
+  overflow: hidden;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+.album-preview-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #e8ebee;
+  isolation: isolate;
+}
+.preview-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: hidden;
+}
+.preview-cover-link {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.preview-cover-outgoing {
+  z-index: 1;
+  pointer-events: none;
+  animation: preview-leave 360ms ease-out both;
+}
+.preview-cover > .album-art {
+  position: absolute;
+  inset: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  aspect-ratio: auto;
+  animation: preview-drift 4500ms linear both;
+}
+.preview-cover img {
+  object-fit: cover;
+}
+.album-preview-caption {
+  flex-shrink: 0;
+  height: 43px;
+  padding: 5px 7px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  background: linear-gradient(#fff, #f1f2f4);
+  border-top: 1px solid #c5c9ce;
+}
+.album-preview-caption > span {
+  font-size: 10px;
+  color: #737b83;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.album-preview-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  gap: 8px;
+  color: #8a949e;
+  text-align: center;
+}
+.album-preview-empty > span {
+  font-size: 52px;
+  color: #b5bec8;
+}
+.album-preview-empty small {
+  font-size: 10px;
+  line-height: 1.6;
+}
+.album-preview[data-paused="true"] .preview-cover > .album-art {
+  animation-play-state: paused;
+}
+@keyframes preview-leave {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes preview-drift {
+  from {
+    transform: translate(-3px, -2px) scale(1.03);
+  }
+  to {
+    transform: translate(3px, 2px) scale(1.1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .preview-cover,
+  .preview-cover > .album-art {
+    animation: none;
+  }
+}
