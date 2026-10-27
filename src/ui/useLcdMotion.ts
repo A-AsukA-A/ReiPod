@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import type { RefObject } from "react";
+import { durationInMilliseconds } from "./motion";
 
 type Direction = "forward" | "back" | "replace";
 
@@ -59,7 +60,7 @@ export function useLcdMotion(
     const { node, direction, x } = next;
     const tokens = getComputedStyle(element);
     const easing = tokens.getPropertyValue("--lcd-ease").trim();
-    const duration = Number.parseFloat(
+    const duration = durationInMilliseconds(
       tokens.getPropertyValue(
         direction === "replace" ? "--lcd-view-duration" : "--lcd-page-duration",
       ),
