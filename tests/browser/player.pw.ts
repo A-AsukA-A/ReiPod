@@ -26,6 +26,7 @@ test("Cover Flow follows a partial drag and rapid navigation retains flat visibl
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await page.locator(".click-wheel").focus();
+  await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
   const card = live(page).locator(".cf-card").first();
@@ -416,4 +417,89 @@ test("the split menu scrolls selected rows below its header on a narrow screen",
   expect(await within()).toBe(true);
   for (let index = 0; index < 10; index++) await page.keyboard.press("ArrowUp");
   expect(await within()).toBe(true);
+});
+
+test("menu highlights change the right preview without executing the command", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const preview = live(page).getByLabel("菜单预览", { exact: true });
+  await page.locator(".click-wheel").focus();
+  await page.keyboard.press("ArrowDown"); // Cover Flow
+  await page.keyboard.press("ArrowDown"); // Settings
+  await expect(preview).toHaveAttribute("data-preview", "settings");
+  await expect(preview.locator(".glyph-settings")).toBeVisible();
+  await page.keyboard.press("ArrowDown"); // Shuffle Songs
+  await expect(preview).toHaveAttribute("data-preview", "shuffle");
+  await expect(preview).toContainText("随机播放歌曲");
+  await expect(
+    live(page).locator('.screen-row[aria-current="true"] .row-chevron'),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem("reipod-session")!)?.currentId,
+    ),
+  ).toBeNull();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".lcd-screen")).toHaveAttribute(
+    "data-page",
+    "playing",
+  );
+  await home(page);
+  await row(page, "设置").click();
+  await expect(preview).toHaveAttribute("data-preview", "shuffle");
+  await page.locator(".click-wheel").focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(preview).toHaveAttribute("data-preview", "repeat");
+});
+
+test("HOLD blocks wheel and screen commands without interrupting playback; long center opens options", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await row(page, "音乐").click();
+  await row(page, "歌曲 3").click();
+  await row(page, "Carefree").click();
+  const current = await page.evaluate(
+    () => JSON.parse(localStorage.getItem("reipod-session")!).currentId,
+  );
+  await page.getByRole("switch", { name: "HOLD 锁定" }).click();
+  await expect(page.locator(".click-wheel")).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await page.locator(".click-wheel").focus();
+  await page.keyboard.press("ArrowRight");
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem("reipod-session")!).currentId,
+    ),
+  ).toBe(current);
+  await expect(page.getByRole("switch", { name: "HOLD 锁定" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await page.getByRole("switch", { name: "HOLD 锁定" }).click();
+  await page.clock.install();
+  const center = await page.locator(".wheel-select").boundingBox();
+  if (!center) throw new Error("Missing center button");
+  await page.mouse.move(
+    center.x + center.width / 2,
+    center.y + center.height / 2,
+  );
+  await page.mouse.down();
+  await page.clock.runFor(650);
+  await page.mouse.up();
+  await expect(page.locator(".lcd-screen")).toHaveAttribute(
+    "data-page",
+    "track-options",
+  );
+  // The center hold must not also fire the short press and change the view.
+  await row(page, "添加到歌单…").click();
+  await expect(page.locator(".lcd-screen")).toHaveAttribute(
+    "data-page",
+    "pick-playlist",
+  );
 });

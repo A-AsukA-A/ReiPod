@@ -35,7 +35,7 @@ export type NavigationState = {
   remembered: Record<string, string | null>;
 };
 export const initialNavigation: NavigationState = {
-  screen: { page: "home", selectedKey: "coverflow" },
+  screen: { page: "home", selectedKey: "music" },
   history: [],
   remembered: {},
 };
@@ -67,7 +67,7 @@ export function navigationReducer(
   };
   if (action.type === "home")
     return {
-      screen: { page: "home", selectedKey: remembered.home ?? "coverflow" },
+      screen: { page: "home", selectedKey: remembered.home ?? "music" },
       history: [],
       remembered,
     };
@@ -81,7 +81,7 @@ export function navigationReducer(
           remembered,
         }
       : {
-          screen: { page: "home", selectedKey: remembered.home ?? "coverflow" },
+          screen: { page: "home", selectedKey: remembered.home ?? "music" },
           history: [],
           remembered,
         };

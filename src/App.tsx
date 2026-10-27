@@ -26,7 +26,9 @@ import type { Page } from "./ui/navigation";
 import { SeekSlider } from "./ui/SeekSlider";
 import { AlbumArt } from "./ui/AlbumArt";
 import { CoverFlow } from "./ui/CoverFlow";
-import { AlbumPreview } from "./ui/AlbumPreview";
+import { MenuPreview } from "./ui/MenuPreview";
+import { menuPreview } from "./ui/menuPreview";
+import { BatteryIndicator } from "./ui/BatteryIndicator";
 import { Lyrics } from "./ui/Lyrics";
 import { setPreferences, usePreferences } from "./ui/preferences";
 import { PlayerIcon } from "./ui/PlayerIcon";
@@ -49,6 +51,7 @@ type MenuItem = {
   value?: string;
   artwork?: string;
   disabled?: boolean;
+  leaf?: boolean;
   action: () => void;
 };
 type PlayView = "art" | "seek" | "lyrics";
@@ -82,6 +85,8 @@ export function App() {
   navigationRef.current = navigation;
   const { page, groupKey } = navigation.screen;
   const [notice, setNotice] = useState("");
+  const [held, setHeld] = useState(false);
+  const [sleeping, setSleeping] = useState(false);
   const [query, setQuery] = useState("");
   const [playlistName, setPlaylistName] = useState("");
   const [contextPlaylist, setContextPlaylist] = useState<string | null>(null);
@@ -164,7 +169,7 @@ export function App() {
     const latest = player.getSnapshot();
     const defaultKey =
       target === "home"
-        ? "coverflow"
+        ? "music"
         : target === "settings"
           ? "shuffle"
           : target === "confirm-clear"
@@ -299,28 +304,35 @@ export function App() {
   };
   const homeItems: MenuItem[] = [
     {
-      key: "coverflow",
-      label: "Cover Flow",
-      detail: `${albums.length} 张专辑`,
-      action: () => open("coverflow"),
-    },
-    {
       key: "music",
       label: "音乐",
       detail: `${state.tracks.length} 首歌曲`,
       action: () => open("music"),
     },
     {
-      key: "playing",
-      label: "正在播放",
-      detail: current?.title ?? "未播放",
-      disabled: !current,
-      action: () => open("playing"),
+      key: "coverflow",
+      label: "Cover Flow",
+      detail: `${albums.length} 张专辑`,
+      action: () => open("coverflow"),
+    },
+    {
+      key: "settings",
+      label: "设置",
+      detail: "声音与外观",
+      action: () => open("settings"),
+    },
+    {
+      key: "shuffle-all",
+      label: "随机播放歌曲",
+      detail: `${state.tracks.length} 首歌曲`,
+      leaf: true,
+      action: shuffleAll,
     },
     {
       key: "import",
       label: "导入音乐",
       detail: "音频 / LRC",
+      leaf: true,
       action: openFiles,
     },
     {
@@ -329,12 +341,16 @@ export function App() {
       detail: "内置音乐精选",
       action: loadDemos,
     },
-    {
-      key: "settings",
-      label: "设置",
-      detail: "声音与外观",
-      action: () => open("settings"),
-    },
+    ...(current
+      ? [
+          {
+            key: "playing",
+            label: "正在播放",
+            detail: current.title,
+            action: () => open("playing"),
+          },
+        ]
+      : []),
   ];
   const musicItems: MenuItem[] = [
     { key: "playlists", label: "播放列表", action: () => open("playlists") },
@@ -357,7 +373,12 @@ export function App() {
       action: () => open("songs"),
     },
     { key: "search", label: "搜索", action: () => open("search") },
-    { key: "shuffle-all", label: "随机播放所有", action: shuffleAll },
+    {
+      key: "shuffle-all",
+      label: "随机播放所有",
+      leaf: true,
+      action: shuffleAll,
+    },
     { key: "import", label: "导入音乐", action: openFiles },
   ];
   const playlistItems: MenuItem[] = [
@@ -697,6 +718,11 @@ export function App() {
     steps: number,
     _source: "pointer" | "wheel" | "keyboard" = "pointer",
   ) => {
+    if (held) return;
+    if (sleeping) {
+      setSleeping(false);
+      return;
+    }
     if (page === "playing" && current) {
       if (playView === "seek")
         player.seek(player.getSnapshot().position + steps * 2);
@@ -733,6 +759,32 @@ export function App() {
       playView === "art" ? "seek" : playView === "seek" ? "lyrics" : "art",
     );
   const command = (value: WheelCommand) => {
+    if (held) return;
+    if (sleeping) {
+      setSleeping(false);
+      return;
+    }
+    if (value === "sleep") {
+      player.pause();
+      setSleeping(true);
+      return;
+    }
+    if (value === "seek-forward" || value === "seek-backward") {
+      player.seek(
+        player.getSnapshot().position + (value === "seek-forward" ? 2 : -2),
+      );
+      return;
+    }
+    if (value === "options") {
+      const id =
+        page === "playing"
+          ? current?.id
+          : isTrackList && visibleIds.has(focusedRow?.key ?? "")
+            ? focusedRow?.key
+            : undefined;
+      if (id) trackOptions(id);
+      return;
+    }
     if (value === "home") {
       if (page !== "home") capture("back");
       dispatch({ type: "home" });
@@ -870,6 +922,13 @@ export function App() {
             : undefined
         }
         className={`screen-row ${row.key === focusedRow?.key ? "selected" : ""} ${row.key === "confirm" ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${isTrackList && visibleIds.has(row.key) ? "track-row" : ""}`}
+        onFocus={() => {
+          if (!row.disabled) dispatch({ type: "select", key: row.key });
+        }}
+        onPointerMove={(event) => {
+          if (event.pointerType === "mouse" && !event.buttons && !row.disabled)
+            dispatch({ type: "select", key: row.key });
+        }}
         onPointerDown={() => {
           feedback("press");
           dispatch({ type: "select", key: row.key });
@@ -896,9 +955,11 @@ export function App() {
           )}
         </span>
         {row.value && <span className="row-value">{row.value}</span>}
-        <span className="row-chevron" aria-hidden="true">
-          <PlayerIcon name="chevron" />
-        </span>
+        {!row.leaf && (
+          <span className="row-chevron" aria-hidden="true">
+            <PlayerIcon name="chevron" />
+          </span>
+        )}
       </button>
     ));
   return (
@@ -922,6 +983,11 @@ export function App() {
       }}
       onDrop={(event) => {
         event.preventDefault();
+        if (held || sleeping) {
+          dragDepth.current = 0;
+          setDragging(false);
+          return;
+        }
         dragDepth.current = 0;
         setDragging(false);
         addFiles(Array.from(event.dataTransfer.files));
@@ -935,6 +1001,7 @@ export function App() {
         accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aiff,.lrc"
         multiple
         aria-label="选择本地音频或歌词文件"
+        disabled={held || sleeping}
         onChange={(event) => {
           addFiles(Array.from(event.target.files ?? []));
           event.target.value = "";
@@ -944,16 +1011,25 @@ export function App() {
         className={`classic-device ${dragging ? "is-dragging" : ""}`}
         aria-label="classic 播放器"
       >
-        <div className="top-hold" aria-hidden="true">
+        <button
+          type="button"
+          className="top-hold"
+          role="switch"
+          aria-label="HOLD 锁定"
+          aria-checked={held}
+          data-held={held}
+          onClick={() => setHeld(!held)}
+        >
           <i />
-        </div>
+        </button>
         <div className="screen-glass">
           <div
             className="lcd-screen"
             data-page={page}
+            data-sleeping={sleeping}
             data-view={page === "playing" ? playView : undefined}
           >
-            <div className="screen-viewport">
+            <div className="screen-viewport" inert={held || sleeping}>
               <div className="screen-content" ref={content}>
                 <div className="screen-status">
                   <button
@@ -1001,6 +1077,17 @@ export function App() {
                   ) : (
                     <span className="screen-header-spacer" />
                   )}
+                  {held && (
+                    <svg
+                      className="hold-icon"
+                      viewBox="0 0 12 14"
+                      aria-label="已锁定"
+                      role="img"
+                    >
+                      <path d="M3 6V4a3 3 0 0 1 6 0v2M2 6h8v7H2Z" />
+                    </svg>
+                  )}
+                  <BatteryIndicator />
                 </div>
                 {page === "search" && (
                   <form
@@ -1086,8 +1173,15 @@ export function App() {
                     >
                       {renderRows()}
                     </nav>
-                    <AlbumPreview
+                    <MenuPreview
+                      spec={menuPreview(
+                        page,
+                        focusedRow?.key ?? "music",
+                        focusedRow?.label ?? "音乐",
+                        focusedRow?.value ?? focusedRow?.detail,
+                      )}
                       albums={albums}
+                      current={current}
                       initialAlbumId={
                         albums.find((album) =>
                           album.tracks.some(
@@ -1098,6 +1192,11 @@ export function App() {
                       onChoose={(album) =>
                         open("album-tracks", album.tracks[0]?.id, album.id)
                       }
+                      count={state.tracks.length}
+                      bytes={state.tracks.reduce(
+                        (sum, track) => sum + track.size,
+                        0,
+                      )}
                     />
                   </div>
                 )}
@@ -1126,7 +1225,9 @@ export function App() {
                   (managedRows[page] !== undefined &&
                     page !== "playlist-add-tracks" &&
                     page !== "playlist-tracks")) && (
-                  <div className="settings-screen">
+                  <div
+                    className={`settings-screen ${page === "settings" ? "split-settings-screen" : ""}`}
+                  >
                     {(page === "confirm-delete-track" ||
                       page === "confirm-delete-playlist") && (
                       <p className="clear-question">
@@ -1161,6 +1262,33 @@ export function App() {
                     >
                       {renderRows()}
                     </nav>
+                    {page === "settings" && (
+                      <MenuPreview
+                        spec={menuPreview(
+                          page,
+                          focusedRow?.key ?? "music",
+                          focusedRow?.label ?? "音乐",
+                          focusedRow?.value ?? focusedRow?.detail,
+                        )}
+                        albums={albums}
+                        current={current}
+                        initialAlbumId={
+                          albums.find((album) =>
+                            album.tracks.some(
+                              (track) => track.id === current?.id,
+                            ),
+                          )?.id
+                        }
+                        onChoose={(album) =>
+                          open("album-tracks", album.tracks[0]?.id, album.id)
+                        }
+                        count={state.tracks.length}
+                        bytes={state.tracks.reduce(
+                          (sum, track) => sum + track.size,
+                          0,
+                        )}
+                      />
+                    )}
                     {(page === "albums" || page === "artists") && (
                       <div className="screen-footer">
                         {page === "albums" ? albums.length : artists.length}{" "}
@@ -1360,6 +1488,7 @@ export function App() {
         <ClickWheel
           onRotate={rotate}
           onCommand={command}
+          disabled={held}
           playLabel={busy ? "取消载入" : active ? "暂停" : "播放"}
           onFeedback={feedback}
         />
