@@ -1217,6 +1217,16 @@ export function App() {
                       </span>
                     )}
                   </span>
+                  {held && (
+                    <svg
+                      className="hold-icon"
+                      viewBox="0 0 12 14"
+                      aria-label="已锁定"
+                      role="img"
+                    >
+                      <path d="M3 6V4a3 3 0 0 1 6 0v2M2 6h8v7H2Z" />
+                    </svg>
+                  )}
                   {current ? (
                     <button
                       className="screen-playing-link"
@@ -1236,16 +1246,6 @@ export function App() {
                     </button>
                   ) : (
                     <span className="screen-header-spacer" />
-                  )}
-                  {held && (
-                    <svg
-                      className="hold-icon"
-                      viewBox="0 0 12 14"
-                      aria-label="已锁定"
-                      role="img"
-                    >
-                      <path d="M3 6V4a3 3 0 0 1 6 0v2M2 6h8v7H2Z" />
-                    </svg>
                   )}
                   <BatteryIndicator />
                 </div>
@@ -1576,7 +1576,7 @@ export function App() {
                           {renderRows()}
                         </nav>
                       ) : page === "favorites" ? (
-                        <small>播放时长按中心键加入收藏</small>
+                        <small>长按中心键，在歌曲选项中收藏</small>
                       ) : (
                         <nav className="empty-actions" aria-label="添加音乐">
                           {renderRows()}
