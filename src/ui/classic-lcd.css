@@ -1,8 +1,9 @@
 /* The LCD has one visual scale and one motion vocabulary, independent of the shell. */
 .lcd-screen {
-  --lcd-ease: cubic-bezier(0.23, 1, 0.32, 1);
-  --lcd-page-duration: 180ms;
-  --lcd-view-duration: 120ms;
+  --lcd-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --lcd-page-duration: 280ms;
+  --lcd-view-duration: 200ms;
+  --lcd-cover-duration: 280ms;
   --lcd-blue: #0876cb;
   font-family:
     Arial, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -278,7 +279,7 @@
   height: calc(var(--device-width) * 0.35);
 }
 .with-motion .cf-card {
-  transition: transform 180ms var(--lcd-ease);
+  transition: transform var(--lcd-cover-duration) var(--lcd-ease);
 }
 .cf-caption {
   height: 43px;
