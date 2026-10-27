@@ -83,12 +83,23 @@ export function MenuPreview({
               )}
               {spec.icon === "settings" ? (
                 <>
-                  <div className="preview-storage">
-                    <i />
-                  </div>
-                  <span>{size} 音乐</span>
+                  {storage && (
+                    <div className="preview-storage" title="浏览器存储用量">
+                      <i
+                        style={{
+                          width: `${Math.min(100, (storage.usage / storage.quota) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  )}
+                  <span>
+                    {storage
+                      ? `${Math.max(0, (storage.quota - storage.usage) / 1024 ** 3).toFixed(1)} GB 可用`
+                      : `${size} 本地音乐`}
+                  </span>
                 </>
               ) : (
+                spec.icon !== "shuffle" &&
                 spec.detail && <span>{spec.detail}</span>
               )}
             </>
