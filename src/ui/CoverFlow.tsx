@@ -1,7 +1,9 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { Album } from "../player/library";
 import { AlbumArt } from "./AlbumArt";
 import { MarqueeText } from "./MarqueeText";
+import { coverPose } from "./coverMotion";
+import { useCoverMotion } from "./useCoverMotion";
 
 export function CoverFlow({
   albums,
@@ -19,10 +21,18 @@ export function CoverFlow({
   const gesture = useRef<{
     id: number;
     start: number;
-    last: number;
+    origin: number;
+    spacing: number;
     moved: boolean;
   } | null>(null);
+  const [dragPosition, setDragPosition] = useState<number | null>(null);
+  const position = useCoverMotion(dragPosition ?? index, dragPosition !== null, animate);
   const album = albums[index];
+  const draggedPosition = (x: number) => {
+    const active = gesture.current!;
+    return Math.max(0, Math.min(albums.length - 1,
+      active.origin + (active.start - x) / active.spacing));
+  };
   return (
     <div className={`coverflow-screen ${animate ? "with-motion" : ""}`}>
       <div
@@ -34,7 +44,8 @@ export function CoverFlow({
           gesture.current = {
             id: event.pointerId,
             start: event.clientX,
-            last: event.clientX,
+            origin: position,
+            spacing: event.currentTarget.clientWidth * 0.31,
             moved: false,
           };
           event.currentTarget.setPointerCapture(event.pointerId);
@@ -45,21 +56,16 @@ export function CoverFlow({
           if (Math.abs(event.clientX - active.start) > 7) {
             active.moved = true;
           }
-          const delta = event.clientX - active.last;
-          if (Math.abs(delta) >= 45) {
-            onMove(
-              -Math.sign(delta) * Math.min(3, Math.floor(Math.abs(delta) / 45)),
-            );
-            active.last = event.clientX;
-          }
+          if (active.moved) setDragPosition(draggedPosition(event.clientX));
         }}
         onPointerUp={(event) => {
           const active = gesture.current;
           if (!active || active.id !== event.pointerId) return;
-          const delta = event.clientX - active.last;
+          const destination = Math.round(draggedPosition(event.clientX));
           gesture.current = null;
+          setDragPosition(null);
           if (active.moved) {
-            if (Math.abs(delta) > 18) onMove(-Math.sign(delta));
+            onMove(destination - index);
           } else {
             const rect = event.currentTarget.getBoundingClientRect();
             const offset = event.clientX - rect.left - rect.width / 2;
@@ -69,9 +75,11 @@ export function CoverFlow({
         }}
         onPointerCancel={() => {
           gesture.current = null;
+          setDragPosition(null);
         }}
         onLostPointerCapture={() => {
           gesture.current = null;
+          setDragPosition(null);
         }}
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
@@ -85,8 +93,9 @@ export function CoverFlow({
         }}
       >
         {albums.map((entry, i) => {
-          const offset = i - index;
-          if (Math.abs(offset) > 4) return null;
+          const offset = i - position;
+          if (Math.abs(offset) > 5 && i !== index) return null;
+          const pose = coverPose(offset);
           return (
             <button
               type="button"
@@ -96,12 +105,13 @@ export function CoverFlow({
               aria-current={i === index ? "true" : undefined}
               tabIndex={i === index ? 0 : -1}
               style={{
-                transform: `translateX(${offset === 0 ? -50 : -50 + Math.sign(offset) * (75 + (Math.abs(offset) - 1) * 37)}%) translateZ(${offset === 0 ? 0 : -35}px) rotateY(${offset === 0 ? 0 : offset > 0 ? -62 : 62}deg)`,
-                zIndex: 10 - Math.abs(offset),
+                transform: `translateX(${pose.x - 50}%) translateZ(${pose.z}px) rotateY(${pose.angle}deg)`,
+                zIndex: pose.depth,
+                opacity: pose.opacity,
               }}
               onClick={(event) => {
                 if (event.detail === 0) {
-                  if (offset) onMove(offset);
+                  if (i !== index) onMove(i - index, "keyboard");
                   else onChoose();
                 }
               }}

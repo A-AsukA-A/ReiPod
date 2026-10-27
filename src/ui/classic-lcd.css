@@ -1,9 +1,8 @@
 /* The LCD has one visual scale and one motion vocabulary, independent of the shell. */
 .lcd-screen {
-  --lcd-ease: cubic-bezier(0.32, 0.72, 0, 1);
-  --lcd-page-duration: 280ms;
-  --lcd-view-duration: 200ms;
-  --lcd-cover-duration: 280ms;
+  --lcd-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --lcd-page-duration: 220ms;
+  --lcd-view-duration: 120ms;
   --lcd-blue: #0876cb;
   font-family:
     Arial, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -147,8 +146,15 @@
   background: #fff;
 }
 .screen-outgoing {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
   z-index: 2;
+}
+.screen-content,
+.screen-outgoing {
+  backface-visibility: hidden;
 }
 .screen-menu {
   border-color: #9c9fa3;
@@ -279,9 +285,17 @@
   height: calc(var(--device-width) * 0.35);
 }
 .with-motion .cf-card {
-  transition: transform var(--lcd-cover-duration) var(--lcd-ease);
+  transition: none;
+  will-change: transform;
+}
+.coverflow-scene {
+  touch-action: none;
 }
 .cf-caption {
+  pointer-events: none;
+}
+.cf-caption {
+  z-index: 110;
   height: 43px;
   gap: 2px;
   padding-inline: 7px;

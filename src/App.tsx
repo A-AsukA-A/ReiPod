@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ClickWheel } from "./input/ClickWheel";
 import type { WheelCommand } from "./input/ClickWheel";
 import { feedback } from "./input/feedback";
@@ -60,17 +60,14 @@ export function App() {
   const [dragging, setDragging] = useState(false);
   const [playView, setPlayView] = useState<PlayView>("art");
   const [lyricWheel, setLyricWheel] = useState(0);
-  const [coverMotion, setCoverMotion] = useState(true);
   const [volumeOverlay, setVolumeOverlay] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const selectedRow = useRef<HTMLButtonElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const dragDepth = useRef(0);
-  const lastInput = useRef("pointer");
   const capture = useLcdMotion(
     content,
     `${page}:${groupKey ?? ""}:${page === "playing" && playView === "lyrics" ? "lyrics" : "page"}`,
-    lastInput,
   );
   const active = state.status === "playing";
   const busy = state.status === "loading" || state.status === "buffering";
@@ -429,10 +426,8 @@ export function App() {
     : rows[selectedIndex];
   const rotate = (
     steps: number,
-    source: "pointer" | "wheel" | "keyboard" = "pointer",
+    _source: "pointer" | "wheel" | "keyboard" = "pointer",
   ) => {
-    lastInput.current = source;
-    setCoverMotion(source !== "keyboard");
     if (page === "playing" && current) {
       if (playView === "seek")
         player.seek(player.getSnapshot().position + steps * 2);
@@ -531,7 +526,7 @@ export function App() {
         prefs.background === "dark" ? "#202124" : "#e8e3dc",
       );
   }, [prefs.background]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const row = selectedRow.current,
       container = row?.parentElement;
     if (!row || !container) return;
@@ -619,12 +614,6 @@ export function App() {
       aria-label="ReiPod 音乐播放器"
       data-finish={prefs.finish}
       data-background={prefs.background}
-      onKeyDownCapture={() => {
-        lastInput.current = "keyboard";
-      }}
-      onPointerDownCapture={() => {
-        lastInput.current = "pointer";
-      }}
       onDragEnter={(event) => {
         event.preventDefault();
         if (event.dataTransfer.types.includes("Files")) {
@@ -765,7 +754,7 @@ export function App() {
                       index={selectedIndex}
                       onMove={(steps, source) => rotate(steps, source)}
                       onChoose={() => focusedRow && chooseRow(focusedRow)}
-                      animate={coverMotion}
+                      animate
                     />
                   ) : (
                     <div className="screen-empty">

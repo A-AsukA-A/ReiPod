@@ -14,7 +14,7 @@ Turn the wheel to select, press the center to confirm, and use MENU to go back. 
 
 Import a matching `.lrc` file with the audio, or afterwards, for synchronized lyrics. Embedded plain lyrics can also be displayed. Lyrics are read from your files; the player does not fetch them from a music service.
 
-The lyrics view uses the full LCD, with queue and cover controls beside the song header and a thin progress strip at the bottom. The queue button shows the actual current playback order. Long selected titles scroll after a short pause. Desktop controls have no focus outlines, pressed tiles or selectable text. Menu navigation keeps the classic blue selection bar; forward and back use opposite screen slides, while keyboard navigation stays immediate and reduced motion is respected.
+The lyrics view uses the full LCD, with queue and cover controls beside the song header and a thin progress strip at the bottom. The queue button shows the actual current playback order. Long selected titles scroll after a short pause. Desktop controls have no focus outlines, pressed tiles or selectable text. Menu navigation keeps the classic blue selection bar; forward and back slide as connected pages. Rapid navigation preserves the in-flight screen instead of restarting from a blank frame. Menu selection stays immediate for every input, and reduced motion skips transitions. Cover Flow follows dragging continuously; wheel and keyboard changes use a damped fan motion that preserves position and velocity when reversed.
 
 Mouse wheel and keyboard controls are available when the wheel is focused: ↑/↓ select, Enter confirms, Escape returns, Home goes home, Space plays or pauses, and F toggles favorites.
 
