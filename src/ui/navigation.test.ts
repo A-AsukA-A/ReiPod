@@ -84,3 +84,30 @@ describe("player navigation", () => {
     expect(reduce(nav, { type: "reset" })).toEqual(initialNavigation);
   });
 });
+
+it("dismisses a completed management flow while preserving the originating list selection", () => {
+  let nav = reduce(initialNavigation, {
+    type: "open",
+    page: "playlists",
+    selectedKey: "list",
+  });
+  nav = reduce(nav, {
+    type: "open",
+    page: "playlist-tracks",
+    groupKey: "list",
+  });
+  nav = reduce(nav, {
+    type: "open",
+    page: "playlist-options",
+    groupKey: "list",
+  });
+  nav = reduce(nav, {
+    type: "open",
+    page: "confirm-delete-playlist",
+    groupKey: "list",
+    selectedKey: "cancel",
+  });
+  nav = reduce(nav, { type: "back", levels: 3 });
+  expect(nav.screen).toEqual({ page: "playlists", selectedKey: "list" });
+  expect(nav.history).toHaveLength(1);
+});

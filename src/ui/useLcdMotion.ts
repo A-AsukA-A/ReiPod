@@ -4,18 +4,39 @@ import { durationInMilliseconds } from "./motion";
 
 type Direction = "forward" | "back" | "replace";
 
-/** Capture only on navigation, never on playback ticks. The old page is visual and inert. */
+/** Freeze the pixels currently on the LCD, including an interrupted slide. */
+function snapshot(element: HTMLElement) {
+  const copy = element.cloneNode(true) as HTMLElement;
+  const originals = [element, ...element.querySelectorAll<HTMLElement>("*")];
+  const copies = [copy, ...copy.querySelectorAll<HTMLElement>("*")];
+  // Apply scroll after insertion: detached nodes cannot retain a scroll offset.
+  const restore = () =>
+    originals.forEach((original, index) => {
+      copies[index].scrollTop = original.scrollTop;
+      copies[index].scrollLeft = original.scrollLeft;
+    });
+  // CSS animations must freeze as well (marquees and independently moving covers).
+  originals.forEach((original, index) => {
+    if (original.getAnimations().length) {
+      const style = getComputedStyle(original);
+      copies[index].style.transform = style.transform;
+      copies[index].style.opacity = style.opacity;
+    }
+    copies[index].style.animation = "none";
+    copies[index].style.transition = "none";
+    copies[index].removeAttribute("id");
+  });
+  return { copy, restore };
+}
+
+/** Navigation is interruptible; playback updates never create a transition. */
 export function useLcdMotion(
   content: RefObject<HTMLDivElement | null>,
   scene: string,
-  input: RefObject<string>,
 ) {
-  const pending = useRef<{
-    node: HTMLElement;
-    direction: Direction;
-    x: number;
-    scroll: [number, number][];
-  } | null>(null);
+  const pending = useRef<{ node: HTMLElement; direction: Direction } | null>(
+    null,
+  );
   const running = useRef<Animation[]>([]);
   const ghost = useRef<HTMLElement | null>(null);
   const stop = () => {
@@ -25,55 +46,108 @@ export function useLcdMotion(
     ghost.current = null;
   };
   const capture = (direction: Direction) => {
-    const element = content.current;
+    pending.current?.node.remove();
     pending.current = null;
+    const element = content.current;
+    const viewport = element?.parentElement;
     if (
       !element ||
-      input.current === "keyboard" ||
+      !viewport ||
       matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
       stop();
       return;
     }
-    const transform = getComputedStyle(element).transform;
-    const x = transform === "none" ? 0 : new DOMMatrixReadOnly(transform).m41;
-    const node = element.cloneNode(true) as HTMLElement;
-    node.inert = true;
-    node.setAttribute("aria-hidden", "true");
-    node.classList.add("screen-outgoing");
-    node.removeAttribute("id");
-    node
-      .querySelectorAll("[id]")
-      .forEach((child) => child.removeAttribute("id"));
-    // cloneNode does not carry scroll positions; keep the departing menu exactly where it was.
-    const scroll = [...element.querySelectorAll("*")].map(
-      (child) => [child.scrollTop, child.scrollLeft] as [number, number],
-    );
+    const frame = document.createElement("div");
+    frame.className = "screen-outgoing";
+    frame.inert = true;
+    frame.setAttribute("aria-hidden", "true");
+    // Preserve both halves of an in-flight slide, rather than jumping the live
+    // page to its resting position or exposing a white gap on a quick reversal.
+    // Flatten the visible fragments. Repeated interruptions must not recursively
+    // clone all previous transition containers or retain offscreen page trees.
+    const layers = [
+      element,
+      ...(ghost.current
+        ? [
+            ...ghost.current.querySelectorAll<HTMLElement>(".screen-content"),
+          ].reverse()
+        : []),
+    ];
+    const bounds = viewport.getBoundingClientRect();
+    const snapshots: ReturnType<typeof snapshot>[] = [];
+    for (const original of layers) {
+      const rect = original.getBoundingClientRect();
+      const oldClip: number[] = original.dataset.motionClip
+        ? JSON.parse(original.dataset.motionClip)
+        : [0, 0, 0, 0];
+      let left = Math.max(bounds.left, rect.left + oldClip[3]);
+      let right = Math.min(bounds.right, rect.right - oldClip[1]);
+      let top = Math.max(bounds.top, rect.top + oldClip[0]);
+      let bottom = Math.min(bounds.bottom, rect.bottom - oldClip[2]);
+      let opacity = Number(getComputedStyle(original).opacity);
+      for (
+        let parent = original.parentElement;
+        parent && parent !== viewport;
+        parent = parent.parentElement
+      ) {
+        const style = getComputedStyle(parent);
+        opacity *= Number(style.opacity);
+        if (style.overflow === "hidden") {
+          const clip = parent.getBoundingClientRect();
+          left = Math.max(left, clip.left);
+          right = Math.min(right, clip.right);
+          top = Math.max(top, clip.top);
+          bottom = Math.min(bottom, clip.bottom);
+        }
+      }
+      if (right <= left || bottom <= top || opacity < 0.001) continue;
+      const captured = snapshot(original);
+      const { copy } = captured;
+      const clip = [
+        top - rect.top,
+        rect.right - right,
+        rect.bottom - bottom,
+        left - rect.left,
+      ];
+      copy.dataset.motionClip = JSON.stringify(clip);
+      Object.assign(copy.style, {
+        inset: "auto",
+        left: "0",
+        top: "0",
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        transform: `translate(${rect.left - bounds.left}px, ${rect.top - bounds.top}px)`,
+        opacity: String(opacity),
+        clipPath: `inset(${clip.map((value) => `${value}px`).join(" ")})`,
+      });
+      frame.append(copy);
+      snapshots.push(captured);
+    }
+    viewport.append(frame);
+    snapshots.forEach(({ restore }) => restore());
     stop();
-    pending.current = { node, direction, x, scroll };
+    pending.current = { node: frame, direction };
   };
   useLayoutEffect(() => {
     const element = content.current;
     const next = pending.current;
     pending.current = null;
-    if (!element || !next || !element.parentElement) return;
-    const { node, direction, x } = next;
+    if (!element || !next) return;
+    const { node, direction } = next;
     const tokens = getComputedStyle(element);
-    const easing = tokens.getPropertyValue("--lcd-ease").trim();
     const duration = durationInMilliseconds(
       tokens.getPropertyValue(
         direction === "replace" ? "--lcd-view-duration" : "--lcd-page-duration",
       ),
     );
-    element.parentElement.prepend(node);
-    node.querySelectorAll("*").forEach((child, index) => {
-      child.scrollTop = next.scroll[index][0];
-      child.scrollLeft = next.scroll[index][1];
-    });
     ghost.current = node;
-    const width = element.clientWidth;
-    const sign = direction === "back" ? -1 : 1;
-    const options = { duration, easing };
+    const distance = element.clientWidth * (direction === "back" ? -1 : 1);
+    const options: KeyframeAnimationOptions = {
+      duration,
+      easing: tokens.getPropertyValue("--lcd-ease").trim(),
+      fill: "both",
+    };
     running.current =
       direction === "replace"
         ? [
@@ -83,21 +157,27 @@ export function useLcdMotion(
         : [
             node.animate(
               [
-                { transform: `translateX(${x}px)` },
-                { transform: `translateX(${-sign * width}px)` },
+                { transform: "translateX(0)" },
+                { transform: `translateX(${-distance}px)` },
               ],
               options,
             ),
             element.animate(
               [
-                { transform: `translateX(${x + sign * width}px)` },
-                { transform: "translateX(0px)" },
+                { transform: `translateX(${distance}px)` },
+                { transform: "translateX(0)" },
               ],
               options,
             ),
           ];
     running.current.at(-1)!.onfinish = stop;
   }, [scene]);
-  useLayoutEffect(() => stop, []);
+  useLayoutEffect(
+    () => () => {
+      pending.current?.node.remove();
+      stop();
+    },
+    [],
+  );
   return capture;
 }

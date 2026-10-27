@@ -8,19 +8,23 @@ A classic-style local music player built with React and TypeScript. The interfac
 
 Choose **导入音乐** on the player's screen and select audio files from your device. The player reads song titles, artists, albums, track numbers and embedded artwork. Browse albums in **Cover Flow**, or open **音乐** for artists, albums, songs, favorites and recently added music. Selecting a song plays the corresponding list; playing an album keeps its own queue.
 
+Open **音乐 → 搜索** to match song titles, artists, albums or filenames. Multiple words narrow the results together. Press Enter in the search field to move focus to the wheel; select a result to play the matching list.
+
+Under **音乐 → 播放列表**, **新建歌单…** creates a browser-local playlist. Open it and choose **添加歌曲** or **管理歌单…** to toggle membership, rename or delete it. **完成选择** returns to the playlist. Deleting a playlist keeps its songs in the library. The **歌曲选项** control in a song list or the playing view can favorite a track, play it next, add it to a playlist or remove it from the library. Removal requires confirmation and affects only this browser's stored copy. Deleted built-in tracks stay removed until **试听音乐** adds them again.
+
 Three full built-in tracks are available on first launch: **Carefree**, **Monkeys Spinning Monkeys** and **Sneaky Snitch**, all by Kevin MacLeod. Select any track to play immediately. After clearing the library, **试听音乐** adds them again. Attribution and source links are available under **设置 → 试听曲目版权**. The MP3 files are hosted with the site under CC BY 4.0; their illustrated covers are original ReiPod artwork.
 
 Turn the wheel to select, press the center to confirm, and use MENU to go back. The bottom button plays or pauses; the side buttons change tracks. In the playing view, the center cycles **cover → seek → lyrics**. Turn the wheel to adjust volume in cover view (use the iPhone's side buttons there), seek in seek view, or scroll lyrics in lyrics view. The progress slider also supports direct seeking. Hold the center to favorite a song; hold MENU to return home.
 
 Import a matching `.lrc` file with the audio, or afterwards, for synchronized lyrics. Embedded plain lyrics can also be displayed. Lyrics are read from your files; the player does not fetch them from a music service.
 
-The lyrics view uses the full LCD, with queue and cover controls beside the song header and a thin progress strip at the bottom. The queue button shows the actual current playback order. Long selected titles scroll after a short pause. Desktop controls have no focus outlines, pressed tiles or selectable text. Menu navigation keeps the classic blue selection bar; forward and back use opposite screen slides, while keyboard navigation stays immediate and reduced motion is respected.
+The lyrics view uses the full LCD, with queue and cover controls beside the song header and a thin progress strip at the bottom. The queue button shows the actual current playback order. Long selected titles scroll after a short pause. Desktop controls have no focus outlines, pressed tiles or selectable text. Menu navigation keeps the classic blue selection bar; forward and back slide as connected pages. Rapid navigation preserves the in-flight screen instead of restarting from a blank frame. Menu selection stays immediate for every input, and reduced motion skips transitions. Cover Flow follows dragging continuously; wheel and keyboard changes use a damped fan motion that preserves position and velocity when reversed.
 
 Mouse wheel and keyboard controls are available when the wheel is focused: ↑/↓ select, Enter confirms, Escape returns, Home goes home, Space plays or pauses, and F toggles favorites.
 
 MENU keeps the selected row when returning. The screen header also provides back and now-playing shortcuts. Opening the current song keeps its position and resumes it if paused. Dragging the progress slider previews the time and seeks once on release; a track change cancels the old seek. **设置** includes shuffle, repeat off/all/one, wheel sounds, silver/black finishes and light/dark surroundings. Clearing the library requires confirmation, with Cancel selected by default.
 
-Music stays on your device: imports are stored in this browser's IndexedDB and restored after a refresh. Favorites and settings are stored locally too. Browser data clearing, private browsing or storage eviction can remove them; keep your original files. MP3, AAC/M4A and PCM WAV are suggested; decoding depends on the browser. The web player does not provide native iPhone haptics or guarantee background playback.
+Music stays on your device: imports are stored in this browser's IndexedDB and restored after a refresh. Favorites, playlists and settings are stored locally too. Refreshing restores the previous song, playback queue, volume and position (to the last saved second), paused until you choose to play. A song selected during library restoration takes priority over the saved session. Browser data clearing, private browsing or storage eviction can remove them; keep your original files. MP3, AAC/M4A and PCM WAV are suggested; decoding depends on the browser. The web player does not provide native iPhone haptics or guarantee background playback.
 
 ## Develop
 
@@ -37,6 +41,15 @@ npm run build
 node scripts/check-dist.mjs
 npm run preview
 ```
+
+Browser regression tests run against the production build:
+
+```sh
+npx playwright install chromium
+npm run test:browser
+```
+
+Pull requests run the unit tests, Chromium browser tests and public-artifact check. Browser traces for failed tests are kept in `.local/playwright-results`.
 
 `npm run test:audio` creates three original WAV test clips and a deliberately damaged file in the ignored `.local/` directory. Optional private development music is never included in the public site. Local planning and reference-package research remain outside this public repository.
 

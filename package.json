@@ -12,7 +12,8 @@
     "preview": "vite preview --host 0.0.0.0 --port 4173 --strictPort",
     "test": "vitest run",
     "test:audio": "node scripts/create-test-audio.mjs",
-    "phone": "node scripts/phone.mjs"
+    "phone": "node scripts/phone.mjs",
+    "test:browser": "npm run build && playwright test"
   },
   "dependencies": {
     "music-metadata": "12.3.2",
@@ -20,6 +21,7 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

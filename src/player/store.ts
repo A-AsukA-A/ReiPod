@@ -2,18 +2,60 @@ import { useSyncExternalStore } from "react";
 import { Player } from "./Player";
 import { getDemoTracks } from "./demoTracks";
 import { parseLyrics } from "./library";
-import { clearFiles, readFiles, saveFiles } from "./storage";
+import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
 
+import { readSession } from "./session";
+import { clearPlaylists, removeFromPlaylists } from "./playlists";
 export const player = new Player();
+let removedDemos: string[] = [];
+let savedSession: ReturnType<typeof readSession> = null;
+try {
+  const hidden = JSON.parse(
+    localStorage.getItem("reipod-removed-demos") ?? "[]",
+  );
+  removedDemos = Array.isArray(hidden)
+    ? hidden.filter((id) => typeof id === "string")
+    : [];
+  savedSession = readSession(
+    JSON.parse(localStorage.getItem("reipod-session") ?? "null"),
+  );
+} catch {
+  /* Optional browser data. */
+}
+let sessionReady = false;
+let lastSession = "";
+const persistSession = () => {
+  if (!sessionReady) return;
+  // Whole seconds bound synchronous storage writes while retaining pause and queue changes.
+  const session = player.getSession();
+  session.position = Math.floor(session.position);
+  const text = JSON.stringify(session);
+  if (text === lastSession) return;
+  try {
+    localStorage.setItem("reipod-session", text);
+    lastSession = text;
+  } catch {
+    /* Listening is still available without persistent storage. */
+  }
+};
+player.subscribe(persistSession);
+window.addEventListener("pagehide", persistSession);
 let showDemos = true;
 try {
   showDemos = localStorage.getItem("reipod-demos") !== "hidden";
 } catch {
   /* Storage can be unavailable in a private browser. */
 }
-if (showDemos) player.add(getDemoTracks(import.meta.env.BASE_URL));
+if (showDemos)
+  player.add(
+    getDemoTracks(import.meta.env.BASE_URL).filter(
+      (track) => !removedDemos.includes(track.id),
+    ),
+  );
 export function addDemos() {
+  removedDemos = [];
   try {
+    localStorage.removeItem("reipod-removed-demos");
     localStorage.removeItem("reipod-demos");
   } catch {
     /* Optional storage. */
@@ -157,11 +199,40 @@ export function initializeLibrary() {
           player.setQueue(player.getSnapshot().tracks.map((track) => track.id));
       }
     })
-    .catch(() => {});
+    .catch(() => {})
+    .finally(() => {
+      if (generation !== epoch) return;
+      if (savedSession) player.restoreSession(savedSession);
+      sessionReady = true;
+      persistSession();
+    });
   return restoring;
 }
+export async function removeTrack(id: string) {
+  const track = player.getSnapshot().tracks.find((item) => item.id === id);
+  if (!track) return false;
+  try {
+    if (track.kind === "demo") {
+      removedDemos = [...new Set([...removedDemos, id])];
+      localStorage.setItem(
+        "reipod-removed-demos",
+        JSON.stringify(removedDemos),
+      );
+    } else await removeFile(id);
+  } catch {
+    notify("未能删除已保存的歌曲，请重试");
+    return false;
+  }
+  player.remove(id);
+  if (!removeFromPlaylists(id)) notify("歌单更改未能保存，本次仍生效");
+  return true;
+}
+
 export function clearLibrary() {
   epoch++;
+  savedSession = null;
+  sessionReady = true;
+  clearPlaylists();
   try {
     localStorage.setItem("reipod-demos", "hidden");
   } catch {
@@ -212,6 +283,14 @@ if ("mediaSession" in navigator) {
     pause: () => player.pause(),
     previoustrack: () => player.previous(),
     nexttrack: () => player.next(),
+    seekbackward: (details) =>
+      player.seek(player.getSnapshot().position - (details.seekOffset ?? 10)),
+    seekforward: (details) =>
+      player.seek(player.getSnapshot().position + (details.seekOffset ?? 10)),
+    stop: () => {
+      player.pause();
+      player.seek(0);
+    },
     seekto: (details) => {
       if (details.seekTime !== undefined) player.seek(details.seekTime);
     },
@@ -250,6 +329,19 @@ if ("mediaSession" in navigator) {
             })
           : null;
     }
+    if (typeof navigator.mediaSession.setPositionState === "function") {
+      try {
+        if (state.duration > 0 && Number.isFinite(state.duration))
+          navigator.mediaSession.setPositionState({
+            duration: state.duration,
+            position: Math.max(0, Math.min(state.position, state.duration)),
+            playbackRate: 1,
+          });
+        else navigator.mediaSession.setPositionState();
+      } catch {
+        /* Some hosts expose this API without implementing it. */
+      }
+    }
     navigator.mediaSession.playbackState =
       state.status === "playing"
         ? "playing"
@@ -262,5 +354,7 @@ if ("mediaSession" in navigator) {
 if (import.meta.hot)
   import.meta.hot.dispose(() => {
     epoch++;
+    sessionReady = false;
+    window.removeEventListener("pagehide", persistSession);
     player.clear();
   });

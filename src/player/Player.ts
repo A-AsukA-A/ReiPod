@@ -1,3 +1,4 @@
+import type { PlaybackSession } from "./session";
 import { shuffled, shuffleAfterCurrent } from "./ordering";
 
 export type Track = {
@@ -17,7 +18,13 @@ export type Track = {
   url: string;
 };
 export type PlaybackStatus =
-  "idle" | "loading" | "playing" | "paused" | "buffering" | "ended" | "error";
+  | "idle"
+  | "loading"
+  | "playing"
+  | "paused"
+  | "buffering"
+  | "ended"
+  | "error";
 export type PlayerState = {
   tracks: Track[];
   queue: string[];
@@ -149,6 +156,25 @@ export class Player {
     this.update({ queue });
   }
 
+  playNext(id: string) {
+    if (
+      id === this.state.currentId ||
+      !this.state.tracks.some((track) => track.id === id)
+    )
+      return;
+    const insert = (order: string[]) => {
+      const next = order.filter((item) => item !== id);
+      const currentIndex = this.state.currentId
+        ? next.indexOf(this.state.currentId)
+        : -1;
+      next.splice(currentIndex + 1, 0, id);
+      return next;
+    };
+    this.naturalOrder = insert(this.naturalOrder);
+    this.queueIsLibrary = false;
+    this.update({ queue: insert(this.state.queue) });
+  }
+
   setShuffle(shuffle: boolean) {
     if (shuffle === this.state.shuffle) return;
     this.update({
@@ -166,6 +192,7 @@ export class Player {
     this.update({ favorites: [...new Set(favorites)] });
   }
   toggleFavorite(id: string) {
+    if (!this.state.tracks.some((track) => track.id === id)) return;
     this.setFavorites(
       this.state.favorites.includes(id)
         ? this.state.favorites.filter((item) => item !== id)
@@ -184,7 +211,7 @@ export class Player {
     }
   }
 
-  select(id: string, autoplay = true) {
+  select(id: string, autoplay = true, startAt = 0) {
     const track = this.state.tracks.find((item) => item.id === id);
     if (!track) return;
     if (!this.state.queue.includes(id))
@@ -201,7 +228,7 @@ export class Player {
     this.update({
       currentId: id,
       status: "loading",
-      position: 0,
+      position: startAt,
       duration: 0,
       error: null,
       volumeControl: Math.abs(audio.volume - this.state.volume) < 0.01,
@@ -218,7 +245,23 @@ export class Player {
         position: Number.isFinite(audio.currentTime) ? audio.currentTime : 0,
         duration: Number.isFinite(audio.duration) ? audio.duration : 0,
       });
+    let pendingStart = Math.max(0, startAt);
+    const restorePosition = () => {
+      if (!pendingStart || !Number.isFinite(audio.duration) || !audio.duration)
+        return;
+      try {
+        audio.currentTime = Math.min(pendingStart, audio.duration);
+        pendingStart = 0;
+      } catch {
+        /* Retry when the resource becomes seekable. */
+      }
+    };
+    on("canplay", () => {
+      restorePosition();
+      syncTime();
+    });
     on("loadedmetadata", () => {
+      restorePosition();
       syncTime();
       if (!this.wantsPlay) this.update({ status: "paused" });
     });
@@ -375,6 +418,68 @@ export class Player {
       volume: this.audio ? this.audio.volume : value,
       volumeControl: !this.audio || Math.abs(this.audio.volume - value) < 0.01,
     });
+  }
+  getSession(): PlaybackSession {
+    return {
+      currentId: this.state.currentId,
+      position: this.state.position,
+      volume: this.state.volume,
+      queue: this.state.queue,
+      naturalOrder: [...this.naturalOrder],
+    };
+  }
+  restoreSession(saved: PlaybackSession) {
+    if (this.state.currentId) return; // A user action wins over asynchronous restoration.
+    this.setVolume(saved.volume);
+    const valid = new Set(this.state.tracks.map((track) => track.id));
+    const queue = saved.queue.filter((id) => valid.has(id));
+    const natural = saved.naturalOrder.filter((id) => valid.has(id));
+    if (!saved.currentId || !valid.has(saved.currentId)) return;
+    if (!queue.includes(saved.currentId)) queue.unshift(saved.currentId);
+    this.naturalOrder = [...new Set([...natural, ...queue])];
+    this.queueIsLibrary =
+      this.naturalOrder.length === this.state.tracks.length &&
+      this.naturalOrder.every(
+        (id, index) => this.state.tracks[index]?.id === id,
+      );
+    this.update({ queue });
+    this.select(saved.currentId, false, saved.position);
+  }
+  remove(id: string) {
+    const track = this.state.tracks.find((item) => item.id === id);
+    if (!track) return;
+    const wasCurrent = this.state.currentId === id;
+    const resume = this.wantsPlay;
+    const oldIndex = this.state.queue.indexOf(id);
+    const queue = this.state.queue.filter((item) => item !== id);
+    if (wasCurrent) {
+      this.session++;
+      this.intent++;
+      this.wantsPlay = false;
+      this.release();
+    }
+    this.naturalOrder = this.naturalOrder.filter((item) => item !== id);
+    this.update({
+      tracks: this.state.tracks.filter((item) => item.id !== id),
+      queue,
+      favorites: this.state.favorites.filter((item) => item !== id),
+      ...(wasCurrent
+        ? {
+            currentId: null,
+            status: "idle" as const,
+            position: 0,
+            duration: 0,
+            error: null,
+          }
+        : {}),
+    });
+    if (track.url.startsWith("blob:")) this.revoke(track.url);
+    if (track.artwork?.startsWith("blob:")) this.revoke(track.artwork);
+    if (wasCurrent && queue.length)
+      this.select(
+        queue[Math.min(Math.max(oldIndex, 0), queue.length - 1)],
+        resume,
+      );
   }
   clear() {
     this.session++;

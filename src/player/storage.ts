@@ -14,8 +14,14 @@ function openDatabase() {
     request.onupgradeneeded = () =>
       request.result.createObjectStore("files", { keyPath: "id" });
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-    request.onblocked = () => reject(new Error("Library database blocked"));
+    request.onerror = () => {
+      database = null;
+      reject(request.error);
+    };
+    request.onblocked = () => {
+      database = null;
+      reject(new Error("Library database blocked"));
+    };
   });
   return database;
 }
@@ -46,6 +52,12 @@ export const saveFiles = (files: File[]) =>
           blob: file,
           importedAt: Date.now(),
         } satisfies SavedFile);
+    }),
+  );
+export const removeFile = (id: string) =>
+  enqueue(() =>
+    transaction((store) => {
+      store.delete(id);
     }),
   );
 export const clearFiles = () =>
