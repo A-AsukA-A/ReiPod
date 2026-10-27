@@ -13,7 +13,7 @@ ReiPod targets the color split-screen iPod classic interface. It is a web implem
 
 The 20-pixel header, 24-pixel menu rows and 16-pixel menu type at a 320-pixel LCD width are visual calibrations. Chinese system sans-serif fonts (Microsoft YaHei / PingFang SC) are preferred, with Helvetica Neue / Arial fallbacks; proprietary font files are not bundled. The split is 160/160. The blue selection gradient, filled arrow silhouettes, embossed contextual icons, wheel proportions and reflections are redrawn in CSS/SVG.
 
-Apple does not publish the transition curves or button-hold thresholds in these references. ReiPod's 280 ms page transition, 200 ms playback-view transition, 360 ms cover fade, 4.5 s artwork interval, 600 ms Menu/Center hold, 350 ms seek hold and 800 ms sleep hold are implementation choices, not claimed measurements from an original device.
+Apple does not publish the transition curves or button-hold thresholds in these references. ReiPod's 280 ms page transition, 200 ms playback-view transition, 360 ms cover fade, 4.5 s artwork interval, 600 ms Menu/Center hold, 350 ms seek hold and 800 ms sleep hold are implementation choices, not claimed measurements from an original device. Cover Flow's album flip uses 560 ms and a symmetric ease-in-out curve, calibrated against the roughly 0.6-second flip visible in the second supplied recording. Reduced motion skips it.
 
 ## Web-specific behavior
 
@@ -21,6 +21,12 @@ Imports and browser-local playlists remain available. Local photo albums/slidesh
 
 ## Supplied My Classic recording
 
-A privately supplied 36.67-second recording was reviewed frame by frame around menu navigation, Cover Flow and settings. It confirms a split menu with Photos/Podcasts, continuous artwork browsing and checked choice submenus. The recording does not show a song-playing interaction or selecting a Cover Flow album, so those flows follow the Apple guide above and remain subject to further visual comparison. The supplied IPA was inspected statically; its main executable is encrypted. Reference videos, fonts, artwork and application binaries are not redistributed.
+A privately supplied 36.67-second recording was reviewed frame by frame around menu navigation, Cover Flow and settings. It confirms a split menu with Photos/Podcasts, continuous artwork browsing and checked choice submenus. A second 91.8-second recording adds the album flip, playback controls and photo browsing. Those visible interactions now inform the following implementation:
 
-The web player deliberately treats the LCD as a display. Every in-app action is reachable through the wheel, Center, Menu, transport buttons or physical Hold switch; native file selection happens outside the device screen. Mouse notches are discrete rather than accelerated. A dedicated Cover Flow album screen preserves album context and returns to the selected cover.
+- Cover Flow retains its fan and header while the selected cover flips into an album/artist heading and track sheet occupying 80% of the LCD width. MENU reverses the flip and preserves the selected album.
+- The playing screen anchors the reflected, slightly turned artwork on the left and metadata on the right. A single bottom bay switches between inline elapsed/progress/remaining time, seek, temporary volume, repeat/shuffle choices and rating. These indicators are passive; the dial changes their values.
+- Photos opens a full-width thumbnail album list, then a five-column contact sheet with a gray count/date strip and yellow selection frame. Full-image viewing hides the menu header. The displayed date comes from the imported file's modification time; no capture date is inferred.
+
+These are visual calibrations from the recordings, not recovered application source or exact timing specifications. ReiPod retains the original iPod's 320 × 240 logical LCD grid rather than adopting the reference app's portrait-video proportions. The supplied IPA was inspected statically; its main executable remains encrypted. Reference videos, fonts, artwork and application binaries are not redistributed.
+
+The web player deliberately treats the LCD as a display. Every in-app action is reachable through the wheel, Center, Menu, transport buttons or physical Hold switch; native file selection happens outside the device screen. Mouse notches are discrete rather than accelerated. Album-sheet transitions support quick reversals without leaving outgoing frames behind.

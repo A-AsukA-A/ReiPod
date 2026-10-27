@@ -35,35 +35,47 @@ export function PhotoScreen({
     );
   if (full)
     return (
-      <div className="photo-full">
+      <div
+        className="photo-full"
+        aria-label={`第 ${index + 1} 张，共 ${photos.length} 张照片`}
+      >
         <img
           key={photos[index]?.id}
           src={photos[index]?.url}
           alt={photos[index]?.name}
         />
-        <span>
-          {index + 1} / {photos.length}
-          {slideshow ? " ▷" : ""}
-        </span>
+        {slideshow && <span aria-label="幻灯片播放中">▷</span>}
       </div>
     );
   return (
-    <div className="photo-contact-sheet" role="list" aria-label="照片缩略图">
-      {photos.map((photo, i) => (
-        <div
-          role="listitem"
-          ref={i === index ? selected : undefined}
-          className={i === index ? "current-photo" : ""}
-          key={photo.id}
-        >
-          <img
-            src={photo.url}
-            alt={photo.name}
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="photo-grid-header">
+        <span>{photos.length.toLocaleString()} 张照片</span>
+        <span title="所选照片的文件修改日期">
+          {photos[index]?.file.lastModified > 0 &&
+            new Date(photos[index].file.lastModified).toLocaleDateString(
+              "zh-CN",
+              { year: "numeric", month: "long", day: "numeric" },
+            )}
+        </span>
+      </div>
+      <div className="photo-contact-sheet" role="list" aria-label="照片缩略图">
+        {photos.map((photo, i) => (
+          <div
+            role="listitem"
+            ref={i === index ? selected : undefined}
+            className={i === index ? "current-photo" : ""}
+            key={photo.id}
+          >
+            <img
+              src={photo.url}
+              alt={photo.name}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

@@ -16,8 +16,10 @@ export function SeekSlider({
     : 0;
   return (
     <div className="screen-progress">
+      <span className="progress-elapsed">{time(state.position)}</span>
       <div
         className="firmware-progress"
+        data-seeking={seeking}
         role="progressbar"
         aria-label="播放进度"
         aria-valuemin={0}
@@ -27,10 +29,9 @@ export function SeekSlider({
         <i style={{ width: `${fraction}%` }} />
         {seeking && <b style={{ left: `${fraction}%` }} />}
       </div>
-      <div>
-        <span>{time(state.position)}</span>
-        <span>−{time(Math.max(0, state.duration - state.position))}</span>
-      </div>
+      <span className="progress-remaining">
+        −{time(Math.max(0, state.duration - state.position))}
+      </span>
     </div>
   );
 }

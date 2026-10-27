@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 import type { RefObject } from "react";
 import { durationInMilliseconds } from "./motion";
 
-type Direction = "forward" | "back" | "replace";
+type Direction = "forward" | "back" | "replace" | "album-open" | "album-close";
 let snapshotSequence = 0;
 
 /** Freeze the pixels currently on the LCD, including an interrupted slide. */
@@ -199,7 +199,11 @@ export function useLcdMotion(
     const tokens = getComputedStyle(element);
     const duration = durationInMilliseconds(
       tokens.getPropertyValue(
-        direction === "replace" ? "--lcd-view-duration" : "--lcd-page-duration",
+        direction.startsWith("album-")
+          ? "--lcd-album-duration"
+          : direction === "replace"
+            ? "--lcd-view-duration"
+            : "--lcd-page-duration",
       ),
     );
     ghost.current = node;
@@ -212,6 +216,67 @@ export function useLcdMotion(
       easing: tokens.getPropertyValue("--lcd-ease").trim(),
       fill: "both",
     };
+    if (direction === "album-open" || direction === "album-close") {
+      const opening = direction === "album-open";
+      const front = node.querySelector<HTMLElement>(
+        opening ? '.cf-card[aria-current="true"]' : ".cf-album-panel",
+      );
+      const back = element.querySelector<HTMLElement>(
+        opening ? ".cf-album-panel" : '.cf-card[aria-current="true"]',
+      );
+      if (front && back) {
+        const timing = {
+          ...options,
+          easing: tokens.getPropertyValue("--lcd-album-ease").trim(),
+        };
+        const frontTransform = getComputedStyle(front).transform;
+        const backTransform = getComputedStyle(back).transform;
+        const initial = frontTransform === "none" ? "" : frontTransform;
+        const final = backTransform === "none" ? "" : backTransform;
+        const edge = `${final} rotateY(-90deg)${opening ? " scale(0.5, 0.64)" : ""}`;
+        running.current = [
+          front.animate(
+            [
+              { transform: `${initial} rotateY(0deg)` },
+              { transform: `${initial} rotateY(90deg)`, offset: 0.5 },
+              { transform: `${initial} rotateY(90deg)` },
+            ],
+            timing,
+          ),
+          back.animate(
+            [
+              { transform: edge },
+              { transform: edge, offset: 0.5 },
+              { transform: `${final} rotateY(0deg) scale(1)` },
+            ],
+            timing,
+          ),
+          node.animate(
+            [
+              { opacity: 1 },
+              { opacity: 1, offset: 0.499 },
+              { opacity: 0, offset: 0.5 },
+              { opacity: 0 },
+            ],
+            timing,
+          ),
+        ];
+        const caption = (opening ? node : element).querySelector<HTMLElement>(
+          ".cf-caption",
+        );
+        if (caption)
+          running.current.push(
+            caption.animate(
+              opening
+                ? [{ opacity: 1 }, { opacity: 0, offset: 0.5 }, { opacity: 0 }]
+                : [{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }],
+              timing,
+            ),
+          );
+        running.current.at(-1)!.onfinish = stop;
+        return;
+      }
+    }
     running.current =
       direction === "replace"
         ? [

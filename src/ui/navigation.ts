@@ -57,7 +57,6 @@ export const splitPages = new Set<Page>([
   "home",
   "music",
   "settings",
-  "photos",
   "podcasts",
   "finish",
   "background",

@@ -25,7 +25,6 @@ import {
   splitPages,
 } from "./ui/navigation";
 import type { Page } from "./ui/navigation";
-import { AlbumArt } from "./ui/AlbumArt";
 import { CoverFlow } from "./ui/CoverFlow";
 import { MenuPreview } from "./ui/MenuPreview";
 import { menuPreview } from "./ui/menuPreviewModel";
@@ -102,6 +101,10 @@ export function App() {
   const [playView, setPlayView] = useState<PlayView>("art");
   const [lyricWheel, setLyricWheel] = useState(0);
   const [volumeOverlay, setVolumeOverlay] = useState(false);
+  const [transportHint, setTransportHint] = useState<
+    "seek-forward" | "seek-backward" | null
+  >(null);
+  const transportTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [slideshow, setSlideshow] = useState(false);
   const textEntry = useWheelTextEntry(
     state.tracks
@@ -229,7 +232,12 @@ export function App() {
                     ? "all"
                     : (latest.currentId ?? latest.tracks[0]?.id ?? "import");
     if (target !== page || group !== groupKey)
-      capture("forward", splitPages.has(page) && splitPages.has(target));
+      capture(
+        page === "coverflow" && target === "coverflow-album"
+          ? "album-open"
+          : "forward",
+        splitPages.has(page) && splitPages.has(target),
+      );
     dispatch({
       type: "open",
       page: target,
@@ -243,7 +251,10 @@ export function App() {
     if (page === "photo-full") setSlideshow(false);
     if (navigation.history.length)
       capture(
-        "back",
+        page === "coverflow-album" &&
+          navigation.history.at(-levels)?.page === "coverflow"
+          ? "album-close"
+          : "back",
         splitPages.has(page) &&
           splitPages.has(navigation.history.at(-levels)?.page ?? "home"),
       );
@@ -309,7 +320,7 @@ export function App() {
     );
   };
   const shuffleAll = () => {
-    const tracks = player.getSnapshot().tracks;
+    const tracks = musicTracks;
     if (!tracks.length) {
       openFiles();
       return;
@@ -403,12 +414,7 @@ export function App() {
     (value) => player.setShuffle(value),
     (value) => player.setRepeat(value),
   );
-  const splitMenu = [
-    "settings",
-    "photos",
-    "podcasts",
-    ...Object.keys(choices),
-  ].includes(page);
+  const splitMenu = splitPages.has(page) && page !== "home" && page !== "music";
   const photoIndex = Math.max(
     0,
     activePhotos.findIndex(
@@ -655,7 +661,17 @@ export function App() {
     if (page === "playing" && current) {
       if (playView === "seek")
         player.seek(player.getSnapshot().position + steps * 2);
-      else if (playView === "shuffle") player.setShuffle(steps > 0);
+      else if (playView === "repeat") {
+        const modes = ["off", "all", "one"] as const;
+        player.setRepeat(
+          modes[
+            Math.max(
+              0,
+              Math.min(2, modes.indexOf(player.getSnapshot().repeat) + steps),
+            )
+          ],
+        );
+      } else if (playView === "shuffle") player.setShuffle(steps > 0);
       else if (playView === "rating") {
         if (!setRating(current.id, (ratings[current.id] ?? 0) + steps))
           setNotice("评分未能保存，本次仍生效");
@@ -677,7 +693,6 @@ export function App() {
   };
   const chooseRow = (row: MenuItem) => {
     if (!row.disabled) {
-      feedback("release");
       dispatch({ type: "select", key: row.key });
       row.action();
     }
@@ -690,6 +705,7 @@ export function App() {
   const playViews: PlayView[] = [
     "art",
     "seek",
+    "repeat",
     "shuffle",
     "rating",
     ...(current?.lyrics?.length ? ["lyrics" as const] : []),
@@ -765,6 +781,9 @@ export function App() {
       return;
     }
     if (value === "seek-forward" || value === "seek-backward") {
+      setTransportHint(value);
+      if (transportTimer.current) clearTimeout(transportTimer.current);
+      transportTimer.current = setTimeout(() => setTransportHint(null), 180);
       player.seek(
         player.getSnapshot().position + (value === "seek-forward" ? 2 : -2),
       );
@@ -847,6 +866,12 @@ export function App() {
   useEffect(() => {
     player.setVolumeLimit(prefs.volumeLimit);
   }, [prefs.volumeLimit]);
+  useEffect(
+    () => () => {
+      if (transportTimer.current) clearTimeout(transportTimer.current);
+    },
+    [],
+  );
   useEffect(() => {
     void restorePhotos();
     void initializeLibrary();
@@ -905,7 +930,7 @@ export function App() {
     return () => clearTimeout(timer);
   }, [volumeOverlay, state.volume]);
   const title =
-    page === "album-tracks" || page === "coverflow-album"
+    page === "album-tracks"
       ? (selectedAlbum?.title ?? "专辑")
       : page === "podcast-episodes"
         ? (podcastShows.find((show) => show.id === groupKey)?.title ?? "播客")
@@ -929,6 +954,7 @@ export function App() {
               settings: "设置",
               "confirm-clear": "清空资料库",
               coverflow: "Cover Flow",
+              "coverflow-album": "Cover Flow",
               photos: "照片",
               "photo-grid": "所有照片",
               "photo-full": "照片",
@@ -995,7 +1021,15 @@ export function App() {
         locked={held || sleeping}
         onAudio={addFiles}
         onPhotos={(result) => {
-          open("photos", result.added ? "all-photos" : "photo-import");
+          const latest = navigationRef.current.screen;
+          if (
+            latest.page === "photos" &&
+            ["photo-import", "photo-folder"].includes(latest.selectedKey ?? "")
+          )
+            dispatch({
+              type: "select",
+              key: result.added ? "all-photos" : "photo-import",
+            });
           setNotice(
             result.persisted
               ? `已导入 ${result.added} 张照片`
@@ -1071,7 +1105,9 @@ export function App() {
                       aria-label={active ? "正在播放" : "已暂停"}
                     >
                       <span aria-hidden="true">
-                        {busy ? (
+                        {transportHint ? (
+                          <PlayerIcon name={transportHint} filled />
+                        ) : busy ? (
                           <i className="lcd-loading" />
                         ) : (
                           <PlayerIcon
@@ -1202,9 +1238,33 @@ export function App() {
                     slideshow={slideshow}
                   />
                 )}
-                {page === "coverflow" &&
+                {(page === "coverflow" || page === "coverflow-album") &&
                   (albums.length ? (
-                    <CoverFlow albums={albums} index={selectedIndex} animate />
+                    <CoverFlow
+                      albums={albums}
+                      index={
+                        page === "coverflow-album"
+                          ? Math.max(
+                              0,
+                              albums.findIndex(
+                                (album) => album.id === groupKey,
+                              ),
+                            )
+                          : selectedIndex
+                      }
+                      animate
+                      albumOpen={page === "coverflow-album"}
+                    >
+                      {page === "coverflow-album" && (
+                        <div
+                          className="screen-song-list"
+                          role="group"
+                          aria-label="专辑曲目"
+                        >
+                          {renderRows()}
+                        </div>
+                      )}
+                    </CoverFlow>
                   ) : (
                     <div className="screen-empty">
                       <strong>暂无专辑</strong>
@@ -1231,7 +1291,7 @@ export function App() {
                     ].includes(page) &&
                     !(page === "playlist-name" && textEntry.editing))) && (
                   <div
-                    className={`settings-screen ${splitMenu ? "split-settings-screen" : ""}`}
+                    className={`settings-screen ${splitMenu ? "split-settings-screen" : ""} ${page === "photos" ? "photo-album-list" : ""}`}
                   >
                     {(page === "confirm-delete-track" ||
                       page === "confirm-delete-playlist") && (
@@ -1300,22 +1360,12 @@ export function App() {
                     )}
                   </div>
                 )}
-                {((isTrackList && !(page === "search" && textEntry.editing)) ||
+                {((isTrackList &&
+                  page !== "coverflow-album" &&
+                  !(page === "search" && textEntry.editing)) ||
                   (page === "playing" && !current)) &&
                   (isTrackList && visibleTracks.length ? (
-                    <div
-                      className={`song-screen ${page === "coverflow-album" ? "coverflow-album-screen" : ""}`}
-                    >
-                      {page === "coverflow-album" && selectedAlbum && (
-                        <div className="coverflow-album-heading">
-                          <AlbumArt
-                            src={selectedAlbum.artwork}
-                            title={selectedAlbum.title}
-                          />
-                          <strong>{selectedAlbum.title}</strong>
-                          <span>{selectedAlbum.artist}</span>
-                        </div>
-                      )}
+                    <div className="song-screen">
                       <div
                         className="screen-song-list"
                         role="group"

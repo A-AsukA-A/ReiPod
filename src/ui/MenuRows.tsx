@@ -3,6 +3,7 @@ import type { Page } from "./navigation";
 import { AlbumArt } from "./AlbumArt";
 import { MarqueeText } from "./MarqueeText";
 import { PlayerIcon } from "./PlayerIcon";
+import { ClassicGlyph } from "./ClassicGlyph";
 export type MenuItem = {
   key: string;
   label: string;
@@ -43,6 +44,17 @@ export function MenuRows({
       }
       className={`screen-row ${row.key === focusedKey ? "selected" : ""} ${row.disabled ? "is-disabled" : ""} ${row.key === "confirm" ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${trackIds.has(row.key) ? "track-row" : ""}`}
     >
+      {page === "photos" && (
+        <span className="photo-album-thumb">
+          {row.artwork ? (
+            <img src={row.artwork} alt="" decoding="async" />
+          ) : (
+            <ClassicGlyph
+              name={row.key === "all-photos" ? "albums" : "import"}
+            />
+          )}
+        </span>
+      )}
       {page === "albums" && (
         <AlbumArt src={row.artwork} title={row.label} artist={row.detail} />
       )}
@@ -55,7 +67,7 @@ export function MenuRows({
           )}
           <MarqueeText text={row.label} active={row.key === focusedKey} />
         </span>
-        {(page === "albums" || page === "search") && (
+        {(page === "albums" || page === "search" || page === "photos") && (
           <small>{row.detail}</small>
         )}
       </span>
@@ -70,7 +82,7 @@ export function MenuRows({
           )}
         </span>
       )}
-      {!row.leaf && (
+      {(!row.leaf || page === "coverflow-album") && (
         <span className="row-chevron">
           <PlayerIcon name="chevron" />
         </span>

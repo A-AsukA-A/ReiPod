@@ -98,6 +98,7 @@ export function ClickWheel({
     if (repeat || keyPress.current || gesture.current || disabled) return;
     keyPress.current = { key, command };
     setPressed(command);
+    callbacks.current.onFeedback?.("press");
     startHold(command);
   };
   const keyUp = (key: string) => {

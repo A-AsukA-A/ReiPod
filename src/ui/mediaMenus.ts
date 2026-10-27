@@ -35,13 +35,16 @@ export function createMediaMenus({
       {
         key: "all-photos",
         label: "所有照片",
-        value: String(photos.length),
+        detail: `${photos.length} 张照片`,
+        artwork: photos[0]?.url,
         disabled: !photos.length,
         action: () => open("photo-grid", photos[0]?.id),
       },
       ...[...new Set(photos.map((photo) => photo.album))].map((album) => ({
         key: album,
         label: album,
+        detail: `${photos.filter((photo) => photo.album === album).length} 张照片`,
+        artwork: photos.find((photo) => photo.album === album)?.url,
         action: () =>
           open(
             "photo-grid",

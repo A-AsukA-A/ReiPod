@@ -4,14 +4,35 @@ import { MarqueeText } from "./MarqueeText";
 import { Lyrics } from "./Lyrics";
 import { PlayerIcon } from "./PlayerIcon";
 import { SeekSlider } from "./SeekSlider";
-export type PlayView = "art" | "seek" | "shuffle" | "rating" | "lyrics";
-const names: Record<PlayView, string> = {
-  art: "封面",
-  seek: "进度",
-  shuffle: "随机播放",
-  rating: "歌曲评分",
-  lyrics: "歌词",
-};
+
+export type PlayView =
+  "art" | "seek" | "repeat" | "shuffle" | "rating" | "lyrics";
+
+function Choices({
+  label,
+  choices,
+  selected,
+}: {
+  label: string;
+  choices: string[];
+  selected: number;
+}) {
+  return (
+    <div className="np-mode-panel" role="group" aria-label={label}>
+      {choices.map((choice, index) => (
+        <span
+          key={choice}
+          aria-current={selected === index ? "true" : undefined}
+          className={selected === index ? "chosen" : ""}
+        >
+          {choice}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** The cover stays anchored while Center changes only the bottom control bay. */
 export function NowPlayingScreen({
   state,
   current,
@@ -27,11 +48,10 @@ export function NowPlayingScreen({
   rating: number;
   volumeOverlay: boolean;
 }) {
+  const volume = volumeOverlay && view === "art";
+  const progress = view === "art" || view === "seek" || view === "lyrics";
   return (
-    <div
-      className={`now-playing-screen view-${view}`}
-      data-volume={volumeOverlay && view === "art"}
-    >
+    <div className={`now-playing-screen view-${view}`} data-volume={volume}>
       {view === "lyrics" ? (
         <Lyrics
           track={current}
@@ -39,110 +59,121 @@ export function NowPlayingScreen({
           wheelStep={lyricWheel}
         />
       ) : (
-        <div className="now-playing-top">
-          <div className="np-cover">
-            <AlbumArt
-              src={current.artwork}
-              title={current.album ?? current.title}
-              artist={current.artist}
-            />
-            <div className="np-cover-reflection" aria-hidden="true">
+        <>
+          <div className="np-indicators" aria-hidden="true">
+            <span
+              className={
+                state.shuffle || view === "shuffle" ? "is-current" : ""
+              }
+            >
+              <PlayerIcon name="shuffle" />
+            </span>
+            {state.repeat !== "off" || view === "repeat" ? (
+              <span className={view === "repeat" ? "is-current" : ""}>
+                <PlayerIcon name="repeat" />
+                {state.repeat === "one" && <small>1</small>}
+              </span>
+            ) : (
+              <PlayerIcon name="queue" />
+            )}
+            {!!current.lyrics?.length && <PlayerIcon name="lyrics" filled />}
+          </div>
+          <div
+            className="now-playing-top"
+            aria-label={`播放队列第 ${state.queue.indexOf(current.id) + 1} 首，共 ${state.queue.length} 首`}
+          >
+            <div className="np-cover">
               <AlbumArt
                 src={current.artwork}
                 title={current.album ?? current.title}
                 artist={current.artist}
               />
+              <div className="np-cover-reflection" aria-hidden="true">
+                <AlbumArt
+                  src={current.artwork}
+                  title={current.album ?? current.title}
+                  artist={current.artist}
+                />
+              </div>
+            </div>
+            <div className="np-info">
+              <strong>
+                <MarqueeText text={current.title} active />
+              </strong>
+              <span>
+                <MarqueeText text={current.artist || "未知艺人"} active />
+              </span>
+              <span>
+                <MarqueeText text={current.album || "未知专辑"} active />
+              </span>
+              {state.status !== "playing" && state.status !== "paused" && (
+                <small>
+                  {
+                    (
+                      {
+                        idle: "未播放",
+                        loading: "正在载入",
+                        buffering: "正在缓冲",
+                        ended: "播放完毕",
+                        error: "无法播放",
+                      } as Record<string, string>
+                    )[state.status]
+                  }
+                </small>
+              )}
             </div>
           </div>
-          <div className="np-info">
-            <div className="np-index">
-              {state.queue.indexOf(current.id) + 1} / {state.queue.length}
+        </>
+      )}
+      <div className="np-control-bay" data-control={volume ? "volume" : view}>
+        <div className="np-progress-slot" aria-hidden={!progress || volume}>
+          <SeekSlider state={state} seeking={view === "seek"} />
+        </div>
+        {volume && (
+          <div
+            className="classic-volume"
+            role="status"
+            aria-label={`音量 ${Math.round(state.volume * 100)}%`}
+          >
+            <PlayerIcon name="volume" />
+            <div className="classic-volume-track">
+              <i style={{ width: `${state.volume * 100}%` }} />
             </div>
-            <strong>
-              <MarqueeText text={current.title} active />
-            </strong>
-            <span>
-              <MarqueeText text={current.artist || "未知艺人"} active />
-            </span>
-            <span>
-              <MarqueeText text={current.album || "未知专辑"} active />
-            </span>
-            {view === "shuffle" && (
-              <div className="np-firmware-control">
-                <small>随机播放</small>
-                <div className="np-shuffle-options">
-                  <span className={!state.shuffle ? "chosen" : ""}>关闭</span>
-                  <span className={state.shuffle ? "chosen" : ""}>歌曲</span>
-                </div>
-              </div>
-            )}
-            {view === "rating" && (
-              <div className="np-firmware-control">
-                <small>歌曲评分</small>
-                <div
-                  className="classic-rating"
-                  aria-label={`评分 ${rating} 星`}
-                >
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <span
-                      key={value}
-                      className={rating >= value ? "chosen" : ""}
-                    >
-                      <PlayerIcon name="star" filled={rating >= value} />
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {state.status !== "playing" && (
-              <small>
-                {
-                  (
-                    {
-                      idle: "未播放",
-                      loading: "正在载入",
-                      paused: "已暂停",
-                      buffering: "正在缓冲",
-                      ended: "播放完毕",
-                      error: "无法播放",
-                    } as Partial<Record<string, string>>
-                  )[state.status]
-                }
-              </small>
-            )}
+            <PlayerIcon name="volume" />
           </div>
-        </div>
-      )}
-      <SeekSlider state={state} seeking={view === "seek"} />
-      {volumeOverlay && view === "art" && (
-        <div
-          className="classic-volume"
-          role="status"
-          aria-label={`音量 ${Math.round(state.volume * 100)}%`}
-        >
-          <PlayerIcon name="volume" />
-          <div className="classic-volume-track">
-            <i style={{ width: `${state.volume * 100}%` }} />
+        )}
+        {view === "repeat" && (
+          <div className="np-repeat-options">
+            <Choices
+              label="重复播放"
+              choices={["关闭", "全部", "单曲"]}
+              selected={["off", "all", "one"].indexOf(state.repeat)}
+            />
           </div>
-          <PlayerIcon name="volume" />
-        </div>
-      )}
-      {view !== "lyrics" && (
-        <div className="firmware-view-label">
-          <span>{view === "art" ? "" : names[view]}</span>
-          <span className="play-view-dots">
-            {[
-              "art",
-              "seek",
-              "shuffle",
-              "rating",
-              ...(current.lyrics?.length ? ["lyrics"] : []),
-            ].map((mode) => (
-              <i className={mode === view ? "active" : ""} key={mode} />
+        )}
+        {view === "shuffle" && (
+          <div className="np-shuffle-options">
+            <Choices
+              label="随机播放"
+              choices={["关闭", "歌曲"]}
+              selected={Number(state.shuffle)}
+            />
+          </div>
+        )}
+        {view === "rating" && (
+          <div
+            className="classic-rating"
+            role="group"
+            aria-label={`评分 ${rating} 星`}
+          >
+            {[1, 2, 3, 4, 5].map((value) => (
+              <span key={value} className={rating >= value ? "chosen" : ""}>
+                <PlayerIcon name="star" filled={rating >= value} />
+              </span>
             ))}
-          </span>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
       {state.error && (
         <div className="screen-error" role="alert">
           {state.error}

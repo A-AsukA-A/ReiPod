@@ -4,6 +4,8 @@ type IconName =
   | "chevron"
   | "play"
   | "pause"
+  | "seek-forward"
+  | "seek-backward"
   | "shuffle"
   | "repeat"
   | "queue"
@@ -16,6 +18,8 @@ const paths: Record<IconName, string> = {
   chevron: "m9 5 7 7-7 7",
   play: "m7 4 13 8-13 8Z",
   pause: "M6 4h4v16H6Zm8 0h4v16h-4Z",
+  "seek-forward": "M2 5v14l9-7Zm10 0v14l9-7Z",
+  "seek-backward": "M22 5v14l-9-7ZM12 5v14l-9-7Z",
   shuffle:
     "M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4",
   repeat:

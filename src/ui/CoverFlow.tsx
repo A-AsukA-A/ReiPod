@@ -1,4 +1,5 @@
 import type { Album } from "../player/library";
+import type { ReactNode } from "react";
 import { AlbumArt } from "./AlbumArt";
 import { MarqueeText } from "./MarqueeText";
 import { coverPose } from "./coverMotion";
@@ -8,15 +9,22 @@ export function CoverFlow({
   albums,
   index,
   animate,
+  albumOpen = false,
+  children,
 }: {
   albums: Album[];
   index: number;
   animate: boolean;
+  albumOpen?: boolean;
+  children?: ReactNode;
 }) {
   const position = useCoverMotion(index, false, animate);
   const album = albums[index];
   return (
-    <div className={`coverflow-screen ${animate ? "with-motion" : ""}`}>
+    <div
+      className={`coverflow-screen ${animate ? "with-motion" : ""}`}
+      data-album-open={albumOpen}
+    >
       <div
         className="coverflow-scene"
         role="group"
@@ -33,9 +41,9 @@ export function CoverFlow({
               aria-label={`${entry.title}，${entry.artist}`}
               aria-current={i === index ? "true" : undefined}
               style={{
-                transform: `translateX(${pose.x - 50}%) translateZ(${pose.z}px) rotateY(${pose.angle}deg)`,
+                transform: `translateX(${pose.x - 50}%) translateZ(calc(var(--lcd-unit) * ${pose.z})) rotateY(${pose.angle}deg)`,
                 zIndex: pose.depth,
-                opacity: pose.opacity,
+                opacity: albumOpen && i === index ? 0 : pose.opacity,
               }}
             >
               <AlbumArt
@@ -54,7 +62,7 @@ export function CoverFlow({
           );
         })}
       </div>
-      <div className="cf-caption" aria-live="polite">
+      <div className="cf-caption" aria-live="polite" hidden={albumOpen}>
         <strong>
           <MarqueeText text={album?.title ?? "暂无专辑"} active />
         </strong>
@@ -62,6 +70,19 @@ export function CoverFlow({
           <MarqueeText text={album?.artist ?? "导入音乐后在这里浏览"} active />
         </span>
       </div>
+      {albumOpen && album && (
+        <section className="cf-album-panel" aria-label={`${album.title}曲目`}>
+          <header className="coverflow-album-heading">
+            <strong>
+              <MarqueeText text={album.title} active />
+            </strong>
+            <span>
+              <MarqueeText text={album.artist} active />
+            </span>
+          </header>
+          {children}
+        </section>
+      )}
     </div>
   );
 }

@@ -130,7 +130,10 @@ test("search and playlist naming can be entered entirely on the click wheel", as
   await choose(page, "完成选择");
   await expect(live(page).locator(".track-row")).toHaveCount(2);
   await choose(page, "Carefree");
-  await expect(live(page).locator(".np-index")).toHaveText("1 / 2");
+  await expect(live(page).locator(".now-playing-top")).toHaveAttribute(
+    "aria-label",
+    "播放队列第 1 首，共 2 首",
+  );
   await page.reload();
   await expect(page.locator(".screen-playing-link .icon-pause")).toHaveCount(1);
 });
@@ -153,6 +156,9 @@ test("photos import, thumbnail selection, full view, slideshow and refresh use t
   ]);
   await choose(page, "所有照片");
   await expect(live(page).locator(".photo-contact-sheet img")).toHaveCount(2);
+  await expect(live(page).locator(".photo-grid-header")).toContainText(
+    "2 张照片",
+  );
   await expect
     .poll(() =>
       live(page)
@@ -167,6 +173,7 @@ test("photos import, thumbnail selection, full view, slideshow and refresh use t
     "alt",
     "two.png",
   );
+  await expect(live(page).locator(".screen-status")).toBeHidden();
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
   await key(page, "ArrowDown");
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
@@ -290,6 +297,12 @@ test("HOLD, hold seeking, sleep and center views remain operable without touchin
   await expect(live(page).locator(".view-seek")).toHaveCount(1);
   await key(page, "ArrowDown");
   await key(page, "Enter");
+  await expect(live(page).locator(".view-repeat")).toHaveCount(1);
+  await key(page, "ArrowDown");
+  await expect(live(page).locator(".np-repeat-options .chosen")).toContainText(
+    "全部",
+  );
+  await key(page, "Enter");
   await key(page, "ArrowDown");
   await expect(live(page).locator(".np-shuffle-options .chosen")).toContainText(
     "歌曲",
@@ -297,6 +310,7 @@ test("HOLD, hold seeking, sleep and center views remain operable without touchin
   await key(page, "Enter");
   await key(page, "ArrowDown");
   await expect(live(page).locator(".classic-rating .chosen")).toHaveCount(1);
+  await key(page, "Enter");
   await page.locator(".top-hold").click();
   const value = await live(page)
     .getByRole("progressbar")
@@ -309,6 +323,9 @@ test("HOLD, hold seeking, sleep and center views remain operable without touchin
   await page.locator(".top-hold").click();
   await page.locator(".click-wheel").focus();
   await page.keyboard.down("ArrowRight");
+  await expect(
+    live(page).locator(".screen-playing-link .icon-seek-forward"),
+  ).toHaveCount(1);
   await expect
     .poll(() =>
       live(page).getByRole("progressbar").getAttribute("aria-valuenow"),
@@ -416,4 +433,161 @@ test("LCD geometry and narrow menu scrolling remain aligned to the original hard
   await choose(page, "背景");
   await choose(page, "深色");
   await expect(page.locator("main")).toHaveAttribute("data-background", "dark");
+});
+
+test("Cover Flow flips the selected cover into an overlaid album sheet, including interruptions", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/");
+  await choose(page, "音乐");
+  await choose(page, "Cover Flow");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await key(page, "Enter");
+  const panel = live(page).locator(".cf-album-panel");
+  const motion = await panel.evaluate((element) => {
+    const animation = element.getAnimations()[0];
+    const viewport = document
+      .querySelector(".screen-viewport")!
+      .getBoundingClientRect();
+    const bounds = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      duration: animation.effect!.getTiming().duration,
+      frames: animation.effect!.getKeyframes().map((frame) => frame.transform),
+      layoutWidth: parseFloat(style.width),
+      viewportWidth: viewport.width,
+      coverStillPresent: !!document.querySelector(
+        '.screen-outgoing .cf-card[aria-current="true"]',
+      ),
+      pageSlides: document
+        .querySelector(".screen-viewport > .screen-content")!
+        .getAnimations().length,
+    };
+  });
+  expect(motion.duration).toBe(560);
+  expect(motion.frames[0]).toContain("rotateY(-90deg)");
+  expect(motion.frames.at(-1)).toContain("rotateY(0deg)");
+  expect(motion.layoutWidth / motion.viewportWidth).toBeCloseTo(0.8, 2);
+  expect(motion.coverStillPresent).toBe(true);
+  expect(motion.pageSlides).toBe(0);
+  await key(page, "Escape");
+  await key(page, "Enter");
+  await key(page, "Escape");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await expect(live(page).locator(".cf-album-panel")).toHaveCount(0);
+  await expect(
+    live(page).locator('.cf-card[aria-current="true"]'),
+  ).toHaveAttribute("aria-label", /Carefree/);
+  expect(errors).toEqual([]);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await key(page, "Enter");
+  await expect(panel).toBeVisible();
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+});
+
+test("playback controls share one bottom bay without moving the cover or creating LCD buttons", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await key(page, "Space");
+  const cover = live(page).locator(".np-cover");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  const original = await cover.boundingBox();
+  await expect(live(page).getByRole("progressbar")).toHaveAttribute(
+    "aria-valuemax",
+    /205/,
+  );
+  const line = await live(page)
+    .locator(".screen-progress")
+    .evaluate((element) => {
+      const times = [...element.querySelectorAll(":scope > span")].map((item) =>
+        item.getBoundingClientRect(),
+      );
+      const bar = element
+        .querySelector(".firmware-progress")!
+        .getBoundingClientRect();
+      return times.every(
+        (time) => time.top < bar.bottom && time.bottom > bar.top,
+      );
+    });
+  expect(line).toBe(true);
+  await key(page, "Enter");
+  await key(page, "ArrowDown");
+  await expect(
+    live(page).locator('.firmware-progress[data-seeking="true"] b'),
+  ).toHaveCount(1);
+  await key(page, "Enter");
+  await key(page, "ArrowDown");
+  await expect(
+    live(page)
+      .getByRole("group", { name: "重复播放", exact: true })
+      .locator('[aria-current="true"]'),
+  ).toHaveText("全部");
+  await key(page, "ArrowDown");
+  await key(page, "ArrowDown");
+  await expect(live(page).locator(".np-repeat-options .chosen")).toHaveText(
+    "单曲",
+  );
+  await key(page, "Enter");
+  await key(page, "ArrowDown");
+  await expect(live(page).locator(".np-shuffle-options .chosen")).toHaveText(
+    "歌曲",
+  );
+  await key(page, "Enter");
+  await key(page, "ArrowDown");
+  await expect(live(page).locator(".classic-rating .chosen")).toHaveCount(1);
+  const after = await cover.boundingBox();
+  expect(after!.x).toBeCloseTo(original!.x, 1);
+  expect(after!.y).toBeCloseTo(original!.y, 1);
+  await key(page, "Enter");
+  await key(page, "ArrowDown");
+  await expect(live(page).locator(".classic-volume")).toBeVisible();
+  await expect(live(page).getByRole("progressbar")).toHaveCount(0);
+  await expect(live(page).locator(".classic-volume")).toHaveCount(0);
+  await expect(live(page).getByRole("progressbar")).toBeVisible();
+  expect(
+    await page
+      .locator(".screen-glass button,.screen-glass input,.screen-glass a")
+      .count(),
+  ).toBe(0);
+});
+
+test("a physical or keyboard confirmation emits one press and one release click", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "reipod-appearance",
+      JSON.stringify({ clickSound: true }),
+    );
+    const Original = window.AudioContext;
+    (window as any).clickFrequencies = [];
+    window.AudioContext = class extends Original {
+      createOscillator() {
+        const oscillator = super.createOscillator();
+        const set = oscillator.frequency.setValueAtTime.bind(
+          oscillator.frequency,
+        );
+        oscillator.frequency.setValueAtTime = (
+          value: number,
+          start: number,
+        ) => {
+          (window as any).clickFrequencies.push(value);
+          return set(value, start);
+        };
+        return oscillator;
+      }
+    };
+  });
+  await page.goto("/");
+  await key(page, "Enter");
+  expect(await page.evaluate(() => (window as any).clickFrequencies)).toEqual([
+    650, 1350,
+  ]);
+  await page.locator(".wheel-select").click();
+  expect(await page.evaluate(() => (window as any).clickFrequencies)).toEqual([
+    650, 1350, 650, 1350,
+  ]);
 });
