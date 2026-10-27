@@ -4,8 +4,6 @@ import type { Track } from "../player/Player";
 import type { MenuPreviewSpec } from "./menuPreviewModel";
 import { AlbumPreview } from "./AlbumPreview";
 import { ClassicGlyph } from "./ClassicGlyph";
-import { MarqueeText } from "./MarqueeText";
-import { AlbumArt } from "./AlbumArt";
 
 export function MenuPreview({
   spec,
@@ -30,6 +28,17 @@ export function MenuPreview({
     albums.find((album) =>
       album.tracks.some((track) => track.id === current?.id),
     )?.artwork;
+  const playingAlbum: Album | undefined =
+    spec.kind === "playing" && current
+      ? {
+          id: current.id,
+          title: current.album || current.title,
+          artist: current.artist || "未知艺人",
+          artwork: playingArtwork,
+          tracks: [current],
+        }
+      : undefined;
+  const showArtwork = covers || !!playingAlbum;
   const [storage, setStorage] = useState<{
     quota: number;
     usage: number;
@@ -60,63 +69,43 @@ export function MenuPreview({
       <AlbumPreview
         albums={albums}
         initialAlbumId={initialAlbumId}
-        enabled={covers}
+        pinnedAlbum={playingAlbum}
+        enabled={showArtwork}
         suspended={suspended}
       />
-      {!covers && (
+      {!showArtwork && (
         <div
-          className={`menu-preview-card ${spec.kind === "playing" ? "is-playing-preview" : ""}`}
+          className="menu-preview-card"
           key={`${spec.kind}:${spec.icon}:${spec.title}`}
         >
-          {spec.kind === "playing" && current ? (
-            <>
-              <div className="preview-now-art">
-                <AlbumArt
-                  src={playingArtwork}
-                  title={current.album || current.title}
-                  artist={current.artist}
-                />
-              </div>
-              <strong>
-                <MarqueeText text={current.title} active />
-              </strong>
-              <span>
-                <MarqueeText text={current.artist || "未知艺人"} active />
-              </span>
-              <span>
-                <MarqueeText text={current.album || "未知专辑"} active />
-              </span>
-            </>
-          ) : (
-            <>
-              <ClassicGlyph name={spec.icon} />
-              <strong>{spec.title}</strong>
-              {spec.icon === "shuffle" && (
-                <span>{spec.detail ?? `${count} 首歌曲`}</span>
-              )}
-              {spec.icon === "settings" ? (
-                <>
-                  {storage && (
-                    <div className="preview-storage" title="浏览器存储用量">
-                      <i
-                        style={{
-                          width: `${Math.min(100, (storage.usage / storage.quota) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  )}
-                  <span>
-                    {storage
-                      ? `${Math.max(0, (storage.quota - storage.usage) / 1024 ** 3).toFixed(1)} GB 可用`
-                      : `${size} 本地音乐`}
-                  </span>
-                </>
-              ) : (
-                spec.icon !== "shuffle" &&
-                spec.detail && <span>{spec.detail}</span>
-              )}
-            </>
-          )}
+          <>
+            <ClassicGlyph name={spec.icon} />
+            <strong>{spec.title}</strong>
+            {spec.icon === "shuffle" && (
+              <span>{spec.detail ?? `${count} 首歌曲`}</span>
+            )}
+            {spec.icon === "settings" ? (
+              <>
+                {storage && (
+                  <div className="preview-storage" title="浏览器存储用量">
+                    <i
+                      style={{
+                        width: `${Math.min(100, (storage.usage / storage.quota) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                )}
+                <span>
+                  {storage
+                    ? `${Math.max(0, (storage.quota - storage.usage) / 1024 ** 3).toFixed(1)} GB 可用`
+                    : `${size} 本地音乐`}
+                </span>
+              </>
+            ) : (
+              spec.icon !== "shuffle" &&
+              spec.detail && <span>{spec.detail}</span>
+            )}
+          </>
         </div>
       )}
     </aside>

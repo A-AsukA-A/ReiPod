@@ -970,27 +970,6 @@
   margin-bottom: calc(var(--lcd-unit) * 8);
   filter: drop-shadow(0 1px 0 #eff6ffa6) drop-shadow(0 3px 2px #24374769);
 }
-.is-playing-preview {
-  padding-top: calc(var(--lcd-unit) * 24);
-  gap: calc(var(--lcd-unit) * 6);
-}
-.preview-now-art {
-  flex-shrink: 0;
-  width: calc(var(--lcd-unit) * 110);
-  height: calc(var(--lcd-unit) * 110);
-  margin-bottom: calc(var(--lcd-unit) * 8);
-}
-.preview-now-art > .album-art {
-  width: 100%;
-  height: 100%;
-}
-.is-playing-preview > :is(strong, span) {
-  width: 100%;
-  min-width: 0;
-}
-.is-playing-preview .marquee-window {
-  display: block;
-}
 .preview-storage {
   height: calc(var(--lcd-unit) * 9);
   width: 85%;

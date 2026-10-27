@@ -10,6 +10,7 @@ const CROSSFADE = classicMotion.previewFade;
 export function AlbumPreview({
   albums,
   initialAlbumId,
+  pinnedAlbum,
   enabled = true,
   suspended = false,
 }: {
@@ -17,6 +18,7 @@ export function AlbumPreview({
   suspended?: boolean;
   albums: Album[];
   initialAlbumId?: string;
+  pinnedAlbum?: Album;
 }) {
   const [id, setId] = useState(initialAlbumId ?? albums[0]?.id);
   const [previous, setPrevious] = useState<Album | null>(null);
@@ -28,7 +30,8 @@ export function AlbumPreview({
   );
   const catalog = useRef(albums);
   catalog.current = albums;
-  const album = albums.find((entry) => entry.id === id) ?? albums[0];
+  const album =
+    pinnedAlbum ?? albums.find((entry) => entry.id === id) ?? albums[0];
   const albumId = album?.id;
   const albumIds = JSON.stringify(albums.map((entry) => entry.id));
 
@@ -48,7 +51,14 @@ export function AlbumPreview({
     if (initialAlbumId) setId(initialAlbumId);
   }, [initialAlbumId]);
   useEffect(() => {
-    if (!enabled || suspended || !visible || reduced || albums.length < 2)
+    if (
+      pinnedAlbum ||
+      !enabled ||
+      suspended ||
+      !visible ||
+      reduced ||
+      albums.length < 2
+    )
       return;
     const timer = setTimeout(() => {
       const latest = catalog.current;
@@ -59,7 +69,16 @@ export function AlbumPreview({
       setId(next.id);
     }, INTERVAL);
     return () => clearTimeout(timer);
-  }, [albumIds, albumId, visible, reduced, albums.length, enabled, suspended]);
+  }, [
+    albumIds,
+    albumId,
+    visible,
+    reduced,
+    albums.length,
+    enabled,
+    suspended,
+    pinnedAlbum,
+  ]);
   useEffect(() => {
     if (!previous) return;
     const timer = setTimeout(() => setPrevious(null), CROSSFADE);
@@ -68,6 +87,7 @@ export function AlbumPreview({
 
   // Keep only valid covers: deleting an album can revoke its image URL.
   const outgoing =
+    !pinnedAlbum &&
     previous &&
     previous.id !== albumId &&
     albums.some((entry) => entry.id === previous.id)
@@ -76,7 +96,7 @@ export function AlbumPreview({
   return (
     <aside
       className="screen-preview album-preview"
-      aria-label="专辑封面轮播"
+      aria-label={pinnedAlbum ? "正在播放封面" : "专辑封面轮播"}
       data-album-id={albumId}
       data-paused={!enabled || suspended || !visible || reduced}
       aria-hidden={!enabled}

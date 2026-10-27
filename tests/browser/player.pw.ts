@@ -4,10 +4,20 @@ import { join } from "node:path";
 import { live, key, home, choose, holdCenter, text } from "./dial";
 import { taggedAudio } from "./taggedAudio";
 
-test("Now Playing home preview follows the current artwork and metadata while paused or changing tracks", async ({
+test("Now Playing uses the carousel's full-pane artwork style and stays on the current track", async ({
   page,
 }) => {
   await page.goto("/");
+  const carousel = live(page).getByLabel("专辑封面轮播");
+  const carouselBounds = await carousel
+    .locator(".album-preview-stage")
+    .boundingBox();
+  const carouselMotion = await carousel
+    .locator(".preview-cover-current > .album-art")
+    .evaluate((el) => {
+      const css = getComputedStyle(el);
+      return { name: css.animationName, duration: css.animationDuration };
+    });
   await key(page, "Space");
   await expect(live(page).locator(".np-cover img").first()).toHaveAttribute(
     "src",
@@ -20,31 +30,31 @@ test("Now Playing home preview follows the current artwork and metadata while pa
     /carefree/,
   );
   await key(page, "Escape");
-  const preview = live(page).locator(".is-playing-preview");
-  await expect(preview.locator(".glyph-music")).toHaveCount(0);
-  await expect(preview.locator(".preview-now-art img")).toHaveAttribute(
-    "src",
-    /carefree/,
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  const preview = live(page).getByLabel("正在播放封面");
+  await expect(live(page).locator(".menu-preview-card")).toHaveCount(0);
+  expect(await preview.locator(".album-preview-stage").boundingBox()).toEqual(
+    carouselBounds,
   );
-  await expect(preview.locator("strong")).toHaveText("Carefree");
-  await expect(preview.locator(":scope > span")).toHaveText([
-    "Kevin MacLeod",
-    "Carefree",
-  ]);
+  expect(
+    await preview
+      .locator(".preview-cover-current > .album-art")
+      .evaluate((el) => {
+        const css = getComputedStyle(el);
+        return { name: css.animationName, duration: css.animationDuration };
+      }),
+  ).toEqual(carouselMotion);
+  await expect(preview.locator("img")).toHaveAttribute("src", /carefree/);
   await key(page, "ArrowRight");
-  await expect(preview.locator("strong")).toHaveText(
-    "Monkeys Spinning Monkeys",
-  );
-  await expect(preview.locator(":scope > span").last()).toHaveText(
-    "Monkeys Spinning Monkeys",
-  );
-  await expect(preview.locator(".preview-now-art img")).toHaveAttribute(
+  await expect(preview.locator("img")).toHaveAttribute(
     "src",
     /monkeys-spinning-monkeys/,
   );
   await key(page, "Space");
   await expect(preview).toBeVisible();
-  await expect(preview.locator(".preview-now-art img")).toHaveAttribute(
+  // A full carousel interval must not replace the current song with unrelated art.
+  await page.waitForTimeout(6500);
+  await expect(preview.locator("img")).toHaveAttribute(
     "src",
     /monkeys-spinning-monkeys/,
   );
@@ -52,6 +62,12 @@ test("Now Playing home preview follows the current artwork and metadata while pa
   await page
     .locator(".screen-glass")
     .screenshot({ path: ".local/screenshots/now-playing-home-preview.png" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(preview).toBeVisible();
+  const paneBounds = await live(page).locator(".menu-preview").boundingBox();
+  expect(await preview.locator(".album-preview-stage").boundingBox()).toEqual(
+    paneBounds,
+  );
 });
 
 test("the LCD ignores clicks, hover and direct screen commands; wheel notches move one row", async ({
