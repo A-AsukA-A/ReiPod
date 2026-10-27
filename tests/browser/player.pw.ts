@@ -272,3 +272,100 @@ test("imported files resume at their saved time while paused, and single-track d
   await page.getByRole("searchbox", { name: "搜索音乐" }).fill("Resume test");
   await expect(live(page).locator(".track-row")).toHaveCount(0);
 });
+
+test("right-hand album preview rotates independently, pauses, and opens an album without playing it", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.goto("/");
+  const preview = live(page).getByLabel("专辑封面轮播", { exact: true });
+  await expect(preview).toHaveAttribute("data-album-id", /Carefree/);
+  const initial = await preview.getAttribute("data-album-id");
+  await page.clock.runFor(2000);
+  await page.locator(".click-wheel").focus();
+  await page.keyboard.press("ArrowDown");
+  const selection = await live(page)
+    .locator('.screen-menu [aria-current="true"]')
+    .textContent();
+  await page.clock.runFor(2500);
+  await expect(preview).not.toHaveAttribute("data-album-id", initial!);
+  await expect(
+    live(page).locator('.screen-menu [aria-current="true"]'),
+  ).toHaveText(selection!);
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem("reipod-session")!)?.currentId,
+    ),
+  ).toBeNull();
+  await page.clock.runFor(400);
+  await expect(preview.locator(".preview-cover-outgoing")).toHaveCount(0);
+  const rotated = await preview.getAttribute("data-album-id");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(preview).toHaveAttribute("data-paused", "true");
+  await page.clock.runFor(10000);
+  await expect(preview).toHaveAttribute("data-album-id", rotated!);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(preview).toHaveAttribute("data-paused", "false");
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(preview).toHaveAttribute("data-paused", "true");
+  await page.clock.runFor(10000);
+  await expect(preview).toHaveAttribute("data-album-id", rotated!);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(preview).toHaveAttribute("data-paused", "false");
+  await page.clock.runFor(4500);
+  await expect(preview).not.toHaveAttribute("data-album-id", rotated!);
+  const album = await preview
+    .locator(".album-preview-caption strong")
+    .textContent();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await preview
+    .getByRole("button", { name: `打开专辑 ${album}`, exact: true })
+    .click();
+  await expect(page.locator(".lcd-screen")).toHaveAttribute(
+    "data-page",
+    "album-tracks",
+  );
+  await expect(page.locator(".screen-status > strong")).toHaveText(album!);
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem("reipod-session")!)?.currentId,
+    ),
+  ).toBeNull();
+});
+
+test("the album preview handles an empty library and holds a single cover without repeated transitions", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.addInitScript(() =>
+    localStorage.setItem("reipod-demos", "hidden"),
+  );
+  await page.goto("/");
+  const preview = live(page).getByLabel("专辑封面轮播", { exact: true });
+  await expect(preview).toContainText("导入音乐后在这里自动展示");
+  await page
+    .locator("#audio-files")
+    .setInputFiles({
+      name: "One album.wav",
+      mimeType: "audio/wav",
+      buffer: silentWav(),
+    });
+  await home(page);
+  await expect(preview.locator(".generated-cover")).toHaveCount(1);
+  const album = await preview.getAttribute("data-album-id");
+  await page.clock.runFor(18000);
+  await expect(preview).toHaveAttribute("data-album-id", album!);
+  await expect(preview.locator(".preview-cover-outgoing")).toHaveCount(0);
+});

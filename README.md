@@ -8,6 +8,8 @@ A classic-style local music player built with React and TypeScript. The interfac
 
 Choose **导入音乐** on the player's screen and select audio files from your device. The player reads song titles, artists, albums, track numbers and embedded artwork. Browse albums in **Cover Flow**, or open **音乐** for artists, albums, songs, favorites and recently added music. Selecting a song plays the corresponding list; playing an album keeps its own queue.
 
+The main and music menus automatically cycle album covers in the right pane every 4.5 seconds, with a slow pan and crossfade. Moving the wheel does not restart the carousel. Tap a cover to browse its album without starting playback. A single album stays on screen; the carousel pauses in background tabs and when reduced motion is enabled.
+
 Open **音乐 → 搜索** to match song titles, artists, albums or filenames. Multiple words narrow the results together. Press Enter in the search field to move focus to the wheel; select a result to play the matching list.
 
 Under **音乐 → 播放列表**, **新建歌单…** creates a browser-local playlist. Open it and choose **添加歌曲** or **管理歌单…** to toggle membership, rename or delete it. **完成选择** returns to the playlist. Deleting a playlist keeps its songs in the library. The **歌曲选项** control in a song list or the playing view can favorite a track, play it next, add it to a playlist or remove it from the library. Removal requires confirmation and affects only this browser's stored copy. Deleted built-in tracks stay removed until **试听音乐** adds them again.
