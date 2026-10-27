@@ -16,27 +16,26 @@ import {
   initializeLibrary,
   onLibraryNotice,
   player,
-  removeTrack,
   usePlayer,
 } from "./player/store";
-import type { PlaybackStatus } from "./player/Player";
 import { albumsFor, artistsFor } from "./player/library";
-import { initialNavigation, navigationReducer } from "./ui/navigation";
+import {
+  initialNavigation,
+  navigationReducer,
+  splitPages,
+} from "./ui/navigation";
 import type { Page } from "./ui/navigation";
-import { SeekSlider } from "./ui/SeekSlider";
 import { AlbumArt } from "./ui/AlbumArt";
 import { CoverFlow } from "./ui/CoverFlow";
 import { MenuPreview } from "./ui/MenuPreview";
-import { menuPreview } from "./ui/menuPreview";
+import { menuPreview } from "./ui/menuPreviewModel";
 import { BatteryIndicator } from "./ui/BatteryIndicator";
 import { backlightTimes, optionalMainItems } from "./ui/classicSettings";
 import { useBacklight } from "./ui/useBacklight";
 import { ClassicClock } from "./ui/ClassicClock";
 import { ClassicGlyph } from "./ui/ClassicGlyph";
-import { Lyrics } from "./ui/Lyrics";
 import { setPreferences, usePreferences } from "./ui/preferences";
 import { PlayerIcon } from "./ui/PlayerIcon";
-import { MarqueeText } from "./ui/MarqueeText";
 import { useLcdMotion } from "./ui/useLcdMotion";
 import { searchTracks } from "./player/search";
 import { useRatings, setRating } from "./player/ratings";
@@ -44,53 +43,47 @@ import {
   usePlaylists,
   createPlaylist,
   renamePlaylist,
-  deletePlaylist,
-  togglePlaylistTrack,
-  removePlaylistTrack,
-  addToOnTheGo,
 } from "./player/playlists";
 
-type MenuItem = {
-  key: string;
-  label: string;
-  detail?: string;
-  value?: string;
-  artwork?: string;
-  disabled?: boolean;
-  leaf?: boolean;
-  action: () => void;
-};
-type PlayView = "art" | "seek" | "shuffle" | "rating" | "lyrics";
-const playViewLabels: Record<PlayView, string> = {
-  art: "封面",
-  seek: "进度",
-  shuffle: "随机播放",
-  rating: "歌曲评分",
-  lyrics: "歌词",
-};
-const statusText: Record<PlaybackStatus, string> = {
-  idle: "未播放",
-  loading: "正在载入",
-  playing: "正在播放",
-  paused: "已暂停",
-  buffering: "正在缓冲",
-  ended: "播放完毕",
-  error: "无法播放",
-};
-const repeatText = { off: "关闭", all: "全部", one: "单曲" };
+import { MenuRows } from "./ui/MenuRows";
+import type { MenuItem } from "./ui/MenuRows";
+import { createPrimaryMenus, repeatText } from "./ui/primaryMenus";
+
+import { NowPlayingScreen } from "./ui/NowPlayingScreen";
+import type { PlayView } from "./ui/NowPlayingScreen";
+import { createMediaMenus } from "./ui/mediaMenus";
+import { createLibraryMenus } from "./ui/libraryMenus";
+import { FileImports } from "./ui/FileImports";
+import { ReadOnlyScreen } from "./ui/ReadOnlyScreen";
+import { settingChoices } from "./ui/settingChoices";
+import { restorePhotos, usePhotos } from "./media/photos";
+import { usePodcastIds, playPodcast } from "./media/podcasts";
+import { PhotoScreen } from "./ui/PhotoScreen";
+import { useWheelTextEntry, WheelTextEntry } from "./ui/WheelTextEntry";
 
 export function App() {
   const state = usePlayer();
   const prefs = usePreferences();
   const playlists = usePlaylists();
   const ratings = useRatings();
+  const photos = usePhotos();
+  const podcastIds = usePodcastIds();
+  const musicTracks = useMemo(
+    () => state.tracks.filter((track) => !podcastIds.includes(track.id)),
+    [state.tracks, podcastIds],
+  );
+  const podcastTracks = useMemo(
+    () => state.tracks.filter((track) => podcastIds.includes(track.id)),
+    [state.tracks, podcastIds],
+  );
+  const podcastShows = useMemo(() => albumsFor(podcastTracks), [podcastTracks]);
   const trackById = useMemo(
     () => new Map(state.tracks.map((track) => [track.id, track])),
     [state.tracks],
   );
   const current = state.currentId ? trackById.get(state.currentId) : undefined;
-  const albums = useMemo(() => albumsFor(state.tracks), [state.tracks]);
-  const artists = useMemo(() => artistsFor(state.tracks), [state.tracks]);
+  const albums = useMemo(() => albumsFor(musicTracks), [musicTracks]);
+  const artists = useMemo(() => artistsFor(musicTracks), [musicTracks]);
   const [navigation, dispatch] = useReducer(
     navigationReducer,
     initialNavigation,
@@ -106,22 +99,35 @@ export function App() {
   const [playlistName, setPlaylistName] = useState("");
   const [contextPlaylist, setContextPlaylist] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [dragging, setDragging] = useState(false);
   const [playView, setPlayView] = useState<PlayView>("art");
   const [lyricWheel, setLyricWheel] = useState(0);
   const [volumeOverlay, setVolumeOverlay] = useState(false);
+  const [slideshow, setSlideshow] = useState(false);
+  const textEntry = useWheelTextEntry(
+    state.tracks
+      .map((track) => `${track.title}${track.artist ?? ""}${track.album ?? ""}`)
+      .join(""),
+  );
   const input = useRef<HTMLInputElement>(null);
-  const selectedRow = useRef<HTMLButtonElement>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const podcastInput = useRef<HTMLInputElement>(null);
+  const selectedRow = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
-  const dragDepth = useRef(0);
   const capture = useLcdMotion(
     content,
-    `${page}:${groupKey ?? ""}:${page === "playing" && playView === "lyrics" ? "lyrics" : "page"}`,
+    `${page}:${groupKey ?? ""}:${page === "playing" && playView === "lyrics" ? "lyrics" : page === "photo-full" ? navigation.screen.selectedKey : "page"}`,
   );
   const active = state.status === "playing";
   const busy = state.status === "loading" || state.status === "buffering";
   const selectedAlbum = albums.find((album) => album.id === groupKey);
   const selectedPlaylist = playlists.find((item) => item.id === groupKey);
+  const activePhotos = useMemo(
+    () =>
+      groupKey && !["photo-options", "photo-delete"].includes(page)
+        ? photos.filter((photo) => photo.album === groupKey)
+        : photos,
+    [photos, groupKey, page],
+  );
   const optionTrack = groupKey ? trackById.get(groupKey) : undefined;
   const playlistTrackIds = useMemo(
     () => new Set(selectedPlaylist?.trackIds ?? []),
@@ -138,9 +144,29 @@ export function App() {
     "playlist-tracks",
     "playlist-add-tracks",
     "search",
+    "coverflow-album",
+    "podcast-episodes",
+    "genre-tracks",
+    "composer-tracks",
   ];
   const isTrackList = trackPages.includes(page);
   const visibleTracks = useMemo(() => {
+    if (page === "genre-tracks" || page === "composer-tracks")
+      return musicTracks.filter((track) => {
+        const values = page === "genre-tracks" ? track.genres : track.composers;
+        return (
+          values?.length
+            ? values
+            : [page === "genre-tracks" ? "未知风格" : "未知作曲者"]
+        ).includes(groupKey ?? "");
+      });
+    if (page === "podcast-episodes")
+      return (
+        podcastShows
+          .find((show) => show.id === groupKey)
+          ?.tracks.slice()
+          .sort((a, b) => (b.importedAt ?? 0) - (a.importedAt ?? 0)) ?? []
+      );
     if (page === "search") return searchTracks(state.tracks, query);
     if (page === "playlist-tracks") {
       return (selectedPlaylist?.trackIds ?? []).flatMap(
@@ -151,7 +177,7 @@ export function App() {
       return state.queue.flatMap((id) => trackById.get(id) ?? []);
     if (page === "demos")
       return state.tracks.filter((track) => track.kind === "demo");
-    if (page === "album-tracks")
+    if (page === "album-tracks" || page === "coverflow-album")
       return albums.find((album) => album.id === groupKey)?.tracks ?? [];
     if (page === "artist-tracks")
       return state.tracks.filter(
@@ -163,7 +189,7 @@ export function App() {
       return [...state.tracks].sort(
         (a, b) => (b.importedAt ?? 0) - (a.importedAt ?? 0),
       );
-    return state.tracks;
+    return musicTracks;
   }, [
     page,
     groupKey,
@@ -174,6 +200,8 @@ export function App() {
     query,
     selectedPlaylist,
     trackById,
+    musicTracks,
+    podcastShows,
   ]);
   const visibleIds = useMemo(
     () => new Set(visibleTracks.map((track) => track.id)),
@@ -200,7 +228,8 @@ export function App() {
                   : target === "playlists"
                     ? "all"
                     : (latest.currentId ?? latest.tracks[0]?.id ?? "import");
-    if (target !== page || group !== groupKey) capture("forward");
+    if (target !== page || group !== groupKey)
+      capture("forward", splitPages.has(page) && splitPages.has(target));
     dispatch({
       type: "open",
       page: target,
@@ -211,7 +240,13 @@ export function App() {
     setNotice("");
   };
   const back = (levels = 1) => {
-    if (navigation.history.length) capture("back");
+    if (page === "photo-full") setSlideshow(false);
+    if (navigation.history.length)
+      capture(
+        "back",
+        splitPages.has(page) &&
+          splitPages.has(navigation.history.at(-levels)?.page ?? "home"),
+      );
     dispatch({ type: "back", levels });
     setNotice("");
   };
@@ -245,6 +280,12 @@ export function App() {
     id: string,
     queue = visibleTracks.map((track) => track.id),
   ) => {
+    if (podcastIds.includes(id)) {
+      playPodcast(id, queue);
+      setPlayView("art");
+      open("playing");
+      return;
+    }
     player.activate(
       id,
       page === "queue" ? undefined : queue.length ? queue : undefined,
@@ -293,6 +334,7 @@ export function App() {
     );
   };
   const editName = (id?: string) => {
+    textEntry.begin();
     setPlaylistName(playlists.find((item) => item.id === id)?.name ?? "");
     open("playlist-name", "save", id);
   };
@@ -317,210 +359,26 @@ export function App() {
     setContextPlaylist(page === "playlist-tracks" ? (groupKey ?? null) : null);
     open("track-options", "favorite", id);
   };
-  const allHomeItems: MenuItem[] = [
-    {
-      key: "music",
-      label: "音乐",
-      detail: `${state.tracks.length} 首歌曲`,
-      action: () => open("music"),
-    },
-    {
-      key: "coverflow",
-      label: "Cover Flow",
-      detail: `${albums.length} 张专辑`,
-      action: () => open("coverflow"),
-    },
-    {
-      key: "settings",
-      label: "设置",
-      detail: "声音与外观",
-      action: () => open("settings"),
-    },
-    {
-      key: "shuffle-all",
-      label: "随机播放歌曲",
-      detail: `${state.tracks.length} 首歌曲`,
-      leaf: true,
-      action: shuffleAll,
-    },
-    {
-      key: "import",
-      label: "导入音乐",
-      detail: "音频 / LRC",
-      leaf: true,
-      action: openFiles,
-    },
-    {
-      key: "demo",
-      label: "试听音乐",
-      detail: "内置音乐精选",
-      action: loadDemos,
-    },
-    {
-      key: "extras",
-      label: "附加功能",
-      detail: "时钟",
-      action: () => open("extras", "clock"),
-    },
-    ...(current
-      ? [
-          {
-            key: "playing",
-            label: "正在播放",
-            detail: current.title,
-            action: () => open("playing"),
-          },
-        ]
-      : []),
-  ];
-  const homeItems = allHomeItems.filter(
-    (item) =>
-      item.key === "music" ||
-      item.key === "settings" ||
-      prefs.mainMenu.includes(item.key),
-  );
-  const musicItems: MenuItem[] = [
-    { key: "playlists", label: "播放列表", action: () => open("playlists") },
-    {
-      key: "artists",
-      label: "艺人",
-      value: `${artists.length}`,
-      action: () => open("artists"),
-    },
-    {
-      key: "albums",
-      label: "专辑",
-      value: `${albums.length}`,
-      action: () => open("albums"),
-    },
-    {
-      key: "songs",
-      label: "歌曲",
-      value: `${state.tracks.length}`,
-      action: () => open("songs"),
-    },
-    { key: "search", label: "搜索", action: () => open("search") },
-    {
-      key: "shuffle-all",
-      label: "随机播放所有",
-      leaf: true,
-      action: shuffleAll,
-    },
-    { key: "import", label: "导入音乐", action: openFiles },
-  ];
-  const playlistItems: MenuItem[] = [
-    {
-      key: "all",
-      label: "全部歌曲",
-      value: `${state.tracks.length}`,
-      action: () => open("songs"),
-    },
-    {
-      key: "favorites",
-      label: "我的收藏",
-      value: `${state.favorites.filter((id) => trackById.has(id)).length}`,
-      action: () => open("favorites"),
-    },
-    { key: "recent", label: "最近添加", action: () => open("recent") },
-    { key: "demo", label: "试听精选", action: loadDemos },
-    ...playlists.map((item) => ({
-      key: item.id,
-      label: item.name,
-      value: `${item.trackIds.filter((id) => trackById.has(id)).length}`,
-      action: () => open("playlist-tracks", undefined, item.id),
-    })),
-    { key: "new-playlist", label: "新建歌单…", action: () => editName() },
-  ];
-  const settingsItems: MenuItem[] = [
-    { key: "about", label: "关于本机", action: () => open("about", "done") },
-    {
-      key: "shuffle",
-      leaf: true,
-      label: "随机播放",
-      value: state.shuffle ? "开启" : "关闭",
-      action: () => player.setShuffle(!player.getSnapshot().shuffle),
-    },
-    {
-      key: "repeat",
-      leaf: true,
-      label: "重复播放",
-      value: repeatText[state.repeat],
-      action: () =>
-        player.setRepeat(
-          state.repeat === "off"
-            ? "all"
-            : state.repeat === "all"
-              ? "one"
-              : "off",
-        ),
-    },
-    {
-      key: "main-menu",
-      label: "主菜单",
-      action: () => open("main-menu", "coverflow"),
-    },
-    {
-      key: "volume-limit",
-      label: "音量上限",
-      value: `${Math.round(prefs.volumeLimit * 100)}%`,
-      action: () => open("volume-limit", "done"),
-    },
-    {
-      key: "backlight",
-      label: "背光时间",
-      value: prefs.backlight ? `${prefs.backlight} 秒` : "始终开启",
-      action: () => open("backlight", `backlight-${prefs.backlight}`),
-    },
-    {
-      key: "brightness",
-      label: "亮度",
-      value: `${Math.round(prefs.brightness * 100)}%`,
-      action: () => open("brightness", "done"),
-    },
-    {
-      key: "click",
-      leaf: true,
-      label: "转轮声音",
-      value: prefs.clickSound ? "开启" : "关闭",
-      action: () => setPreferences({ clickSound: !prefs.clickSound }),
-    },
-    {
-      key: "finish",
-      leaf: true,
-      label: "机身颜色",
-      value: prefs.finish === "silver" ? "银色" : "黑色",
-      action: () =>
-        setPreferences({
-          finish: prefs.finish === "silver" ? "black" : "silver",
-        }),
-    },
-    {
-      key: "background",
-      leaf: true,
-      label: "背景",
-      value: prefs.background === "warm" ? "浅色" : "深色",
-      action: () =>
-        setPreferences({
-          background: prefs.background === "warm" ? "dark" : "warm",
-        }),
-    },
-    {
-      key: "clear",
-      label: "清空资料库",
-      disabled: !state.tracks.length,
-      action: () => open("confirm-clear", "cancel"),
-    },
-    {
-      key: "licenses",
-      label: "开源许可",
-      action: () => openDocument("third-party-licenses.txt"),
-    },
-    {
-      key: "credits",
-      label: "试听曲目版权",
-      action: () => openDocument("music/credits.txt"),
-    },
-  ];
+  const { homeItems, musicItems, playlistItems, settingsItems } =
+    createPrimaryMenus({
+      state,
+      prefs,
+      albums,
+      artists,
+      photoCount: photos.length,
+      podcastShows,
+      musicCount: musicTracks.length,
+      current,
+      playlists,
+      trackById,
+      open,
+      shuffleAll,
+      openFiles,
+      loadDemos,
+      editName,
+      openDocument,
+      beginText: textEntry.begin,
+    });
   const emptyItems: MenuItem[] = [
     { key: "import", label: "导入音乐", action: openFiles },
     { key: "demo", label: "试听音乐", action: loadDemos },
@@ -538,7 +396,80 @@ export function App() {
       },
     },
   ];
+  const choices = settingChoices(
+    prefs,
+    state,
+    setPreferences,
+    (value) => player.setShuffle(value),
+    (value) => player.setRepeat(value),
+  );
+  const splitMenu = [
+    "settings",
+    "photos",
+    "podcasts",
+    ...Object.keys(choices),
+  ].includes(page);
+  const photoIndex = Math.max(
+    0,
+    activePhotos.findIndex(
+      (photo) => photo.id === navigation.screen.selectedKey,
+    ),
+  );
   const managedRows: Partial<Record<Page, MenuItem[]>> = {
+    genres: [
+      ...new Set(
+        musicTracks.flatMap((track) =>
+          track.genres?.length ? track.genres : ["未知风格"],
+        ),
+      ),
+    ]
+      .sort()
+      .map((name) => ({
+        key: name,
+        label: name,
+        action: () => open("genre-tracks", undefined, name),
+      })),
+    composers: [
+      ...new Set(
+        musicTracks.flatMap((track) =>
+          track.composers?.length ? track.composers : ["未知作曲者"],
+        ),
+      ),
+    ]
+      .sort()
+      .map((name) => ({
+        key: name,
+        label: name,
+        action: () => open("composer-tracks", undefined, name),
+      })),
+    ...Object.fromEntries(
+      Object.entries(choices).map(([name, items]) => [
+        name,
+        items.map((item) => ({
+          key: item.key,
+          label: item.label,
+          value: item.selected ? "✓" : undefined,
+          leaf: true,
+          action: () => {
+            item.apply();
+            back();
+          },
+        })),
+      ]),
+    ),
+    ...createMediaMenus({
+      photos,
+      activePhotos,
+      podcastShows,
+      photoInput,
+      podcastInput,
+      groupKey,
+      open,
+      back,
+      setNotice,
+      setSlideshow,
+      navigationRef,
+    }),
     about: [{ key: "done", label: "返回", action: () => back() }],
     "main-menu": [
       {
@@ -584,193 +515,27 @@ export function App() {
       { key: "clock", label: "时钟", action: () => open("clock", "done") },
     ],
     clock: [{ key: "done", label: "返回", action: () => back() }],
-    "playlist-name": [
-      {
-        key: "save",
-        label: groupKey ? "保存名称" : "创建歌单",
-        action: saveName,
-      },
-      { key: "cancel", label: "取消", action: () => back() },
-    ],
-    "playlist-options": [
-      {
-        key: "add",
-        label: "添加 / 移除歌曲",
-        action: () => open("playlist-add-tracks", undefined, groupKey),
-      },
-      { key: "rename", label: "重命名", action: () => editName(groupKey) },
-      {
-        key: "delete",
-        label: "删除歌单…",
-        action: () => open("confirm-delete-playlist", "cancel", groupKey),
-      },
-    ],
-    "playlist-tracks":
-      page === "playlist-tracks"
-        ? [
-            ...visibleTracks.map((track) => ({
-              key: track.id,
-              label: track.title,
-              action: () => playTrack(track.id),
-            })),
-            ...(!visibleTracks.length
-              ? [
-                  {
-                    key: "add",
-                    label: "添加歌曲",
-                    action: () =>
-                      open("playlist-add-tracks", undefined, groupKey),
-                  },
-                ]
-              : []),
-            {
-              key: "manage-playlist",
-              label: "管理歌单…",
-              action: () => open("playlist-options", "add", groupKey),
-            },
-          ]
-        : [],
-    "playlist-add-tracks":
-      page === "playlist-add-tracks"
-        ? [
-            ...state.tracks.map((track) => ({
-              key: track.id,
-              label: track.title,
-              value: playlistTrackIds.has(track.id) ? "✓" : "+",
-              action: () => {
-                if (groupKey && !togglePlaylistTrack(groupKey, track.id))
-                  setNotice("更改未能保存，本次仍生效");
-              },
-            })),
-            { key: "done", label: "完成选择", action: () => back() },
-          ]
-        : [],
-    "pick-playlist": [
-      ...playlists.map((item) => ({
-        key: item.id,
-        label: item.name,
-        value: item.trackIds.includes(groupKey ?? "") ? "已添加" : "+",
-        action: () => {
-          if (!groupKey) return;
-          if (item.trackIds.includes(groupKey)) {
-            setNotice("歌曲已在歌单中");
-            return;
-          }
-          const persisted = togglePlaylistTrack(item.id, groupKey);
-          back();
-          setNotice(
-            persisted ? `已加入「${item.name}」` : "更改未能保存，本次仍生效",
-          );
-        },
-      })),
-      { key: "new-playlist", label: "新建歌单…", action: () => editName() },
-    ],
-    "track-options": optionTrack
-      ? [
-          {
-            key: "favorite",
-            label: state.favorites.includes(optionTrack.id)
-              ? "取消收藏"
-              : "收藏歌曲",
-            action: () => toggleFavorite(optionTrack.id),
-          },
-          {
-            key: "play-next",
-            label: "播放下一首",
-            disabled: optionTrack.id === state.currentId,
-            action: () => {
-              player.playNext(optionTrack.id);
-              setNotice("已设为下一首播放");
-            },
-          },
-          {
-            key: "on-the-go",
-            label: "添加到 On-The-Go",
-            leaf: true,
-            action: () => {
-              const result = addToOnTheGo(optionTrack.id);
-              setNotice(
-                result.persisted
-                  ? result.added
-                    ? "已加入 On-The-Go"
-                    : "歌曲已在 On-The-Go 中"
-                  : "本次已添加，歌单未能保存",
-              );
-            },
-          },
-          {
-            key: "add-playlist",
-            label: "添加到歌单…",
-            action: () => open("pick-playlist", undefined, optionTrack.id),
-          },
-          ...(contextPlaylist
-            ? [
-                {
-                  key: "remove-playlist",
-                  label: "从此歌单移除",
-                  action: () => {
-                    const persisted = removePlaylistTrack(
-                      contextPlaylist,
-                      optionTrack.id,
-                    );
-                    back();
-                    setNotice(
-                      persisted ? "已从歌单移除" : "更改未能保存，本次仍生效",
-                    );
-                  },
-                },
-              ]
-            : []),
-          {
-            key: "delete",
-            label: "从曲库删除…",
-            action: () =>
-              open("confirm-delete-track", "cancel", optionTrack.id),
-          },
-        ]
-      : [{ key: "back", label: "歌曲已不在曲库中", action: () => back() }],
-    "confirm-delete-track": [
-      { key: "cancel", label: "取消", action: () => back() },
-      {
-        key: "confirm",
-        label: deleting ? "正在删除…" : "删除歌曲",
-        disabled: deleting,
-        action: () => {
-          if (!groupKey || deleting) return;
-          setDeleting(true);
-          void removeTrack(groupKey)
-            .then((removed) => {
-              if (removed) {
-                const screen = navigationRef.current.screen;
-                if (
-                  screen.page === "confirm-delete-track" &&
-                  screen.groupKey === groupKey
-                )
-                  back(2);
-                setNotice("歌曲已从曲库删除");
-              }
-            })
-            .finally(() => setDeleting(false));
-        },
-      },
-    ],
-    "confirm-delete-playlist": [
-      { key: "cancel", label: "取消", action: () => back() },
-      {
-        key: "confirm",
-        label: "删除歌单",
-        action: () => {
-          if (!groupKey) return;
-          const persisted = deletePlaylist(groupKey);
-          back(3);
-          setNotice(
-            persisted
-              ? "歌单已删除，歌曲仍在曲库中"
-              : "删除未能保存，本次仍生效",
-          );
-        },
-      },
-    ],
+    ...createLibraryMenus({
+      page,
+      groupKey,
+      playlists,
+      state,
+      visibleTracks,
+      playlistTrackIds,
+      optionTrack,
+      contextPlaylist,
+      deleting,
+      editName,
+      saveName,
+      beginText: textEntry.begin,
+      setDeleting,
+      setNotice,
+      open,
+      back,
+      navigationRef,
+      playTrack,
+      toggleFavorite,
+    }),
   };
   const albumRows: MenuItem[] = (
     page === "coverflow" || page === "albums" ? albums : []
@@ -780,7 +545,12 @@ export function App() {
     detail: album.artist,
     value: `${album.tracks.length}`,
     artwork: album.artwork,
-    action: () => open("album-tracks", album.tracks[0]?.id, album.id),
+    action: () =>
+      open(
+        page === "coverflow" ? "coverflow-album" : "album-tracks",
+        album.tracks[0]?.id,
+        album.id,
+      ),
   }));
   const rows: MenuItem[] =
     managedRows[page] ??
@@ -807,17 +577,36 @@ export function App() {
                       }))
                     : emptyItems
                   : isTrackList && visibleTracks.length
-                    ? visibleTracks.map((track) => ({
-                        key: track.id,
-                        label: track.title,
-                        detail: track.artist || track.album || track.filename,
-                        action: () => playTrack(track.id),
-                      }))
+                    ? [
+                        ...visibleTracks.map((track) => ({
+                          key: track.id,
+                          label: track.title,
+                          detail: track.artist || track.album || track.filename,
+                          action: () => playTrack(track.id),
+                        })),
+                        ...(page === "search"
+                          ? [
+                              {
+                                key: "edit-search",
+                                label: "修改搜索…",
+                                action: textEntry.begin,
+                              },
+                            ]
+                          : []),
+                      ]
                     : page === "favorites" ||
                         page === "search" ||
                         page === "playlist-tracks" ||
                         page === "playlist-add-tracks"
-                      ? []
+                      ? page === "search"
+                        ? [
+                            {
+                              key: "edit-search",
+                              label: "修改搜索…",
+                              action: textEntry.begin,
+                            },
+                          ]
+                        : []
                       : !current || isTrackList
                         ? emptyItems
                         : []);
@@ -838,6 +627,21 @@ export function App() {
     activate();
     if (sleeping) {
       setSleeping(false);
+      return;
+    }
+    if (textEntry.editing && (page === "search" || page === "playlist-name")) {
+      textEntry.rotate(steps);
+      return;
+    }
+    if (page === "photo-grid" || page === "photo-full") {
+      const destination = Math.max(
+        0,
+        Math.min(activePhotos.length - 1, photoIndex + steps),
+      );
+      setSlideshow(false);
+      if (destination === photoIndex || !activePhotos[destination]) return;
+      if (page === "photo-full") capture("replace");
+      dispatch({ type: "select", key: activePhotos[destination].id });
       return;
     }
     if (page === "brightness") {
@@ -901,6 +705,60 @@ export function App() {
       setSleeping(false);
       return;
     }
+    if (textEntry.editing && (page === "search" || page === "playlist-name")) {
+      if (value === "select") {
+        const next = textEntry.pick(page === "search" ? query : playlistName);
+        if (next === null) {
+          textEntry.setEditing(false);
+          if (page === "playlist-name") saveName();
+          else
+            dispatch({
+              type: "select",
+              key: visibleTracks[0]?.id ?? "edit-search",
+            });
+        } else if (page === "search") setQuery(next);
+        else setPlaylistName(next);
+        return;
+      }
+      if (value === "menu") {
+        textEntry.setEditing(false);
+        return;
+      }
+    }
+    if (page === "photo-grid" || page === "photo-full") {
+      if (value === "next" || value === "previous") {
+        rotate(value === "next" ? 1 : -1);
+        return;
+      }
+      if (value === "seek-forward" || value === "seek-backward") {
+        const destination = activePhotos.at(
+          value === "seek-forward" ? -1 : 0,
+        )?.id;
+        if (!destination || destination === navigation.screen.selectedKey)
+          return;
+        capture("replace");
+        dispatch({
+          type: "select",
+          key: activePhotos.at(value === "seek-forward" ? -1 : 0)?.id ?? "",
+        });
+        return;
+      }
+      if (value === "options" && activePhotos[photoIndex]) {
+        setSlideshow(false);
+        open("photo-options", "slideshow", activePhotos[photoIndex].id);
+        return;
+      }
+      if (value === "play") {
+        if (page === "photo-grid")
+          open("photo-full", activePhotos[photoIndex]?.id, groupKey);
+        setSlideshow(!slideshow);
+        return;
+      }
+      if (value === "select" && page === "photo-full") {
+        setSlideshow(!slideshow);
+        return;
+      }
+    }
     if (value === "sleep") {
       player.pause();
       setSleeping(true);
@@ -923,7 +781,9 @@ export function App() {
       return;
     }
     if (value === "home") {
-      if (page !== "home") capture("back");
+      textEntry.setEditing(false);
+      setSlideshow(false);
+      if (page !== "home") capture("back", splitPages.has(page));
       dispatch({ type: "home" });
       setNotice("");
     }
@@ -937,8 +797,10 @@ export function App() {
             : undefined,
       );
     if (value === "select") {
-      if (page === "playing" && current) cyclePlayView();
-      else if (focusedRow) chooseRow(focusedRow);
+      if (page === "playing" && current) {
+        if (state.status === "error") player.play();
+        else cyclePlayView();
+      } else if (focusedRow) chooseRow(focusedRow);
     }
     if (value === "play") {
       if (
@@ -968,6 +830,10 @@ export function App() {
       }
     }
     if (value === "next" || value === "previous") {
+      if (page === "coverflow") {
+        rotate(value === "next" ? 1 : -1);
+        return;
+      }
       if (!state.tracks.length) {
         setNotice("先选择一首歌曲");
         return;
@@ -982,9 +848,28 @@ export function App() {
     player.setVolumeLimit(prefs.volumeLimit);
   }, [prefs.volumeLimit]);
   useEffect(() => {
+    void restorePhotos();
     void initializeLibrary();
     return onLibraryNotice(setNotice);
   }, []);
+  useEffect(() => {
+    if (
+      !slideshow ||
+      page !== "photo-full" ||
+      held ||
+      sleeping ||
+      activePhotos.length < 2
+    )
+      return;
+    const timer = setTimeout(() => {
+      capture("replace");
+      dispatch({
+        type: "select",
+        key: activePhotos[(photoIndex + 1) % activePhotos.length].id,
+      });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [slideshow, page, photoIndex, activePhotos, held, sleeping]);
   useEffect(() => {
     document
       .querySelector('meta[name="theme-color"]')
@@ -1020,153 +905,109 @@ export function App() {
     return () => clearTimeout(timer);
   }, [volumeOverlay, state.volume]);
   const title =
-    page === "album-tracks"
+    page === "album-tracks" || page === "coverflow-album"
       ? (selectedAlbum?.title ?? "专辑")
-      : page === "artist-tracks"
-        ? (groupKey ?? "艺人")
-        : {
-            about: "关于本机",
-            "main-menu": "主菜单",
-            backlight: "背光时间",
-            brightness: "亮度",
-            "volume-limit": "音量上限",
-            extras: "附加功能",
-            clock: "时钟",
-            home: "ReiPod",
-            music: "音乐",
-            songs: "歌曲",
-            demos: "试听音乐",
-            playing: playView === "lyrics" ? "歌词" : "正在播放",
-            settings: "设置",
-            "confirm-clear": "清空资料库",
-            coverflow: "Cover Flow",
-            artists: "艺人",
-            albums: "专辑",
-            favorites: "我的收藏",
-            recent: "最近添加",
-            playlists: "播放列表",
-            queue: "播放队列",
-            search: "搜索",
-            "playlist-tracks": selectedPlaylist?.name ?? "歌单",
-            "playlist-options": "管理歌单",
-            "playlist-name": groupKey ? "重命名歌单" : "新建歌单",
-            "playlist-add-tracks": "选择歌曲",
-            "pick-playlist": "添加到歌单",
-            "track-options": "歌曲选项",
-            "confirm-delete-track": "删除歌曲",
-            "confirm-delete-playlist": "删除歌单",
-          }[page];
-  const renderRows = () =>
-    rows.map((row) => (
-      <button
-        key={row.key}
-        ref={row.key === focusedRow?.key ? selectedRow : undefined}
-        disabled={row.disabled}
-        aria-current={row.key === focusedRow?.key ? "true" : undefined}
-        aria-pressed={
-          page === "playlist-add-tracks"
-            ? (playlistTrackIds.has(row.key) ?? false)
-            : undefined
-        }
-        className={`screen-row ${row.key === focusedRow?.key ? "selected" : ""} ${row.key === "confirm" ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${isTrackList && visibleIds.has(row.key) ? "track-row" : ""}`}
-        onFocus={() => {
-          if (!row.disabled) dispatch({ type: "select", key: row.key });
-        }}
-        onPointerMove={(event) => {
-          if (event.pointerType === "mouse" && !event.buttons && !row.disabled)
-            dispatch({ type: "select", key: row.key });
-        }}
-        onPointerDown={() => {
-          feedback("press");
-          dispatch({ type: "select", key: row.key });
-        }}
-        onClick={() => chooseRow(row)}
-      >
-        {page === "albums" && (
-          <AlbumArt src={row.artwork} title={row.label} artist={row.detail} />
-        )}
-        <span className="row-label">
-          <span className="row-title">
-            {isTrackList && state.currentId === row.key && (
-              <span className="track-playing-marker" aria-hidden="true">
-                <PlayerIcon name={active ? "play" : "pause"} filled={active} />
-              </span>
-            )}
-            <MarqueeText
-              text={row.label}
-              active={row.key === focusedRow?.key}
-            />
-          </span>
-          {(page === "albums" || page === "search") && (
-            <small>{row.detail}</small>
-          )}
-        </span>
-        {row.value && <span className="row-value">{row.value}</span>}
-        {!row.leaf && (
-          <span className="row-chevron" aria-hidden="true">
-            <PlayerIcon name="chevron" />
-          </span>
-        )}
-      </button>
-    ));
+      : page === "podcast-episodes"
+        ? (podcastShows.find((show) => show.id === groupKey)?.title ?? "播客")
+        : page === "artist-tracks" ||
+            page === "genre-tracks" ||
+            page === "composer-tracks"
+          ? (groupKey ?? "艺人")
+          : {
+              about: "关于本机",
+              "main-menu": "主菜单",
+              backlight: "背光时间",
+              brightness: "亮度",
+              "volume-limit": "音量上限",
+              extras: "附加功能",
+              clock: "时钟",
+              home: "ReiPod",
+              music: "音乐",
+              songs: "歌曲",
+              demos: "试听音乐",
+              playing: playView === "lyrics" ? "歌词" : "正在播放",
+              settings: "设置",
+              "confirm-clear": "清空资料库",
+              coverflow: "Cover Flow",
+              photos: "照片",
+              "photo-grid": "所有照片",
+              "photo-full": "照片",
+              "photo-options": "照片选项",
+              "photo-delete": "删除照片",
+              podcasts: "播客",
+              finish: "机身颜色",
+              background: "背景",
+              "click-sound": "转轮声音",
+              "shuffle-mode": "随机播放",
+              "repeat-mode": "重复播放",
+              artists: "艺人",
+              genres: "风格",
+              composers: "作曲者",
+              albums: "专辑",
+              favorites: "我的收藏",
+              recent: "最近添加",
+              playlists: "播放列表",
+              queue: "播放队列",
+              search: "搜索",
+              "playlist-tracks": selectedPlaylist?.name ?? "歌单",
+              "playlist-options": "管理歌单",
+              "playlist-name": groupKey ? "重命名歌单" : "新建歌单",
+              "playlist-add-tracks": "选择歌曲",
+              "pick-playlist": "添加到歌单",
+              "track-options": "歌曲选项",
+              "confirm-delete-track": "删除歌曲",
+              "confirm-delete-playlist": "删除歌单",
+            }[page];
+  const renderRows = () => (
+    <MenuRows
+      rows={rows}
+      focusedKey={focusedRow?.key}
+      page={page}
+      currentId={state.currentId}
+      active={active}
+      trackIds={isTrackList ? visibleIds : new Set<string>()}
+      playlistIds={playlistTrackIds}
+      selectedRow={selectedRow}
+    />
+  );
   return (
     <main
       className="app-shell"
       aria-label="ReiPod 音乐播放器"
       data-finish={prefs.finish}
-      onPointerDownCapture={() => {
-        if (!held) activate();
+      onPointerDownCapture={(event) => {
+        if (!(event.target as Element).closest(".screen-glass") && !held)
+          activate();
       }}
       onKeyDownCapture={() => {
         if (!held) activate();
       }}
-      onWheelCapture={() => {
-        if (!held) activate();
+      onWheelCapture={(event) => {
+        if (!(event.target as Element).closest(".screen-glass") && !held)
+          activate();
       }}
       data-background={prefs.background}
-      onDragEnter={(event) => {
-        event.preventDefault();
-        if (event.dataTransfer.types.includes("Files")) {
-          dragDepth.current++;
-          setDragging(true);
-        }
-      }}
-      onDragOver={(event) => event.preventDefault()}
-      onDragLeave={(event) => {
-        event.preventDefault();
-        dragDepth.current = Math.max(0, dragDepth.current - 1);
-        if (!dragDepth.current) setDragging(false);
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        if (held || sleeping) {
-          dragDepth.current = 0;
-          setDragging(false);
-          return;
-        }
-        dragDepth.current = 0;
-        setDragging(false);
-        addFiles(Array.from(event.dataTransfer.files));
-      }}
     >
-      <input
-        ref={input}
-        id="audio-files"
-        className="sr-only"
-        type="file"
-        accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aiff,.lrc"
-        multiple
-        aria-label="选择本地音频或歌词文件"
-        disabled={held || sleeping}
-        onChange={(event) => {
-          addFiles(Array.from(event.target.files ?? []));
-          event.target.value = "";
+      <FileImports
+        audio={input}
+        photos={photoInput}
+        podcasts={podcastInput}
+        locked={held || sleeping}
+        onAudio={addFiles}
+        onPhotos={(result) => {
+          open("photos", result.added ? "all-photos" : "photo-import");
+          setNotice(
+            result.persisted
+              ? `已导入 ${result.added} 张照片`
+              : "照片未能保存，本次仍可浏览",
+          );
+        }}
+        onPodcasts={(persisted) => {
+          open("podcasts");
+          if (!persisted) setNotice("播客分类未能保存，本次仍可播放");
         }}
       />
-      <section
-        className={`classic-device ${dragging ? "is-dragging" : ""}`}
-        aria-label="classic 播放器"
-      >
+      <section className="classic-device" aria-label="classic 播放器">
         <button
           type="button"
           className="top-hold"
@@ -1181,10 +1022,15 @@ export function App() {
         >
           <i />
         </button>
-        <div className="screen-glass">
+        <ReadOnlyScreen scene={page}>
           <div
             className="lcd-screen"
             data-page={page}
+            data-split={
+              splitMenu || page === "home" || page === "music"
+                ? "true"
+                : undefined
+            }
             data-sleeping={sleeping}
             style={{ filter: `brightness(${prefs.brightness})` }}
             data-view={page === "playing" ? playView : undefined}
@@ -1192,14 +1038,6 @@ export function App() {
             <div className="screen-viewport" inert={held || sleeping}>
               <div className="screen-content" ref={content}>
                 <div className="screen-status">
-                  <button
-                    className="screen-back"
-                    aria-label="返回上一级"
-                    disabled={!navigation.history.length}
-                    onClick={() => back()}
-                  >
-                    <PlayerIcon name="back" />
-                  </button>
                   <strong>{title}</strong>
                   <span className="play-modes">
                     {state.shuffle && (
@@ -1228,10 +1066,9 @@ export function App() {
                     </svg>
                   )}
                   {current ? (
-                    <button
+                    <span
                       className="screen-playing-link"
-                      aria-label="返回正在播放"
-                      onClick={() => open("playing")}
+                      aria-label={active ? "正在播放" : "已暂停"}
                     >
                       <span aria-hidden="true">
                         {busy ? (
@@ -1243,86 +1080,29 @@ export function App() {
                           />
                         )}
                       </span>
-                    </button>
+                    </span>
                   ) : (
                     <span className="screen-header-spacer" />
                   )}
                   <BatteryIndicator />
                 </div>
-                {page === "search" && (
-                  <form
-                    className="lcd-text-entry"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      document
-                        .querySelector<HTMLElement>(".click-wheel")
-                        ?.focus();
-                    }}
-                  >
-                    <input
-                      type="search"
-                      aria-label="搜索音乐"
-                      placeholder="歌名、艺人、专辑"
-                      value={query}
-                      onChange={(event) => setQuery(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (
-                          event.key === "ArrowDown" &&
-                          !event.nativeEvent.isComposing
-                        ) {
-                          event.preventDefault();
-                          document
-                            .querySelector<HTMLElement>(".click-wheel")
-                            ?.focus();
-                        }
-                        if (event.key === "Escape") back();
-                      }}
+                {(page === "search" || page === "playlist-name") &&
+                  (textEntry.editing ? (
+                    <WheelTextEntry
+                      text={page === "search" ? query : playlistName}
+                      title={page === "search" ? "搜索音乐" : "歌单名称"}
+                      characters={textEntry.characters}
+                      index={textEntry.index}
                     />
-                    {query && (
-                      <button
-                        type="button"
-                        aria-label="清除搜索"
-                        onClick={() => setQuery("")}
-                      >
-                        ×
-                      </button>
-                    )}
-                  </form>
-                )}
-                {page === "playlist-name" && (
-                  <form
-                    className="lcd-text-entry name-entry"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      saveName();
-                    }}
-                  >
-                    <label htmlFor="playlist-name">歌单名称</label>
-                    <input
-                      id="playlist-name"
-                      value={playlistName}
-                      maxLength={60}
-                      placeholder="例如：通勤路上"
-                      onChange={(event) => setPlaylistName(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Escape") back();
-                      }}
-                    />
-                  </form>
-                )}
+                  ) : (
+                    <div className="lcd-text-display">
+                      {page === "search" ? query || "全部歌曲" : playlistName}
+                    </div>
+                  ))}
                 {(page === "playlist-tracks" ||
                   page === "playlist-add-tracks") && (
                   <div className="lcd-toolbar">
                     <span>{selectedPlaylist?.name ?? "歌单"}</span>
-                    <button
-                      onClick={() =>
-                        page === "playlist-tracks"
-                          ? open("playlist-options", "add", groupKey)
-                          : back()
-                      }
-                    >
-                      {page === "playlist-tracks" ? "管理" : "完成"}
-                    </button>
                   </div>
                 )}
                 {page === "about" && (
@@ -1347,25 +1127,16 @@ export function App() {
                     <ClassicGlyph
                       name={page === "brightness" ? "background" : "speaker"}
                     />
-                    <input
-                      type="range"
-                      min={page === "brightness" ? 0.25 : 0.1}
+                    <progress
+                      className="adjustment-meter"
                       max={1}
-                      step={0.05}
-                      aria-label={
-                        page === "brightness" ? "屏幕亮度" : "最高音量"
-                      }
                       value={
                         page === "brightness"
                           ? prefs.brightness
                           : prefs.volumeLimit
                       }
-                      onChange={(event) =>
-                        setPreferences(
-                          page === "brightness"
-                            ? { brightness: Number(event.target.value) }
-                            : { volumeLimit: Number(event.target.value) },
-                        )
+                      aria-label={
+                        page === "brightness" ? "屏幕亮度" : "最高音量"
                       }
                     />
                     <strong>
@@ -1414,9 +1185,6 @@ export function App() {
                           ),
                         )?.id
                       }
-                      onChoose={(album) =>
-                        open("album-tracks", album.tracks[0]?.id, album.id)
-                      }
                       suspended={sleeping}
                       count={state.tracks.length}
                       bytes={state.tracks.reduce(
@@ -1426,15 +1194,17 @@ export function App() {
                     />
                   </div>
                 )}
+                {(page === "photo-grid" || page === "photo-full") && (
+                  <PhotoScreen
+                    photos={activePhotos}
+                    index={photoIndex}
+                    full={page === "photo-full"}
+                    slideshow={slideshow}
+                  />
+                )}
                 {page === "coverflow" &&
                   (albums.length ? (
-                    <CoverFlow
-                      albums={albums}
-                      index={selectedIndex}
-                      onMove={(steps, source) => rotate(steps, source)}
-                      onChoose={() => focusedRow && chooseRow(focusedRow)}
-                      animate
-                    />
+                    <CoverFlow albums={albums} index={selectedIndex} animate />
                   ) : (
                     <div className="screen-empty">
                       <strong>暂无专辑</strong>
@@ -1451,11 +1221,17 @@ export function App() {
                   (managedRows[page] !== undefined &&
                     page !== "playlist-add-tracks" &&
                     page !== "playlist-tracks" &&
-                    !["about", "brightness", "volume-limit", "clock"].includes(
-                      page,
-                    ))) && (
+                    ![
+                      "about",
+                      "brightness",
+                      "volume-limit",
+                      "clock",
+                      "photo-grid",
+                      "photo-full",
+                    ].includes(page) &&
+                    !(page === "playlist-name" && textEntry.editing))) && (
                   <div
-                    className={`settings-screen ${page === "settings" ? "split-settings-screen" : ""}`}
+                    className={`settings-screen ${splitMenu ? "split-settings-screen" : ""}`}
                   >
                     {(page === "confirm-delete-track" ||
                       page === "confirm-delete-playlist") && (
@@ -1475,7 +1251,7 @@ export function App() {
                     )}
                     {page === "confirm-clear" && (
                       <p className="clear-question">
-                        清空资料库及已保存的文件？
+                        清空音乐资料库及已保存的音频？
                         <span>不会删除设备上的原始文件</span>
                       </p>
                     )}
@@ -1491,7 +1267,7 @@ export function App() {
                     >
                       {renderRows()}
                     </nav>
-                    {page === "settings" && (
+                    {splitMenu && (
                       <MenuPreview
                         spec={menuPreview(
                           page,
@@ -1507,9 +1283,6 @@ export function App() {
                               (track) => track.id === current?.id,
                             ),
                           )?.id
-                        }
-                        onChoose={(album) =>
-                          open("album-tracks", album.tracks[0]?.id, album.id)
                         }
                         suspended={sleeping}
                         count={state.tracks.length}
@@ -1527,9 +1300,22 @@ export function App() {
                     )}
                   </div>
                 )}
-                {(isTrackList || (page === "playing" && !current)) &&
+                {((isTrackList && !(page === "search" && textEntry.editing)) ||
+                  (page === "playing" && !current)) &&
                   (isTrackList && visibleTracks.length ? (
-                    <div className="song-screen">
+                    <div
+                      className={`song-screen ${page === "coverflow-album" ? "coverflow-album-screen" : ""}`}
+                    >
+                      {page === "coverflow-album" && selectedAlbum && (
+                        <div className="coverflow-album-heading">
+                          <AlbumArt
+                            src={selectedAlbum.artwork}
+                            title={selectedAlbum.title}
+                          />
+                          <strong>{selectedAlbum.title}</strong>
+                          <span>{selectedAlbum.artist}</span>
+                        </div>
+                      )}
                       <div
                         className="screen-song-list"
                         role="group"
@@ -1543,18 +1329,6 @@ export function App() {
                             ? `${visibleTracks.findIndex((track) => track.id === focusedRow?.key) + 1} / ${visibleTracks.length}`
                             : `共 ${visibleTracks.length} 首歌曲`}
                         </span>
-                        {page !== "playlist-add-tracks" &&
-                          focusedRow &&
-                          visibleTracks.some(
-                            (track) => track.id === focusedRow.key,
-                          ) && (
-                            <button
-                              className="list-options"
-                              onClick={() => trackOptions(focusedRow.key)}
-                            >
-                              歌曲选项
-                            </button>
-                          )}
                       </div>
                     </div>
                   ) : (
@@ -1570,7 +1344,7 @@ export function App() {
                             : "暂无歌曲"}
                       </strong>
                       {page === "search" ? (
-                        <small>试试其他歌名、艺人或专辑</small>
+                        <nav className="empty-actions">{renderRows()}</nav>
                       ) : page === "playlist-tracks" ? (
                         <nav className="empty-actions" aria-label="管理空歌单">
                           {renderRows()}
@@ -1585,200 +1359,25 @@ export function App() {
                     </div>
                   ))}
                 {page === "playing" && current && (
-                  <div
-                    className={`now-playing-screen view-${playView}`}
-                    data-volume={volumeOverlay && playView === "art"}
-                  >
-                    {playView === "lyrics" ? (
-                      <Lyrics
-                        track={current}
-                        position={state.position}
-                        wheelStep={lyricWheel}
-                        onQueue={() => open("queue", current.id)}
-                        onClose={() => changePlayView("art")}
-                      />
-                    ) : (
-                      <div className="now-playing-top">
-                        <div className="np-cover">
-                          <AlbumArt
-                            src={current.artwork}
-                            title={current.album ?? current.title}
-                            artist={current.artist}
-                          />
-                          <div
-                            className="np-cover-reflection"
-                            aria-hidden="true"
-                          >
-                            <AlbumArt
-                              src={current.artwork}
-                              title={current.album ?? current.title}
-                              artist={current.artist}
-                            />
-                          </div>
-                        </div>
-                        <div className="np-info">
-                          <div className="np-index">
-                            {state.queue.indexOf(current.id) + 1} /{" "}
-                            {state.queue.length}
-                          </div>
-                          <strong>
-                            <MarqueeText text={current.title} active />
-                          </strong>
-                          <span>
-                            <MarqueeText
-                              text={current.artist || "未知艺人"}
-                              active
-                            />
-                          </span>
-                          <span>
-                            <MarqueeText
-                              text={current.album || "未知专辑"}
-                              active
-                            />
-                          </span>
-                          {playView === "shuffle" && (
-                            <div className="np-firmware-control">
-                              <small>随机播放</small>
-                              <div className="np-shuffle-options">
-                                <button
-                                  aria-pressed={!state.shuffle}
-                                  onClick={() => player.setShuffle(false)}
-                                >
-                                  关闭
-                                </button>
-                                <button
-                                  aria-pressed={state.shuffle}
-                                  onClick={() => player.setShuffle(true)}
-                                >
-                                  歌曲
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          {playView === "rating" && (
-                            <div className="np-firmware-control">
-                              <small>歌曲评分</small>
-                              <div className="classic-rating">
-                                {[1, 2, 3, 4, 5].map((value) => (
-                                  <button
-                                    key={value}
-                                    aria-label={`评分 ${value} 星`}
-                                    aria-pressed={
-                                      (ratings[current.id] ?? 0) >= value
-                                    }
-                                    onClick={() => {
-                                      if (
-                                        !setRating(
-                                          current.id,
-                                          ratings[current.id] === value
-                                            ? 0
-                                            : value,
-                                        )
-                                      )
-                                        setNotice("评分未能保存，本次仍生效");
-                                    }}
-                                  >
-                                    <PlayerIcon
-                                      name="star"
-                                      filled={
-                                        (ratings[current.id] ?? 0) >= value
-                                      }
-                                    />
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {state.status !== "playing" && (
-                            <small>{statusText[state.status]}</small>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    <SeekSlider state={state} />
-                    {volumeOverlay && playView === "art" && (
-                      <div
-                        className="classic-volume"
-                        role="status"
-                        aria-label={`音量 ${Math.round(state.volume * 100)}%`}
-                      >
-                        <PlayerIcon name="volume" />
-                        <div className="classic-volume-track">
-                          <i style={{ width: `${state.volume * 100}%` }} />
-                        </div>
-                        <PlayerIcon name="volume" />
-                      </div>
-                    )}
-                    <div className="np-actions">
-                      <button
-                        aria-label="歌曲选项"
-                        onClick={() => trackOptions(current.id)}
-                      >
-                        <PlayerIcon name="more" />
-                      </button>
-                      <button
-                        aria-label={
-                          state.favorites.includes(current.id)
-                            ? "取消收藏"
-                            : "收藏歌曲"
-                        }
-                        aria-pressed={state.favorites.includes(current.id)}
-                        onClick={() => toggleFavorite(current.id)}
-                      >
-                        <PlayerIcon
-                          name="star"
-                          filled={state.favorites.includes(current.id)}
-                        />
-                      </button>
-                      <span
-                        className="play-view-dots"
-                        aria-label={`${playViewLabels[playView]}视图`}
-                      >
-                        {playViews.map((view) => (
-                          <i
-                            key={view}
-                            className={playView === view ? "active" : ""}
-                          />
-                        ))}
-                      </span>
-                      <button
-                        aria-label="查看播放队列"
-                        onClick={() => open("queue", current.id)}
-                      >
-                        <PlayerIcon name="queue" />
-                      </button>
-                      <button
-                        aria-label={
-                          playView === "lyrics" ? "返回封面" : "查看歌词"
-                        }
-                        onClick={() =>
-                          changePlayView(
-                            playView === "lyrics" ? "art" : "lyrics",
-                          )
-                        }
-                      >
-                        <PlayerIcon name="lyrics" filled />
-                      </button>
-                    </div>
-                    {state.error && (
-                      <div className="screen-error" role="alert">
-                        <p>{state.error}</p>
-                        <button onClick={() => player.play()}>重试</button>
-                        <button onClick={() => player.next()}>下一首</button>
-                      </div>
-                    )}
-                  </div>
+                  <NowPlayingScreen
+                    state={state}
+                    current={current}
+                    view={playView}
+                    lyricWheel={lyricWheel}
+                    rating={ratings[current.id] ?? 0}
+                    volumeOverlay={volumeOverlay}
+                  />
                 )}
               </div>
             </div>
             {dimmed && <div className="lcd-backlight-dim" aria-hidden="true" />}
-            {(notice || dragging) && (
+            {notice && (
               <div className="screen-notice" role="status">
-                {dragging ? "松开以导入音乐" : notice}
+                {notice}
               </div>
             )}
           </div>
-        </div>
+        </ReadOnlyScreen>
         <ClickWheel
           onRotate={rotate}
           onCommand={command}

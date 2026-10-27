@@ -8,14 +8,10 @@ export function Lyrics({
   track,
   position,
   wheelStep = 0,
-  onQueue,
-  onClose,
 }: {
   track: Track;
   position: number;
   wheelStep?: number;
-  onQueue: () => void;
-  onClose: () => void;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const previousWheel = useRef(wheelStep);
@@ -78,16 +74,12 @@ export function Lyrics({
           </span>
         </div>
         <div className="lyrics-actions">
-          <button aria-label="查看播放队列" onClick={onQueue}>
+          <span aria-hidden="true">
             <PlayerIcon name="queue" />
-          </button>
-          <button
-            aria-label="返回封面"
-            className="is-current"
-            onClick={onClose}
-          >
+          </span>
+          <span className="is-current" aria-hidden="true">
             <PlayerIcon name="lyrics" filled />
-          </button>
+          </span>
         </div>
       </div>
       {lines.length ? (

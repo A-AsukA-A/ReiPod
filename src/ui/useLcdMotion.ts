@@ -65,18 +65,23 @@ export function useLcdMotion(
   content: RefObject<HTMLDivElement | null>,
   scene: string,
 ) {
-  const pending = useRef<{ node: HTMLElement; direction: Direction } | null>(
-    null,
-  );
+  const pending = useRef<{
+    node: HTMLElement;
+    direction: Direction;
+    paneOnly: boolean;
+  } | null>(null);
   const running = useRef<Animation[]>([]);
   const ghost = useRef<HTMLElement | null>(null);
+  const staticPane = useRef<HTMLElement | null>(null);
   const stop = () => {
     running.current.forEach((animation) => animation.cancel());
     running.current = [];
     ghost.current?.remove();
     ghost.current = null;
+    staticPane.current?.remove();
+    staticPane.current = null;
   };
-  const capture = (direction: Direction) => {
+  const capture = (direction: Direction, paneOnly = false) => {
     pending.current?.node.remove();
     pending.current = null;
     const element = content.current;
@@ -104,6 +109,7 @@ export function useLcdMotion(
             ...ghost.current.querySelectorAll<HTMLElement>(".screen-content"),
           ].reverse()
         : []),
+      ...(staticPane.current ? [staticPane.current] : []),
     ];
     const bounds = viewport.getBoundingClientRect();
     const snapshots: ReturnType<typeof snapshot>[] = [];
@@ -135,6 +141,7 @@ export function useLcdMotion(
       if (right <= left || bottom <= top || opacity < 0.001) continue;
       const captured = snapshot(original);
       const { copy } = captured;
+      if (original === staticPane.current) copy.classList.add("screen-content");
       const clip = [
         top - rect.top,
         rect.right - right,
@@ -157,15 +164,38 @@ export function useLcdMotion(
     }
     viewport.append(frame);
     snapshots.forEach(({ restore }) => restore());
+    const preview = paneOnly
+      ? (staticPane.current ??
+        element.querySelector<HTMLElement>(".menu-preview"))
+      : null;
+    const pane = preview ? snapshot(preview) : null;
     stop();
-    pending.current = { node: frame, direction };
+    if (pane) {
+      Object.assign(pane.copy.style, {
+        position: "absolute",
+        inset: "0 0 0 50%",
+        width: "50%",
+        height: "100%",
+        transform: "none",
+        opacity: "1",
+        zIndex: "20",
+      });
+      pane.copy.classList.add("screen-pane-still");
+      pane.copy.inert = true;
+      pane.copy.setAttribute("aria-hidden", "true");
+      viewport.append(pane.copy);
+      pane.restore();
+      staticPane.current = pane.copy;
+      frame.style.clipPath = "inset(0 50% 0 0)";
+    }
+    pending.current = { node: frame, direction, paneOnly: Boolean(pane) };
   };
   useLayoutEffect(() => {
     const element = content.current;
     const next = pending.current;
     pending.current = null;
     if (!element || !next) return;
-    const { node, direction } = next;
+    const { node, direction, paneOnly } = next;
     const tokens = getComputedStyle(element);
     const duration = durationInMilliseconds(
       tokens.getPropertyValue(
@@ -173,7 +203,10 @@ export function useLcdMotion(
       ),
     );
     ghost.current = node;
-    const distance = element.clientWidth * (direction === "back" ? -1 : 1);
+    const distance =
+      element.clientWidth *
+      (paneOnly ? 0.5 : 1) *
+      (direction === "back" ? -1 : 1);
     const options: KeyframeAnimationOptions = {
       duration,
       easing: tokens.getPropertyValue("--lcd-ease").trim(),
@@ -201,6 +234,24 @@ export function useLcdMotion(
               options,
             ),
           ];
+    if (staticPane.current) {
+      const latest = element.querySelector<HTMLElement>(".menu-preview");
+      if (
+        latest &&
+        (latest.dataset.preview !== staticPane.current.dataset.preview ||
+          latest.textContent !== staticPane.current.textContent)
+      )
+        running.current.push(
+          staticPane.current.animate(
+            [
+              { opacity: 1, offset: 0 },
+              { opacity: 1, offset: 0.55 },
+              { opacity: 0, offset: 1 },
+            ],
+            options,
+          ),
+        );
+    }
     running.current.at(-1)!.onfinish = stop;
   }, [scene]);
   useLayoutEffect(

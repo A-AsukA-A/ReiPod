@@ -10,6 +10,9 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4173",
     viewport: { width: 390, height: 844 },
     trace: "retain-on-failure",
+    launchOptions: process.env.REIPOD_BROWSER_EXECUTABLE
+      ? { executablePath: process.env.REIPOD_BROWSER_EXECUTABLE }
+      : {},
   },
   webServer: {
     command: "npm run preview",

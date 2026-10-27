@@ -1,4 +1,21 @@
 export type Page =
+  | "genres"
+  | "composers"
+  | "genre-tracks"
+  | "composer-tracks"
+  | "finish"
+  | "background"
+  | "click-sound"
+  | "shuffle-mode"
+  | "repeat-mode"
+  | "coverflow-album"
+  | "photos"
+  | "photo-grid"
+  | "photo-full"
+  | "photo-options"
+  | "photo-delete"
+  | "podcasts"
+  | "podcast-episodes"
   | "about"
   | "main-menu"
   | "backlight"
@@ -36,6 +53,18 @@ export type Screen = {
   selectedKey: string | null;
   groupKey?: string;
 };
+export const splitPages = new Set<Page>([
+  "home",
+  "music",
+  "settings",
+  "photos",
+  "podcasts",
+  "finish",
+  "background",
+  "click-sound",
+  "shuffle-mode",
+  "repeat-mode",
+]);
 export type NavigationState = {
   screen: Screen;
   history: Screen[];

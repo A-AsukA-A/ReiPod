@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getCircularBoundingInfo } from "./geometry";
 import { WheelGesture } from "./WheelGesture";
+import { MouseWheel } from "./MouseWheel";
 
 export type WheelCommand =
   | "menu"
@@ -117,29 +118,14 @@ export function ClickWheel({
   }, [disabled]);
   useEffect(() => {
     const wheel = root.current!;
-    let remainder = 0,
-      lastWheelTime = 0;
+    const scroll = new MouseWheel();
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
       if (callbacks.current.disabled) {
-        remainder = 0;
         return;
       }
-      if (event.timeStamp - lastWheelTime > 180) remainder = 0;
-      lastWheelTime = event.timeStamp;
-      const delta =
-        event.deltaY *
-        (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 120 : 1);
-      if (Math.sign(delta) !== Math.sign(remainder)) remainder = 0;
-      remainder += delta;
-      if (Math.abs(remainder) >= 32) {
-        callbacks.current.onRotate(
-          Math.sign(remainder) *
-            Math.min(3, Math.trunc(Math.abs(remainder) / 32)),
-          "wheel",
-        );
-        remainder %= 32;
-      }
+      const step = scroll.move(event.deltaY, event.deltaMode, event.timeStamp);
+      if (step) callbacks.current.onRotate(step, "wheel");
     };
     const cancel = () => resetGesture();
     const visibility = () => {
@@ -250,7 +236,10 @@ export function ClickWheel({
         const steps = active.input.move(point, event.timeStamp);
         if (steps) {
           setPressed(null);
-          onRotate(steps, "pointer");
+          onRotate(
+            event.pointerType === "mouse" ? Math.sign(steps) : steps,
+            "pointer",
+          );
         }
         if (!active.input.canClick(point)) {
           cancelHold();

@@ -36,6 +36,8 @@ jobs:
         run: npm run build
       - name: Check public artifact
         run: node scripts/check-dist.mjs
+      - name: Check program size budget
+        run: npm run size
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
       - name: Upload website

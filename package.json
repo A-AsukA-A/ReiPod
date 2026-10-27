@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:audio": "node scripts/create-test-audio.mjs",
     "phone": "node scripts/phone.mjs",
-    "test:browser": "npm run build && playwright test"
+    "test:browser": "npm run build && playwright test",
+    "size": "node scripts/bundle-report.mjs"
   },
   "dependencies": {
     "music-metadata": "12.3.2",

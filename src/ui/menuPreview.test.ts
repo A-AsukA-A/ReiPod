@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { menuPreview } from "./menuPreview";
+import { menuPreview } from "./menuPreviewModel";
 it("selects a contextual card without confusing a setting with a music category", () => {
   expect(menuPreview("home", "music", "音乐").kind).toBe("covers");
   expect(menuPreview("home", "shuffle-all", "随机播放歌曲")).toMatchObject({

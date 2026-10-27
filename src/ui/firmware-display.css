@@ -1,0 +1,336 @@
+/* Display-only LCD: the wheel is the sole navigation/control surface. */
+.screen-glass {
+  pointer-events: auto;
+}
+.screen-glass * {
+  pointer-events: none !important;
+}
+.lcd-screen {
+  --lcd-page-duration: 280ms;
+  --lcd-view-duration: 200ms;
+  --lcd-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  font-family:
+    "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.screen-row .row-value {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: normal;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+.split-settings-screen .screen-row .row-value {
+  font-size: inherit;
+}
+.split-settings-screen .screen-row {
+  font-size: calc(var(--lcd-unit) * 16);
+}
+.screen-row.is-disabled {
+  color: #888;
+}
+.row-check {
+  width: calc(var(--lcd-unit) * 18);
+  height: calc(var(--lcd-unit) * 18);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lcd-screen[data-split="true"] .screen-status {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 50%;
+  z-index: 3;
+  border-right: 1px solid #9c9fa3;
+}
+.lcd-screen[data-split="true"] .screen-back {
+  display: none;
+}
+.lcd-screen[data-split="true"] .play-modes {
+  display: none;
+}
+.lcd-screen .settings-screen .screen-menu {
+  overflow: auto;
+}
+.screen-status .screen-back {
+  display: none;
+}
+.adjustment-meter {
+  width: 85%;
+  height: calc(var(--lcd-unit) * 8);
+  accent-color: #2199db;
+}
+.settings-screen .screen-menu {
+  scrollbar-width: none;
+}
+.now-playing-screen {
+  padding: calc(var(--lcd-unit) * 9) calc(var(--lcd-unit) * 10)
+    calc(var(--lcd-unit) * 5);
+}
+.now-playing-top {
+  height: auto;
+  min-height: calc(var(--lcd-unit) * 133);
+  gap: calc(var(--lcd-unit) * 12);
+}
+.np-cover {
+  width: calc(var(--lcd-unit) * 116);
+  height: calc(var(--lcd-unit) * 116);
+}
+.np-cover-reflection > .album-art {
+  height: calc(var(--lcd-unit) * 116);
+}
+.now-playing-top > .np-info {
+  gap: calc(var(--lcd-unit) * 5);
+  padding-top: calc(var(--lcd-unit) * 4);
+  min-height: 0;
+}
+.np-index {
+  font-size: calc(var(--lcd-unit) * 11);
+}
+.now-playing-top strong {
+  font-size: calc(var(--lcd-unit) * 15);
+}
+.now-playing-top span {
+  font-size: calc(var(--lcd-unit) * 13);
+}
+.now-playing-top .marquee-text {
+  font: inherit;
+  color: inherit;
+}
+.np-info > strong .marquee-window {
+  font: inherit;
+  color: #141414;
+}
+.firmware-progress {
+  position: relative;
+  height: calc(var(--lcd-unit) * 7);
+  background: linear-gradient(#cdd4db, #f4f6f7);
+  border: 1px solid #87939c;
+  border-radius: 2px;
+  margin-block: calc(var(--lcd-unit) * 7);
+}
+.firmware-progress > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(#8ccff5, #328fcf);
+  box-shadow: inset 0 1px #d1efff;
+}
+.firmware-progress > b {
+  position: absolute;
+  top: -2px;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #e8f8ff;
+  border: 1px solid #477f9d;
+}
+.firmware-view-label {
+  height: calc(var(--lcd-unit) * 17);
+  font-size: calc(var(--lcd-unit) * 10);
+  color: #84919b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.firmware-view-label .play-view-dots {
+  flex: 0;
+}
+.firmware-view-label .play-view-dots i {
+  width: 3px;
+  height: 3px;
+}
+.np-shuffle-options > span {
+  padding: 2px 5px;
+  font-size: calc(var(--lcd-unit) * 12);
+  color: #555;
+}
+.np-shuffle-options > span.chosen {
+  background: linear-gradient(#50b7e7, #118cca);
+  color: #fff;
+}
+.classic-rating > span {
+  color: #b5c0c9;
+}
+.classic-rating > span.chosen {
+  color: #308fce;
+}
+.screen-error small {
+  display: block;
+  margin-top: 4px;
+}
+.view-lyrics .screen-progress {
+  bottom: 0;
+}
+.view-lyrics .firmware-progress {
+  height: 3px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.lyrics-actions > span {
+  padding: 3px;
+  display: block;
+}
+.lyrics-actions > span.is-current {
+  background: #999;
+  color: #fff;
+  border-radius: 3px;
+  padding-inline: 5px;
+}
+.coverflow-album-screen {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+.coverflow-album-heading {
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  gap: 6px;
+  padding: 8px;
+  background: linear-gradient(#fff, #eef1f4);
+  border-right: 1px solid #b7c0c7;
+}
+.coverflow-album-heading > .album-art {
+  width: 100%;
+  max-width: 110px;
+}
+.coverflow-album-heading strong {
+  font-size: calc(var(--lcd-unit) * 12);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.coverflow-album-heading span {
+  font-size: calc(var(--lcd-unit) * 10);
+  color: #777;
+  max-width: 100%;
+  overflow: hidden;
+}
+.coverflow-album-screen .screen-song-list {
+  grid-column: 2;
+  min-height: 0;
+}
+.coverflow-album-screen .screen-footer {
+  grid-column: 2;
+}
+.photo-contact-sheet {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-rows: calc(var(--lcd-unit) * 49);
+  gap: calc(var(--lcd-unit) * 5);
+  padding: calc(var(--lcd-unit) * 6);
+  overflow: auto;
+  scrollbar-width: none;
+  align-content: start;
+}
+.photo-contact-sheet > div {
+  padding: 2px;
+  border: 2px solid transparent;
+  overflow: hidden;
+  background: #eef0f2;
+}
+.photo-contact-sheet > div.current-photo {
+  border-color: #1688ca;
+  background: #c5e6f8;
+}
+.photo-contact-sheet img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-full {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+.photo-full > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.photo-full > span {
+  position: absolute;
+  right: 5px;
+  bottom: 4px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-size: 10px;
+  background: #0008;
+  color: #fff;
+}
+.wheel-text-entry {
+  flex: 1;
+  min-height: 0;
+  padding: calc(var(--lcd-unit) * 6);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--lcd-unit) * 5);
+}
+.wheel-text-entry > label {
+  font-size: calc(var(--lcd-unit) * 12);
+  color: #777;
+}
+.wheel-text-value {
+  height: calc(var(--lcd-unit) * 25);
+  min-height: 25px;
+  border-bottom: 1px solid #aaa;
+  font-size: calc(var(--lcd-unit) * 17);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.wheel-text-value i {
+  display: inline-block;
+  vertical-align: middle;
+  height: 17px;
+  border-left: 1px solid #1685ca;
+  margin-left: 2px;
+}
+.wheel-character-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+  min-height: 0;
+  flex: 1;
+}
+.wheel-character-grid > span {
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--lcd-unit) * 13);
+  border-radius: 2px;
+}
+.wheel-character-grid > span[aria-current="true"] {
+  background: linear-gradient(#52b9eb, #128bcb);
+  color: white;
+}
+.wheel-text-entry > small {
+  font-size: calc(var(--lcd-unit) * 10);
+  color: #8b8b8b;
+}
+.lcd-text-display {
+  padding: 4px 7px;
+  font-size: 13px;
+  color: #697985;
+  background: #eef1f4;
+}
+@media (prefers-reduced-motion: reduce) {
+  .photo-full img {
+    animation: none;
+  }
+}

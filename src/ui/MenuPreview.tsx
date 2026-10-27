@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Album } from "../player/library";
 import type { Track } from "../player/Player";
-import type { MenuPreviewSpec } from "./menuPreview";
+import type { MenuPreviewSpec } from "./menuPreviewModel";
 import { AlbumPreview } from "./AlbumPreview";
 import { ClassicGlyph } from "./ClassicGlyph";
 import { AlbumArt } from "./AlbumArt";
@@ -11,7 +11,6 @@ export function MenuPreview({
   albums,
   current,
   initialAlbumId,
-  onChoose,
   count,
   bytes,
   suspended = false,
@@ -21,7 +20,6 @@ export function MenuPreview({
   albums: Album[];
   current?: Track;
   initialAlbumId?: string;
-  onChoose: (album: Album) => void;
   count: number;
   bytes: number;
 }) {
@@ -58,7 +56,6 @@ export function MenuPreview({
         initialAlbumId={initialAlbumId}
         enabled={covers}
         suspended={suspended}
-        onChoose={onChoose}
       />
       {!covers && (
         <div

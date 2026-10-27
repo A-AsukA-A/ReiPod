@@ -140,6 +140,8 @@ export function importFiles(files: File[], persist = true) {
           artist: metadata.common.artist?.trim(),
           album: metadata.common.album?.trim(),
           albumArtist: metadata.common.albumartist?.trim(),
+          genres: metadata.common.genre,
+          composers: metadata.common.composer,
           trackNumber: metadata.common.track.no ?? undefined,
           duration: metadata.format.duration,
           ...(artwork ? { artwork } : {}),

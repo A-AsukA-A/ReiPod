@@ -12,7 +12,8 @@ const files = await readdir("dist", { recursive: true });
 for (const file of files) {
   const path = file.replaceAll("\\", "/");
   if (
-    (/\.(m4a|mp3|wav|flac|ipa)$/i.test(path) && !approvedMusic.has(path)) ||
+    (/\.(m4a|mp3|wav|flac|ipa|mp4|mov|webm|m4v|aac)$/i.test(path) &&
+      !approvedMusic.has(path)) ||
     /(?:^|\/)(?:analysis|\.local|docs)\//.test(path)
   ) {
     throw new Error(`Private or unexpected file in public build: ${file}`);

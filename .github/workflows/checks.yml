@@ -32,3 +32,5 @@ jobs:
         run: npm run test:browser
       - name: Check public artifact
         run: node scripts/check-dist.mjs
+      - name: Check program size budget
+        run: npm run size

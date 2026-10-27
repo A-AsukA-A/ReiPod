@@ -13,6 +13,20 @@ export function menuPreview(
   label: string,
   detail?: string,
 ): MenuPreviewSpec {
+  const choiceIcons: Record<string, ClassicGlyphName> = {
+    finish: "finish",
+    background: "background",
+    "click-sound": "speaker",
+    "shuffle-mode": "shuffle",
+    "repeat-mode": "repeat",
+  };
+  if (choiceIcons[page])
+    return {
+      kind: "card",
+      icon: choiceIcons[page],
+      title: label,
+      detail: detail === "✓" ? undefined : detail,
+    };
   if (
     ["coverflow", "music", "albums", "songs", "all", "demo"].includes(key) &&
     page !== "settings"
@@ -41,6 +55,11 @@ export function menuPreview(
     backlight: "background",
     brightness: "background",
     "volume-limit": "speaker",
+    photos: "albums",
+    "all-photos": "albums",
+    "photo-import": "import",
+    podcasts: "music",
+    "podcast-import": "import",
   };
   return { kind: "card", icon: icons[key] ?? "music", title: label, detail };
 }

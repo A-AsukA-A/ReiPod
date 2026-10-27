@@ -9,7 +9,6 @@ const CROSSFADE = 360;
 export function AlbumPreview({
   albums,
   initialAlbumId,
-  onChoose,
   enabled = true,
   suspended = false,
 }: {
@@ -17,7 +16,6 @@ export function AlbumPreview({
   suspended?: boolean;
   albums: Album[];
   initialAlbumId?: string;
-  onChoose: (album: Album) => void;
 }) {
   const [id, setId] = useState(initialAlbumId ?? albums[0]?.id);
   const [previous, setPrevious] = useState<Album | null>(null);
@@ -104,11 +102,6 @@ export function AlbumPreview({
                 src={album.artwork}
                 title={album.title}
                 artist={album.artist}
-              />
-              <button
-                className="preview-cover-link"
-                aria-label={`打开专辑 ${album.title}`}
-                onClick={() => onChoose(album)}
               />
             </div>
           </div>

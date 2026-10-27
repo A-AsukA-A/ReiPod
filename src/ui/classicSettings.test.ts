@@ -18,6 +18,7 @@ it("clamps controls and accepts only known menu entries and backlight durations"
       volumeLimit: 9,
       backlight: 17,
       mainMenu: ["coverflow", "unknown", "coverflow", 4],
+      menuVersion: 2,
     }),
   ).toMatchObject({
     brightness: 0.25,
@@ -26,10 +27,25 @@ it("clamps controls and accepts only known menu entries and backlight durations"
     mainMenu: ["coverflow"],
   });
   expect(
-    parsePreferences({ mainMenu: [], volumeLimit: Infinity, backlight: 0 }),
+    parsePreferences({
+      mainMenu: [],
+      volumeLimit: Infinity,
+      backlight: 0,
+      menuVersion: 2,
+    }),
   ).toMatchObject({
     mainMenu: [],
     volumeLimit: 1,
     backlight: 0,
   });
+});
+it("adds newly available photo and podcast entries when migrating the previous menu schema", () => {
+  expect(parsePreferences({ mainMenu: ["coverflow"] }).mainMenu).toEqual([
+    "photos",
+    "podcasts",
+    "coverflow",
+  ]);
+  expect(parsePreferences({ mainMenu: [], menuVersion: 2 }).mainMenu).toEqual(
+    [],
+  );
 });

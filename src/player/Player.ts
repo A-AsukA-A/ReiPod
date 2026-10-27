@@ -7,6 +7,8 @@ export type Track = {
   artist?: string;
   album?: string;
   albumArtist?: string;
+  genres?: string[];
+  composers?: string[];
   artwork?: string;
   trackNumber?: number;
   duration?: number;
@@ -18,13 +20,7 @@ export type Track = {
   url: string;
 };
 export type PlaybackStatus =
-  | "idle"
-  | "loading"
-  | "playing"
-  | "paused"
-  | "buffering"
-  | "ended"
-  | "error";
+  "idle" | "loading" | "playing" | "paused" | "buffering" | "ended" | "error";
 export type PlayerState = {
   tracks: Track[];
   queue: string[];
