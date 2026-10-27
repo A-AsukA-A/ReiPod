@@ -14,7 +14,16 @@ export type Page =
   | "favorites"
   | "recent"
   | "playlists"
-  | "queue";
+  | "queue"
+  | "search"
+  | "playlist-tracks"
+  | "playlist-options"
+  | "playlist-name"
+  | "playlist-add-tracks"
+  | "pick-playlist"
+  | "track-options"
+  | "confirm-delete-track"
+  | "confirm-delete-playlist";
 export type Screen = {
   page: Page;
   selectedKey: string | null;
@@ -40,7 +49,7 @@ export type NavigationAction =
     }
   | { type: "select"; key: string }
   | { type: "move"; keys: string[]; steps: number }
-  | { type: "back" }
+  | { type: "back"; levels?: number }
   | { type: "home" }
   | { type: "reset" };
 
@@ -63,9 +72,14 @@ export function navigationReducer(
       remembered,
     };
   if (action.type === "back") {
-    const previous = state.history.at(-1);
+    const levels = action.levels ?? 1;
+    const previous = state.history.at(-levels);
     return previous
-      ? { screen: previous, history: state.history.slice(0, -1), remembered }
+      ? {
+          screen: previous,
+          history: state.history.slice(0, -levels),
+          remembered,
+        }
       : {
           screen: { page: "home", selectedKey: remembered.home ?? "coverflow" },
           history: [],

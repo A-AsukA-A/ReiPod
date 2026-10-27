@@ -1,4 +1,5 @@
 type IconName =
+  | "more"
   | "back"
   | "chevron"
   | "play"
@@ -10,6 +11,7 @@ type IconName =
   | "star"
   | "volume";
 const paths: Record<IconName, string> = {
+  more: "M4 12h1m6 0h1m6 0h1",
   back: "M14 4 6 12l8 8",
   chevron: "m9 5 7 7-7 7",
   play: "m7 4 13 8-13 8Z",

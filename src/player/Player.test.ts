@@ -244,3 +244,108 @@ describe("shared playback session", () => {
     expect(revoke).toHaveBeenCalledTimes(4);
   });
 });
+
+describe("library editing and resume", () => {
+  it("removes a queued song without disturbing the active audio and cleans favorites and URLs", () => {
+    const { player, audios, revoke } = setup();
+    player.select("1");
+    audios[0].currentTime = 28;
+    audios[0].emit("timeupdate");
+    player.toggleFavorite("2");
+    player.updateTrack("2", { artwork: "blob:cover" });
+    player.remove("2");
+    expect(player.getSnapshot()).toMatchObject({
+      currentId: "1",
+      position: 28,
+      queue: ["1", "3"],
+      favorites: [],
+    });
+    expect(audios).toHaveLength(1);
+    expect(revoke.mock.calls.flat()).toEqual(["blob:2", "blob:cover"]);
+    player.setShuffle(true);
+    player.setShuffle(false);
+    expect(player.getSnapshot().queue).toEqual(["1", "3"]);
+  });
+  it("advances when deleting the active song but keeps a paused session paused", () => {
+    const { player, audios } = setup();
+    player.activate("2", ["2", "3"]);
+    player.pause();
+    const stale = audios[0].captured.get("ended")!;
+    player.remove("2");
+    expect(player.getSnapshot().currentId).toBe("3");
+    expect(audios[1].play).not.toHaveBeenCalled();
+    audios[1].emit("loadedmetadata");
+    expect(player.getSnapshot().status).toBe("paused");
+    stale(new Event("ended"));
+    expect(player.getSnapshot().currentId).toBe("3");
+    player.remove("3");
+    expect(player.getSnapshot()).toMatchObject({
+      currentId: null,
+      status: "idle",
+      queue: [],
+    });
+  });
+  it("continues playback with the successor when the playing song is removed", () => {
+    const { player, audios } = setup();
+    player.select("2");
+    player.remove("2");
+    expect(player.getSnapshot().currentId).toBe("3");
+    expect(audios[1].play).toHaveBeenCalledOnce();
+  });
+  it("restores the exact shuffle queue and seeks only after metadata, without autoplay", () => {
+    const { player, audios } = setup();
+    player.setShuffle(true);
+    player.restoreSession({
+      currentId: "2",
+      position: 42,
+      volume: 0.4,
+      queue: ["2", "missing", "3", "1"],
+      naturalOrder: ["1", "2", "3"],
+    });
+    expect(player.getSnapshot().queue).toEqual(["2", "3", "1"]);
+    expect(audios[0].play).not.toHaveBeenCalled();
+    expect(audios[0].currentTime).toBe(0);
+    audios[0].emit("loadedmetadata");
+    expect(player.getSnapshot()).toMatchObject({
+      currentId: "2",
+      status: "paused",
+      position: 42,
+      volume: 0.4,
+    });
+    player.setShuffle(false);
+    expect(player.getSnapshot().queue).toEqual(["1", "2", "3"]);
+  });
+  it("does not let late storage restoration override a user-selected song", () => {
+    const { player } = setup();
+    player.select("1");
+    player.restoreSession({
+      currentId: "2",
+      position: 10,
+      volume: 0.1,
+      queue: ["2"],
+      naturalOrder: ["2"],
+    });
+    expect(player.getSnapshot()).toMatchObject({
+      currentId: "1",
+      position: 0,
+      volume: 0.8,
+    });
+  });
+});
+
+it("moves a requested song immediately after the current one without restarting audio or duplicating it", () => {
+  const { player, audios } = setup();
+  player.select("1");
+  player.playNext("3");
+  expect(player.getSnapshot().queue).toEqual(["1", "3", "2"]);
+  player.playNext("3");
+  player.playNext("1");
+  player.playNext("missing");
+  expect(player.getSnapshot().queue).toEqual(["1", "3", "2"]);
+  expect(audios).toHaveLength(1);
+  player.setShuffle(true);
+  player.playNext("2");
+  expect(player.getSnapshot().queue[1]).toBe("2");
+  player.setShuffle(false);
+  expect(player.getSnapshot().queue).toEqual(["1", "2", "3"]);
+});
