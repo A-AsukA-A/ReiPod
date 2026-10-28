@@ -10,7 +10,7 @@ final class MusicBridge: NSObject, WKScriptMessageHandlerWithReply {
 
     func userContentController(_ userContentController: WKUserContentController,
                                didReceive message: WKScriptMessage,
-                               replyHandler: @escaping (Any?, String?) -> Void) {
+                               replyHandler: @escaping @MainActor @Sendable (Any?, String?) -> Void) {
         // Never grant native access to an iframe or an external webpage.
         guard message.frameInfo.isMainFrame,
               message.frameInfo.request.url?.scheme == "reipod-app",

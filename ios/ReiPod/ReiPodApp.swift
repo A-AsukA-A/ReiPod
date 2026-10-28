@@ -5,7 +5,6 @@ struct ReiPodApp: App {
     var body: some Scene {
         WindowGroup {
             PlayerScreen()
-                .ignoresSafeArea(.container, edges: .bottom)
                 .preferredColorScheme(.light)
         }
     }

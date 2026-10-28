@@ -4,6 +4,8 @@ A classic-style music player built with React and TypeScript, with local playbac
 
 **Website:** [Open ReiPod](https://a-asuka-a.github.io/ReiPod/)
 
+**iPhone app:** [Native shell and Mac/Xcode installation](ios/README.md). It reuses this interface and controls the iPhone's system music library through MediaPlayer, without a web MusicKit developer token. The web and native transports share the service selector but have different authorization and playback paths.
+
 ## Use
 
 **设置 → 音乐服务** selects Apple Music or local music. With a configured Apple Music connection, Music and Playlists show that account's library and playlists; **音乐 → 本地音乐** keeps imported files separate. Service choice and verified authorization restore in this browser. Apple Music is the first integration target; NetEase Cloud Music and QQ Music are labeled as pending. Production Apple credentials and real-account/DRM verification are not yet available. See [MUSIC_SERVICES.md](MUSIC_SERVICES.md) for implemented behavior, setup and verification limits.

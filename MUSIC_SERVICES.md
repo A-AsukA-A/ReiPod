@@ -2,6 +2,10 @@
 
 Apple Music 是首个接入目标。设置 → 音乐服务把 Apple Music 放在首位；网站配置有效时，首次访问默认选用 Apple Music，用户手动选择本地音乐后不会被自动改回。未配置时本地播放器继续可用，也可以选择 Apple Music 查看连接状态。
 
+## iPhone 原生路线
+
+`ios/` 提供原生容器和系统音乐桥接。App 内优先调用 `MediaPlayer`，读取用户授权的系统资料库与已有歌单，由系统音乐 App 播放，不经过下面的网页 Developer Token / Music User Token 流程。界面沿用同一份网页代码，授权由 iOS 管理，导入本地文件的列表保持独立。目录搜索与现有资料库搜索是不同功能；此版本原生端只实现后者。安装、编译与实测范围见 [ios/README.md](ios/README.md)。
+
 ## 已实现的代码
 
 - MusicKit JS v3 官方授权入口、退出、当前浏览器授权恢复；恢复时调用个人 storefront 验证授权，不仅凭本地标志显示已登录。
