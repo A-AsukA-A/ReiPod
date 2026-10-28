@@ -32,7 +32,7 @@ export type BacklightTime = (typeof backlightTimes)[number];
 export type Preferences = {
   menuVersion: 3;
   finish: "silver" | "black";
-  background: "warm" | "dark";
+  background: "transparent" | "warm" | "dark";
   clickSound: boolean;
   lyricsEnabled: boolean;
   brightness: number;
@@ -53,7 +53,7 @@ export function parsePreferences(value: unknown): Preferences {
   return {
     menuVersion: 3,
     finish: saved.finish === "black" ? "black" : "silver",
-    background: saved.background === "dark" ? "dark" : "warm",
+    background: saved.background === "dark" || saved.background === "warm" ? saved.background : "transparent",
     clickSound: saved.clickSound !== false,
     lyricsEnabled: saved.lyricsEnabled !== false,
     brightness: number(saved.brightness, 1, 0.25),

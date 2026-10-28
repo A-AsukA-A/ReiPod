@@ -1603,7 +1603,7 @@ export function App() {
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute(
         "content",
-        prefs.background === "dark" ? "#202124" : "#e8e3dc",
+        prefs.background === "transparent" ? "transparent" : prefs.background === "dark" ? "#202124" : "#e8e3dc",
       );
   }, [prefs.background]);
   useLayoutEffect(() => {

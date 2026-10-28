@@ -33,6 +33,7 @@ export function settingChoices(
     })),
     background: (
       [
+        ["transparent", "透明"],
         ["warm", "浅色"],
         ["dark", "深色"],
       ] as const

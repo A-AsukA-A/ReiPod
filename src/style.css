@@ -8,7 +8,7 @@
     "Microsoft YaHei",
     sans-serif;
   color: #303431;
-  background: #efeee9;
+  background: transparent;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -902,10 +902,13 @@ button:disabled {
 /* Classic: cool metal, restrained light, dense firmware typography. */
 .app-shell {
   --device-width: min(390px, calc(100vw - 20px));
-  background: #e8e3dc;
+  background: transparent;
   padding: max(16px, env(safe-area-inset-top))
     max(10px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
     max(10px, env(safe-area-inset-left));
+}
+.app-shell[data-background="warm"] {
+  background: #e8e3dc;
 }
 .app-shell[data-background="dark"] {
   background: #202124;

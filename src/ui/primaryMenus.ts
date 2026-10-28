@@ -230,7 +230,7 @@ export function createPrimaryMenus({
     {
       key: "background",
       label: "背景",
-      value: prefs.background === "warm" ? "浅色" : "深色",
+      value: prefs.background === "transparent" ? "透明" : prefs.background === "warm" ? "浅色" : "深色",
       action: () => open("background", prefs.background),
     },
     {
