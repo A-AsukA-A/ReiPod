@@ -237,3 +237,53 @@ test("changing and pausing a still-loading Apple song cannot start the stale que
     )
     .toEqual(["i.second"]);
 });
+
+test("a late unauthorized response from the previous login cannot clear the new account", async ({
+  page,
+}) => {
+  await appleMusicFixture(page);
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let first = true;
+  await page.route(
+    "https://api.music.apple.com/v1/me/library/songs?limit=100",
+    async (route) => {
+      if (!first) {
+        await route.fallback();
+        return;
+      }
+      first = false;
+      await held;
+      await route.fulfill({ status: 401, json: {} }).catch(() => {});
+    },
+  );
+  await page.goto("/");
+  await expect(page.locator("main")).toHaveAttribute(
+    "data-music-service",
+    "apple-music",
+  );
+  await choose(page, "音乐");
+  await choose(page, "登录 Apple Music");
+  await choose(page, "登录 Apple Music");
+  await expect(live(page).getByRole("status")).toContainText(
+    "已连接 Apple Music",
+  );
+  await choose(page, "退出 Apple Music");
+  await expect(live(page).getByRole("status")).toContainText(
+    "连接你的 Apple Music",
+  );
+  await choose(page, "登录 Apple Music");
+  await expect(live(page).getByRole("status")).toContainText(
+    "2 首歌曲 · 2 个歌单",
+  );
+  release();
+  await page.waitForTimeout(200);
+  await expect(live(page).getByRole("status")).toContainText(
+    "已连接 Apple Music",
+  );
+  expect(
+    await page.evaluate(() => localStorage.getItem("reipod-apple-user")),
+  ).toBe("test-user");
+});

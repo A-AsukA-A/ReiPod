@@ -69,6 +69,13 @@ let developerToken = "";
 let tokenUrl = "";
 let storefront = "us";
 let generation = 0;
+let accountRequests = new AbortController();
+function nextAccountGeneration() {
+  generation++;
+  accountRequests.abort();
+  accountRequests = new AbortController();
+  return generation;
+}
 let preparing: Promise<void> | undefined;
 let initialized = false;
 let sessionReady = false;
@@ -184,7 +191,7 @@ class AppleApiError extends Error {
   }
 }
 function invalidateAuthorization() {
-  generation++;
+  nextAccountGeneration();
   sessionReady = false;
   save("reipod-apple-user", null);
   update({
@@ -199,8 +206,22 @@ function invalidateAuthorization() {
   loadedPlaylists.clear();
   if (state.playback === "apple-music") playbackFrom("local");
 }
-async function request(path: string) {
-  if (!instance?.musicUserToken) throw new Error("请先登录 Apple Music");
+async function request(path: string, epoch = generation) {
+  const accountSignal = accountRequests.signal;
+  const userToken = instance?.musicUserToken;
+  const assertCurrentAccount = () => {
+    if (
+      epoch !== generation ||
+      accountSignal.aborted ||
+      instance?.musicUserToken !== userToken
+    )
+      throw new DOMException(
+        "Previous Apple Music account request canceled",
+        "AbortError",
+      );
+  };
+  assertCurrentAccount();
+  if (!userToken) throw new Error("请先登录 Apple Music");
   const url = new URL(path, "https://api.music.apple.com");
   if (
     url.origin !== "https://api.music.apple.com" ||
@@ -208,22 +229,36 @@ async function request(path: string) {
   )
     throw new Error("Apple Music 返回了无效的分页地址");
   if (!validDeveloperToken(developerToken)) await freshDeveloperToken();
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${developerToken}`,
-      "Music-User-Token": instance.musicUserToken,
-    },
-    signal: AbortSignal.timeout(20000),
-  });
-  if (!response.ok) {
-    const error = new AppleApiError(response.status);
-    if (response.status === 401) {
-      invalidateAuthorization();
-      update({ error: error.message });
+  assertCurrentAccount();
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  accountSignal.addEventListener("abort", cancel, { once: true });
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${developerToken}`,
+        "Music-User-Token": userToken,
+      },
+      signal: controller.signal,
+    });
+    // A previous login's failure must never sign out the current account.
+    assertCurrentAccount();
+    if (!response.ok) {
+      const error = new AppleApiError(response.status);
+      if (response.status === 401) {
+        invalidateAuthorization();
+        update({ error: error.message });
+      }
+      throw error;
     }
-    throw error;
+    const data = await response.json();
+    assertCurrentAccount();
+    return data;
+  } finally {
+    clearTimeout(timeout);
+    accountSignal.removeEventListener("abort", cancel);
   }
-  return response.json();
 }
 type Resource = {
   id: string;
@@ -238,7 +273,7 @@ type Resource = {
     artwork?: { url?: string };
   };
 };
-async function allPages(path: string) {
+async function allPages(path: string, epoch: number) {
   const result: Resource[] = [],
     seen = new Set<string>();
   let next: string | undefined = path;
@@ -246,7 +281,7 @@ async function allPages(path: string) {
     if (seen.has(next))
       throw new Error("Apple Music 分页未能完成，请刷新资料库");
     seen.add(next);
-    const response = await request(next);
+    const response = await request(next, epoch);
     result.push(...(response.data ?? []));
     next = response.next;
   }
@@ -276,7 +311,7 @@ export function appleTrack(resource: Resource): Track {
   };
 }
 async function completeAuthorization(token: string) {
-  const epoch = ++generation;
+  const epoch = nextAccountGeneration();
   try {
     const response = await request("/v1/me/storefront");
     if (epoch !== generation) return;
@@ -353,8 +388,8 @@ export async function refreshAppleLibrary() {
   update({ syncing: true, error: "" });
   try {
     const [songs, lists] = await Promise.all([
-      allPages("/v1/me/library/songs?limit=100"),
-      allPages("/v1/me/library/playlists?limit=100"),
+      allPages("/v1/me/library/songs?limit=100", epoch),
+      allPages("/v1/me/library/playlists?limit=100", epoch),
     ]);
     if (epoch !== generation) return;
     const tracks = songs
@@ -389,6 +424,7 @@ export async function loadApplePlaylist(id: string) {
   try {
     const items = await allPages(
       `/v1/me/library/playlists/${encodeURIComponent(id.slice("apple-playlist:".length))}/tracks?limit=100`,
+      epoch,
     );
     if (epoch !== generation) return false;
     const tracks = items
@@ -420,6 +456,7 @@ export async function searchAppleMusic(term: string) {
   try {
     const result = await request(
       `/v1/catalog/${encodeURIComponent(storefront)}/search?types=songs&limit=25&term=${encodeURIComponent(term.trim())}`,
+      epoch,
     );
     if (version !== searchVersion || epoch !== generation) return;
     const tracks = ((result.results?.songs?.data ?? []) as Resource[]).map(
