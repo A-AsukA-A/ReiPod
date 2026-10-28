@@ -7,6 +7,7 @@ import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
 import { readSession } from "./session";
 import { clearRatings, setRating } from "./ratings";
 import { clearPlaylists, removeFromPlaylists } from "./playlists";
+import { hasNativeMusic } from "../services/nativeMusic";
 export const player = new Player();
 let removedDemos: string[] = [];
 let savedSession: ReturnType<typeof readSession> = null;
@@ -280,7 +281,7 @@ player.subscribe(() => {
 });
 
 // The browser may expose these controls on a lock screen; native background support is a separate milestone.
-if ("mediaSession" in navigator) {
+if ("mediaSession" in navigator && !hasNativeMusic()) {
   const handlers: Partial<
     Record<MediaSessionAction, MediaSessionActionHandler>
   > = {

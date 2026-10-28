@@ -32,9 +32,18 @@ jobs:
           xcodebuild -quiet -project ReiPod.xcodeproj -scheme ReiPod -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
           test -f build/Build/Products/Debug-iphoneos/ReiPod.app/Web/index.html
       - name: Test native boundaries on simulator
+        timeout-minutes: 12
         working-directory: ios
         run: |
           IOS_TEST_DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["isAvailable"] and "iPhone" in x["name"]))')
           xcrun simctl boot "$IOS_TEST_DEVICE_ID" || true
           xcrun simctl bootstatus "$IOS_TEST_DEVICE_ID" -b
-          xcodebuild -quiet -project ReiPod.xcodeproj -scheme ReiPod -destination "platform=iOS Simulator,id=$IOS_TEST_DEVICE_ID" -destination-timeout 60 -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 60 -maximum-test-execution-time-allowance 90 -derivedDataPath build CODE_SIGNING_ALLOWED=NO test
+          xcodebuild -project ReiPod.xcodeproj -scheme ReiPod -destination "platform=iOS Simulator,id=$IOS_TEST_DEVICE_ID" -destination-timeout 60 -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 60 -maximum-test-execution-time-allowance 90 -derivedDataPath build -resultBundlePath build/NativeTests.xcresult CODE_SIGN_IDENTITY=- test
+      - name: Report simulator failures
+        if: failure()
+        working-directory: ios
+        run: |
+          find "$HOME/Library/Logs/DiagnosticReports" -name 'ReiPod*' -type f -exec tail -c 20000 {} \; || true
+          if test -d build/NativeTests.xcresult; then
+            xcrun xcresulttool get test-results summary --path build/NativeTests.xcresult || true
+          fi

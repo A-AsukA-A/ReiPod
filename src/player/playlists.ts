@@ -53,7 +53,12 @@ function save(next: Playlist[]) {
 export function createPlaylist(name: string) {
   const clean = name.trim().slice(0, 60);
   if (!clean) return null;
-  const playlist = { id: crypto.randomUUID(), name: clean, trackIds: [] };
+  // Custom WKWebView schemes may not expose secure-context randomUUID().
+  const id = crypto.randomUUID?.() ?? Array.from(
+    crypto.getRandomValues(new Uint8Array(16)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+  const playlist = { id, name: clean, trackIds: [] };
   return { playlist, persisted: save([...playlists, playlist]) };
 }
 export function renamePlaylist(id: string, name: string) {

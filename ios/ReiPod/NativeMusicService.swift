@@ -120,7 +120,7 @@ final class NativeMusicService {
                               current: item.map(track), queue: known ? ownedQueue : currentID.map { [$0] } ?? [],
                               queueKnown: known, status: state,
                               position: player.currentPlaybackTime.isFinite ? max(0, player.currentPlaybackTime) : 0,
-                              duration: item?.playbackDuration ?? 0,
+                              duration: item.map { $0.playbackDuration.isFinite ? max(0, $0.playbackDuration) : 0 } ?? 0,
                               volume: AVAudioSession.sharedInstance().outputVolume, repeat: repeatMode)
     }
 

@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import {
   parsePlaylists,
   createPlaylist,
@@ -31,4 +31,17 @@ it("keeps in-memory editing usable when persistent storage is unavailable", () =
     removeFromPlaylists("track");
     deletePlaylist(result.playlist.id);
   }).not.toThrow();
+});
+it("creates distinct local playlists when WebKit has no randomUUID", () => {
+  const getRandomValues = crypto.getRandomValues.bind(crypto);
+  vi.stubGlobal("crypto", { getRandomValues });
+  try {
+    const first = createPlaylist("手机歌单")!;
+    const second = createPlaylist("第二个歌单")!;
+    expect(first.playlist.id).toMatch(/^[0-9a-f]{32}$/);
+    expect(second.playlist.id).not.toBe(first.playlist.id);
+  } finally {
+    vi.unstubAllGlobals();
+    clearPlaylists();
+  }
 });

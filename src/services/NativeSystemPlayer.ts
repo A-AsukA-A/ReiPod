@@ -20,7 +20,11 @@ export class NativeSystemPlayer extends Player {
   adopt(snapshot: NativePlayback) {
     if (snapshot.sequence <= this.sequence) return;
     this.sequence = snapshot.sequence;
-    if (snapshot.current) this.add([nativeTrack(snapshot.current)]);
+    const current = snapshot.current;
+    if (
+      current &&
+      !this.getSnapshot().tracks.some((track) => track.id === `ios-song:${current.id}`)
+    ) this.add([nativeTrack(current)]);
     const currentId = snapshot.currentId
       ? `ios-song:${snapshot.currentId}`
       : null;
