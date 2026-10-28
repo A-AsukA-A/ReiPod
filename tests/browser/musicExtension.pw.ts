@@ -69,27 +69,30 @@ test("packaged extension bridges only allowed pages and rejects arbitrary operat
         body: { url: "https://evil.test/" },
       }),
     ).toMatchObject({ status: 400 });
-    await context.route("https://music.163.com/**", async (route) => {
-      const path = new URL(route.request().url()).pathname;
-      const data = path.includes("/unikey")
-        ? { code: 200, unikey: "fixture-key" }
-        : path.includes("/client/login")
-          ? { code: 803 }
-          : {
-              code: 200,
-              account: { id: 123 },
-              profile: { nickname: "Fixture user" },
-            };
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        headers: {
-          "Set-Cookie":
-            "MUSIC_U=fixture-private-cookie; Path=/; Secure; HttpOnly",
-        },
-        body: JSON.stringify(data),
-      });
-    });
+    await context.route(
+      /^https:\/\/(?:music|interfacepc\.music)\.163\.com\//,
+      async (route) => {
+        const path = new URL(route.request().url()).pathname;
+        const data = path.includes("/unikey")
+          ? { code: 200, unikey: "fixture-key" }
+          : path.includes("/client/login")
+            ? { code: 803 }
+            : {
+                code: 200,
+                account: { id: 123 },
+                profile: { nickname: "Fixture user" },
+              };
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: {
+            "Set-Cookie":
+              "MUSIC_U=fixture-private-cookie; Path=/; Secure; HttpOnly",
+          },
+          body: JSON.stringify(data),
+        });
+      },
+    );
     const started = await send({
       version: 1,
       service: "netease",
@@ -215,8 +218,9 @@ test("Pages UI uses the extension for QR login without an HTTP music backend", a
         });
       },
     );
-    await context.route("https://music.163.com/**", (route) =>
-      route.fulfill({ json: { code: 200, unikey: "qr-fixture" } }),
+    await context.route(
+      /^https:\/\/(?:music|interfacepc\.music)\.163\.com\//,
+      (route) => route.fulfill({ json: { code: 200, unikey: "qr-fixture" } }),
     );
     const page = await context.newPage();
     await page.goto("https://a-asuka-a.github.io/ReiPod/");

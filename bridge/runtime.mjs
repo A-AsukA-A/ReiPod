@@ -8,7 +8,7 @@ export async function createRuntime({ fetcher, storage, secret }) {
   // QQ's serverless adapter uses global fetch; never install this in the page world.
   globalThis.fetch = fetcher;
   const providers = createProviders(
-    createNetEase(fetcher),
+    createNetEase(fetcher, { deviceId: secret.slice(0, 32) }),
     async (path, params = {}, token) => {
       const url = new URL(path, "https://reipod-music.local");
       for (const [key, value] of Object.entries(params))

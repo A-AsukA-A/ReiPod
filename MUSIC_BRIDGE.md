@@ -4,7 +4,7 @@
 
 ## 当前实现
 
-`bridge/` 提供无需 Node 的共享运行时，复用 `server/providers.mjs` 的平台数据归一化、歌单顺序、歌词及 VIP／购买／试听限制判断。网易云使用 WEAPI 签名和无 DOM 的 SVG 二维码生成；QQ 复用固定版本 QQ Music API 的 serverless 运行时。这里的 serverless 是嵌入浏览器／App 的库代码，不需要部署云函数。
+`bridge/` 提供无需 Node 的共享运行时，复用 `server/providers.mjs` 的平台数据归一化、歌单顺序、歌词及 VIP／购买／试听限制判断。网易云按 api-enhanced 4.41.1 的路由区分 WEAPI 与 EAPI；扫码使用 EAPI，并延续扫码过程中的 Cookie，二维码使用无 DOM 的 SVG 生成；QQ 复用固定版本 QQ Music API 的 serverless 运行时。这里的 serverless 是嵌入浏览器／App 的库代码，不需要部署云函数。
 
 | 环境 | 请求路径 | 凭证存储 |
 | --- | --- | --- |
@@ -67,4 +67,6 @@ open ReiPod.xcodeproj
 
 网易云协议参照 [api-enhanced 4.41.1](https://www.npmjs.com/package/@neteasecloudmusicapienhanced/api/v/4.41.1) 的 `module/`、`util/crypto.js`（MIT）；签名测试向量记录该版本及固定的公开测试输入。没有复制其 Node 请求层、解锁或替代音源功能。
 
-QQ 适配器固定使用 [QQ Music API 3.3.5](https://www.npmjs.com/package/@yakult-green-tea/qq-music-api/v/3.3.5) 的 serverless 导出。CryptoJS 4.2.0、qrcode 1.5.4 仅进入内置／扩展运行时，不进入 Pages 主应用包；构建脚本随产物附带库的许可和 QQ 项目贡献来源说明。
+QQ 适配器固定使用 [QQ Music API 3.3.5](https://www.npmjs.com/package/@yakult-green-tea/qq-music-api/v/3.3.5) 的 serverless 导出。扩展 0.1.1 修正了扫码接口的协议选择，并补齐 QQ 手机确认后的 `ssl.ptlogin2.graph.qq.com/check_sig` 目标白名单。匿名 EAPI 轮询已返回 `801 等待扫码`；QQ 凭证交换回归使用替身，不等于真实账号已通过。更新后需重新运行安装助手，在浏览器扩展页重新加载并确认版本为 0.1.1，再刷新 ReiPod 生成新二维码。
+
+CryptoJS 4.2.0、qrcode 1.5.4 仅进入内置／扩展运行时，不进入 Pages 主应用包；构建脚本随产物附带库的许可和 QQ 项目贡献来源说明。

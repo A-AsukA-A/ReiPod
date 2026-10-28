@@ -42,7 +42,35 @@ export function weapi(data) {
     encSecKey: result.toString(16).padStart(256, "0"),
   };
 }
-export function createNetEase(fetcher) {
+export function eapi(path, data) {
+  const text = JSON.stringify(data);
+  const digest = CryptoJS.MD5(
+    `nobody${path}use${text}md5forencrypt`,
+  ).toString();
+  return {
+    params: CryptoJS.AES.encrypt(
+      CryptoJS.enc.Utf8.parse(
+        `${path}-36cd479b6b5-${text}-36cd479b6b5-${digest}`,
+      ),
+      CryptoJS.enc.Utf8.parse("e82ckenh8dichen8"),
+      { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 },
+    )
+      .ciphertext.toString()
+      .toUpperCase(),
+  };
+}
+export function createNetEase(
+  fetcher,
+  { deviceId = crypto.randomUUID() } = {},
+) {
+  const jar = new Map();
+  const remember = (cookie) => {
+    for (const part of cookie.split(/;\s*/)) {
+      const index = part.indexOf("=");
+      if (index > 0) jar.set(part.slice(0, index), part.slice(index + 1));
+    }
+  };
+  const webActions = new Set(["login_status", "user_playlist", "song_detail"]);
   const definitions = {
     login_status: () => ["/api/w/nuser/account/get", {}],
     login_qr_key: () => ["/api/login/qrcode/unikey", { type: 3 }],
@@ -88,30 +116,68 @@ export function createNetEase(fetcher) {
       name,
       async (q = {}) => {
         const [path, data] = definition(q);
-        const csrf = /(?:^|;\s*)__csrf=([^;]*)/.exec(q.cookie ?? "")?.[1] ?? "";
+        if (name === "login_qr_key") jar.clear();
+        if (q.cookie) {
+          jar.clear();
+          remember(q.cookie);
+        }
+        const csrf = jar.get("__csrf") ?? "";
+        const web = webActions.has(name);
+        const header = {
+          os: "pc",
+          appver: "3.1.17.204416",
+          osver: "Microsoft-Windows-10-Professional-build-19045-64bit",
+          deviceId,
+          versioncode: "140",
+          mobilename: "",
+          buildver: String(Math.floor(Date.now() / 1000)),
+          resolution: "1920x1080",
+          __csrf: csrf,
+          channel: "netease",
+          requestId: `${Date.now()}_${crypto.getRandomValues(new Uint16Array(1))[0]}`,
+        };
+        for (const key of ["MUSIC_U", "MUSIC_A", "NMTID"])
+          if (jar.has(key)) header[key] = jar.get(key);
+        const cookies = web ? Object.fromEntries(jar) : header;
         const response = await fetcher(
-          `https://music.163.com${path.replace("/api/", "/weapi/")}?csrf_token=${encodeURIComponent(csrf)}`,
+          web
+            ? `https://music.163.com${path.replace("/api/", "/weapi/")}?csrf_token=${encodeURIComponent(csrf)}`
+            : `https://interfacepc.music.163.com${path.replace("/api/", "/eapi/")}`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/x-www-form-urlencoded",
               Referer: "https://music.163.com/",
-              Cookie: q.cookie ?? "",
+              "User-Agent": web
+                ? "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
+                : "NeteaseMusic 9.0.90/5038 (iPhone; iOS 16.2; zh_CN)",
+              Cookie: Object.entries(cookies)
+                .map(
+                  ([key, value]) =>
+                    `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
+                )
+                .join("; "),
             },
             body: new URLSearchParams(
-              weapi({ ...data, csrf_token: csrf }),
+              web
+                ? weapi({ ...data, csrf_token: csrf })
+                : eapi(path, { ...data, header }),
             ).toString(),
             redirect: "manual",
           },
         );
+        const received = response.headers
+          .getSetCookie()
+          .map((c) => c.split(";")[0]);
+        received.forEach(remember);
         let body = await response.json();
         if (name === "login_status") body = { data: body };
         if (name === "login_qr_key") body = { code: 200, data: body };
         if (name === "login_qr_check")
-          body.cookie = response.headers
-            .getSetCookie()
-            .map((c) => c.split(";")[0])
+          body.cookie = Array.from(jar)
+            .map(([key, value]) => `${key}=${value}`)
             .join("; ");
+        if (name === "logout") jar.clear();
         return { status: response.status, body };
       },
     ]),

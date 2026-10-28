@@ -14,8 +14,8 @@ private final class NoMusicRedirects: NSObject, URLSessionTaskDelegate, Sendable
 final class ThirdPartyMusicBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let world = WKContentWorld.world(name: "ReiPodMusicService")
     private static let hosts: Set<String> = [
-        "api.tencentmusic.com", "y.gtimg.cn", "music.163.com", "interface.music.163.com", "interface3.music.163.com", "qrcode.music.163.com",
-        "u.y.qq.com", "c.y.qq.com", "c6.y.qq.com", "y.qq.com", "ssl.ptlogin2.qq.com",
+        "api.tencentmusic.com", "y.gtimg.cn", "music.163.com", "interface.music.163.com", "interfacepc.music.163.com", "interface3.music.163.com", "qrcode.music.163.com",
+        "u.y.qq.com", "c.y.qq.com", "c6.y.qq.com", "y.qq.com", "ssl.ptlogin2.qq.com", "ssl.ptlogin2.graph.qq.com",
         "xui.ptlogin2.qq.com", "ptlogin2.qq.com", "graph.qq.com", "open.weixin.qq.com",
         "lp.open.weixin.qq.com", "login.weixin.qq.com"
     ]

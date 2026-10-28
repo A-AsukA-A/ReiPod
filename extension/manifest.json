@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ReiPod Music Bridge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "为 ReiPod 提供本机浏览器内的网易云与 QQ 音乐连接，无需 HTTP 后端。",
   "minimum_chrome_version": "120",
   "permissions": [
@@ -26,7 +26,9 @@
     "https://lp.open.weixin.qq.com/*",
     "https://login.weixin.qq.com/*",
     "https://api.tencentmusic.com/*",
-    "https://y.gtimg.cn/*"
+    "https://y.gtimg.cn/*",
+    "https://interfacepc.music.163.com/*",
+    "https://ssl.ptlogin2.graph.qq.com/*"
   ],
   "background": {
     "service_worker": "worker.js",
