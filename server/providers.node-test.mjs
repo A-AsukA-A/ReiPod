@@ -364,3 +364,31 @@ test("account profiles expose public identity and HTTPS avatars, never credentia
     avatar: "https://example.test/qq.jpg",
   });
 });
+
+test("new NetEase lyrics expose YRC with LRC fallback and preserve authorization errors", async () => {
+  const providers = createProviders({
+    lyric_new: async () => ({
+      status: 200,
+      body: {
+        lrc: { lyric: "[00:01]Line" },
+        yrc: { lyric: "[1000,1000](1000,1000,0)Line" },
+      },
+    }),
+  });
+  assert.deepEqual(await providers.read("netease", "lyrics", { id: "1" }, {}), {
+    lyric: "[00:01]Line",
+    yrc: "[1000,1000](1000,1000,0)Line",
+  });
+  let legacyCalls = 0;
+  const expired = createProviders({
+    lyric_new: async () => ({ status: 401, body: { code: 301 } }),
+    lyric: async () => {
+      legacyCalls++;
+    },
+  });
+  await assert.rejects(
+    expired.read("netease", "lyrics", { id: "1" }, {}),
+    (error) => error.status === 401,
+  );
+  assert.equal(legacyCalls, 0);
+});

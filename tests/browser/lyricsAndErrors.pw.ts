@@ -22,9 +22,28 @@ async function fixture(page: Page, source: "netease" | "qq", mode = "lyrics") {
     { id: "3", title: "Unrestricted", artist: "Artist", album: "Album" },
   ];
   const audio = await readFile("public/music/carefree.mp3");
-  await page.route("https://audio.reipod.test/**", (route) =>
-    route.fulfill({ contentType: "audio/mpeg", body: audio }),
-  );
+  await page.route("https://audio.reipod.test/**", (route) => {
+    const range = route
+      .request()
+      .headers()
+      .range?.match(/^bytes=(\d+)-(\d*)$/);
+    const start = Number(range?.[1] ?? 0);
+    const end = Math.min(
+      audio.length - 1,
+      range?.[2] ? Number(range[2]) : audio.length - 1,
+    );
+    return route.fulfill({
+      status: range ? 206 : 200,
+      contentType: "audio/mpeg",
+      headers: {
+        "Accept-Ranges": "bytes",
+        ...(range
+          ? { "Content-Range": `bytes ${start}-${end}/${audio.length}` }
+          : {}),
+      },
+      body: audio.subarray(start, end + 1),
+    });
+  });
   await page.addInitScript((source) => {
     localStorage.setItem("reipod-music-service", source);
     localStorage.setItem(`reipod-${source}-session`, "fixture");
@@ -40,6 +59,14 @@ async function fixture(page: Page, source: "netease" | "qq", mode = "lyrics") {
       }
       await route.fulfill({
         json: {
+          ...(mode === "word-lyrics"
+            ? {
+                yrc: Array.from({ length: 12 }, (_, i) => {
+                  const start = i * 6000;
+                  return `[${start},4000](${start},2000,0)${body.id === "1" ? "逐字" : "换曲"} (${start + 2000},2000,0)${i === 1 ? "LongEnglishWordAnd中文🌙" : "跟随旋律"}`;
+                }).join("\n"),
+              }
+            : {}),
           lyric:
             mode === "empty"
               ? ""
@@ -439,3 +466,111 @@ test("opening another playlist song's lyrics retains that playlist's playback or
     "First",
   ]);
 });
+
+for (const width of [320, 390, 960]) {
+  test(`word lyric masks, gaps, seek, wheel follow and reduced motion at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.addInitScript(() => {
+      const original = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () {
+        (
+          window as unknown as { lyricTestAudio: HTMLMediaElement }
+        ).lyricTestAudio = this;
+        return original.call(this);
+      };
+    });
+    await fixture(page, "netease", "word-lyrics");
+    const seek = (time: number) =>
+      page.evaluate((time) => {
+        const audio = (
+          window as unknown as { lyricTestAudio: HTMLMediaElement }
+        ).lyricTestAudio;
+        audio.pause();
+        audio.currentTime = time;
+        audio.dispatchEvent(new Event("timeupdate"));
+      }, time);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (window as unknown as { lyricTestAudio: HTMLMediaElement })
+              .lyricTestAudio?.readyState ?? 0,
+        ),
+      )
+      .toBeGreaterThanOrEqual(2);
+    await seek(1);
+    await lyrics(page);
+    const list = live(page).locator(".lyrics-lines");
+    const first = list.locator(".lyric-word").first();
+    await expect(list.locator(".lyric-word")).toHaveCount(24);
+    await expect(list.locator(".active-lyric")).toHaveAttribute(
+      "data-line-index",
+      "0",
+    );
+    await expect
+      .poll(() =>
+        first.evaluate((el) =>
+          parseFloat(
+            (el as HTMLElement).style.getPropertyValue("--word-progress"),
+          ),
+        ),
+      )
+      .toBeCloseTo(50, 0);
+    const frozen = await first.getAttribute("style");
+    // Wait across several animation frames: a paused mask must stay at the audio position.
+    await page.waitForTimeout(150);
+    expect(await first.getAttribute("style")).toBe(frozen);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await Promise.all(
+        document
+          .getAnimations()
+          .filter(
+            (animation) =>
+              animation.effect?.getComputedTiming().iterations !== Infinity,
+          )
+          .map((animation) => animation.finished.catch(() => {})),
+      );
+    });
+    await page
+      .locator(".classic-device")
+      .screenshot({ path: testInfo.outputPath("word-lyrics.png") });
+    await seek(4.5);
+    await expect(list.locator(".active-lyric")).toHaveCount(0);
+    await seek(7);
+    await expect(list.locator(".active-lyric")).toHaveAttribute(
+      "data-line-index",
+      "1",
+    );
+    await seek(1);
+    await expect(list.locator(".active-lyric")).toHaveAttribute(
+      "data-line-index",
+      "0",
+    );
+    await expect
+      .poll(() => list.evaluate((el) => el.scrollTop))
+      .toBeLessThan(20);
+    for (let i = 0; i < 4; i++) await key(page, "ArrowDown");
+    await expect
+      .poll(() => list.evaluate((el) => el.scrollTop))
+      .toBeGreaterThan(60);
+    await expect
+      .poll(() => list.evaluate((el) => el.scrollTop), { timeout: 5000 })
+      .toBeLessThan(20);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await seek(1.1);
+    await expect(first).toHaveCSS("transform", "none");
+    await expect(list.locator('p[data-distance="1"]').first()).toHaveCSS(
+      "filter",
+      "none",
+    );
+    await key(page, "ArrowRight");
+    await expect(live(page).locator(".lyrics-header strong")).toHaveText(
+      "Second",
+    );
+    await expect(list).toContainText("换曲");
+    await expect(list).not.toContainText("逐字");
+  });
+}

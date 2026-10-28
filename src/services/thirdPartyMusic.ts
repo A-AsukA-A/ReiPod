@@ -558,6 +558,7 @@ export function loadThirdPartyLyrics(track: Track): Promise<void> {
       if (epoch !== epochs[service]) return;
       const lyrics = parseLyrics(
         typeof result.lyric === "string" ? result.lyric : "",
+        typeof result.yrc === "string" ? result.yrc : "",
       );
       player.updateTrack(track.id, {
         lyrics,

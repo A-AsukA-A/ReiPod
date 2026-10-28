@@ -68,3 +68,18 @@ test("QR requests preserve server cookies and clear them for a fresh login", asy
   await api.login_qr_key();
   expect(sent[2]).not.toContain("NMTID=challenge-cookie");
 });
+
+test("word lyrics use the signed v1 route without exposing credentials to the UI", async () => {
+  let sent;
+  const api = createNetEase(async (url, options) => {
+    sent = { url, options };
+    const response = Response.json({ code: 200, yrc: { lyric: "fixture" } });
+    response.headers.getSetCookie = () => [];
+    return response;
+  });
+  await api.lyric_new({ id: "1", cookie: "MUSIC_U=fixture" });
+  expect(sent.url).toBe("https://interfacepc.music.163.com/eapi/song/lyric/v1");
+  expect(new URLSearchParams(sent.options.body).get("params")).toMatch(
+    /^[A-F0-9]+$/,
+  );
+});

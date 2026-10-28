@@ -102,3 +102,26 @@ test("catalog normalization clears an old VIP label when a refreshed song is fre
   );
   expect(player.getSnapshot().tracks[0].access).toBeUndefined();
 });
+
+test("word lyrics survive the provider/session cache boundary", async () => {
+  const { loadThirdPartyLyrics } = await import("./thirdPartyMusic");
+  const fetcher = vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue(
+      Response.json({
+        lyric: "[00:01]回退",
+        yrc: "[1000,2000](1000,1000,0)逐(2000,1000,0)字",
+      }),
+    );
+  try {
+    const song = thirdPartyTrack("netease", { id: "42", title: "Word lyric" });
+    const player = thirdPartyPlayerFor("netease");
+    player.add([song]);
+    await loadThirdPartyLyrics(song);
+    await loadThirdPartyLyrics(song);
+    expect(player.getSnapshot().tracks[0].lyrics?.[0].words).toHaveLength(2);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  } finally {
+    fetcher.mockRestore();
+  }
+});

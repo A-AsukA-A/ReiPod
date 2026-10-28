@@ -87,6 +87,10 @@ export function createNetEase(
       "/api/song/lyric",
       { id: q.id, tv: -1, lv: -1, rv: -1, kv: -1 },
     ],
+    lyric_new: (q) => [
+      "/api/song/lyric/v1",
+      { id: q.id, cp: false, tv: -1, lv: -1, rv: -1, kv: -1, yv: -1, ytv: -1, yrv: -1 },
+    ],
     song_url: (q) => [
       "/api/song/enhance/player/url",
       { ids: JSON.stringify(String(q.id).split(",")), br: 128000 },

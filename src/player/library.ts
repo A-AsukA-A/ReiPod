@@ -1,3 +1,4 @@
+import { parseYrc } from "./yrc";
 import type { Track } from "./Player";
 
 export type Album = {
@@ -74,7 +75,9 @@ export function coverFlowOrder(albums: Album[]) {
   );
 }
 
-export function parseLyrics(text: string): NonNullable<Track["lyrics"]> {
+export function parseLyrics(text: string, yrc = ""): NonNullable<Track["lyrics"]> {
+  const words = parseYrc(yrc || text);
+  if (words.length) return words;
   const result: NonNullable<Track["lyrics"]> = [];
   const offset = Number(text.match(/\[offset:([+-]?\d+)\]/i)?.[1] ?? 0) / 1000;
   for (const line of text.split(/\r?\n/)) {

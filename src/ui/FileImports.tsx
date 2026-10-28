@@ -44,7 +44,7 @@ export function FileImports({
         id="audio-files"
         className="sr-only"
         type="file"
-        accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aiff,.lrc"
+        accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aiff,.lrc,.yrc"
         multiple
         aria-label="选择本地音频或歌词文件"
         disabled={locked}

@@ -13,6 +13,14 @@ export class PlaybackError extends Error {
 }
 export type PlaybackErrorKind = "vip" | "purchase" | "preview" | "unavailable";
 
+export type LyricWord = { time: number; duration: number; text: string };
+export type LyricLine = {
+  time: number;
+  text: string;
+  end?: number;
+  words?: LyricWord[];
+};
+
 export type Track = {
   id: string;
   title: string;
@@ -25,7 +33,7 @@ export type Track = {
   trackNumber?: number;
   duration?: number;
   importedAt?: number;
-  lyrics?: { time: number; text: string }[];
+  lyrics?: LyricLine[];
   lyricsStatus?: "loading" | "ready" | "empty" | "error";
   access?: "vip" | "purchase";
   kind?: "local" | "demo" | "apple-music" | "netease" | "qq";

@@ -87,7 +87,7 @@ export function importFiles(files: File[], persist = true) {
   );
   let rejected = 0;
   const tracks = files.flatMap((file) => {
-    if (/\.lrc$/i.test(file.name)) return [];
+    if (/\.(?:lrc|yrc)$/i.test(file.name)) return [];
     if (
       !/\.(mp3|m4a|aac|wav|wave|flac|ogg|oga|opus|aif|aiff|mp4)$/i.test(
         file.name,
@@ -157,13 +157,13 @@ export function importFiles(files: File[], persist = true) {
       }
     });
   }
-  const lyricFiles = files.filter((file) => /\.lrc$/i.test(file.name));
+  const lyricFiles = files.filter((file) => /\.(?:lrc|yrc)$/i.test(file.name));
   for (const file of lyricFiles)
     void file
       .text()
       .then((text) => {
         if (generation !== epoch) return;
-        const stem = file.name.replace(/\.lrc$/i, "").toLocaleLowerCase();
+        const stem = file.name.replace(/\.(?:lrc|yrc)$/i, "").toLocaleLowerCase();
         const matches = player
           .getSnapshot()
           .tracks.filter(

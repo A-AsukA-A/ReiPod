@@ -55,6 +55,7 @@ export function NowPlayingScreen({
         <Lyrics
           track={current}
           position={state.position}
+          playing={state.status === "playing"}
           wheelStep={lyricWheel}
         />
       ) : (

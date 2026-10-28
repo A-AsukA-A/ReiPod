@@ -213,9 +213,16 @@ export function createProviders(netease, qqRequest) {
           throw new ServiceError("无效歌曲标识", 400);
         if (action === "lyrics") {
           if (source === "netease") {
-            const body = await net("lyric", { id }, session);
+            let body;
+            try {
+              body = await net("lyric_new", { id }, session);
+            } catch (error) {
+              if (error.status === 401) throw error;
+              body = await net("lyric", { id }, session);
+            }
             return {
               lyric: typeof body.lrc?.lyric === "string" ? body.lrc.lyric : "",
+              ...(typeof body.yrc?.lyric === "string" ? { yrc: body.yrc.lyric } : {}),
             };
           }
           const body = (await qq("/getLyric", { songmid: id }, session))

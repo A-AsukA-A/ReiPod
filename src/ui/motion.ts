@@ -33,3 +33,16 @@ export const lcdMotionStyle = {
   "--lcd-preview-fade": `${classicMotion.previewFade}ms`,
   "--lcd-preview-card-duration": `${classicMotion.previewCard}ms`,
 } as CSSProperties;
+
+/** ReiPod lyric additions: modest emphasis in the small LCD, not hardware measurements. */
+export const lyricMotion = {
+  focus: 0.35,
+  manualHold: 2500,
+  interpolationLimit: 0.3,
+  mass: 1,
+  stiffness: 100,
+  damping: 10,
+  settle: 0.5,
+  wordScale: 0.035,
+  wordLift: 0.035,
+} as const;
