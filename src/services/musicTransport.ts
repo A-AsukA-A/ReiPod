@@ -113,6 +113,13 @@ export async function bridgeMusicRequest(
     if (status.status !== 200)
       throw new Error(String(status.data.error ?? "音乐扩展不可用"));
     reply = await extensionRequest(request, signal);
+    if (
+      reply.status >= 400 &&
+      typeof reply.data.error === "string" &&
+      typeof status.data.extensionVersion === "string"
+    ) {
+      reply.data.error = `${reply.data.error}（扩展 ${status.data.extensionVersion}）`;
+    }
   }
   return Response.json(reply.data, { status: reply.status });
 }

@@ -76,7 +76,7 @@ export function createNetEase(
     login_qr_key: () => ["/api/login/qrcode/unikey", { type: 3 }],
     login_qr_check: (q) => [
       "/api/login/qrcode/client/login",
-      { key: q.key, type: 3 },
+      { key: q.key, type: 3, secureCaptcha: "" },
     ],
     logout: () => ["/api/logout", {}],
     cloudsearch: (q) => [
@@ -121,8 +121,9 @@ export function createNetEase(
           jar.clear();
           remember(q.cookie);
         }
-        const csrf = jar.get("__csrf") ?? "";
+        const csrf = jar.get("__csrf") ?? jar.get("__csrf_token") ?? "";
         const web = webActions.has(name);
+        const plain = name === "login_qr_key" || name === "login_qr_check";
         const header = {
           os: "pc",
           appver: "3.1.17.204416",
@@ -138,19 +139,23 @@ export function createNetEase(
         };
         for (const key of ["MUSIC_U", "MUSIC_A", "NMTID"])
           if (jar.has(key)) header[key] = jar.get(key);
-        const cookies = web ? Object.fromEntries(jar) : header;
+        const cookies = web || plain ? Object.fromEntries(jar) : header;
         const response = await fetcher(
-          web
-            ? `https://music.163.com${path.replace("/api/", "/weapi/")}?csrf_token=${encodeURIComponent(csrf)}`
-            : `https://interfacepc.music.163.com${path.replace("/api/", "/eapi/")}`,
+          plain
+            ? `https://music.163.com${path}`
+            : web
+              ? `https://music.163.com${path.replace("/api/", "/weapi/")}?csrf_token=${encodeURIComponent(csrf)}`
+              : `https://interfacepc.music.163.com${path.replace("/api/", "/eapi/")}`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/x-www-form-urlencoded",
               Referer: "https://music.163.com/",
-              "User-Agent": web
-                ? "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
-                : "NeteaseMusic 9.0.90/5038 (iPhone; iOS 16.2; zh_CN)",
+              "User-Agent": plain
+                ? "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/3.1.29.205117"
+                : web
+                  ? "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
+                  : "NeteaseMusic 9.0.90/5038 (iPhone; iOS 16.2; zh_CN)",
               Cookie: Object.entries(cookies)
                 .map(
                   ([key, value]) =>
@@ -159,9 +164,16 @@ export function createNetEase(
                 .join("; "),
             },
             body: new URLSearchParams(
-              web
-                ? weapi({ ...data, csrf_token: csrf })
-                : eapi(path, { ...data, header }),
+              plain
+                ? Object.fromEntries(
+                    Object.entries(data).map(([key, value]) => [
+                      key,
+                      String(value),
+                    ]),
+                  )
+                : web
+                  ? weapi({ ...data, csrf_token: csrf })
+                  : eapi(path, { ...data, header }),
             ).toString(),
             redirect: "manual",
           },
@@ -171,6 +183,9 @@ export function createNetEase(
           .map((c) => c.split(";")[0]);
         received.forEach(remember);
         let body = await response.json();
+        if (body.code === 8821)
+          body.message =
+            "网易云要求安全验证（8821）。请先在官方 App 或官网完成验证，再重新扫码。";
         if (name === "login_status") body = { data: body };
         if (name === "login_qr_key") body = { code: 200, data: body };
         if (name === "login_qr_check")

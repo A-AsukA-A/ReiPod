@@ -114,7 +114,17 @@ export function createMusicService({ providers, storage, now = Date.now }) {
       }
       if (!check.cookie) throw new ServiceError("平台未返回登录会话");
       const candidate = { source, cookie: check.cookie };
-      candidate.profile = await providers.profile(source, candidate);
+      // Confirmation cookies may precede the account endpoint becoming ready.
+      for (let attempt = 0; ; attempt++) {
+        try {
+          candidate.profile = await providers.profile(source, candidate);
+          break;
+        } catch (error) {
+          if (source !== "netease" || error.status !== 401 || attempt >= 2)
+            throw error;
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
       const id = randomID();
       state.sessions[id] = candidate;
       item.token = id;

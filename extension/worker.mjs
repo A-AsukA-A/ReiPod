@@ -131,7 +131,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   )
     return false;
   if (request?.action === "bridge-status" && request.version === 1) {
-    sendResponse({ status: 200, data: { version: 1, transport: "extension" } });
+    sendResponse({
+      status: 200,
+      data: {
+        version: 1,
+        transport: "extension",
+        extensionVersion: chrome.runtime.getManifest().version,
+      },
+    });
     return false;
   }
   try {

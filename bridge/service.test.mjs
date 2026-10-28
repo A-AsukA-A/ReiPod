@@ -142,3 +142,22 @@ test("native network responses preserve repeated Set-Cookie fields", async () =>
   ]);
   expect(await response.json()).toEqual({ ok: true });
 });
+
+test("NetEase confirmation waits briefly for the account endpoint before adopting a session", async () => {
+  const f = fixture();
+  let calls = 0;
+  f.providers.profile = async () => {
+    if (++calls === 1)
+      throw Object.assign(new Error("not ready"), { status: 401 });
+    return { id: "123", name: "Ready" };
+  };
+  const start = await f.handle(request("login-start"));
+  const result = await f.handle(
+    request("login-check", { key: start.data.key }),
+  );
+  expect(result).toMatchObject({
+    status: 200,
+    data: { status: "authorized", profile: { name: "Ready" } },
+  });
+  expect(calls).toBe(2);
+});

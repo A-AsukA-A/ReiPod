@@ -6,7 +6,16 @@ import { createMusicService, createProviders } from "./service.mjs";
 export async function createRuntime({ fetcher, storage, secret }) {
   // This module runs only in the extension worker or an isolated WKContentWorld.
   // QQ's serverless adapter uses global fetch; never install this in the page world.
-  globalThis.fetch = fetcher;
+  let qqNetworkFailure;
+  globalThis.fetch = async (url, options) => {
+    try {
+      return await fetcher(url, options);
+    } catch (error) {
+      const target = new URL(String(url));
+      qqNetworkFailure = `QQ 音乐请求失败：${target.hostname}${target.pathname}，请重试或切换微信扫码。`;
+      throw error;
+    }
+  };
   const providers = createProviders(
     createNetEase(fetcher, { deviceId: secret.slice(0, 32) }),
     async (path, params = {}, token) => {
@@ -16,11 +25,14 @@ export async function createRuntime({ fetcher, storage, secret }) {
       const raw = token?.startsWith("qqmusic_session=")
         ? token.slice("qqmusic_session=".length).split(";")[0]
         : token;
+      qqNetworkFailure = undefined;
       const response = await handleRequest(
         new Request(url, { headers: raw ? { "X-QQ-Session": raw } : {} }),
         { QQ_SESSION_SECRET: secret },
       );
       const body = await response.json();
+      if (path === "/login/qr/check" && body.code === 801 && qqNetworkFailure)
+        throw new ServiceError(qqNetworkFailure, 502);
       if (!response.ok) {
         throw new ServiceError(
           body.failureHint || body.message || "QQ 音乐请求失败",
