@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 const extension = resolve(".local/extension");
 await build({
   configFile: false,
+  publicDir: false,
   define: {
     "process.env": "{}",
     "process.env.NODE_ENV": JSON.stringify("production"),
@@ -49,6 +50,7 @@ if (process.argv.includes("--ios")) {
   );
   await build({
     configFile: false,
+    publicDir: false,
     define: {
       "process.env": "{}",
       "process.env.NODE_ENV": JSON.stringify("production"),

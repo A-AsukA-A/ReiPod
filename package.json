@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173 --strictPort",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && npm run bridge:build && node scripts/package-music-bridge.mjs",
     "preview": "vite preview --host 0.0.0.0 --port 4173 --strictPort",
     "test": "vitest run",
     "test:audio": "node scripts/create-test-audio.mjs",
@@ -16,7 +16,7 @@
     "ios:prepare": "npm run build && node scripts/check-dist.mjs && node scripts/prepare-ios.mjs && node scripts/build-music-bridge.mjs --ios",
     "music:serve": "node server/index.mjs",
     "test:music-server": "npm --prefix server test",
-    "test:browser": "npm run build && npm run bridge:build && playwright test",
+    "test:browser": "npm run build && playwright test",
     "size": "node scripts/bundle-report.mjs",
     "bridge:build": "node scripts/build-music-bridge.mjs"
   },

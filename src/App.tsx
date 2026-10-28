@@ -805,11 +805,11 @@ export function App() {
               ? [
                   {
                     key: "install-extension",
-                    label: "扩展安装说明",
+                    label: "下载扩展安装助手",
                     leaf: true,
                     action: () => {
                       window.open(
-                        "https://github.com/A-AsukA-A/ReiPod/blob/main/MUSIC_BRIDGE.md#构建和使用扩展",
+                        new URL("extension-install.html", location.href).href,
                         "_blank",
                         "noopener,noreferrer",
                       );
