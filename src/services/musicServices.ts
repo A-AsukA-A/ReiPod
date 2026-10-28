@@ -13,10 +13,25 @@ import {
   nativePlaylist,
 } from "./nativeMusic";
 import type { NativeReply } from "./nativeMusic";
+import type { MusicAccountProfile } from "./thirdPartyMusic";
 import { NativeSystemPlayer } from "./NativeSystemPlayer";
 import { searchTracks } from "../player/search";
+import {
+  isThirdParty,
+  thirdPartyState,
+  thirdPartyPlayerFor,
+  thirdPartyPlayers,
+  onThirdPartyChange,
+  prepareThirdParty,
+  authorizeThirdParty,
+  signOutThirdParty,
+  refreshThirdParty,
+  loadThirdPartyPlaylist,
+  searchThirdParty,
+  cancelThirdPartyLogin,
+} from "./thirdPartyMusic";
 
-export type MusicService = "local" | "apple-music";
+export type MusicService = "local" | "apple-music" | "netease" | "qq";
 type ServiceState = {
   transport: "web" | "ios";
   nativeAuthorization?: NativeReply["authorization"];
@@ -29,6 +44,9 @@ type ServiceState = {
   libraryTracks: Track[];
   playlists: Playlist[];
   searchResults: Track[];
+  qrImage?: string;
+  loginMessage?: string;
+  profile?: MusicAccountProfile;
 };
 const read = (key: string) => {
   try {
@@ -47,8 +65,11 @@ const save = (key: string, value: string | null) => {
 };
 let state: ServiceState = {
   transport: hasNativeMusic() ? "ios" : "web",
-  selected:
-    read("reipod-music-service") === "apple-music" ? "apple-music" : "local",
+  selected: ["apple-music", "netease", "qq"].includes(
+    read("reipod-music-service") ?? "",
+  )
+    ? (read("reipod-music-service") as MusicService)
+    : "local",
   playback: "local",
   auth: "unconfigured",
   ready: false,
@@ -59,10 +80,19 @@ let state: ServiceState = {
   searchResults: [],
 };
 const listeners = new Set<() => void>();
-function update(patch: Partial<ServiceState>) {
-  state = { ...state, ...patch };
+let exposedState = state;
+function publish() {
+  exposedState = isThirdParty(state.selected)
+    ? { ...state, ...thirdPartyState(state.selected), transport: "web" }
+    : state;
   listeners.forEach((fn) => fn());
 }
+function update(patch: Partial<ServiceState>) {
+  state = { ...state, ...patch };
+  publish();
+}
+onThirdPartyChange(publish);
+publish();
 export const useMusicServices = () =>
   useSyncExternalStore(
     (fn) => {
@@ -71,11 +101,45 @@ export const useMusicServices = () =>
         listeners.delete(fn);
       };
     },
-    () => state,
+    () => exposedState,
   );
-export const getMusicServices = () => state;
+export const getMusicServices = () => exposedState;
+export function playerFor(service: MusicService) {
+  return service === "local"
+    ? localPlayer
+    : service === "apple-music"
+      ? applePlayer
+      : thirdPartyPlayerFor(service);
+}
+let remoteSnapshot = applePlayer.getSnapshot();
+function syncRemoteSnapshot() {
+  const service = state.playback === "local" ? state.selected : state.playback;
+  remoteSnapshot = {
+    ...playerFor(service === "local" ? "apple-music" : service).getSnapshot(),
+    tracks: [
+      ...applePlayer.getSnapshot().tracks,
+      ...thirdPartyPlayers.flatMap((player) => player.getSnapshot().tracks),
+    ],
+  };
+}
+const remoteListeners = new Set<() => void>();
+const changedRemote = () => {
+  syncRemoteSnapshot();
+  remoteListeners.forEach((fn) => fn());
+};
+applePlayer.subscribe(changedRemote);
+thirdPartyPlayers.forEach((player) => player.subscribe(changedRemote));
+listeners.add(changedRemote);
 export const useApplePlayer = () =>
-  useSyncExternalStore(applePlayer.subscribe, applePlayer.getSnapshot);
+  useSyncExternalStore(
+    (fn) => {
+      remoteListeners.add(fn);
+      return () => {
+        remoteListeners.delete(fn);
+      };
+    },
+    () => remoteSnapshot,
+  );
 let instance: MusicKitInstance | undefined;
 let developerToken = "";
 let tokenUrl = "";
@@ -94,13 +158,16 @@ let sessionReady = false;
 const loadedPlaylists = new Set<string>();
 
 export function selectMusicService(service: MusicService) {
+  if (isThirdParty(state.selected) && state.selected !== service)
+    cancelThirdPartyLogin(state.selected);
   save("reipod-music-service", service);
   update({ selected: service });
-  if (service === "apple-music") void prepareAppleMusic();
+  if (service === "apple-music") void prepareAppleMusicInternal();
+  else if (isThirdParty(service)) void prepareThirdParty(service);
 }
 export function playbackFrom(service: MusicService) {
   if (state.playback !== service) {
-    (state.playback === "local" ? localPlayer : applePlayer).pause();
+    playerFor(state.playback).pause();
     update({ playback: service });
   }
   save("reipod-playback-source", service);
@@ -147,18 +214,22 @@ async function freshDeveloperToken() {
 export async function initializeMusicServices() {
   if (initialized) return;
   initialized = true;
+  if (isThirdParty(state.selected)) {
+    await prepareThirdParty(state.selected);
+    return;
+  }
   if (hasNativeMusic()) {
     if (!read("reipod-music-service")) update({ selected: "apple-music" });
-    await prepareAppleMusic();
+    await prepareAppleMusicInternal();
     return;
   }
   await configuration();
   if (!read("reipod-music-service") && (developerToken || tokenUrl))
     update({ selected: "apple-music" });
   if (state.selected === "apple-music" || read("reipod-apple-user"))
-    await prepareAppleMusic();
+    await prepareAppleMusicInternal();
 }
-export function prepareAppleMusic() {
+function prepareAppleMusicInternal() {
   return (preparing ??= (async () => {
     if (hasNativeMusic()) {
       update({ auth: "loading", error: "" });
@@ -230,7 +301,7 @@ async function connectNativeMusic(reply: NativeReply) {
   }
   save("reipod-ios-music-connected", "true");
   update({ auth: "authorized", error: "" });
-  await refreshAppleLibrary();
+  await refreshAppleLibraryInternal();
   if (epoch !== generation) return;
   const latest = await nativeMusicRequest("status");
   if (epoch !== generation) return;
@@ -279,7 +350,8 @@ window.addEventListener("reipod-native-music", (event) => {
     applePlayer.adopt(reply.playback);
     if (reply.playback.status === "playing") playbackFrom("apple-music");
   }
-  if (reply.libraryChanged && !state.syncing) void refreshAppleLibrary();
+  if (reply.libraryChanged && !state.syncing)
+    void refreshAppleLibraryInternal();
 });
 class AppleApiError extends Error {
   constructor(public status: number) {
@@ -424,7 +496,7 @@ async function completeAuthorization(token: string) {
     instance!.storefrontId = storefront;
     save("reipod-apple-user", token);
     update({ auth: "authorized", error: "" });
-    await refreshAppleLibrary();
+    await refreshAppleLibraryInternal();
     if (epoch !== generation) return;
     if (!sessionReady && read("reipod-playback-source") === "apple-music") {
       let saved = null;
@@ -453,7 +525,7 @@ async function completeAuthorization(token: string) {
     update({ error: message(error) });
   }
 }
-export async function authorizeAppleMusic() {
+async function authorizeAppleMusicInternal() {
   if (hasNativeMusic()) {
     update({ auth: "loading", error: "" });
     try {
@@ -464,7 +536,7 @@ export async function authorizeAppleMusic() {
     return;
   }
   if (!instance || !state.ready) {
-    await prepareAppleMusic();
+    await prepareAppleMusicInternal();
     return;
   }
   const epoch = generation;
@@ -481,7 +553,7 @@ export async function authorizeAppleMusic() {
     update({ auth: "signed-out", error: "Apple Music 登录未完成，可重试" });
   }
 }
-export async function signOutAppleMusic() {
+async function signOutAppleMusicInternal() {
   if (hasNativeMusic()) {
     if (state.playback === "apple-music") applePlayer.pause();
     save("reipod-ios-music-connected", "false");
@@ -500,7 +572,7 @@ export async function signOutAppleMusic() {
     update({ auth: "signed-out" });
   }
 }
-export async function refreshAppleLibrary() {
+async function refreshAppleLibraryInternal() {
   if (state.auth !== "authorized") return;
   const epoch = generation;
   update({ syncing: true, error: "" });
@@ -544,7 +616,7 @@ export async function refreshAppleLibrary() {
     if (epoch === generation) update({ syncing: false });
   }
 }
-export async function loadApplePlaylist(id: string) {
+async function loadApplePlaylistInternal(id: string) {
   if (loadedPlaylists.has(id)) return true;
   const playlist = state.playlists.find((entry) => entry.id === id);
   if (!playlist) return false;
@@ -591,7 +663,7 @@ export async function loadApplePlaylist(id: string) {
   }
 }
 let searchVersion = 0;
-export async function searchAppleMusic(term: string) {
+async function searchAppleMusicInternal(term: string) {
   const version = ++searchVersion,
     epoch = generation;
   update({ searchResults: [], error: "" });
@@ -632,7 +704,7 @@ applePlayer.subscribe(() => {
 // Route lock-screen controls to the active engine, including local music while
 // browsing Apple Music. Never start both players from a media-session command.
 function activePlayer() {
-  return state.playback === "apple-music" ? applePlayer : localPlayer;
+  return playerFor(state.playback);
 }
 if ("mediaSession" in navigator && !hasNativeMusic()) {
   const handlers: Partial<
@@ -715,5 +787,43 @@ if ("mediaSession" in navigator && !hasNativeMusic()) {
   };
   localPlayer.subscribe(sync);
   applePlayer.subscribe(sync);
+  thirdPartyPlayers.forEach((player) => player.subscribe(sync));
   listeners.add(sync);
+}
+
+// Public UI commands select the provider; Apple callbacks above stay on their own account.
+export function prepareAppleMusic() {
+  return isThirdParty(state.selected)
+    ? prepareThirdParty(state.selected)
+    : prepareAppleMusicInternal();
+}
+export function authorizeAppleMusic(channel?: string) {
+  return isThirdParty(state.selected)
+    ? authorizeThirdParty(state.selected, channel)
+    : authorizeAppleMusicInternal();
+}
+export function signOutAppleMusic() {
+  return isThirdParty(state.selected)
+    ? signOutThirdParty(state.selected)
+    : signOutAppleMusicInternal();
+}
+export function refreshAppleLibrary() {
+  return isThirdParty(state.selected)
+    ? refreshThirdParty(state.selected)
+    : refreshAppleLibraryInternal();
+}
+export function loadApplePlaylist(id: string) {
+  const source = id.startsWith("netease-playlist:")
+    ? "netease"
+    : id.startsWith("qq-playlist:")
+      ? "qq"
+      : undefined;
+  return source
+    ? loadThirdPartyPlaylist(source, id)
+    : loadApplePlaylistInternal(id);
+}
+export function searchAppleMusic(term: string) {
+  return isThirdParty(state.selected)
+    ? searchThirdParty(state.selected, term)
+    : searchAppleMusicInternal(term);
 }

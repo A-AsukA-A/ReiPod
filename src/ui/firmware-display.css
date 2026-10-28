@@ -551,3 +551,245 @@
 .lcd-screen[data-page="playing"] .play-modes {
   display: none;
 }
+
+/* Playback failures use the same restrained LCD materials as the firmware menus. */
+.playback-alert-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--lcd-unit) * 10);
+  background: #eef2f6b8;
+}
+.playback-alert {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #8397ad;
+  border-radius: calc(var(--lcd-unit) * 5);
+  background: linear-gradient(#fff, #edf2f7);
+  color: #26374a;
+  box-shadow:
+    0 2px 7px #24364d33,
+    inset 0 1px #fff;
+}
+.playback-alert-heading {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 7);
+  padding: calc(var(--lcd-unit) * 9) calc(var(--lcd-unit) * 10) 0;
+}
+.playback-alert-heading strong {
+  font-size: calc(var(--lcd-unit) * 13);
+  line-height: 1.35;
+}
+.playback-alert-symbol {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  min-width: calc(var(--lcd-unit) * 24);
+  height: calc(var(--lcd-unit) * 22);
+  padding: 0 calc(var(--lcd-unit) * 3);
+  border: 1px solid #8094a9;
+  border-radius: calc(var(--lcd-unit) * 4);
+  color: #486078;
+  background: #e2eaf2;
+  font-size: calc(var(--lcd-unit) * 10);
+  font-weight: 750;
+}
+.playback-alert p {
+  margin: 0;
+  padding: calc(var(--lcd-unit) * 7) calc(var(--lcd-unit) * 10)
+    calc(var(--lcd-unit) * 10);
+  font-size: calc(var(--lcd-unit) * 11);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  max-height: calc(var(--lcd-unit) * 96);
+  overflow: auto;
+}
+.playback-alert-actions {
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--lcd-unit) * 15);
+  padding: calc(var(--lcd-unit) * 7) calc(var(--lcd-unit) * 5);
+  border-top: 1px solid #c2ceda;
+  background: #dfe8f2;
+  color: #405772;
+  font-size: calc(var(--lcd-unit) * 10);
+}
+.playback-alert-actions > span {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 4);
+  white-space: nowrap;
+}
+.playback-alert-actions i {
+  width: calc(var(--lcd-unit) * 9);
+  height: calc(var(--lcd-unit) * 9);
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+.playback-alert-actions .player-icon {
+  width: calc(var(--lcd-unit) * 13);
+  height: calc(var(--lcd-unit) * 13);
+}
+
+.row-name {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 5);
+  min-width: 0;
+}
+.row-name .row-title {
+  flex: 0 1 auto;
+}
+.track-access-badge {
+  flex: 0 0 auto;
+  position: relative;
+  /* Noto's visible glyph center sits slightly below its line-box center. */
+  top: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12em 0.3em;
+  border: 1px solid currentColor;
+  border-radius: calc(var(--lcd-unit) * 2);
+  color: #b45045;
+  font-family: var(--font-lcd);
+  font-size: 0.65em;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.screen-row.selected .track-access-badge {
+  color: #fff;
+  border-color: #ffffffb3;
+}
+
+/* Account identity is content; the inset command group is the control surface. */
+.music-account-screen {
+  background: #f3f4f6;
+}
+.music-account-header {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: calc(var(--lcd-unit) * 12) calc(var(--lcd-unit) * 12)
+    calc(var(--lcd-unit) * 9);
+}
+.music-account-identity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: calc(var(--lcd-unit) * 10);
+}
+.music-account-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 calc(var(--lcd-unit) * 42);
+  width: calc(var(--lcd-unit) * 42);
+  height: calc(var(--lcd-unit) * 42);
+  overflow: hidden;
+  border: 1px solid #0000000c;
+  border-radius: 50%;
+  background: #e2e7ee;
+  color: #8795a7;
+}
+.music-account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.music-account-avatar svg {
+  width: 78%;
+  height: 78%;
+  fill: currentColor;
+}
+.music-account-name {
+  flex: 1;
+  min-width: 0;
+}
+.music-account-name strong {
+  display: block;
+  min-width: 0;
+  color: #20252b;
+  font-size: calc(var(--lcd-unit) * 15);
+  font-weight: 650;
+  line-height: 1.4;
+}
+.music-account-id {
+  display: block;
+  margin-top: calc(var(--lcd-unit) * 2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: calc(var(--lcd-unit) * 10);
+  line-height: 1.5;
+  color: #68717e;
+  font-variant-numeric: tabular-nums;
+}
+.music-account-summary {
+  margin-top: calc(var(--lcd-unit) * 9);
+  font-size: calc(var(--lcd-unit) * 10);
+  line-height: 1.5;
+  color: #626c77;
+}
+.music-account-connection {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 5);
+}
+.music-account-connection i {
+  flex: 0 0 auto;
+  width: calc(var(--lcd-unit) * 5);
+  height: calc(var(--lcd-unit) * 5);
+  border-radius: 50%;
+  background: #9aa3ae;
+}
+.music-account-connection[data-connected="true"] i {
+  background: #32845b;
+}
+.music-account-connection[data-busy="true"] i {
+  background: #438ac5;
+}
+.music-account-summary p {
+  margin: calc(var(--lcd-unit) * 3) 0 0;
+  overflow-wrap: anywhere;
+}
+.music-account-summary .music-account-error {
+  color: #a44338;
+}
+.lcd-screen .music-account-screen > .screen-menu {
+  flex: 0 1 auto;
+  width: auto;
+  min-height: 0;
+  margin: 0 calc(var(--lcd-unit) * 8) calc(var(--lcd-unit) * 8);
+  border: 1px solid #d5dce4;
+  border-radius: calc(var(--lcd-unit) * 5);
+  overflow: auto;
+  background: #fff;
+}
+.music-account-screen .screen-row + .screen-row {
+  border-top: 1px solid #e1e5eb;
+}
+.music-account-screen .screen-row {
+  height: calc(var(--lcd-unit) * 28);
+  padding-inline: calc(var(--lcd-unit) * 9);
+  font-size: calc(var(--lcd-unit) * 13);
+}
+.music-account-screen .screen-row.destructive:not(.selected) {
+  color: #ab3c35;
+}
+.music-account-screen .screen-row.selected.is-disabled {
+  color: #eef5fd;
+}
+.music-account-screen .screen-row.is-disabled:not(.selected) {
+  color: #9aa2ad;
+}
+.music-account-screen.has-login-qr .music-account-header {
+  padding: 3px 8px;
+}
+.music-account-header.is-scanning .music-account-summary {
+  margin: 0;
+  font-size: 10px;
+  line-height: 13px;
+}

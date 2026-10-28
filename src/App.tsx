@@ -8,6 +8,7 @@ import {
 } from "react";
 import { ClickWheel } from "./input/ClickWheel";
 import type { WheelCommand } from "./input/ClickWheel";
+import type { Track } from "./player/Player";
 import { feedback } from "./input/feedback";
 import {
   addDemos,
@@ -62,7 +63,9 @@ import type { MenuItem } from "./ui/MenuRows";
 import { createPrimaryMenus, repeatText } from "./ui/primaryMenus";
 
 import { NowPlayingScreen } from "./ui/NowPlayingScreen";
-import type { PlayView } from "./ui/NowPlayingScreen";
+import { MusicAccountHeader } from "./ui/MusicAccountHeader";
+import { canShowLyrics, playingViews, restingPlayView } from "./ui/nowPlaying";
+import type { PlayView } from "./ui/nowPlaying";
 import { createMediaMenus } from "./ui/mediaMenus";
 import { createLibraryMenus } from "./ui/libraryMenus";
 import { FileImports } from "./ui/FileImports";
@@ -97,17 +100,34 @@ import {
   useApplePlayer,
   useMusicServices,
   openNativeMusicSettings,
+  playerFor,
 } from "./services/musicServices";
+import {
+  isThirdParty,
+  thirdPartyNames,
+  loadThirdPartyLyrics,
+} from "./services/thirdPartyMusic";
+import type { MusicService } from "./services/musicServices";
+
+const trackService = (track?: Track): MusicService =>
+  track?.kind === "apple-music" ||
+  track?.kind === "netease" ||
+  track?.kind === "qq"
+    ? track.kind
+    : "local";
 
 export function App() {
   const localState = useLocalPlayer();
   const appleState = useApplePlayer();
   const services = useMusicServices();
-  const cloud = services.selected === "apple-music";
+  const cloud = services.selected !== "local";
+  const externalMusic = isThirdParty(services.selected);
+  const serviceName = externalMusic
+    ? thirdPartyNames[services.selected as "netease" | "qq"]
+    : "Apple Music";
   const nativeMusic = services.transport === "ios";
-  const player =
-    services.playback === "apple-music" ? applePlayer : localPlayer;
-  const state = services.playback === "apple-music" ? appleState : localState;
+  const player = playerFor(services.playback);
+  const state = services.playback !== "local" ? appleState : localState;
   const prefs = usePreferences();
   const localPlaylists = usePlaylists();
   const playlists = cloud ? services.playlists : localPlaylists;
@@ -170,10 +190,12 @@ export function App() {
   const [query, setQuery] = useState("");
   const [playlistName, setPlaylistName] = useState("");
   const [contextPlaylist, setContextPlaylist] = useState<string | null>(null);
+  const optionQueue = useRef<string[] | undefined>(undefined);
   const [deleting, setDeleting] = useState(false);
   const [playView, setPlayView] = useState<PlayView>("art");
   const [lyricWheel, setLyricWheel] = useState(0);
   const [volumeOverlay, setVolumeOverlay] = useState(false);
+  const previousPlaybackPage = useRef({ page, trackId: current?.id });
   const [transportHint, setTransportHint] = useState<
     "seek-forward" | "seek-backward" | null
   >(null);
@@ -396,13 +418,14 @@ export function App() {
       open("playing");
       return;
     }
-    const remote = trackById.get(id)?.kind === "apple-music";
+    const source = trackService(trackById.get(id));
+    const remote = source !== "local";
     if (remote && services.auth !== "authorized") {
       open("music-account", "login");
       return;
     }
-    const target = remote ? applePlayer : localPlayer;
-    playbackFrom(remote ? "apple-music" : "local");
+    const target = playerFor(source);
+    playbackFrom(source);
     target.activate(
       id,
       page === "queue" ? undefined : queue.length ? queue : undefined,
@@ -452,8 +475,8 @@ export function App() {
       return;
     }
     const first = tracks[Math.floor(Math.random() * tracks.length)];
-    const target = cloud ? applePlayer : localPlayer;
-    playbackFrom(cloud ? "apple-music" : "local");
+    const target = playerFor(services.selected);
+    playbackFrom(services.selected);
     target.setShuffle(true);
     target.setQueue(
       tracks.map((track) => track.id),
@@ -465,8 +488,8 @@ export function App() {
   };
   const toggleFavorite = (id?: string) => {
     if (!id || !trackById.has(id)) return;
-    if (trackById.get(id)?.kind === "apple-music") {
-      setNotice("Apple Music 歌曲不加入本地收藏");
+    if (trackService(trackById.get(id)) !== "local") {
+      setNotice("在线歌曲不加入本地收藏");
       return;
     }
     localPlayer.toggleFavorite(id);
@@ -500,7 +523,16 @@ export function App() {
   };
   const trackOptions = (id: string) => {
     setContextPlaylist(page === "playlist-tracks" ? (groupKey ?? null) : null);
-    open("track-options", "favorite", id);
+    optionQueue.current = isTrackList
+      ? visibleTracks.map((track) => track.id)
+      : undefined;
+    open(
+      "track-options",
+      canShowLyrics(trackById.get(id), prefs.lyricsEnabled)
+        ? "lyrics"
+        : "favorite",
+      id,
+    );
   };
   const {
     homeItems,
@@ -532,7 +564,7 @@ export function App() {
     {
       key: "music-services",
       label: "音乐服务",
-      value: cloud ? "Apple Music" : "本地音乐",
+      value: cloud ? serviceName : "本地音乐",
       action: () => open("music-services", services.selected),
     },
     ...originalSettingsItems.slice(1).map((item) =>
@@ -552,10 +584,10 @@ export function App() {
       key: "music-account",
       label:
         services.auth === "authorized"
-          ? "Apple Music 账户"
+          ? `${serviceName} 账户`
           : nativeMusic
             ? "连接系统音乐"
-            : "登录 Apple Music",
+            : `登录 ${serviceName}`,
       action: account,
     },
   ];
@@ -578,7 +610,7 @@ export function App() {
               { key: "songs", label: "歌曲", action: () => open("songs") },
               {
                 key: "search",
-                label: nativeMusic ? "搜索资料库" : "搜索 Apple Music",
+                label: nativeMusic ? "搜索资料库" : `搜索 ${serviceName}`,
                 action: () => {
                   setQuery("");
                   textEntry.begin();
@@ -616,7 +648,7 @@ export function App() {
         })),
         {
           key: "refresh",
-          label: services.syncing ? "正在同步…" : "刷新 Apple Music 歌单",
+          label: services.syncing ? "正在同步…" : `刷新 ${serviceName} 歌单`,
           disabled: services.syncing,
           action: () => {
             void refreshAppleLibrary();
@@ -674,7 +706,7 @@ export function App() {
       {
         key: "apple-music",
         label: "Apple Music",
-        value: cloud ? "✓" : "",
+        value: services.selected === "apple-music" ? "✓" : "",
         action: () => {
           selectMusicService("apple-music");
           back();
@@ -683,7 +715,7 @@ export function App() {
       {
         key: "local",
         label: "本地音乐",
-        value: !cloud ? "✓" : "",
+        value: services.selected === "local" ? "✓" : "",
         action: () => {
           selectMusicService("local");
           back();
@@ -692,16 +724,20 @@ export function App() {
       {
         key: "netease",
         label: "网易云音乐",
-        value: "待接入",
-        disabled: true,
-        action: () => {},
+        value: services.selected === "netease" ? "✓" : "",
+        action: () => {
+          selectMusicService("netease");
+          open("music-account", "login");
+        },
       },
       {
         key: "qq",
         label: "QQ 音乐",
-        value: "待接入",
-        disabled: true,
-        action: () => {},
+        value: services.selected === "qq" ? "✓" : "",
+        action: () => {
+          selectMusicService("qq");
+          open("music-account", "login");
+        },
       },
     ],
     "music-account":
@@ -711,13 +747,16 @@ export function App() {
               key: "refresh",
               label: services.syncing ? "正在同步…" : "刷新资料库",
               disabled: services.syncing,
+              leaf: true,
               action: () => {
                 void refreshAppleLibrary();
               },
             },
             {
               key: "logout",
-              label: nativeMusic ? "断开系统音乐" : "退出 Apple Music",
+              label: nativeMusic ? "断开系统音乐" : "退出登录",
+              destructive: true,
+              leaf: true,
               action: () => {
                 void signOutAppleMusic();
               },
@@ -736,7 +775,9 @@ export function App() {
                         )
                         ? "打开系统设置"
                         : "允许访问音乐资料库"
-                      : "登录 Apple Music"
+                      : externalMusic
+                        ? `扫码登录 ${serviceName}`
+                        : "登录 Apple Music"
                     : "重新检查连接",
               disabled: services.auth === "loading",
               action: () => {
@@ -760,6 +801,32 @@ export function App() {
                   : prepareAppleMusic());
               },
             },
+            ...(externalMusic
+              ? [
+                  ...(services.selected === "qq" && services.auth !== "loading"
+                    ? [
+                        {
+                          key: "wechat-login",
+                          label: "用微信扫码登录",
+                          action: () => {
+                            void authorizeAppleMusic("wechat");
+                          },
+                        },
+                      ]
+                    : []),
+                  ...(services.auth === "loading"
+                    ? [
+                        {
+                          key: "cancel-login",
+                          label: "取消登录",
+                          action: () => {
+                            void signOutAppleMusic();
+                          },
+                        },
+                      ]
+                    : []),
+                ]
+              : []),
             {
               key: "local-songs",
               label: "本地音乐",
@@ -1011,7 +1078,7 @@ export function App() {
           ],
         }
       : {}),
-    ...(cloud && optionTrack && optionTrack.kind !== "apple-music"
+    ...(cloud && optionTrack && trackService(optionTrack) === "local"
       ? {
           "track-options": [
             {
@@ -1039,7 +1106,7 @@ export function App() {
           ],
         }
       : {}),
-    ...(optionTrack?.kind === "apple-music"
+    ...(optionTrack && trackService(optionTrack) !== "local"
       ? {
           "track-options": [
             { key: "queue", label: "播放队列", action: () => open("queue") },
@@ -1047,7 +1114,7 @@ export function App() {
               key: "play-next",
               label: "下一首播放",
               action: () => {
-                applePlayer.playNext(optionTrack.id);
+                playerFor(trackService(optionTrack)).playNext(optionTrack.id);
                 back();
               },
             },
@@ -1055,6 +1122,29 @@ export function App() {
         }
       : {}),
   };
+  if (optionTrack && canShowLyrics(optionTrack, prefs.lyricsEnabled)) {
+    const track = optionTrack;
+    managedRows["track-options"] = [
+      {
+        key: "lyrics",
+        label: "歌词",
+        action: () => {
+          const source = trackService(track);
+          if (source !== "local" && services.auth !== "authorized") {
+            open("music-account", "login");
+            return;
+          }
+          if (current?.id !== track.id)
+            playTrack(track.id, optionQueue.current);
+          else if (navigation.history.at(-1)?.page === "playing") back();
+          else open("playing");
+          setPlayView("lyrics");
+          setVolumeOverlay(false);
+        },
+      },
+      ...(managedRows["track-options"] ?? []),
+    ];
+  }
   const albumRows: MenuItem[] = (
     page === "coverflow" ? flowAlbums : page === "albums" ? browseAlbums : []
   ).map((album) => ({
@@ -1156,12 +1246,16 @@ export function App() {
   const selectedIndex = Math.max(
     0,
     rows.findIndex(
-      (row) => row.key === navigation.screen.selectedKey && !row.disabled,
+      (row) =>
+        row.key === navigation.screen.selectedKey &&
+        (!row.disabled || (page === "music-account" && services.syncing)),
     ),
   );
-  const focusedRow = rows[selectedIndex]?.disabled
-    ? rows.find((row) => !row.disabled)
-    : rows[selectedIndex];
+  const focusedRow =
+    rows[selectedIndex]?.disabled &&
+    !(page === "music-account" && services.syncing)
+      ? rows.find((row) => !row.disabled)
+      : rows[selectedIndex];
   const rotate = (
     steps: number,
     _source: "pointer" | "wheel" | "keyboard" = "pointer",
@@ -1202,17 +1296,7 @@ export function App() {
     if (page === "playing" && current) {
       if (playView === "seek")
         player.seek(player.getSnapshot().position + steps * 2);
-      else if (playView === "repeat") {
-        const modes = ["off", "all", "one"] as const;
-        player.setRepeat(
-          modes[
-            Math.max(
-              0,
-              Math.min(2, modes.indexOf(player.getSnapshot().repeat) + steps),
-            )
-          ],
-        );
-      } else if (playView === "shuffle") player.setShuffle(steps > 0);
+      else if (playView === "shuffle") player.setShuffle(steps > 0);
       else if (playView === "rating") {
         if (!setRating(current.id, (ratings[current.id] ?? 0) + steps))
           setNotice("评分未能保存，本次仍生效");
@@ -1223,7 +1307,13 @@ export function App() {
       } else setNotice("侧键调音量 · 中心键调进度");
       return;
     }
-    const keys = rows.filter((row) => !row.disabled).map((row) => row.key);
+    const keys = rows
+      .filter(
+        (row) =>
+          !row.disabled ||
+          (page === "music-account" && services.auth === "authorized"),
+      )
+      .map((row) => row.key);
     const index = Math.max(0, keys.indexOf(focusedRow?.key ?? ""));
     if (
       keys[Math.max(0, Math.min(keys.length - 1, index + steps))] !==
@@ -1243,14 +1333,7 @@ export function App() {
     setPlayView(view);
     setVolumeOverlay(false);
   };
-  const playViews: PlayView[] = [
-    "art",
-    "seek",
-    "repeat",
-    "shuffle",
-    "rating",
-    ...(current?.lyrics?.length ? ["lyrics" as const] : []),
-  ];
+  const playViews = playingViews(current, prefs.lyricsEnabled);
   const cyclePlayView = () =>
     changePlayView(
       playViews[(playViews.indexOf(playView) + 1) % playViews.length],
@@ -1376,7 +1459,7 @@ export function App() {
       );
     if (value === "select") {
       if (page === "playing" && current) {
-        if (state.status === "error") player.play();
+        if (state.error || state.status === "error") player.play();
         else cyclePlayView();
       } else if (focusedRow) chooseRow(focusedRow);
     }
@@ -1445,14 +1528,45 @@ export function App() {
     }
   };
 
+  useLayoutEffect(() => {
+    const previous = previousPlaybackPage.current;
+    previousPlaybackPage.current = { page, trackId: current?.id };
+    if (
+      (previous.page === "playing" && page !== "playing") ||
+      previous.trackId !== current?.id
+    ) {
+      setPlayView((view) =>
+        canShowLyrics(current, prefs.lyricsEnabled)
+          ? restingPlayView(view)
+          : "art",
+      );
+      setVolumeOverlay(false);
+      setLyricWheel(0);
+    }
+  }, [page, current?.id]);
+  useEffect(() => {
+    if (!prefs.lyricsEnabled && playView === "lyrics") changePlayView("art");
+  }, [prefs.lyricsEnabled, playView]);
+  useEffect(() => {
+    if (
+      prefs.lyricsEnabled &&
+      page === "playing" &&
+      playView === "lyrics" &&
+      current
+    )
+      void loadThirdPartyLyrics(current);
+    // Loading is keyed by song/view, not by the playback clock or metadata updates.
+  }, [prefs.lyricsEnabled, page, playView, current?.id]);
   useEffect(() => {
     localPlayer.setVolumeLimit(prefs.volumeLimit);
     applePlayer.setVolumeLimit(prefs.volumeLimit);
+    playerFor("qq").setVolumeLimit(prefs.volumeLimit);
+    playerFor("netease").setVolumeLimit(prefs.volumeLimit);
   }, [prefs.volumeLimit]);
   useEffect(() => {
     if (page === "search" && cloud && !textEntry.editing)
       void searchAppleMusic(query);
-  }, [page, cloud, textEntry.editing, query]);
+  }, [page, cloud, services.selected, textEntry.editing, query]);
   useEffect(
     () => () => {
       if (transportTimer.current) clearTimeout(transportTimer.current);
@@ -1543,7 +1657,7 @@ export function App() {
               home: "ReiPod",
               music: "音乐",
               "music-services": "音乐服务",
-              "music-account": "Apple Music",
+              "music-account": serviceName,
               "local-songs": "本地音乐",
               songs: "歌曲",
               demos: "试听音乐",
@@ -1561,6 +1675,7 @@ export function App() {
               finish: "机身颜色",
               background: "背景",
               "click-sound": "转轮声音",
+              "lyrics-display": "歌词显示",
               "shuffle-mode": "随机播放",
               "repeat-mode": "重复播放",
               artists: "艺人",
@@ -1589,6 +1704,7 @@ export function App() {
       currentId={state.currentId}
       active={active}
       trackIds={isTrackList ? visibleIds : new Set<string>()}
+      tracks={trackById}
       playlistIds={playlistTrackIds}
       selectedRow={selectedRow}
     />
@@ -1890,8 +2006,7 @@ export function App() {
                   page === "albums" ||
                   page === "playlists" ||
                   (managedRows[page] !== undefined &&
-                    page !== "playlist-add-tracks" &&
-                    page !== "playlist-tracks" &&
+                    !isTrackList &&
                     ![
                       "about",
                       "brightness",
@@ -1902,34 +2017,54 @@ export function App() {
                     ].includes(page) &&
                     !(page === "playlist-name" && textEntry.editing))) && (
                   <div
-                    className={`settings-screen ${splitMenu ? "split-settings-screen" : ""} ${page === "photos" ? "photo-album-list" : ""}`}
+                    className={`settings-screen ${splitMenu ? "split-settings-screen" : ""} ${page === "photos" ? "photo-album-list" : ""} ${page === "music-account" ? "music-account-screen" : ""} ${page === "music-account" && services.qrImage ? "has-login-qr" : ""}`}
                   >
                     {page === "music-account" && (
-                      <p className="clear-question" role="status">
-                        {nativeMusic
-                          ? services.auth === "authorized"
-                            ? "已连接系统音乐"
-                            : "访问 iPhone 音乐资料库"
-                          : services.auth === "unconfigured"
-                            ? "网站尚未配置 Apple Music"
-                            : services.auth === "authorized"
-                              ? "已连接 Apple Music"
-                              : services.auth === "loading"
-                                ? "正在连接 Apple Music…"
-                                : "连接你的 Apple Music"}
-                        <span>
-                          {services.error ||
-                            (services.auth === "unconfigured"
-                              ? "配置完成后，即可在这里登录并同步资料库。"
-                              : services.syncing
-                                ? "正在同步资料库…"
-                                : services.auth === "authorized"
-                                  ? `${services.libraryTracks.length} 首歌曲 · ${services.playlists.length} 个歌单`
-                                  : nativeMusic
-                                    ? "允许访问后显示系统歌单，ReiPod 导入的音乐单独保留。"
-                                    : "登录后显示 Apple Music 歌单，本地音乐独立保留。")}
-                        </span>
-                      </p>
+                      <MusicAccountHeader
+                        profile={externalMusic ? services.profile : undefined}
+                        serviceName={
+                          nativeMusic ? "iPhone 系统音乐" : serviceName
+                        }
+                        authorized={services.auth === "authorized"}
+                        syncing={services.syncing}
+                        qr={!!services.qrImage}
+                        status={
+                          nativeMusic
+                            ? services.auth === "authorized"
+                              ? "已连接系统音乐"
+                              : "访问 iPhone 音乐资料库"
+                            : services.auth === "unconfigured"
+                              ? externalMusic
+                                ? "音乐服务尚未连接"
+                                : "网站尚未配置 Apple Music"
+                              : services.auth === "authorized"
+                                ? `已连接 ${serviceName}`
+                                : services.auth === "loading"
+                                  ? services.loginMessage ||
+                                    `正在连接 ${serviceName}…`
+                                  : `连接你的 ${serviceName}`
+                        }
+                        detail={
+                          services.auth === "unconfigured"
+                            ? "配置完成后即可登录并同步资料库。"
+                            : services.syncing
+                              ? "正在同步资料库…"
+                              : services.auth === "authorized"
+                                ? `${services.libraryTracks.length} 首歌曲 · ${services.playlists.length} 个歌单`
+                                : nativeMusic
+                                  ? "允许访问后显示系统歌单，本地音乐独立保留。"
+                                  : "扫码登录后同步歌单，本地音乐独立保留。"
+                        }
+                        error={services.error}
+                      />
+                    )}
+                    {page === "music-account" && services.qrImage && (
+                      <div className="music-login-qr">
+                        <img
+                          src={services.qrImage}
+                          alt={`${serviceName}登录二维码`}
+                        />
+                      </div>
                     )}
                     {page === "confirm-delete-text" && (
                       <p className="clear-question">

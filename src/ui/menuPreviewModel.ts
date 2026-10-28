@@ -17,6 +17,7 @@ export function menuPreview(
     finish: "finish",
     background: "background",
     "click-sound": "speaker",
+    "lyrics-display": "info",
     "shuffle-mode": "shuffle",
     "repeat-mode": "repeat",
   };
@@ -44,6 +45,7 @@ export function menuPreview(
     artists: "artists",
     search: "search",
     click: "speaker",
+    "lyrics-display": "info",
     finish: "finish",
     background: "background",
     clear: "clear",

@@ -26,6 +26,8 @@ jobs:
         run: npm ci
       - name: Unit tests
         run: npm test
+      - name: Self-hosted music service tests
+        run: npm run test:music-server
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Production browser tests

@@ -14,6 +14,8 @@
     "test:audio": "node scripts/create-test-audio.mjs",
     "phone": "node scripts/phone.mjs",
     "ios:prepare": "npm run build && node scripts/check-dist.mjs && node scripts/prepare-ios.mjs",
+    "music:serve": "node server/index.mjs",
+    "test:music-server": "npm --prefix server test",
     "test:browser": "npm run build && playwright test",
     "size": "node scripts/bundle-report.mjs"
   },

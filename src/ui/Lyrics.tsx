@@ -30,6 +30,10 @@ export function Lyrics({
     if (!element) return;
     const first = previousTrack.current !== track.id;
     previousTrack.current = track.id;
+    if (first) {
+      element.scrollTop = 0;
+      manualUntil.current = 0;
+    }
     const center = () => {
       element.style.setProperty(
         "--lyric-inset",
@@ -109,9 +113,23 @@ export function Lyrics({
         <div className="lyrics-empty">
           <span>♫</span>
           <strong>
-            {track.kind === "demo" ? "纯音乐，请欣赏" : "暂无歌词"}
+            {track.lyricsStatus === "loading"
+              ? "正在读取歌词…"
+              : track.lyricsStatus === "error"
+                ? "歌词暂不可用"
+                : track.kind === "demo"
+                  ? "纯音乐，请欣赏"
+                  : "暂无歌词"}
           </strong>
-          {track.kind !== "demo" && <small>可导入同名 LRC 文件</small>}
+          {track.lyricsStatus === "error" ? (
+            <small>中心键返回，再切入可重试</small>
+          ) : track.kind === "local" || !track.kind ? (
+            <small>可导入同名 LRC 文件</small>
+          ) : track.kind === "apple-music" ? (
+            <small>系统音乐暂不提供歌词</small>
+          ) : track.kind !== "demo" && track.lyricsStatus !== "loading" ? (
+            <small>平台暂未提供这首歌的歌词</small>
+          ) : null}
         </div>
       )}
     </div>

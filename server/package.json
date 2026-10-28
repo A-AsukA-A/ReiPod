@@ -1,0 +1,11 @@
+{
+  "name": "reipod-music-service",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": { "start": "node index.mjs", "test": "node --test *.node-test.mjs" },
+  "dependencies": {
+    "@neteasecloudmusicapienhanced/api": "4.41.1",
+    "@yakult-green-tea/qq-music-api": "3.3.5"
+  }
+}

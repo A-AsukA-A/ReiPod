@@ -34,6 +34,7 @@ export type Preferences = {
   finish: "silver" | "black";
   background: "warm" | "dark";
   clickSound: boolean;
+  lyricsEnabled: boolean;
   brightness: number;
   backlight: BacklightTime;
   volumeLimit: number;
@@ -54,6 +55,7 @@ export function parsePreferences(value: unknown): Preferences {
     finish: saved.finish === "black" ? "black" : "silver",
     background: saved.background === "dark" ? "dark" : "warm",
     clickSound: saved.clickSound !== false,
+    lyricsEnabled: saved.lyricsEnabled !== false,
     brightness: number(saved.brightness, 1, 0.25),
     volumeLimit: number(saved.volumeLimit, 1, 0.1),
     backlight: backlightTimes.includes(saved.backlight as BacklightTime)

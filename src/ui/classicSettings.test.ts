@@ -73,3 +73,9 @@ it("migrates legacy home shortcuts to the Music menu and preserves current expli
   ).toEqual(["albums"]);
   expect(parsePreferences({ musicMenu: [] }).musicMenu).toEqual([]);
 });
+
+it("restores lyrics for old preferences and preserves the explicit off switch", () => {
+  expect(parsePreferences({}).lyricsEnabled).toBe(true);
+  expect(parsePreferences({ lyricsEnabled: false }).lyricsEnabled).toBe(false);
+  expect(parsePreferences({ lyricsEnabled: "false" }).lyricsEnabled).toBe(true);
+});

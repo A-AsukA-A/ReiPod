@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 export default defineConfig({
   // Relative assets work both at / and at a GitHub Pages repository subpath.
   base: "./",
+  server: { proxy: { "/api/music": "http://127.0.0.1:3210" } },
   plugins: [
     react(),
     {

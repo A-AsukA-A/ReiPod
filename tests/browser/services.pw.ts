@@ -142,7 +142,7 @@ test("Apple library pagination, playlists, catalog search and playback stay sepa
           .logins,
     ),
   ).toBe(0);
-  await choose(page, "退出 Apple Music");
+  await choose(page, "退出登录");
   await expect(live(page).getByRole("status")).toContainText(
     "连接你的 Apple Music",
   );
@@ -270,7 +270,7 @@ test("a late unauthorized response from the previous login cannot clear the new 
   await expect(live(page).getByRole("status")).toContainText(
     "已连接 Apple Music",
   );
-  await choose(page, "退出 Apple Music");
+  await choose(page, "退出登录");
   await expect(live(page).getByRole("status")).toContainText(
     "连接你的 Apple Music",
   );

@@ -1,5 +1,6 @@
 import type { RefObject } from "react";
 import type { Page } from "./navigation";
+import type { Track } from "../player/Player";
 import { AlbumArt } from "./AlbumArt";
 import { MarqueeText } from "./MarqueeText";
 import { PlayerIcon } from "./PlayerIcon";
@@ -12,6 +13,7 @@ export type MenuItem = {
   artwork?: string;
   aggregate?: boolean;
   disabled?: boolean;
+  destructive?: boolean;
   leaf?: boolean;
   action: () => void;
 };
@@ -22,6 +24,7 @@ export function MenuRows({
   currentId,
   active,
   trackIds,
+  tracks,
   playlistIds,
   selectedRow,
 }: {
@@ -31,6 +34,7 @@ export function MenuRows({
   currentId: string | null;
   active: boolean;
   trackIds: Set<string>;
+  tracks: ReadonlyMap<string, Track>;
   playlistIds: Set<string>;
   selectedRow: RefObject<HTMLDivElement | null>;
 }) {
@@ -43,7 +47,7 @@ export function MenuRows({
       data-member={
         page === "playlist-add-tracks" ? playlistIds.has(row.key) : undefined
       }
-      className={`screen-row ${row.key === focusedKey ? "selected" : ""} ${row.disabled ? "is-disabled" : ""} ${row.key === "confirm" ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${trackIds.has(row.key) ? "track-row" : ""}`}
+      className={`screen-row ${row.key === focusedKey ? "selected" : ""} ${row.disabled ? "is-disabled" : ""} ${row.key === "confirm" || row.destructive ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${trackIds.has(row.key) ? "track-row" : ""}`}
     >
       {page === "photos" && (
         <span className="photo-album-thumb">
@@ -65,13 +69,25 @@ export function MenuRows({
           <AlbumArt src={row.artwork} title={row.label} artist={row.detail} />
         ))}
       <span className="row-label">
-        <span className="row-title">
-          {trackIds.has(row.key) && currentId === row.key && (
-            <span className="track-playing-marker">
-              <PlayerIcon name={active ? "play" : "pause"} filled={active} />
+        <span className="row-name">
+          <span className="row-title">
+            {trackIds.has(row.key) && currentId === row.key && (
+              <span className="track-playing-marker">
+                <PlayerIcon name={active ? "play" : "pause"} filled={active} />
+              </span>
+            )}
+            <MarqueeText text={row.label} active={row.key === focusedKey} />
+          </span>
+          {trackIds.has(row.key) && tracks.get(row.key)?.access && (
+            <span
+              className="track-access-badge"
+              aria-label={
+                tracks.get(row.key)?.access === "vip" ? "VIP 歌曲" : "付费歌曲"
+              }
+            >
+              {tracks.get(row.key)?.access === "vip" ? "VIP" : "付费"}
             </span>
           )}
-          <MarqueeText text={row.label} active={row.key === focusedKey} />
         </span>
         {(page === "albums" || page === "search" || page === "photos") && (
           <small>{row.detail}</small>

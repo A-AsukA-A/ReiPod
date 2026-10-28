@@ -169,6 +169,13 @@ export function createPrimaryMenus({
   const settingsItems: MenuItem[] = [
     { key: "about", label: "关于本机", action: () => open("about", "done") },
     {
+      key: "lyrics-display",
+      label: "歌词显示",
+      value: prefs.lyricsEnabled ? "开启" : "关闭",
+      detail: "长按中心键快捷打开歌词",
+      action: () => open("lyrics-display", String(prefs.lyricsEnabled)),
+    },
+    {
       key: "shuffle",
       label: "随机播放",
       value: state.shuffle ? "开启" : "关闭",

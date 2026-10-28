@@ -13,7 +13,16 @@ export async function home(page: Page) {
   );
 }
 export async function choose(page: Page, label: string) {
-  const rows = live(page).locator('.screen-row:not([aria-disabled="true"])');
+  const busyAccountFocus = await live(page)
+    .locator(
+      '.music-account-screen .screen-row[aria-current="true"][aria-disabled="true"]',
+    )
+    .count();
+  const rows = live(page).locator(
+    busyAccountFocus
+      ? ".screen-row:visible"
+      : '.screen-row:not([aria-disabled="true"])',
+  );
   await expect
     .poll(() =>
       rows.evaluateAll(

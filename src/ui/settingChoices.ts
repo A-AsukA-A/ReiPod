@@ -14,6 +14,12 @@ export function settingChoices(
   repeat: (value: PlayerState["repeat"]) => void,
 ): Record<string, SettingChoice[]> {
   return {
+    "lyrics-display": [false, true].map((value) => ({
+      key: String(value),
+      label: value ? "开启" : "关闭",
+      selected: prefs.lyricsEnabled === value,
+      apply: () => save({ lyricsEnabled: value }),
+    })),
     finish: (
       [
         ["silver", "银色"],

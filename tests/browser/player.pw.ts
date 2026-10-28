@@ -353,9 +353,10 @@ test("classic menu order and Music customization survive legacy settings and rel
   ]);
   await home(page);
   await choose(page, "设置");
-  expect((await labels()).slice(0, 8)).toEqual([
+  expect((await labels()).slice(0, 9)).toEqual([
     "关于本机",
     "音乐服务",
+    "歌词显示",
     "随机播放",
     "重复播放",
     "主菜单",
@@ -606,12 +607,7 @@ test("HOLD, hold seeking, sleep and center views remain operable without touchin
   await expect(live(page).locator(".view-seek")).toHaveCount(1);
   await key(page, "ArrowDown");
   await key(page, "Enter");
-  await expect(live(page).locator(".view-repeat")).toHaveCount(1);
-  await key(page, "ArrowDown");
-  await expect(live(page).locator(".np-repeat-options .chosen")).toContainText(
-    "全部",
-  );
-  await key(page, "Enter");
+  await expect(live(page).locator(".view-shuffle")).toHaveCount(1);
   await key(page, "ArrowDown");
   await expect(live(page).locator(".np-shuffle-options .chosen")).toContainText(
     "歌曲",
@@ -620,6 +616,7 @@ test("HOLD, hold seeking, sleep and center views remain operable without touchin
   await key(page, "ArrowDown");
   await expect(live(page).locator(".classic-rating .chosen")).toHaveCount(1);
   await key(page, "Enter");
+  await expect(live(page).locator(".view-art")).toHaveCount(1);
   await page.locator(".top-hold").click();
   const value = await live(page)
     .getByRole("progressbar")
@@ -717,7 +714,7 @@ test("split menu navigation keeps the right preview stationary while the left ha
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
 });
 
-test("LCD geometry and narrow menu scrolling remain aligned to the original hardware grid", async ({
+test("LCD and body aspect ratios remain stable with narrow menu scrolling", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 568 });
@@ -796,7 +793,7 @@ test("Cover Flow flips the selected cover into an overlaid album sheet, includin
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
 });
 
-test("hardware-calibrated travel keeps the menu readable and Cover Flow closes from both edges", async ({
+test("provisional menu travel keeps text readable and Cover Flow closes from both edges", async ({
   page,
 }) => {
   await page.goto("/");
@@ -886,18 +883,6 @@ test("playback controls share one bottom bay without moving the cover or creatin
   ).toHaveCount(1);
   await key(page, "Enter");
   await key(page, "ArrowDown");
-  await expect(
-    live(page)
-      .getByRole("group", { name: "重复播放", exact: true })
-      .locator('[aria-current="true"]'),
-  ).toHaveText("全部");
-  await key(page, "ArrowDown");
-  await key(page, "ArrowDown");
-  await expect(live(page).locator(".np-repeat-options .chosen")).toHaveText(
-    "单曲",
-  );
-  await key(page, "Enter");
-  await key(page, "ArrowDown");
   await expect(live(page).locator(".np-shuffle-options .chosen")).toHaveText(
     "歌曲",
   );
@@ -908,6 +893,7 @@ test("playback controls share one bottom bay without moving the cover or creatin
   expect(after!.x).toBeCloseTo(original!.x, 1);
   expect(after!.y).toBeCloseTo(original!.y, 1);
   await key(page, "Enter");
+  await expect(live(page).locator(".view-art")).toHaveCount(1);
   await key(page, "ArrowDown");
   await expect(live(page).locator(".classic-volume")).toBeVisible();
   await expect(live(page).getByRole("progressbar")).toHaveCount(0);

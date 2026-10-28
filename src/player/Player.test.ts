@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { Player } from "./Player";
+import { Player, PlaybackError } from "./Player";
 import { getDemoTracks } from "./demoTracks";
 import type { AudioPort, Track } from "./Player";
 
@@ -368,4 +368,26 @@ it("enforces the volume cap on wheel changes and session restoration", () => {
   expect(player.getSnapshot().volume).toBe(0.2);
   player.setVolume(NaN);
   expect(player.getSnapshot().volume).toBe(0.2);
+});
+
+it("preserves actionable service errors instead of reporting a local codec failure", async () => {
+  const { player, audios } = setup();
+  player.select("1");
+  audios[0].rejectPlay?.(new PlaybackError("平台暂未提供播放链接，请重试"));
+  await vi.waitFor(() =>
+    expect(player.getSnapshot().error).toBe("平台暂未提供播放链接，请重试"),
+  );
+});
+
+it("carries VIP feedback to the LCD and clears it when skipping or retrying", async () => {
+  const { player, audios } = setup();
+  player.select("1");
+  audios[0].rejectPlay?.(new PlaybackError("请确认 VIP 权益", "vip"));
+  await vi.waitFor(() => expect(player.getSnapshot().errorKind).toBe("vip"));
+  player.play();
+  expect(player.getSnapshot().error).toBeNull();
+  expect(player.getSnapshot().errorKind).toBeUndefined();
+  player.next();
+  expect(player.getSnapshot().currentId).toBe("2");
+  expect(player.getSnapshot().errorKind).toBeUndefined();
 });

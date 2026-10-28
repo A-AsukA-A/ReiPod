@@ -6,6 +6,7 @@ export type Page =
   | "finish"
   | "background"
   | "click-sound"
+  | "lyrics-display"
   | "shuffle-mode"
   | "repeat-mode"
   | "coverflow-album"
@@ -70,6 +71,7 @@ export const splitPages = new Set<Page>([
   "finish",
   "background",
   "click-sound",
+  "lyrics-display",
   "shuffle-mode",
   "repeat-mode",
 ]);

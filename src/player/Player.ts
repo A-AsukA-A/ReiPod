@@ -1,6 +1,18 @@
 import type { PlaybackSession } from "./session";
 import { shuffled, shuffleAfterCurrent } from "./ordering";
 
+/** A streaming adapter can provide an actionable error without changing local decoder errors. */
+export class PlaybackError extends Error {
+  override name = "PlaybackError";
+  constructor(
+    message: string,
+    readonly kind?: PlaybackErrorKind,
+  ) {
+    super(message);
+  }
+}
+export type PlaybackErrorKind = "vip" | "purchase" | "preview" | "unavailable";
+
 export type Track = {
   id: string;
   title: string;
@@ -14,13 +26,21 @@ export type Track = {
   duration?: number;
   importedAt?: number;
   lyrics?: { time: number; text: string }[];
-  kind?: "local" | "demo" | "apple-music";
+  lyricsStatus?: "loading" | "ready" | "empty" | "error";
+  access?: "vip" | "purchase";
+  kind?: "local" | "demo" | "apple-music" | "netease" | "qq";
   filename: string;
   size: number;
   url: string;
 };
 export type PlaybackStatus =
-  "idle" | "loading" | "playing" | "paused" | "buffering" | "ended" | "error";
+  | "idle"
+  | "loading"
+  | "playing"
+  | "paused"
+  | "buffering"
+  | "ended"
+  | "error";
 export type PlayerState = {
   tracks: Track[];
   queue: string[];
@@ -34,6 +54,7 @@ export type PlayerState = {
   volume: number;
   volumeControl: boolean;
   error: string | null;
+  errorKind?: PlaybackErrorKind;
 };
 
 export type AudioPort = Pick<
@@ -91,6 +112,8 @@ export class Player {
     };
   };
   private update(patch: Partial<PlayerState>) {
+    if ("error" in patch && !("errorKind" in patch))
+      patch.errorKind = undefined;
     this.state = { ...this.state, ...patch };
     this.listeners.forEach((listener) => listener());
   }
@@ -308,11 +331,13 @@ export class Player {
         error:
           track.kind === "apple-music"
             ? "Apple Music 播放失败，请检查订阅、地区或网络后重试。"
-            : audio.error?.code === 2
-              ? track.kind === "demo"
-                ? "试听音乐读取中断，请检查网络后重试。"
-                : "文件读取中断，请重新导入这首歌。"
-              : "这首歌无法解码或文件已损坏。请换用 MP3、AAC / M4A 或 PCM WAV。",
+            : track.kind === "netease" || track.kind === "qq"
+              ? "平台音频暂时无法播放，请重试或换一首歌曲。"
+              : audio.error?.code === 2
+                ? track.kind === "demo"
+                  ? "试听音乐读取中断，请检查网络后重试。"
+                  : "文件读取中断，请重新导入这首歌。"
+                : "这首歌无法解码或文件已损坏。请换用 MP3、AAC / M4A 或 PCM WAV。",
       });
     });
     audio.src = track.url;
@@ -371,7 +396,12 @@ export class Player {
             }
           : {
               status: "error",
-              error: "播放失败，请重试或换用浏览器支持的音频文件。",
+              error:
+                error instanceof PlaybackError
+                  ? error.message
+                  : "播放失败，请重试或换用浏览器支持的音频文件。",
+              errorKind:
+                error instanceof PlaybackError ? error.kind : undefined,
             },
       );
     });

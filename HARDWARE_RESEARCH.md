@@ -18,29 +18,29 @@
 
 ## 资料目录与可用范围
 
-| 资料 | 直接用途 | 使用边界 |
-| --- | --- | --- |
-| [Apple 2007 发布说明](https://www.apple.com/newsroom/2007/09/05Apple-Introduces-New-iPod-classic/) | 确定金属机身、Cover Flow、产品代际 | 没有动画毫秒数 |
-| [Apple Classic 用户指南](https://cdsassets.apple.com/live/6GJYWVAV/user/ma1195_ipod_classic_160gb_user_guide.pdf) | 操作、菜单、HOLD、封面浏览、照片和播放流程 | 是后期 160 GB 指南，不能把所有新增功能套给 2007 首版 |
-| [Apple 120 GB 用户指南](https://cdsassets.apple.com/live/6GJYWVAV/user/ma630_ipod_classic_120gb_en.pdf) | 对照 2008 版菜单与功能差异 | 不提供 UI 曲线 |
-| [The Gadgeteer 2007 实机评测](https://the-gadgeteer.com/2007/09/19/apple_ipod_classic/) | 实物菜单、Music、Settings、播放页照片 | 静态照片不能量出时长 |
-| [Ars Technica 2007 实测](https://arstechnica.com/gadgets/2007/09/the-ipod-gets-a-makeover-a-review-of-the-ipod-nano-and-ipod-classic/) | 原机过渡组织、导航响应的同期记录 | 原文涉及两种设备；整体操作耗时不是单次动画时间 |
-| [Macworld 首版评测](https://www.macworld.com/article/187329/ipodclassic.html) | 同期 Cover Flow、封面读取响应 | 迟缓可能来自读盘，不能全部做成人为延迟 |
-| [Macworld 1.0.1 更新实测](https://www.macworld.com/article/187476/ipodclassic101.html) | 证明固件升级会改变响应观感 | 不能把 1.0 初版卡顿认定为所有 Classic 的标准 |
-| [Geekanoids 2007 实机视频出处](https://www.geekanoids.co.uk/reviews/2007/9/12/apple-ipod-classic-first-look-video-review.html) / [原视频](https://www.youtube.com/watch?v=64_CxTW7_84) | 实机菜单与 Cover Flow 的动态参考 | 视频未核实精确固件号；压缩、拍摄帧率限制测量精度 |
-| [q3k 的 wInd3x 原始研究](https://q3k.org/wInd3x.html) | 理解 BootROM、解密与实际硬件需求 | 不是开源 RetailOS 源码，也不直接提供 UI 常量 |
-| [freemyipod/wInd3x](https://github.com/freemyipod/wInd3x) | 官方工具 README 当前列出 Classic 的 DFU、解密支持 | 需要兼容设备；README 对 Classic 仍标 Experimental |
-| [固件研究总目录](https://github.com/giek2000/ipod-classic-firmware-research) | 分代规格、系统结构和研究入口 | 是第三方分析；“完整”是作者描述，不等于本项目已验证 |
-| [Cover Flow 引擎研究](https://github.com/giek2000/ipod-classic-firmware-research/blob/main/architecture/COVERFLOW_ENGINE.md) | 查找事件、投影、绘制与缓存的线索 | FPS、CPU 预算有估算成分；本文菜单入口描述与 Apple 手册有冲突，不用它覆盖官方菜单 |
-| [IPSW 结构研究](https://github.com/giek2000/ipod-classic-firmware-research/blob/main/architecture/IPSW_FORMAT.md) | ZIP、IMG1、分区类型的研究线索 | 其 0x4000 表位置不匹配本轮取得的 6G 文件；不能直接照搬解析 |
-| [RepriseOS / OSOS Lab](https://github.com/lgreitis/osos-lab) | 原版 RetailOS 的补丁、原生 UI 资源元数据、Ghidra 注释 | 当前基于 2.0.5；补丁中的新功能不是原机默认行为；仓库不提供完整 Apple 系统 |
-| [OSOS Lab 固件输入清单](https://github.com/lgreitis/osos-lab/blob/main/firmware/apple.json) | 根据字节数和哈希区分加密输入、解密输入 | 有哈希清单不等于已经拥有对应明文 |
-| [QEMU Classic 实机系统模拟项目](https://github.com/davidmonterocrespo24/qemu-ipod-classic) | 可运行原版固件、观察原版绘制输出的候选工具 | 作者明确不提供固件；部分播放功能有缺陷；模拟器速度不是实机时长证据 |
-| [clicky](https://github.com/daniel5151/clicky) | RetailOS 模拟、硬件文档与调试方法 | 当前主攻 4G 灰阶，不能用其画面校准 Classic 6G |
-| [Chikuma 界面研究](https://chikuma.ringum.net/architecture/ui/) / [状态](https://chikuma.ringum.net/status/) | 原机区域表面、控制器栈、资源驱动 UI 的研究描述 | 本轮只读到了文档，未取得其完整代码或独立运行验证；状态页列有未完成功能 |
-| [iPod.js 动画源码](https://github.com/tvillarete/ipod-classic-js/blob/e91d2b6b8cadf72e8a807c521f9297936a51efbb/app/animation/index.tsx) | 可验证的网页实现比较：推页 300 ms，预览 400 ms | 是复刻作者选择，不是 Apple 实机常量 |
-| [iPod.js Cover Flow 源码](https://github.com/tvillarete/ipod-classic-js/blob/e91d2b6b8cadf72e8a807c521f9297936a51efbb/app/components/views/CoverFlowView/AlbumCover.tsx) | 侧封面 250 ms、中心封面 300 ms、翻面 500 ms 的实现参考 | 不能据此宣称原机时长 |
-| 用户提供的 My Classic 3.0 / 3.16 IPA 与两段录像 | 原生转轮反馈、分区过渡、翻面节奏的比较样本 | 旧样本元数据不等于源码；3.16 主程序 cryptid=1；录像不是 Apple 原机 |
+| 资料                                                                                                                                                                                   | 直接用途                                               | 使用边界                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| [Apple 2007 发布说明](https://www.apple.com/newsroom/2007/09/05Apple-Introduces-New-iPod-classic/)                                                                                     | 确定金属机身、Cover Flow、产品代际                     | 没有动画毫秒数                                                                   |
+| [Apple Classic 用户指南](https://cdsassets.apple.com/live/6GJYWVAV/user/ma1195_ipod_classic_160gb_user_guide.pdf)                                                                      | 操作、菜单、HOLD、封面浏览、照片和播放流程             | 是后期 160 GB 指南，不能把所有新增功能套给 2007 首版                             |
+| [Apple 120 GB 用户指南](https://cdsassets.apple.com/live/6GJYWVAV/user/ma630_ipod_classic_120gb_en.pdf)                                                                                | 对照 2008 版菜单与功能差异                             | 不提供 UI 曲线                                                                   |
+| [The Gadgeteer 2007 实机评测](https://the-gadgeteer.com/2007/09/19/apple_ipod_classic/)                                                                                                | 实物菜单、Music、Settings、播放页照片                  | 静态照片不能量出时长                                                             |
+| [Ars Technica 2007 实测](https://arstechnica.com/gadgets/2007/09/the-ipod-gets-a-makeover-a-review-of-the-ipod-nano-and-ipod-classic/)                                                 | 原机过渡组织、导航响应的同期记录                       | 原文涉及两种设备；整体操作耗时不是单次动画时间                                   |
+| [Macworld 首版评测](https://www.macworld.com/article/187329/ipodclassic.html)                                                                                                          | 同期 Cover Flow、封面读取响应                          | 迟缓可能来自读盘，不能全部做成人为延迟                                           |
+| [Macworld 1.0.1 更新实测](https://www.macworld.com/article/187476/ipodclassic101.html)                                                                                                 | 证明固件升级会改变响应观感                             | 不能把 1.0 初版卡顿认定为所有 Classic 的标准                                     |
+| [Geekanoids 2007 实机视频出处](https://www.geekanoids.co.uk/reviews/2007/9/12/apple-ipod-classic-first-look-video-review.html) / [原视频](https://www.youtube.com/watch?v=64_CxTW7_84) | 实机菜单与 Cover Flow 的动态参考                       | 视频未核实精确固件号；压缩、拍摄帧率限制测量精度                                 |
+| [q3k 的 wInd3x 原始研究](https://q3k.org/wInd3x.html)                                                                                                                                  | 理解 BootROM、解密与实际硬件需求                       | 不是开源 RetailOS 源码，也不直接提供 UI 常量                                     |
+| [freemyipod/wInd3x](https://github.com/freemyipod/wInd3x)                                                                                                                              | 官方工具 README 当前列出 Classic 的 DFU、解密支持      | 需要兼容设备；README 对 Classic 仍标 Experimental                                |
+| [固件研究总目录](https://github.com/giek2000/ipod-classic-firmware-research)                                                                                                           | 分代规格、系统结构和研究入口                           | 是第三方分析；“完整”是作者描述，不等于本项目已验证                               |
+| [Cover Flow 引擎研究](https://github.com/giek2000/ipod-classic-firmware-research/blob/main/architecture/COVERFLOW_ENGINE.md)                                                           | 查找事件、投影、绘制与缓存的线索                       | FPS、CPU 预算有估算成分；本文菜单入口描述与 Apple 手册有冲突，不用它覆盖官方菜单 |
+| [IPSW 结构研究](https://github.com/giek2000/ipod-classic-firmware-research/blob/main/architecture/IPSW_FORMAT.md)                                                                      | ZIP、IMG1、分区类型的研究线索                          | 其 0x4000 表位置不匹配本轮取得的 6G 文件；不能直接照搬解析                       |
+| [RepriseOS / OSOS Lab](https://github.com/lgreitis/osos-lab)                                                                                                                           | 原版 RetailOS 的补丁、原生 UI 资源元数据、Ghidra 注释  | 当前基于 2.0.5；补丁中的新功能不是原机默认行为；仓库不提供完整 Apple 系统        |
+| [OSOS Lab 固件输入清单](https://github.com/lgreitis/osos-lab/blob/main/firmware/apple.json)                                                                                            | 根据字节数和哈希区分加密输入、解密输入                 | 有哈希清单不等于已经拥有对应明文                                                 |
+| [QEMU Classic 实机系统模拟项目](https://github.com/davidmonterocrespo24/qemu-ipod-classic)                                                                                             | 可运行原版固件、观察原版绘制输出的候选工具             | 作者明确不提供固件；部分播放功能有缺陷；模拟器速度不是实机时长证据               |
+| [clicky](https://github.com/daniel5151/clicky)                                                                                                                                         | RetailOS 模拟、硬件文档与调试方法                      | 当前主攻 4G 灰阶，不能用其画面校准 Classic 6G                                    |
+| [Chikuma 界面研究](https://chikuma.ringum.net/architecture/ui/) / [状态](https://chikuma.ringum.net/status/)                                                                           | 原机区域表面、控制器栈、资源驱动 UI 的研究描述         | 本轮只读到了文档，未取得其完整代码或独立运行验证；状态页列有未完成功能           |
+| [iPod.js 动画源码](https://github.com/tvillarete/ipod-classic-js/blob/e91d2b6b8cadf72e8a807c521f9297936a51efbb/app/animation/index.tsx)                                                | 可验证的网页实现比较：推页 300 ms，预览 400 ms         | 是复刻作者选择，不是 Apple 实机常量                                              |
+| [iPod.js Cover Flow 源码](https://github.com/tvillarete/ipod-classic-js/blob/e91d2b6b8cadf72e8a807c521f9297936a51efbb/app/components/views/CoverFlowView/AlbumCover.tsx)               | 侧封面 250 ms、中心封面 300 ms、翻面 500 ms 的实现参考 | 不能据此宣称原机时长                                                             |
+| 用户提供的 My Classic 3.0 / 3.16 IPA 与两段录像                                                                                                                                        | 原生转轮反馈、分区过渡、翻面节奏的比较样本             | 旧样本元数据不等于源码；3.16 主程序 cryptid=1；录像不是 Apple 原机               |
 
 GitHub 本轮核查快照：iPod.js `e91d2b6b8cadf72e8a807c521f9297936a51efbb`；固件研究 `2b916dc452f869d59b1819e5c2b0b06a172eddb2`；OSOS Lab `ad98aa61b4c86f3f93441b5cfcaaaf9ab2a30619`。读取的源码/研究文本及各文件 SHA 仅保存在本地 `sources/`，没有引入新的运行时依赖。
 
@@ -60,24 +60,24 @@ GitHub 本轮核查快照：iPod.js `e91d2b6b8cadf72e8a807c521f9297936a51efbb`�
 
 取上述 Geekanoids 原视频的 240–360 秒片段，本地文件 640 × 360、25 fps。按原帧率提取，局部裁切 LCD；单帧间隔 40 ms。以下是目视可辨的运动范围，边界至少有一帧不确定性，不能当作原机精确时钟。
 
-| 动作 | 本地片段中的观察 | 当前处理 |
-| --- | --- | --- |
-| Home → Music | 片段 +1.84 到 +2.16 秒附近完成主要行程；之前已有右侧预览变化 | 推页 360 ms，改为对称加减速；不把预览变化前的等待计入菜单行程 |
-| 进入 Cover Flow | +7.96 仍是菜单，+8.00 已是封面扇列；文字/状态随后在 +8.16 到 +8.40 附近补齐 | 扇列直接出现，标题/说明在 320 ms 内呈现，取消普通整页横移 |
-| 封面 → 曲目背面 | +15.76 尚稳定，+15.80 起旋转，+16.12 左右趋于稳定 | 360 ms 翻面；原先来自 My Classic 的 560 ms 不再优先于原机录像 |
-| 退出 Cover Flow | +27.28 附近标题/说明先退；+27.44 起两边菜单/预览合拢，+27.76 左右稳定 | 总计 480 ms：先退场，再由两边各移动半屏合拢；取消旧的全屏单向推移 |
+| 动作            | 本地片段中的观察                                                            | 当前处理                                                          |
+| --------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Home → Music    | 片段 +1.84 到 +2.16 秒附近完成主要行程；之前已有右侧预览变化                | 推页 360 ms，改为对称加减速；不把预览变化前的等待计入菜单行程     |
+| 进入 Cover Flow | +7.96 仍是菜单，+8.00 已是封面扇列；文字/状态随后在 +8.16 到 +8.40 附近补齐 | 扇列直接出现，标题/说明在 320 ms 内呈现，取消普通整页横移         |
+| 封面 → 曲目背面 | +15.76 尚稳定，+15.80 起旋转，+16.12 左右趋于稳定                           | 360 ms 翻面；原先来自 My Classic 的 560 ms 不再优先于原机录像     |
+| 退出 Cover Flow | +27.28 附近标题/说明先退；+27.44 起两边菜单/预览合拢，+27.76 左右稳定       | 总计 480 ms：先退场，再由两边各移动半屏合拢；取消旧的全屏单向推移 |
 
 25 fps 接触表、原帧和观察记录都保留在本地研究目录。没有把这些第三方视频或截图加入公开站点。曲线为人工校准，尚未对 LCD 上的坐标序列做定量拟合；不能声称取到了 Apple 的贝塞尔常量。
 
-| 参数 | 原值 | 本轮值与性质 |
-| --- | --- | --- |
-| 菜单推页 | 280 ms，前段很快的 drawer 曲线 | 360 ms，对称曲线，参照录像可见范围 |
-| 播放视图切换 | 200 ms | 300 ms，暂定校准值 |
-| Cover Flow 翻面 | 560 ms | 360 ms，原机录像优先于 My Classic |
-| 退出 Cover Flow | 与普通推页同为 280 ms | 480 ms，分两侧合拢 |
-| 封面转动阻尼频率 | 24 | 18，单步约 99% 归位由 277 ms 延长至 369 ms；保留反向时的位置和速度 |
-| 右侧图卡淡入 | 130 ms | 400 ms，参考实机预览变化与 iPod.js 的比较值 |
-| 封面轮播 / 淡出 | 4.5 s / 360 ms | 6 s / 650 ms，暂定校准值，未宣称实机常量 |
+| 参数             | 原值                           | 本轮值与性质                                                       |
+| ---------------- | ------------------------------ | ------------------------------------------------------------------ |
+| 菜单推页         | 280 ms，前段很快的 drawer 曲线 | 360 ms，对称曲线，参照录像可见范围                                 |
+| 播放视图切换     | 200 ms                         | 300 ms，暂定校准值                                                 |
+| Cover Flow 翻面  | 560 ms                         | 360 ms，原机录像优先于 My Classic                                  |
+| 退出 Cover Flow  | 与普通推页同为 280 ms          | 480 ms，分两侧合拢                                                 |
+| 封面转动阻尼频率 | 24                             | 18，单步约 99% 归位由 277 ms 延长至 369 ms；保留反向时的位置和速度 |
+| 右侧图卡淡入     | 130 ms                         | 400 ms，参考实机预览变化与 iPod.js 的比较值                        |
+| 封面轮播 / 淡出  | 4.5 s / 360 ms                 | 6 s / 650 ms，暂定校准值，未宣称实机常量                           |
 
 选中条仍即时响应转轮，不人为模拟读盘卡顿；减少动态效果继续跳过运动。所有动画继续可中断。保留输入/播放状态，不为了让动画看起来慢而延迟执行按键。
 
@@ -109,3 +109,39 @@ GitHub 本轮核查快照：iPod.js `e91d2b6b8cadf72e8a807c521f9297936a51efbb`�
 用户截图暴露了此前自行设计的倾斜小封面卡片。核对 [Classic 用户的实机录像讨论](https://www.reddit.com/r/IpodClassic/comments/1ez09hh/now_playing_artwork_problems/) 和 [固件研究作者帖下的同一现象反馈](https://www.reddit.com/r/ipod/comments/1v67uyf/204_osos_has_been_decrypted/)，多个原机使用者（包括 7G 用户）确认：Classic 主菜单的 Now Playing 预览使用音符占位，不显示当前封面；Nano 的表现可能不同。这是原机行为的用户观察，尚非已提取的 UI 绑定或本项目持有实机的直接验证。
 
 **用户明确指定：这里应显示歌曲或专辑封面，而且展示形式与右侧轮播的大封面一致。以该明确要求为准。** 此处直接复用 `AlbumPreview` 的满幅大封面、裁切与缓慢平移动效，移除自行设计的小封面及歌名、艺人、专辑文字卡片。图片固定为当前歌曲封面，没有时取同一专辑封面；暂停保留，切歌更新，不轮换无关专辑。只有没有可用封面时才显示音符。“音乐”的右侧封面轮播保持独立。上述用户观察资料尚不足以确认各固件版本的全部预览行为，也不应以此为自行设计卡片的依据。
+
+## UI 标准化资料补充 — 2026-10-28
+
+后续采用 [UI_STANDARDS.md](UI_STANDARDS.md) 的证据分级、320 × 240 坐标归一化、测量误差和截图验收流程。本轮整理来源和开发约束，没有把播放条、音量条或封面角度改成另一套估值。
+
+### 官方来源与版本
+
+| 来源                                                                                                                                                                                                                                                                    | 本轮确认的用途与限制                                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [2007 classic 发布资料](https://www.apple.com/newsroom/2007/09/05Apple-Introduces-New-iPod-classic/)                                                                                                                                                                    | 确认本项目既有 6G 基线、金属机身和 Cover Flow；没有给出条高或投影角度                                                                                       |
+| [2008 120GB 规格](https://support.apple.com/en-us/112321) / [Late 2009 规格](https://support.apple.com/en-gb/112601)                                                                                                                                                    | 2.5 英寸、320 × 240、103.5 × 61.8 mm；分别标记后续版本，不能单独推出内部布局                                                                                |
+| [Apple 机型识别](https://support.apple.com/en-au/103823)                                                                                                                                                                                                                | 区分代际；A1238 被多个版本使用，不能只靠型号代码确认固件                                                                                                    |
+| [后期 160GB 手册](https://cdsassets.apple.com/live/6GJYWVAV/user/ma1195_ipod_classic_160gb_user_guide.pdf)                                                                                                                                                              | 已查看印刷页 24 播放示意图：透视/倒影封面、元数据、评分、队列位置、底部进度与时间。示意图不是原始 LCD 截图，不能据此声称像素或 CSS 角度准确                 |
+| 同一手册印刷页 25、26、29                                                                                                                                                                                                                                               | 中心键依次进入定位、条件性的 Genius、随机、评分、条件性的歌词；长按打开额外命令；重复在设置。这里是后期指南的行为说明，恢复颗粒度另见 PLAYBACK_INTERACTIONS |
+| [2008 120GB 手册](https://cdsassets.apple.com/live/6GJYWVAV/user/ma630_ipod_classic_120gb_en.pdf)                                                                                                                                                                       | 用于对照版本，不与 2007 首版混称                                                                                                                            |
+| Apple HIG：[Layout](https://developer.apple.com/design/human-interface-guidelines/layout)、[Motion](https://developer.apple.com/design/human-interface-guidelines/motion)、[Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility) | 指导账户/VIP/错误等新增界面的分组、层级、对齐和减少动态效果；不是旧固件的尺寸、字体或材质规范                                                               |
+
+[The Gadgeteer 2007 第一手评测](https://the-gadgeteer.com/2007/09/19/apple_ipod_classic/) 的 [Music 照片](https://the-gadgeteer.com/assets/apple-ipod-classic-7.jpg) 和 [Settings 照片](https://the-gadgeteer.com/assets/apple-ipod-classic-42.jpg) 本轮可访问。其播放页图片 `https://the-gadgeteer.com/assets/apple-ipod-classic-8.jpg` 本轮返回 404，不能当作当前可用量尺。照片的固件未知，并受拍摄透视、曝光和压缩影响；同期评测可支持可见关系，不能自动提供精确色值、条高与动画常量。
+
+### robbiebyrd/ipod_ui 的实际参考价值
+
+已读取 [仓库](https://github.com/robbiebyrd/ipod_ui) 和固定修订 [f4fc1de095e064de9db79729eeb8585d10e840cb](https://github.com/robbiebyrd/ipod_ui/tree/f4fc1de095e064de9db79729eeb8585d10e840cb)（2026-04-06），并在本机渲染其页面检查菜单与播放视图。它派生自 `mitchivin/ipod-classic`；README 称 fifth-generation，界面又使用 Classic 标签，未提供同型号原机测量过程。README 的 `https://mitchivin.github.io/ipod/` 演示地址本轮返回 404。
+
+- 封面实现使用父级 `perspective: 600u`，`rotateY(35deg) scaleX(1.04)`，原点在左侧中部。这是该网页的组合参数，不能只复制 35° 作为原机角度。
+- 进度条高 13u；其中 u 按外壳宽度 / 371 缩放，不是 LCD 单位。本机一次渲染 LCD 宽 298.5625px、条高 12.59375px，归一到 320 宽约 13.5px。此数仅描述该网页，不是实机测量，也不是 ReiPod 的拟定标准。
+- 没有可比较的音量条。播放页转轮直接按时长的 2% 定位，中心键没有完整 classic 面板循环，不能用作本项目控制顺序依据。
+- Myriad Pro / Source Sans 回退栈不能证明原机字体；没有取得字体使用许可的依据，不随 ReiPod 复制分发。
+- 适合比较视觉组织与 CSS 方法，尚不足以确认还原精度。渲染截图和源码仅作本地研究，不加入发布产物。
+
+### iPod.js 的边界
+
+对照 [e91d2b6b8cadf72e8a807c521f9297936a51efbb 的 Controls](https://github.com/tvillarete/ipod-classic-js/blob/e91d2b6b8cadf72e8a807c521f9297936a51efbb/app/components/Controls/index.tsx)：封面/定位状态以及音量互斥可供实现比较，但并未覆盖后期 classic 手册的全部中心键序列。固定 commit 避免之后仓库更新导致研究描述漂移；通过其实现只能证明作者选择，不能证明 Apple 常量。
+
+### 接下来需要补齐的证据
+
+先处理播放条、定位状态、音量条和播放封面的四角/倒影；再处理字体、菜单、状态栏和动画。需要同版本、可辨识状态的原机画面，记录 LCD 四角和误差后测量。现有 CSS 数值、自动化测试及本轮网页截图均不是实机真值。具体优先级与验收矩阵维护在 UI_STANDARDS；当前阶段不宣称 UI 标准化已经完成。

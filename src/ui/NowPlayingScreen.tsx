@@ -4,9 +4,8 @@ import { MarqueeText } from "./MarqueeText";
 import { Lyrics } from "./Lyrics";
 import { PlayerIcon } from "./PlayerIcon";
 import { SeekSlider } from "./SeekSlider";
-
-export type PlayView =
-  "art" | "seek" | "repeat" | "shuffle" | "rating" | "lyrics";
+import { PlaybackAlert } from "./PlaybackAlert";
+import type { PlayView } from "./nowPlaying";
 
 function Choices({
   label,
@@ -68,8 +67,8 @@ export function NowPlayingScreen({
             >
               <PlayerIcon name="shuffle" />
             </span>
-            {state.repeat !== "off" || view === "repeat" ? (
-              <span className={view === "repeat" ? "is-current" : ""}>
+            {state.repeat !== "off" ? (
+              <span>
                 <PlayerIcon name="repeat" />
                 {state.repeat === "one" && <small>1</small>}
               </span>
@@ -142,15 +141,6 @@ export function NowPlayingScreen({
             <PlayerIcon name="volume" />
           </div>
         )}
-        {view === "repeat" && (
-          <div className="np-repeat-options">
-            <Choices
-              label="重复播放"
-              choices={["关闭", "全部", "单曲"]}
-              selected={["off", "all", "one"].indexOf(state.repeat)}
-            />
-          </div>
-        )}
         {view === "shuffle" && (
           <div className="np-shuffle-options">
             <Choices
@@ -175,10 +165,7 @@ export function NowPlayingScreen({
         )}
       </div>
       {state.error && (
-        <div className="screen-error" role="alert">
-          {state.error}
-          <small>中心键重试 · 下一首跳过</small>
-        </div>
+        <PlaybackAlert message={state.error} kind={state.errorKind} />
       )}
     </div>
   );

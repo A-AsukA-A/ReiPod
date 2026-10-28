@@ -1284,3 +1284,34 @@
   border: 1px solid #5983a7;
   background: #e7f4fc;
 }
+.music-login-qr {
+  display: grid;
+  place-items: center;
+  flex: 0 1 112px;
+  min-height: 0;
+  padding: 2px;
+  background: #fff;
+}
+.music-login-qr img {
+  width: 108px;
+  max-width: 100%;
+  height: 108px;
+  max-height: 100%;
+  object-fit: contain;
+}
+.has-login-qr .music-login-qr {
+  flex: 0 0 112px;
+}
+.has-login-qr .clear-question {
+  margin: 2px 4px;
+  font-size: 10px;
+  line-height: 13px;
+}
+.has-login-qr .clear-question > span,
+.has-login-qr .screen-row[aria-disabled="true"] {
+  display: none;
+}
+.has-login-qr > .screen-menu {
+  flex: 1;
+  min-height: 0;
+}
