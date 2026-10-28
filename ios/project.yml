@@ -16,7 +16,6 @@ targets:
     sources:
       - path: ReiPod
         excludes: [Web, Info.plist]
-    resources:
       - path: ReiPod/Web
         type: folder
     info:

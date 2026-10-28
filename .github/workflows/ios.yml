@@ -28,7 +28,9 @@ jobs:
         working-directory: ios
       - name: Build for iPhone without distribution credentials
         working-directory: ios
-        run: xcodebuild -quiet -project ReiPod.xcodeproj -scheme ReiPod -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+        run: |
+          xcodebuild -quiet -project ReiPod.xcodeproj -scheme ReiPod -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+          test -f build/Build/Products/Debug-iphoneos/ReiPod.app/Web/index.html
       - name: Test native boundaries on simulator
         working-directory: ios
         run: |
