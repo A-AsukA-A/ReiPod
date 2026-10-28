@@ -1,6 +1,8 @@
 import { Player } from "../player/Player";
 import type { AudioPort } from "../player/Player";
 import type { MusicKitInstance } from "./musicKit";
+import { hasNativeMusic } from "./nativeMusic";
+import { NativeSystemPlayer } from "./NativeSystemPlayer";
 
 let kit: MusicKitInstance | undefined;
 let active: AppleAudio | undefined;
@@ -145,4 +147,6 @@ class AppleAudio extends EventTarget implements AudioPort {
     if (active === this) active = undefined;
   }
 }
-export const applePlayer = new Player(() => new AppleAudio());
+export const applePlayer = hasNativeMusic()
+  ? new NativeSystemPlayer()
+  : new Player(() => new AppleAudio());

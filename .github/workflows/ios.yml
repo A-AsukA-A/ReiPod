@@ -1,0 +1,36 @@
+name: Check iPhone native shell
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, codex/iphone-native-music]
+    paths: ['ios/**', 'src/**', 'scripts/prepare-ios.mjs', 'package*.json', '.github/workflows/ios.yml']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run ios:prepare
+      - run: brew install xcodegen
+      - run: xcodegen generate
+        working-directory: ios
+      - name: Build for iPhone without distribution credentials
+        working-directory: ios
+        run: xcodebuild -quiet -project ReiPod.xcodeproj -scheme ReiPod -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Test native boundaries on simulator
+        working-directory: ios
+        run: |
+          IOS_TEST_DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["isAvailable"] and "iPhone" in x["name"]))')
+          xcodebuild -quiet -project ReiPod.xcodeproj -scheme ReiPod -destination "platform=iOS Simulator,id=$IOS_TEST_DEVICE_ID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO test

@@ -6,9 +6,20 @@ import { readSession } from "../player/session";
 import { applePlayer, setMusicKitPlayer } from "./applePlayer";
 import { loadMusicKit, validDeveloperToken } from "./musicKit";
 import type { MusicKitInstance } from "./musicKit";
+import {
+  hasNativeMusic,
+  nativeMusicRequest,
+  nativeLibrary,
+  nativePlaylist,
+} from "./nativeMusic";
+import type { NativeReply } from "./nativeMusic";
+import { NativeSystemPlayer } from "./NativeSystemPlayer";
+import { searchTracks } from "../player/search";
 
 export type MusicService = "local" | "apple-music";
 type ServiceState = {
+  transport: "web" | "ios";
+  nativeAuthorization?: NativeReply["authorization"];
   selected: MusicService;
   playback: MusicService;
   auth: "unconfigured" | "loading" | "signed-out" | "authorized" | "error";
@@ -35,6 +46,7 @@ const save = (key: string, value: string | null) => {
   }
 };
 let state: ServiceState = {
+  transport: hasNativeMusic() ? "ios" : "web",
   selected:
     read("reipod-music-service") === "apple-music" ? "apple-music" : "local",
   playback: "local",
@@ -135,6 +147,11 @@ async function freshDeveloperToken() {
 export async function initializeMusicServices() {
   if (initialized) return;
   initialized = true;
+  if (hasNativeMusic()) {
+    if (!read("reipod-music-service")) update({ selected: "apple-music" });
+    await prepareAppleMusic();
+    return;
+  }
   await configuration();
   if (!read("reipod-music-service") && (developerToken || tokenUrl))
     update({ selected: "apple-music" });
@@ -143,6 +160,25 @@ export async function initializeMusicServices() {
 }
 export function prepareAppleMusic() {
   return (preparing ??= (async () => {
+    if (hasNativeMusic()) {
+      update({ auth: "loading", error: "" });
+      try {
+        const reply = await nativeMusicRequest("status");
+        update({
+          ready: true,
+          nativeAuthorization: reply.authorization,
+          auth: "signed-out",
+        });
+        if (
+          reply.authorization === "authorized" &&
+          read("reipod-ios-music-connected") !== "false"
+        )
+          await connectNativeMusic(reply);
+      } catch (error) {
+        update({ auth: "error", error: message(error) });
+      }
+      return;
+    }
     await configuration();
     if (!developerToken && !tokenUrl) {
       update({ auth: "unconfigured", ready: false });
@@ -179,6 +215,58 @@ function message(error: unknown) {
     ? error.message
     : "Apple Music 请求失败，请重试";
 }
+async function connectNativeMusic(reply: NativeReply) {
+  const epoch = nextAccountGeneration();
+  update({ ready: true, nativeAuthorization: reply.authorization });
+  if (reply.authorization !== "authorized") {
+    update({
+      auth: "signed-out",
+      error:
+        reply.authorization === "notDetermined"
+          ? ""
+          : "请在 iPhone 系统设置中允许 ReiPod 访问音乐资料库",
+    });
+    return;
+  }
+  save("reipod-ios-music-connected", "true");
+  update({ auth: "authorized", error: "" });
+  await refreshAppleLibrary();
+  if (epoch !== generation) return;
+  const latest = await nativeMusicRequest("status");
+  if (epoch !== generation) return;
+  if (latest.playback && applePlayer instanceof NativeSystemPlayer) {
+    applePlayer.adopt(latest.playback);
+    if (
+      latest.playback.currentId &&
+      (latest.playback.status === "playing" ||
+        read("reipod-playback-source") === "apple-music")
+    )
+      playbackFrom("apple-music");
+  }
+}
+export function openNativeMusicSettings() {
+  return nativeMusicRequest("openSettings");
+}
+window.addEventListener("reipod-native-music", (event) => {
+  if (!hasNativeMusic() || state.auth !== "authorized") return;
+  const reply = (
+    event as CustomEvent<NativeReply & { libraryChanged?: boolean }>
+  ).detail;
+  if (!reply) return;
+  if (reply.authorization !== "authorized") {
+    invalidateAuthorization();
+    update({
+      nativeAuthorization: reply.authorization,
+      error: "系统音乐权限已改变，请重新授权",
+    });
+    return;
+  }
+  if (reply.playback && applePlayer instanceof NativeSystemPlayer) {
+    applePlayer.adopt(reply.playback);
+    if (reply.playback.status === "playing") playbackFrom("apple-music");
+  }
+  if (reply.libraryChanged && !state.syncing) void refreshAppleLibrary();
+});
 class AppleApiError extends Error {
   constructor(public status: number) {
     super(
@@ -352,6 +440,15 @@ async function completeAuthorization(token: string) {
   }
 }
 export async function authorizeAppleMusic() {
+  if (hasNativeMusic()) {
+    update({ auth: "loading", error: "" });
+    try {
+      await connectNativeMusic(await nativeMusicRequest("authorize"));
+    } catch (error) {
+      update({ auth: "error", error: message(error) });
+    }
+    return;
+  }
   if (!instance || !state.ready) {
     await prepareAppleMusic();
     return;
@@ -371,6 +468,13 @@ export async function authorizeAppleMusic() {
   }
 }
 export async function signOutAppleMusic() {
+  if (hasNativeMusic()) {
+    if (state.playback === "apple-music") applePlayer.pause();
+    save("reipod-ios-music-connected", "false");
+    invalidateAuthorization();
+    update({ error: "" });
+    return;
+  }
   invalidateAuthorization();
   update({ auth: "loading" });
   save("reipod-apple-session", null);
@@ -387,6 +491,17 @@ export async function refreshAppleLibrary() {
   const epoch = generation;
   update({ syncing: true, error: "" });
   try {
+    if (hasNativeMusic()) {
+      const library = await nativeLibrary();
+      if (epoch !== generation) return;
+      applePlayer.add(library.tracks);
+      library.tracks.forEach((track) =>
+        applePlayer.updateTrack(track.id, track),
+      );
+      loadedPlaylists.clear();
+      update({ libraryTracks: library.tracks, playlists: library.playlists });
+      return;
+    }
     const [songs, lists] = await Promise.all([
       allPages("/v1/me/library/songs?limit=100", epoch),
       allPages("/v1/me/library/playlists?limit=100", epoch),
@@ -422,6 +537,20 @@ export async function loadApplePlaylist(id: string) {
   const epoch = generation;
   update({ syncing: true, error: "" });
   try {
+    if (hasNativeMusic()) {
+      const tracks = await nativePlaylist(id);
+      if (epoch !== generation) return false;
+      applePlayer.add(tracks);
+      loadedPlaylists.add(id);
+      update({
+        playlists: state.playlists.map((entry) =>
+          entry.id === id
+            ? { ...entry, trackIds: tracks.map((track) => track.id) }
+            : entry,
+        ),
+      });
+      return true;
+    }
     const items = await allPages(
       `/v1/me/library/playlists/${encodeURIComponent(id.slice("apple-playlist:".length))}/tracks?limit=100`,
       epoch,
@@ -453,6 +582,10 @@ export async function searchAppleMusic(term: string) {
     epoch = generation;
   update({ searchResults: [], error: "" });
   if (!term.trim() || state.auth !== "authorized") return;
+  if (hasNativeMusic()) {
+    update({ searchResults: searchTracks(state.libraryTracks, term) });
+    return;
+  }
   try {
     const result = await request(
       `/v1/catalog/${encodeURIComponent(storefront)}/search?types=songs&limit=25&term=${encodeURIComponent(term.trim())}`,
@@ -471,6 +604,7 @@ export async function searchAppleMusic(term: string) {
 }
 let lastSession = "";
 applePlayer.subscribe(() => {
+  if (hasNativeMusic()) return; // iOS owns the live system session; never replace it on launch.
   if (!sessionReady || state.auth !== "authorized") return;
   const session = applePlayer.getSession();
   session.position = Math.floor(session.position);
@@ -486,7 +620,7 @@ applePlayer.subscribe(() => {
 function activePlayer() {
   return state.playback === "apple-music" ? applePlayer : localPlayer;
 }
-if ("mediaSession" in navigator) {
+if ("mediaSession" in navigator && !hasNativeMusic()) {
   const handlers: Partial<
     Record<MediaSessionAction, MediaSessionActionHandler>
   > = {

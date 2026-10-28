@@ -95,6 +95,13 @@ export class Player {
     this.listeners.forEach((listener) => listener());
   }
 
+  /** Native system players report their live state, including background changes. */
+  protected syncExternalPlayback(patch: Partial<PlayerState>) {
+    if (patch.status !== undefined)
+      this.wantsPlay = patch.status === "playing" || patch.status === "loading";
+    this.update(patch);
+  }
+
   add(tracks: Track[]) {
     const ids = new Set(this.state.tracks.map((track) => track.id));
     const unique = tracks.filter((track) => {

@@ -96,6 +96,7 @@ import {
   signOutAppleMusic,
   useApplePlayer,
   useMusicServices,
+  openNativeMusicSettings,
 } from "./services/musicServices";
 
 export function App() {
@@ -103,6 +104,7 @@ export function App() {
   const appleState = useApplePlayer();
   const services = useMusicServices();
   const cloud = services.selected === "apple-music";
+  const nativeMusic = services.transport === "ios";
   const player =
     services.playback === "apple-music" ? applePlayer : localPlayer;
   const state = services.playback === "apple-music" ? appleState : localState;
@@ -533,17 +535,15 @@ export function App() {
       value: cloud ? "Apple Music" : "本地音乐",
       action: () => open("music-services", services.selected),
     },
-    ...originalSettingsItems
-      .slice(1)
-      .map((item) =>
-        item.key === "clear"
-          ? {
-              ...item,
-              label: "清空本地音乐资料库",
-              disabled: !localMusicTracks.length,
-            }
-          : item,
-      ),
+    ...originalSettingsItems.slice(1).map((item) =>
+      item.key === "clear"
+        ? {
+            ...item,
+            label: "清空本地音乐资料库",
+            disabled: !localMusicTracks.length,
+          }
+        : item,
+    ),
   ];
   const account = () =>
     open("music-account", services.auth === "authorized" ? "refresh" : "login");
@@ -553,7 +553,9 @@ export function App() {
       label:
         services.auth === "authorized"
           ? "Apple Music 账户"
-          : "登录 Apple Music",
+          : nativeMusic
+            ? "连接系统音乐"
+            : "登录 Apple Music",
       action: account,
     },
   ];
@@ -576,7 +578,7 @@ export function App() {
               { key: "songs", label: "歌曲", action: () => open("songs") },
               {
                 key: "search",
-                label: "搜索 Apple Music",
+                label: nativeMusic ? "搜索资料库" : "搜索 Apple Music",
                 action: () => {
                   setQuery("");
                   textEntry.begin();
@@ -715,7 +717,7 @@ export function App() {
             },
             {
               key: "logout",
-              label: "退出 Apple Music",
+              label: nativeMusic ? "断开系统音乐" : "退出 Apple Music",
               action: () => {
                 void signOutAppleMusic();
               },
@@ -728,10 +730,31 @@ export function App() {
                 services.auth === "loading"
                   ? "正在连接…"
                   : services.ready
-                    ? "登录 Apple Music"
+                    ? nativeMusic
+                      ? ["denied", "restricted"].includes(
+                          services.nativeAuthorization ?? "",
+                        )
+                        ? "打开系统设置"
+                        : "允许访问音乐资料库"
+                      : "登录 Apple Music"
                     : "重新检查连接",
               disabled: services.auth === "loading",
               action: () => {
+                if (
+                  nativeMusic &&
+                  ["denied", "restricted"].includes(
+                    services.nativeAuthorization ?? "",
+                  )
+                ) {
+                  void openNativeMusicSettings().catch((error: unknown) =>
+                    setNotice(
+                      error instanceof Error
+                        ? error.message
+                        : "未能打开系统设置",
+                    ),
+                  );
+                  return;
+                }
                 void (services.ready
                   ? authorizeAppleMusic()
                   : prepareAppleMusic());
@@ -1883,13 +1906,17 @@ export function App() {
                   >
                     {page === "music-account" && (
                       <p className="clear-question" role="status">
-                        {services.auth === "unconfigured"
-                          ? "网站尚未配置 Apple Music"
-                          : services.auth === "authorized"
-                            ? "已连接 Apple Music"
-                            : services.auth === "loading"
-                              ? "正在连接 Apple Music…"
-                              : "连接你的 Apple Music"}
+                        {nativeMusic
+                          ? services.auth === "authorized"
+                            ? "已连接系统音乐"
+                            : "访问 iPhone 音乐资料库"
+                          : services.auth === "unconfigured"
+                            ? "网站尚未配置 Apple Music"
+                            : services.auth === "authorized"
+                              ? "已连接 Apple Music"
+                              : services.auth === "loading"
+                                ? "正在连接 Apple Music…"
+                                : "连接你的 Apple Music"}
                         <span>
                           {services.error ||
                             (services.auth === "unconfigured"
@@ -1898,7 +1925,9 @@ export function App() {
                                 ? "正在同步资料库…"
                                 : services.auth === "authorized"
                                   ? `${services.libraryTracks.length} 首歌曲 · ${services.playlists.length} 个歌单`
-                                  : "登录后显示 Apple Music 歌单，本地音乐独立保留。")}
+                                  : nativeMusic
+                                    ? "允许访问后显示系统歌单，ReiPod 导入的音乐单独保留。"
+                                    : "登录后显示 Apple Music 歌单，本地音乐独立保留。")}
                         </span>
                       </p>
                     )}

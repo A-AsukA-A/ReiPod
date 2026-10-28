@@ -11,3 +11,9 @@ dist/
 .env.*
 !.env.example
 *.p8
+/ios/ReiPod/Web/
+/ios/ReiPod/Info.plist
+/ios/*.xcodeproj/
+/ios/build/
+/ios/DerivedData/
+*.xcuserstate

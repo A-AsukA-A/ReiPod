@@ -1,0 +1,49 @@
+name: ReiPod
+options:
+  bundleIdPrefix: com.reipod
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+targets:
+  ReiPod:
+    type: application
+    platform: iOS
+    sources:
+      - path: ReiPod
+        excludes: [Web, Info.plist]
+    resources:
+      - path: ReiPod/Web
+        type: folder
+    info:
+      path: ReiPod/Info.plist
+      properties:
+        CFBundleDisplayName: ReiPod
+        CFBundleShortVersionString: "0.2.0"
+        CFBundleVersion: "1"
+        NSAppleMusicUsageDescription: ReiPod 需要读取你的音乐资料库和歌单，并通过系统音乐播放器播放所选歌曲。
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIApplicationSupportsIndirectInputEvents: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.reipod.player
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+    scheme:
+      testTargets: [ReiPodTests]
+  ReiPodTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [ReiPodTests]
+    dependencies:
+      - target: ReiPod
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES

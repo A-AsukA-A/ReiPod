@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:audio": "node scripts/create-test-audio.mjs",
     "phone": "node scripts/phone.mjs",
+    "ios:prepare": "npm run build && node scripts/check-dist.mjs && node scripts/prepare-ios.mjs",
     "test:browser": "npm run build && playwright test",
     "size": "node scripts/bundle-report.mjs"
   },
