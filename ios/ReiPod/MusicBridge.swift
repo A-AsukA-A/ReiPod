@@ -43,7 +43,7 @@ final class MusicBridge: NSObject, WKScriptMessageHandlerWithReply {
             let object = try JSONSerialization.jsonObject(with: data)
             webView.callAsyncJavaScript(
                 "window.dispatchEvent(new CustomEvent('reipod-native-music', {detail: reply}));",
-                arguments: ["reply": object], in: nil, contentWorld: .page, completionHandler: nil)
+                arguments: ["reply": object], in: nil, in: .page, completionHandler: nil)
         } catch { /* A later foreground/status update can resynchronize the display. */ }
     }
 }

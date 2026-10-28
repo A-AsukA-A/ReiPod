@@ -29,6 +29,13 @@ export async function nativeMusicFixture(page: Page, denied = false) {
         calls: [] as string[],
         queue: [] as string[],
         settings: 0,
+        setPermission(value: string) {
+          permission = value;
+          localStorage.setItem("__fixture-ios-permission", value);
+          window.dispatchEvent(
+            new CustomEvent("reipod-native-music", { detail: status() }),
+          );
+        },
         update(patch: Record<string, unknown>) {
           playback = { ...playback, ...patch };
           localStorage.setItem(

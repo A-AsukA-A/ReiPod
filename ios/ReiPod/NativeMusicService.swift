@@ -32,14 +32,14 @@ final class NativeMusicService {
         observers.append(NotificationCenter.default.addObserver(forName: .MPMediaLibraryDidChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                songCache = nil
-                itemCache.removeAll()
-                playlistCache = nil
-                artworkVersion += 1
-                artworkCache.removeAllObjects()
-                var reply = status()
+                self.songCache = nil
+                self.itemCache.removeAll()
+                self.playlistCache = nil
+                self.artworkVersion += 1
+                self.artworkCache.removeAllObjects()
+                var reply = self.status()
                 reply.libraryChanged = true
-                onEvent?(reply)
+                self.onEvent?(reply)
             }
         })
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in

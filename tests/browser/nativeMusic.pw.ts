@@ -127,6 +127,18 @@ test("denied iPhone music access offers system settings and retains local playba
           .__nativeTest.settings,
     ),
   ).toBe(1);
+  await page.evaluate(() =>
+    (
+      window as unknown as {
+        __nativeTest: { setPermission(value: string): void };
+      }
+    ).__nativeTest.setPermission("authorized"),
+  );
+  await expect(live(page).getByRole("status")).toContainText("已连接系统音乐");
+  await expect(live(page).getByRole("status")).toContainText(
+    "2 首歌曲 · 1 个歌单",
+  );
+  await choose(page, "断开系统音乐");
   await choose(page, "本地音乐");
   await choose(page, "Carefree");
   await expect(live(page).locator(".np-info strong")).toHaveText("Carefree");

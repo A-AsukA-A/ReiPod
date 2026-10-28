@@ -30,7 +30,7 @@ struct WebBundleTests {
             });
             const status = await window.webkit.messageHandlers.reipodMusic.postMessage({version: 1, action: 'status'});
             return {native: window.__REIPOD_NATIVE_MUSIC_VERSION__, fetched: notice.includes('MIT License'), saved, database, authorization: status.authorization};
-            """, arguments: [:], in: nil, contentWorld: .page)
+            """, arguments: [:], in: nil, in: .page)
         let result = try #require(value as? [String: Any])
         #expect(result["native"] as? Int == 1)
         #expect(result["fetched"] as? Bool == true)

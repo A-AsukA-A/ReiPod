@@ -248,11 +248,25 @@ export function openNativeMusicSettings() {
   return nativeMusicRequest("openSettings");
 }
 window.addEventListener("reipod-native-music", (event) => {
-  if (!hasNativeMusic() || state.auth !== "authorized") return;
+  if (!hasNativeMusic()) return;
   const reply = (
     event as CustomEvent<NativeReply & { libraryChanged?: boolean }>
   ).detail;
   if (!reply) return;
+  if (reply.authorization !== state.nativeAuthorization)
+    update({ nativeAuthorization: reply.authorization });
+  if (state.auth !== "authorized") {
+    if (
+      reply.authorization === "authorized" &&
+      state.auth !== "loading" &&
+      read("reipod-ios-music-connected") !== "false"
+    ) {
+      void connectNativeMusic(reply).catch((error: unknown) =>
+        update({ auth: "error", error: message(error) }),
+      );
+    }
+    return;
+  }
   if (reply.authorization !== "authorized") {
     invalidateAuthorization();
     update({
