@@ -37,13 +37,14 @@ jobs:
         run: |
           IOS_TEST_DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["isAvailable"] and "iPhone" in x["name"]))')
           xcrun simctl boot "$IOS_TEST_DEVICE_ID" || true
+          xcodebuild -quiet -project ReiPod.xcodeproj -scheme ReiPod -destination "platform=iOS Simulator,id=$IOS_TEST_DEVICE_ID" -derivedDataPath build CODE_SIGN_IDENTITY=- build-for-testing
           xcrun simctl bootstatus "$IOS_TEST_DEVICE_ID" -b
-          xcodebuild -project ReiPod.xcodeproj -scheme ReiPod -destination "platform=iOS Simulator,id=$IOS_TEST_DEVICE_ID" -destination-timeout 60 -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 60 -maximum-test-execution-time-allowance 90 -derivedDataPath build -resultBundlePath build/NativeTests.xcresult CODE_SIGN_IDENTITY=- test
+          xcodebuild -project ReiPod.xcodeproj -scheme ReiPod -destination "platform=iOS Simulator,id=$IOS_TEST_DEVICE_ID" -destination-timeout 60 -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 60 -maximum-test-execution-time-allowance 90 -derivedDataPath build -resultBundlePath build/NativeTests.xcresult CODE_SIGN_IDENTITY=- test-without-building
       - name: Report simulator failures
         if: failure()
         working-directory: ios
         run: |
-          find "$HOME/Library/Logs/DiagnosticReports" -name 'ReiPod*' -type f -exec tail -c 20000 {} \; || true
+          find "$HOME/Library/Logs/DiagnosticReports" -name 'ReiPod*' -type f -exec head -c 20000 {} \; || true
           if test -d build/NativeTests.xcresult; then
             xcrun xcresulttool get test-results summary --path build/NativeTests.xcresult || true
           fi

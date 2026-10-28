@@ -9,6 +9,9 @@ settings:
     SWIFT_STRICT_CONCURRENCY: complete
     SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
     SWIFT_APPROACHABLE_CONCURRENCY: YES
+    # Xcode 16.4's iOS 18.5 simulator lacks the legacy Swift WebKit overlay.
+    # Keep iOS 17 on devices; Apple's simulator workaround links the new overlay.
+    "IPHONEOS_DEPLOYMENT_TARGET[sdk=iphonesimulator*]": "18.4"
 targets:
   ReiPod:
     type: application

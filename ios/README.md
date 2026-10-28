@@ -51,4 +51,6 @@ open ReiPod.xcodeproj
 
 工作流 **Check iPhone native shell** 会在 macOS 上生成工程、不签名编译 iPhone target，并在模拟器运行边界测试和 WebKit 资源/存储/桥接冒烟测试。网页测试使用原生桥接替身验证权限、分页、完整队列、系统切歌同步、刷新恢复和本地音乐隔离。
 
+模拟器构建使用 iOS 18.4+ 的最低目标，规避 [Apple 已确认的 Xcode 16.4 / iOS 18.5 WebKit 动态库缺失问题](https://developer.apple.com/forums/thread/785964)；真机最低版本仍为 iOS 17。
+
 这些检查无法代替 iPhone 实测。请在真机确认：允许/拒绝权限、云端与下载歌曲、锁屏/后台连续切歌、系统音乐 App 外部切歌、来电或耳机打断、重新打开 App、系统设置撤销权限。模拟器没有你的真实音乐资料库。
