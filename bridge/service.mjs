@@ -1,5 +1,5 @@
-import { createProviders, ServiceError } from "../server/providers.mjs";
-export const actions = new Set([
+import { ServiceError } from "../server/providers.mjs";
+const actions = new Set([
   "status",
   "login-start",
   "login-check",
@@ -170,4 +170,3 @@ export function createMusicService({ providers, storage, now = Date.now }) {
     );
   };
 }
-export { createProviders };

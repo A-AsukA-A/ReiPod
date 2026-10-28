@@ -1,10 +1,10 @@
-import { ServiceError } from "../server/providers.mjs";
+import { createProviders, ServiceError } from "../server/providers.mjs";
 import { handleRequest } from "@yakult-green-tea/qq-music-api/serverless";
 import { createNetEase } from "./netease.mjs";
-import { createMusicService, createProviders } from "./service.mjs";
+import { createMusicService } from "./service.mjs";
 
 export async function createRuntime({ fetcher, storage, secret }) {
-  // This module runs only in the extension worker or an isolated WKContentWorld.
+  // This module runs only in an isolated WKContentWorld.
   // QQ's serverless adapter uses global fetch; never install this in the page world.
   let qqNetworkFailure;
   globalThis.fetch = async (url, options) => {

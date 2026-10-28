@@ -16,31 +16,29 @@ const notices = await Promise.all(
     ["dijkstrajs", "node_modules/dijkstrajs/LICENSE.md"],
   ].map(async ([name, path]) => `${name}\n\n${await readFile(path, "utf8")}`),
 );
-if (process.argv.includes("--ios")) {
-  await mkdir("ios/ReiPod/Web", { recursive: true });
-  await writeFile(
-    "ios/ReiPod/Web/music-bridge-licenses.txt",
-    notices.join("\n\n---\n\n"),
-  );
-  await build({
-    configFile: false,
-    publicDir: false,
-    define: {
-      "process.env": "{}",
-      "process.env.NODE_ENV": JSON.stringify("production"),
+await mkdir("ios/ReiPod/Web", { recursive: true });
+await writeFile(
+  "ios/ReiPod/Web/music-bridge-licenses.txt",
+  notices.join("\n\n---\n\n"),
+);
+await build({
+  configFile: false,
+  publicDir: false,
+  define: {
+    "process.env": "{}",
+    "process.env.NODE_ENV": JSON.stringify("production"),
+  },
+  build: {
+    target: "safari16",
+    outDir: resolve("ios/ReiPod/Web"),
+    emptyOutDir: false,
+    lib: {
+      entry: resolve("bridge/ios.mjs"),
+      formats: ["iife"],
+      name: "ReiPodMusicRuntime",
+      fileName: () => "music-runtime.js",
     },
-    build: {
-      target: "safari16",
-      outDir: resolve("ios/ReiPod/Web"),
-      emptyOutDir: false,
-      lib: {
-        entry: resolve("bridge/ios.mjs"),
-        formats: ["iife"],
-        name: "ReiPodMusicRuntime",
-        fileName: () => "music-runtime.js",
-      },
-      rollupOptions: { output: { codeSplitting: false } },
-    },
-  });
-}
+    rollupOptions: { output: { codeSplitting: false } },
+  },
+});
 console.log("Native music runtime prepared.");

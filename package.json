@@ -18,7 +18,7 @@
     "test:music-server": "npm --prefix server test",
     "test:browser": "npm run build && playwright test",
     "size": "node scripts/bundle-report.mjs",
-    "bridge:build": "node scripts/build-music-bridge.mjs --ios"
+    "bridge:build": "node scripts/build-music-bridge.mjs"
   },
   "dependencies": {
     "@yakult-green-tea/qq-music-api": "3.3.5",

@@ -47,4 +47,3 @@ export function restoreResponse(reply) {
   });
   return response;
 }
-export const providerDomains = domains;
