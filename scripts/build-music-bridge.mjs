@@ -1,26 +1,6 @@
 import { build } from "vite";
-import { mkdir, copyFile, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-const extension = resolve(".local/extension");
-await build({
-  configFile: false,
-  publicDir: false,
-  define: {
-    "process.env": "{}",
-    "process.env.NODE_ENV": JSON.stringify("production"),
-  },
-  build: {
-    target: "es2022",
-    outDir: extension,
-    emptyOutDir: true,
-    lib: {
-      entry: resolve("extension/worker.mjs"),
-      formats: ["es"],
-      fileName: () => "worker.js",
-    },
-    rollupOptions: { output: { codeSplitting: false } },
-  },
-});
 const notices = await Promise.all(
   [
     [
@@ -36,12 +16,6 @@ const notices = await Promise.all(
     ["dijkstrajs", "node_modules/dijkstrajs/LICENSE.md"],
   ].map(async ([name, path]) => `${name}\n\n${await readFile(path, "utf8")}`),
 );
-await writeFile(
-  resolve(extension, "third-party-licenses.txt"),
-  notices.join("\n\n---\n\n"),
-);
-await copyFile("extension/manifest.json", resolve(extension, "manifest.json"));
-await copyFile("extension/content.js", resolve(extension, "content.js"));
 if (process.argv.includes("--ios")) {
   await mkdir("ios/ReiPod/Web", { recursive: true });
   await writeFile(
@@ -69,4 +43,4 @@ if (process.argv.includes("--ios")) {
     },
   });
 }
-console.log(`Music extension prepared: ${extension}`);
+console.log("Native music runtime prepared.");

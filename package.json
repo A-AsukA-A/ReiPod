@@ -8,17 +8,17 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173 --strictPort",
-    "build": "tsc -b && vite build && npm run bridge:build && node scripts/package-music-bridge.mjs",
+    "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173 --strictPort",
     "test": "vitest run",
     "test:audio": "node scripts/create-test-audio.mjs",
     "phone": "node scripts/phone.mjs",
-    "ios:prepare": "npm run build && node scripts/check-dist.mjs && node scripts/prepare-ios.mjs && node scripts/build-music-bridge.mjs --ios",
+    "ios:prepare": "npm run build && node scripts/check-dist.mjs && node scripts/prepare-ios.mjs && npm run bridge:build",
     "music:serve": "node server/index.mjs",
     "test:music-server": "npm --prefix server test",
     "test:browser": "npm run build && playwright test",
     "size": "node scripts/bundle-report.mjs",
-    "bridge:build": "node scripts/build-music-bridge.mjs"
+    "bridge:build": "node scripts/build-music-bridge.mjs --ios"
   },
   "dependencies": {
     "@yakult-green-tea/qq-music-api": "3.3.5",

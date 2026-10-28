@@ -6,7 +6,7 @@
 
 App 已接入内置网络服务：Web UI 通过原生消息桥调用隔离脚本环境中的平台适配器，再由 URLSession 请求平台，用户无需启动本机 HTTP 后端。平台凭证保存在 Keychain，网页只持有不透明会话标识。此路线与下面的 Apple 系统音乐授权独立。
 
-运行 `npm run ios:prepare` 会同时生成服务运行时和许可文件。实现、扩展构建和验收边界见 [MUSIC_BRIDGE.md](../MUSIC_BRIDGE.md)。目前已编译并验证部分隔离边界，真实第三方账号、会员播放和 iPhone 后台能力仍需实测。
+运行 `npm run ios:prepare` 会同时生成服务运行时和许可文件。实现、原生运行时构建和验收边界见 [MUSIC_BRIDGE.md](../MUSIC_BRIDGE.md)。目前已编译并验证部分隔离边界，真实第三方账号、会员播放和 iPhone 后台能力仍需实测。
 
 ## 在你的 Mac 上安装
 

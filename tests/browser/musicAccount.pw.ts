@@ -151,61 +151,14 @@ test("an unavailable avatar falls back without losing public profile or overflow
   await expect(live(page).locator(".music-account-id")).toHaveText("ID 123");
 });
 
-test("a missing extension exposes installation guidance through the wheel", async ({
-  page,
-}) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(window, "__REIPOD_SERVICE_VERSION__", { value: 1 });
-    Object.defineProperty(window, "webkit", {
-      value: {
-        messageHandlers: {
-          reipodService: {
-            postMessage: async () => {
-              throw new Error("请安装并启用 ReiPod 音乐扩展，然后重试连接");
-            },
-          },
-        },
-      },
-    });
-  });
+test("an unavailable service keeps QR retry available without extension installation", async ({ page }) => {
+  await page.route("**/api/music/**", route => route.fulfill({
+    status: 502, contentType: "application/json", body: JSON.stringify({error: "音乐服务暂不可用，请稍后重试"}),
+  }));
   await page.goto("/");
   await choose(page, "设置");
   await choose(page, "音乐服务");
   await choose(page, "网易云音乐");
-  await expect(live(page).getByRole("status")).toContainText(
-    "需要安装音乐扩展",
-  );
-  await expect(live(page).locator(".row-title")).toContainText([
-    "扫码登录 网易云音乐",
-    "下载扩展安装助手",
-  ]);
-  const opened = page.waitForEvent("popup");
-  await choose(page, "下载扩展安装助手");
-  const popup = await opened;
-  await expect.poll(() => popup.url()).toContain("/extension-install.html");
-  await expect(
-    popup.getByRole("link", { name: "下载安装助手", exact: true }),
-  ).toBeVisible();
-  const metadata = await (
-    await popup.request.get(
-      new URL("downloads/extension.json", popup.url()).href,
-    )
-  ).json();
-  const archive = await popup.request.get(
-    new URL("downloads/" + metadata.filename, popup.url()).href,
-  );
-  expect(archive.ok()).toBe(true);
-  const { createHash } = await import("node:crypto");
-  expect(
-    createHash("sha256")
-      .update(await archive.body())
-      .digest("hex"),
-  ).toBe(metadata.sha256);
-  const helper = await (
-    await popup.request.get(
-      new URL("downloads/install-reipod.command", popup.url()).href,
-    )
-  ).text();
-  expect(helper).toContain(metadata.sha256);
-  expect(helper).not.toContain("@@");
+  await expect(live(page).locator(".row-title")).toContainText(["扫码登录 网易云音乐"]);
+  await expect(live(page).getByText("下载扩展安装助手")).toHaveCount(0);
 });

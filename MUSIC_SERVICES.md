@@ -20,26 +20,25 @@ Apple Music 是首个接入目标。设置 → 音乐服务把 Apple Music 放�
 
 项目维护者目前没有 Apple Developer 账号，因此尚未配置生产开发者 Token。真实 Apple 账号的授权、订阅权限和 DRM 播放仍需要在凭证配置后进行实机联调。浏览器测试拦截 Apple API 并注入 SDK 替身，覆盖分页、资料库隔离、播放路由、刷新恢复、失效授权及取消登录；它们不等于真实 Apple 账号验证。
 
-网易云音乐与 QQ 音乐的现有自托管路线支持扫码登录、个人歌单、喜欢的歌曲、搜索和按需获取播放链接；新接入的 App 内置服务与 Web 扩展复用同一套平台数据和权限判断，验证范围另见下文。两家的资料库、队列及账号会话分别保存，本地导入列表保持独立。网易云真实账号的已验证范围见下文；QQ 真实账号扫码与播放仍待完成。浏览器替身测试不等于平台真实播放已通过。
+网易云音乐与 QQ 音乐的现有自托管路线支持扫码登录、个人歌单、喜欢的歌曲、搜索和按需获取播放链接；App 内置服务与 Web 后端复用同一套平台数据和权限判断，验证范围另见下文。两家的资料库、队列及账号会话分别保存，本地导入列表保持独立。网易云真实账号的已验证范围见下文；QQ 真实账号扫码与播放仍待完成。浏览器替身测试不等于平台真实播放已通过。
 
 ## 网易云音乐与 QQ 音乐：架构约定
 
-2026-10-28 产品决定：**本地 App 内置运行音乐服务能力，Web 使用浏览器扩展**。默认使用流程无需用户手动启动本机后端、填写接口地址或部署远程后端。
+2026-10-29 产品决定：**本地 App 内置运行音乐服务能力，Web 连接维护者的 HTTPS 后端**。浏览器扩展方案已废除，网页不再要求安装扩展。
 
-| 环境 | 目标实现 | 使用边界 |
+| 环境 | 实现 | 使用边界 |
 | --- | --- | --- |
-| 桌面 App | 随 App 启停的内置服务，可内嵌 Node | 服务生命周期由 App 管理 |
-| iOS App | 原生网络桥承接请求签名、平台请求及登录会话 | 复用 Web 界面，不照搬桌面 Node 子进程方案 |
-| Web / GitHub Pages | 浏览器扩展承接平台请求及登录会话 | 首期桌面 Chrome/Edge；无需 localhost HTTP 服务 |
-| iOS Safari | Safari 扩展路线单独验证 | 普通网页或 PWA 不具备扩展权限，不能承诺打开链接即用 |
+| 桌面 App | 目标为随 App 启停的内置服务 | 尚无桌面 App 壳 |
+| iOS App | 原生网络桥承接签名、请求及会话 | 保留现有实现，真实账号与后台能力待验 |
+| Web / GitHub Pages / Safari | 静态页面连接 HTTPS 音乐后端 | 不依赖扩展，后台播放仍需平台实测 |
 
-UI 共用音乐服务接口，保留网易云、QQ、本地音乐的账号、资料库和队列隔离，以及现有 Apple Music 路线。平台 Cookie 和其他登录凭证留在原生服务或扩展边界内；网页只接收所需操作结果。桥接必须校验调用来源并限制平台目标，不能提供任意 URL 代理。
+平台 Cookie 留在原生服务或服务器加密 vault 内；网页只持有 ReiPod 不透明会话标识。服务限制操作和来源，不提供任意 URL 代理。保留网易云、QQ、本地音乐账号、资料库及队列隔离，以及 Apple Music 路线。
 
-扩展后台在获得指定主机权限后可以发起跨域请求，见 [Chrome 跨域请求文档](https://developer.chrome.com/docs/extensions/develop/concepts/network-requests)。当前实现通过受限请求头规则与响应头观察管理自己的扫码会话，不读取浏览器已有 Cookie 存储，详见 [桥接实现说明](MUSIC_BRIDGE.md)。这些能力不等于网易云／QQ 的登录、会员播放或音频来源限制已经验证通过。
-
-**实现状态：已接入 iOS 内置网络服务与 Chrome/Edge 开发版扩展，共享无需 Node 的平台适配器；构建、使用和验证边界见 [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md)。真实账号与 iPhone 播放验收尚待完成，桌面 App 壳尚未实现。** 迁移需逐个平台验证登录、身份读取、歌单、歌词、播放、会话恢复和退出；原生端另验后台与锁屏。现有自托管方式保留为开发及可选路径。此前“Pages 连接用户手动启动的 localhost 服务”提案不作为默认产品路线。
+服务器部署与验收状态见 [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md)，原生实现见 [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md)。Pages 工作流默认编入维护者的 API 地址，可通过仓库变量 `MUSIC_API_URL` 覆盖。发布与真实扫码验收分别记录；不能把匿名二维码检查当作登录或播放成功。
 
 ## 可选实现：免费自托管接口
+
+维护者的 VPS 部署入口、HTTPS、自动续期和验收边界见 [自有服务器部署](SERVER_DEPLOYMENT.md)。服务器发布包显式配置远程 API，无需安装 Web 扩展；此部署选择保留现有 App 内置桥。
 
 后端位于 `server/`，使用固定版本的社区项目 [NetEase Cloud Music API Enhanced](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced) 和 [QQ Music API](https://github.com/yakult-green-tea/qq-music-api)。它们不是两家平台的官方 SDK；接口代码可自行部署，无需购买 API 调用套餐。歌曲能否播放取决于当前账号和平台返回结果。后端只调用原平台的读取与播放链接接口，关闭替代音源及解锁功能；不会把试听当作完整歌曲。
 
@@ -70,7 +69,7 @@ npm run music:serve
 
 ### GitHub Pages 与 iPhone 使用边界
 
-GitHub Pages 只部署 `dist/`，不能运行 Node.js 后端。在当前自托管实现下，公网网页和 iPhone 打包资源可以通过可访问的 HTTPS 后端接入：构建时配置 `VITE_MUSIC_API_URL=https://你的后端域名/api/music/`，并在后端用 `REIPOD_MUSIC_ORIGINS` 显式允许对应网页来源。这是现有可选部署方式，不是上述 App 内置服务／Web 扩展的默认目标路线。后端端口默认为 3210，可用 `REIPOD_MUSIC_PORT` 调整；监听地址由 `REIPOD_MUSIC_HOST` 设置。
+GitHub Pages 只部署 `dist/`，不能运行 Node.js 后端。在当前自托管实现下，公网网页和 iPhone 打包资源可以通过可访问的 HTTPS 后端接入：构建时配置 `VITE_MUSIC_API_URL=https://你的后端域名/api/music/`，并在后端用 `REIPOD_MUSIC_ORIGINS` 显式允许对应网页来源。这是当前 Web 部署路线；iOS App 继续优先使用内置服务。后端端口默认为 3210，可用 `REIPOD_MUSIC_PORT` 调整；监听地址由 `REIPOD_MUSIC_HOST` 设置。
 
 本机运行不产生 API 服务费用，但 Mac 必须保持运行；长期公网部署的主机费用由选择的托管方案决定，不能保证免费。没有配置可用后端时，界面显示连接失败，不会冒充已登录。此接入使用网页音频播放器；新服务在 iPhone 上的后台与锁屏能力需要另行真机验证，不能沿用 Apple 系统音乐路线的验收结论。
 

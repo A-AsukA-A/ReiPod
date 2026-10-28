@@ -43,6 +43,7 @@ jobs:
       - name: Build
         env:
           VITE_APPLE_MUSIC_TOKEN_URL: ${{ vars.APPLE_MUSIC_TOKEN_URL }}
+          VITE_MUSIC_API_URL: ${{ vars.MUSIC_API_URL || 'https://188.255.249.57:8443/api/music/' }}
         run: npm run build
       - name: Check public artifact
         run: node scripts/check-dist.mjs

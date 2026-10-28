@@ -801,22 +801,6 @@ export function App() {
                   : prepareAppleMusic());
               },
             },
-            ...(externalMusic && services.error.includes("请安装并启用 ReiPod")
-              ? [
-                  {
-                    key: "install-extension",
-                    label: "下载扩展安装助手",
-                    leaf: true,
-                    action: () => {
-                      window.open(
-                        new URL("extension-install.html", location.href).href,
-                        "_blank",
-                        "noopener,noreferrer",
-                      );
-                    },
-                  },
-                ]
-              : []),
             ...(externalMusic
               ? [
                   ...(services.selected === "qq" && services.auth !== "loading"
@@ -2045,10 +2029,7 @@ export function App() {
                         syncing={services.syncing}
                         qr={!!services.qrImage}
                         status={
-                          externalMusic &&
-                          services.error.includes("请安装并启用 ReiPod")
-                            ? "需要安装音乐扩展"
-                            : nativeMusic
+                          nativeMusic
                               ? services.auth === "authorized"
                                 ? "已连接系统音乐"
                                 : "访问 iPhone 音乐资料库"

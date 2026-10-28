@@ -38,3 +38,9 @@ test("a missing bundled service cannot silently fall back to HTTP", async () => 
     bridgeMusicRequest("qq", "status", {}, "", new AbortController().signal),
   ).rejects.toThrow("内置音乐服务不可用");
 });
+
+test("ordinary HTTPS pages use HTTP service without an extension bridge", () => {
+  vi.stubGlobal("window", {});
+  vi.stubGlobal("location", { protocol: "https:" });
+  expect(useMusicBridge()).toBe(false);
+});
