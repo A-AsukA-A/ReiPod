@@ -801,6 +801,22 @@ export function App() {
                   : prepareAppleMusic());
               },
             },
+            ...(externalMusic && services.error.includes("请安装并启用 ReiPod")
+              ? [
+                  {
+                    key: "install-extension",
+                    label: "扩展安装说明",
+                    leaf: true,
+                    action: () => {
+                      window.open(
+                        "https://github.com/A-AsukA-A/ReiPod/blob/main/MUSIC_BRIDGE.md#构建和使用扩展",
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    },
+                  },
+                ]
+              : []),
             ...(externalMusic
               ? [
                   ...(services.selected === "qq" && services.auth !== "loading"
@@ -2029,20 +2045,23 @@ export function App() {
                         syncing={services.syncing}
                         qr={!!services.qrImage}
                         status={
-                          nativeMusic
-                            ? services.auth === "authorized"
-                              ? "已连接系统音乐"
-                              : "访问 iPhone 音乐资料库"
-                            : services.auth === "unconfigured"
-                              ? externalMusic
-                                ? "音乐服务尚未连接"
-                                : "网站尚未配置 Apple Music"
-                              : services.auth === "authorized"
-                                ? `已连接 ${serviceName}`
-                                : services.auth === "loading"
-                                  ? services.loginMessage ||
-                                    `正在连接 ${serviceName}…`
-                                  : `连接你的 ${serviceName}`
+                          externalMusic &&
+                          services.error.includes("请安装并启用 ReiPod")
+                            ? "需要安装音乐扩展"
+                            : nativeMusic
+                              ? services.auth === "authorized"
+                                ? "已连接系统音乐"
+                                : "访问 iPhone 音乐资料库"
+                              : services.auth === "unconfigured"
+                                ? externalMusic
+                                  ? "音乐服务尚未连接"
+                                  : "网站尚未配置 Apple Music"
+                                : services.auth === "authorized"
+                                  ? `已连接 ${serviceName}`
+                                  : services.auth === "loading"
+                                    ? services.loginMessage ||
+                                      `正在连接 ${serviceName}…`
+                                    : `连接你的 ${serviceName}`
                         }
                         detail={
                           services.auth === "unconfigured"

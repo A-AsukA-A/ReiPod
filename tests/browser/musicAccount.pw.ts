@@ -150,3 +150,18 @@ test("an unavailable avatar falls back without losing public profile or overflow
   ).toBeVisible();
   await expect(live(page).locator(".music-account-id")).toHaveText("ID 123");
 });
+
+test("a missing extension exposes installation guidance through the wheel", async ({page}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "__REIPOD_SERVICE_VERSION__", {value:1});
+    Object.defineProperty(window, "webkit", {value:{messageHandlers:{reipodService:{postMessage:async()=>{throw new Error("请安装并启用 ReiPod 音乐扩展，然后重试连接");}}}}});
+  });
+  await page.goto('/');
+  await choose(page,'设置');await choose(page,'音乐服务');await choose(page,'网易云音乐');
+  await expect(live(page).getByRole('status')).toContainText('需要安装音乐扩展');
+  await expect(live(page).locator('.row-title')).toContainText(['扫码登录 网易云音乐','扩展安装说明']);
+  const opened=page.waitForEvent('popup');
+  await choose(page,'扩展安装说明');
+  const popup=await opened;
+  await expect.poll(()=>popup.url()).toContain('/ReiPod/blob/main/MUSIC_BRIDGE.md');
+});
