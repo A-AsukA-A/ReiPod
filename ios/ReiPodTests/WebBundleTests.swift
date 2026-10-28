@@ -1,5 +1,6 @@
 import Testing
 import WebKit
+import UIKit
 @testable import ReiPod
 
 @MainActor
@@ -7,8 +8,12 @@ struct WebBundleTests {
     @Test(.timeLimit(.minutes(1)))
     func bundledInterfaceSupportsNativeBridgeFetchAndStorage() async throws {
         let controller = PlayerViewController()
+        let scene = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = controller
+        window.makeKeyAndVisible()
         controller.loadViewIfNeeded()
-        defer { controller.viewDidDisappear(false) }
+        defer { window.isHidden = true; controller.viewDidDisappear(false) }
         let web = try #require(controller.view.subviews.compactMap { $0 as? WKWebView }.first)
         var mounted = false
         for _ in 0..<150 {

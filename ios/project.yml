@@ -25,6 +25,11 @@ targets:
         CFBundleShortVersionString: "0.2.0"
         CFBundleVersion: "1"
         NSAppleMusicUsageDescription: ReiPod 需要读取你的音乐资料库和歌单，并通过系统音乐播放器播放所选歌曲。
+        NSPhotoLibraryUsageDescription: 选择照片供 ReiPod 在本机浏览，不会上传。
+        NSCameraUsageDescription: 仅在你选择拍照导入照片时使用相机。
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations: {}
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UIApplicationSupportsIndirectInputEvents: true

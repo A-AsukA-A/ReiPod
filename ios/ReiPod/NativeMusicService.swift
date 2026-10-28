@@ -17,7 +17,16 @@ final class NativeMusicService {
     private let artworkCache = NSCache<NSString, NSData>()
     private var ownedQueue: [String] = []
 
-    var isAuthorized: Bool { MPMediaLibrary.authorizationStatus() == .authorized }
+    private var authorizationStatus: MPMediaLibraryAuthorizationStatus {
+        #if targetEnvironment(simulator)
+        // System music playback is a device-only API. Do not instantiate its
+        // controller in the simulator's WebKit/resource smoke tests.
+        return .restricted
+        #else
+        return MPMediaLibrary.authorizationStatus()
+        #endif
+    }
+    var isAuthorized: Bool { authorizationStatus == .authorized }
 
     func startObservation() {
         guard isAuthorized, observers.isEmpty else { return }
@@ -61,7 +70,7 @@ final class NativeMusicService {
     func publish() { onEvent?(status()) }
 
     func status() -> NativeMusicReply {
-        let authorization: String = switch MPMediaLibrary.authorizationStatus() {
+        let authorization: String = switch authorizationStatus {
         case .authorized: "authorized"
         case .denied: "denied"
         case .restricted: "restricted"
@@ -136,7 +145,7 @@ final class NativeMusicService {
         guard request.version == 1 else { throw NativeMusicError.invalidRequest }
         if request.action == .status { startObservation(); return status() }
         if request.action == .authorize {
-            if MPMediaLibrary.authorizationStatus() == .notDetermined {
+            if authorizationStatus == .notDetermined {
                 _ = await withCheckedContinuation { continuation in
                     MPMediaLibrary.requestAuthorization { status in continuation.resume(returning: status) }
                 }
