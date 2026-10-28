@@ -180,7 +180,7 @@ final class NativeMusicService {
             reply.nextOffset = page.nextOffset
             return reply
         case .setQueue:
-            guard let ids = request.ids, !ids.isEmpty, ids.count <= 20000,
+            guard let ids = request.ids, !ids.isEmpty,
                   let selectedID = request.selectedId, ids.contains(selectedID) else { throw NativeMusicError.invalidRequest }
             let items = ids.compactMap(item)
             guard items.count == ids.count, let selected = item(selectedID) else { throw NativeMusicError.unavailableSong }
@@ -191,7 +191,14 @@ final class NativeMusicService {
             player.shuffleMode = .off // The interface has already chosen the queue order.
             player.setQueue(with: descriptor)
             ownedQueue = ids
-            try await player.prepareToPlay()
+            // The legacy async overlay is nonisolated in older SDKs. Start the
+            // callback API on MainActor so the non-Sendable player never hops.
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+                player.prepareToPlay { error in
+                    if let error { continuation.resume(throwing: error) }
+                    else { continuation.resume() }
+                }
+            }
             guard playbackIntent == intent else { throw NativeMusicError.canceled }
             if let seconds = request.seconds, seconds.isFinite {
                 player.currentPlaybackTime = max(0, min(seconds, selected.playbackDuration))
