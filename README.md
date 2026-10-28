@@ -20,8 +20,8 @@ Screenshots show the current web build with included demo music. The interface c
 
 - **Bring your own music.** Import audio with metadata and embedded artwork. Browse artists, albums, songs and genres; search, favorite tracks and make browser-local playlists.
 - **Browse with the wheel.** Cover Flow, contextual menu previews, remembered selections, HOLD locking and keyboard controls keep navigation inside the player.
-- **Read lyrics while listening.** Import LRC or embedded lyrics, or fetch lyrics through the optional NetEase/QQ backend. Hold Center and confirm **歌词** (Lyrics) to open them quickly; turn the feature on or off in Settings.
-- **Choose your music source.** Use the iPhone's system music library, configure web Apple Music, or self-host NetEase Cloud Music and QQ Music. Account sessions and libraries stay separate; catalog VIP/purchase labels and playback errors explain restrictions.
+- **Read lyrics while listening.** Import LRC or embedded lyrics, or fetch lyrics through the built-in service, browser extension or optional self-hosted NetEase/QQ backend. Hold Center and confirm **歌词** (Lyrics) to open them quickly; turn the feature on or off in Settings.
+- **Choose your music source.** Use the iPhone's system music library, configure web Apple Music, or connect NetEase Cloud Music and QQ Music through the built-in iOS service or browser extension. Account sessions and libraries stay separate; catalog VIP/purchase labels and playback errors explain restrictions.
 - **Make it yours.** Silver or black finish, light or dark surroundings, shuffle/repeat, ratings, backlight and wheel sounds.
 - **Keep more in your pocket.** Local photo albums and slideshows, podcast imports with resume positions, and a text reader with saved reading progress.
 
@@ -32,10 +32,10 @@ Screenshots show the current web build with included demo music. The interface c
 | Local files         | A supported browser; no account or backend                               | Imports, artwork, playlists and playback; data stays in that browser                                           |
 | iPhone system music | The native shell, iOS permission and playable music in Apple's Music app | Library, existing playlists and playback through MediaPlayer; no web MusicKit developer token                  |
 | Web Apple Music     | Site-owned MusicKit developer configuration and listener authorization   | Library/catalog integration implemented; production credentials and real-account DRM validation remain pending |
-| NetEase Cloud Music | Optional Node.js backend and QR login                                    | Real-account login, playlists, playback controls and lyrics verified locally                                   |
-| QQ Music            | The same backend; QQ or WeChat QR login                                  | Implemented and covered by mock tests; real-account login/playback verification remains pending                |
+| NetEase Cloud Music | Built-in iOS service or desktop browser extension; QR login | Anonymous extension QR verified; real-account verification of the new routes remains pending; existing self-hosted route verified locally |
+| QQ Music | Built-in iOS service or desktop browser extension; QQ/WeChat QR login | Anonymous extension QQ QR verified; real-account login/playback verification remains pending |
 
-**GitHub Pages hosts the static player.** NetEase/QQ require a separately reachable backend; pushing this repository does not deploy that service. Their integrations use community APIs, and playback remains subject to account access, region and platform availability. No alternative-source unlocking is provided. See [setup and verification limits](MUSIC_SERVICES.md).
+**GitHub Pages hosts the static player.** The new NetEase/QQ web route uses a desktop browser extension; the iOS app includes a native network bridge. Neither requires a manually started HTTP backend. Build and validation details are in [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md). Their integrations use community APIs, and playback remains subject to account access, region and platform availability. No alternative-source unlocking is provided. See [setup and verification limits](MUSIC_SERVICES.md).
 
 ## Start listening
 
@@ -74,7 +74,7 @@ npm run build
 npm run music:serve
 ```
 
-Open `http://127.0.0.1:3210/`, then **设置 → 音乐服务** (Settings → Music Services). The backend listens on localhost by default. Public web/iPhone use needs an HTTPS backend and explicit allowed origins; configuration is documented in [MUSIC_SERVICES.md](MUSIC_SERVICES.md).
+Open `http://127.0.0.1:3210/`, then **设置 → 音乐服务** (Settings → Music Services). The backend listens on localhost by default. This remains an optional development/self-hosted route. For the built-in app service or web extension, see [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md); HTTPS self-hosted configuration is documented in [MUSIC_SERVICES.md](MUSIC_SERVICES.md).
 
 For the iPhone app, follow the [Mac/Xcode installation guide](ios/README.md). A free Personal Team can sign for personal-device testing; it is not an App Store release.
 

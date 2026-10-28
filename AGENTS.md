@@ -4,6 +4,17 @@
 
 ReiPod is a classic-style player with local web playback, an iPhone WKWebView/MediaPlayer transport, and optional self-hosted NetEase/QQ services. Continue the existing implementation. UI work must preserve provider isolation, queues, native authorization, background playback, and local imports.
 
+## Third-party music architecture
+
+Product decision (2026-10-28): local apps provide built-in backend capabilities; the web version uses a browser extension. See [MUSIC_SERVICES.md](MUSIC_SERVICES.md) for the implementation status and boundaries.
+
+- Local apps initialize their music service internally. Users must not need to start a server manually or configure an API URL for the default app experience. Desktop apps may bundle a Node service managed by the app; iOS implements equivalent capabilities through a native network bridge, not a desktop Node subprocess.
+- GitHub Pages remains static. The default web route is an extension bridge that handles provider requests, signing and login sessions without a localhost HTTP service or a project-operated remote backend. Do not make the earlier Pages-to-localhost proposal the default architecture.
+- Keep provider credentials within the native service or extension boundary; expose only the operations and results needed by the UI. Restrict bridge callers and provider destinations; do not expose an arbitrary URL proxy or raw platform cookies to the page.
+- Keep a shared service contract and preserve provider/account/library/queue isolation, local imports and the existing Apple Music routes. Existing self-hosted support remains a development/optional path while migration is incomplete.
+- Web extension work targets desktop Chrome/Edge first. iOS Safari extension support requires separate validation; do not present an ordinary Safari page or PWA as having extension/native capabilities. Login, playback permissions and background playback require actual platform verification.
+- Report migration and real-account verification status explicitly. Current iOS/extension implementation and outstanding checks are tracked in [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md); code or compile success does not establish real-account or device playback.
+
 ## UI work
 
 Before changing UI, read [UI_STANDARDS.md](UI_STANDARDS.md), [REPLICA.md](REPLICA.md), [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md), and [PLAYBACK_INTERACTIONS.md](PLAYBACK_INTERACTIONS.md).

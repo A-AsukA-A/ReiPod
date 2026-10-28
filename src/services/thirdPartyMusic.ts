@@ -1,3 +1,4 @@
+import { bridgeMusicRequest, useMusicBridge } from "./musicTransport";
 import { Player, PlaybackError } from "../player/Player";
 import type { AudioPort, Track, PlaybackErrorKind } from "../player/Player";
 import { parseLyrics } from "../player/library";
@@ -105,21 +106,30 @@ async function request(
   const token = tokens[service];
   let response: Response;
   try {
-    response = await fetch(endpoint(service, action), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.any([signal, AbortSignal.timeout(30000)]),
-      cache: "no-store",
-    });
+    response = useMusicBridge()
+      ? await bridgeMusicRequest(
+          service,
+          action,
+          body,
+          token,
+          AbortSignal.any([signal, AbortSignal.timeout(30000)]),
+        )
+      : await fetch(endpoint(service, action), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.any([signal, AbortSignal.timeout(30000)]),
+          cache: "no-store",
+        });
   } catch (error) {
     if (signal.aborted)
       throw new DOMException("Canceled music request", "AbortError");
     throw new Error(
-      error instanceof Error && error.message.includes("HTTPS")
+      error instanceof Error &&
+        (error.message.includes("HTTPS") || useMusicBridge())
         ? error.message
         : "音乐服务暂未连接，请确认自托管音乐服务已启动",
     );

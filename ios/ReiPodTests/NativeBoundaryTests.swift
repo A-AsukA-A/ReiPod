@@ -4,6 +4,13 @@ import Testing
 
 @MainActor
 struct NativeBoundaryTests {
+    @Test func thirdPartyNetworkIsRestrictedToPlatformHTTPS() throws {
+        #expect(ThirdPartyMusicBridge.allows(try #require(URL(string: "https://music.163.com/weapi/test"))))
+        for raw in ["http://music.163.com/", "https://music.163.com.evil.test/", "https://music.163.com:8443/", "https://user:password@music.163.com/", "http://127.0.0.1:3210/"] {
+            #expect(!ThirdPartyMusicBridge.allows(try #require(URL(string: raw))))
+        }
+    }
+
     @Test func persistentIDsPreserveAll64Bits() throws {
         #expect(NativeMusicID.parse("18446744073709551615") == UInt64.max)
         #expect(NativeMusicID.parse("18446744073709551616") == nil)

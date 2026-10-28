@@ -22,6 +22,17 @@ struct WebBundleTests {
             try await Task.sleep(for: .milliseconds(100))
         }
         try #require(mounted, "The bundled JavaScript must mount without a network server")
+        let service = try await web.callAsyncJavaScript("""
+            const reply = await window.webkit.messageHandlers.reipodService.postMessage({version:1,service:'netease',action:'status',body:{},token:''});
+            return {version:window.__REIPOD_SERVICE_VERSION__,status:reply.status,authorized:reply.data.authorized,hostVisible:!!window.webkit.messageHandlers.reipodServiceHost};
+            """, arguments: [:], in: nil, contentWorld: .page)
+        let serviceResult = try #require(service as? [String: Any])
+        #expect(serviceResult["version"] as? Int == 1)
+        #expect(serviceResult["status"] as? Int == 200)
+        #expect(serviceResult["authorized"] as? Bool == false)
+        #expect(serviceResult["hostVisible"] as? Bool == false)
+        let crypto = try await web.evaluateJavaScript("Boolean(globalThis.crypto?.subtle)", in: nil, contentWorld: ThirdPartyMusicBridge.world)
+        #expect(crypto as? Bool == true, "QQ sealed sessions require Web Crypto in the isolated world")
         let value = try await web.callAsyncJavaScript("""
             const notice = await fetch('./third-party-licenses.txt').then(r => r.text());
             localStorage.setItem('native-smoke', 'saved');

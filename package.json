@@ -13,14 +13,18 @@
     "test": "vitest run",
     "test:audio": "node scripts/create-test-audio.mjs",
     "phone": "node scripts/phone.mjs",
-    "ios:prepare": "npm run build && node scripts/check-dist.mjs && node scripts/prepare-ios.mjs",
+    "ios:prepare": "npm run build && node scripts/check-dist.mjs && node scripts/prepare-ios.mjs && node scripts/build-music-bridge.mjs --ios",
     "music:serve": "node server/index.mjs",
     "test:music-server": "npm --prefix server test",
-    "test:browser": "npm run build && playwright test",
-    "size": "node scripts/bundle-report.mjs"
+    "test:browser": "npm run build && npm run bridge:build && playwright test",
+    "size": "node scripts/bundle-report.mjs",
+    "bridge:build": "node scripts/build-music-bridge.mjs"
   },
   "dependencies": {
+    "@yakult-green-tea/qq-music-api": "3.3.5",
+    "crypto-js": "4.2.0",
     "music-metadata": "12.3.2",
+    "qrcode": "1.5.4",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

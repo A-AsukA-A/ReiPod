@@ -2,6 +2,12 @@
 
 这是一层很薄的 iOS 原生容器，复用项目的 React/CSS 界面。系统音乐通过 `MediaPlayer` 的 `MPMediaLibrary`、`MPMediaQuery` 和 `MPMusicPlayerController.systemMusicPlayer` 读取、控制；不需要网页 MusicKit 的开发者 JWT，也不会把歌曲音频解密或转交给网页。
 
+## 网易云音乐与 QQ 音乐
+
+App 已接入内置网络服务：Web UI 通过原生消息桥调用隔离脚本环境中的平台适配器，再由 URLSession 请求平台，用户无需启动本机 HTTP 后端。平台凭证保存在 Keychain，网页只持有不透明会话标识。此路线与下面的 Apple 系统音乐授权独立。
+
+运行 `npm run ios:prepare` 会同时生成服务运行时和许可文件。实现、扩展构建和验收边界见 [MUSIC_BRIDGE.md](../MUSIC_BRIDGE.md)。目前已编译并验证部分隔离边界，真实第三方账号、会员播放和 iPhone 后台能力仍需实测。
+
 ## 在你的 Mac 上安装
 
 需要 Xcode、Node.js 22.12+ 和一台 iOS 17+ 的 iPhone。若使用免费 Personal Team，只是个人设备调试签名，存在有效期和设备数量限制；它不是 App Store 分发，也不保证所有账号、地区及系统版本的云端歌曲都能播放。Apple Music 账号和订阅仍由系统“音乐”App 管理。

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, codex/iphone-native-music]
-    paths: ['ios/**', 'src/**', 'scripts/prepare-ios.mjs', 'package*.json', '.github/workflows/ios.yml']
+    paths: ['ios/**', 'src/**', 'scripts/prepare-ios.mjs', 'scripts/build-music-bridge.mjs', 'bridge/**', 'extension/**', 'server/providers.mjs', 'package*.json', '.github/workflows/ios.yml']
   pull_request:
     branches: [main]
 permissions:

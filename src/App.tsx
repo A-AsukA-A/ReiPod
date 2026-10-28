@@ -768,17 +768,17 @@ export function App() {
               label:
                 services.auth === "loading"
                   ? "正在连接…"
-                  : services.ready
-                    ? nativeMusic
-                      ? ["denied", "restricted"].includes(
-                          services.nativeAuthorization ?? "",
-                        )
-                        ? "打开系统设置"
-                        : "允许访问音乐资料库"
-                      : externalMusic
-                        ? `扫码登录 ${serviceName}`
+                  : externalMusic
+                    ? `扫码登录 ${serviceName}`
+                    : services.ready
+                      ? nativeMusic
+                        ? ["denied", "restricted"].includes(
+                            services.nativeAuthorization ?? "",
+                          )
+                          ? "打开系统设置"
+                          : "允许访问音乐资料库"
                         : "登录 Apple Music"
-                    : "重新检查连接",
+                      : "重新检查连接",
               disabled: services.auth === "loading",
               action: () => {
                 if (
@@ -796,7 +796,7 @@ export function App() {
                   );
                   return;
                 }
-                void (services.ready
+                void (services.ready || externalMusic
                   ? authorizeAppleMusic()
                   : prepareAppleMusic());
               },

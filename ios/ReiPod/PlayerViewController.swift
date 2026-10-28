@@ -5,6 +5,7 @@ import WebKit
 final class PlayerViewController: UIViewController, WKNavigationDelegate {
     private let music = NativeMusicService()
     private var bridge: MusicBridge?
+    private var thirdPartyBridge: ThirdPartyMusicBridge?
     private var webView: WKWebView?
 
     override func viewDidLoad() {
@@ -31,6 +32,16 @@ final class PlayerViewController: UIViewController, WKNavigationDelegate {
         configuration.userContentController.addUserScript(WKUserScript(
             source: "Object.defineProperty(window, '__REIPOD_NATIVE_MUSIC_VERSION__', {value: 1, writable: false});",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        let thirdPartyBridge = ThirdPartyMusicBridge()
+        if let runtimeURL = Bundle.main.url(forResource: "music-runtime", withExtension: "js", subdirectory: "Web"),
+           let runtime = try? String(contentsOf: runtimeURL, encoding: .utf8) {
+            configuration.userContentController.addScriptMessageHandler(thirdPartyBridge, contentWorld: .page, name: "reipodService")
+            configuration.userContentController.addScriptMessageHandler(thirdPartyBridge, contentWorld: ThirdPartyMusicBridge.world, name: "reipodServiceHost")
+            configuration.userContentController.addUserScript(WKUserScript(source: runtime, injectionTime: .atDocumentStart, forMainFrameOnly: true, in: ThirdPartyMusicBridge.world))
+            configuration.userContentController.addUserScript(WKUserScript(
+                source: "Object.defineProperty(window, '__REIPOD_SERVICE_VERSION__', {value: 1, writable: false});",
+                injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
         webView.isOpaque = false
@@ -46,6 +57,8 @@ final class PlayerViewController: UIViewController, WKNavigationDelegate {
             webView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ])
         bridge.webView = webView
+        thirdPartyBridge.webView = webView
+        self.thirdPartyBridge = thirdPartyBridge
         music.onEvent = { [weak bridge] reply in bridge?.send(reply) }
         self.bridge = bridge
         self.webView = webView
