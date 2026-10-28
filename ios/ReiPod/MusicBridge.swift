@@ -24,6 +24,11 @@ final class MusicBridge: NSObject, WKScriptMessageHandlerWithReply {
         } catch {
             replyHandler(nil, "无效的系统音乐请求"); return
         }
+        #if DEBUG
+        if ![.status, .library, .playlists, .playlistTracks].contains(request.action) {
+            print("[ReiPod Music] request action=\(request.action.rawValue) queueCount=\(request.ids?.count ?? 0)")
+        }
+        #endif
         Task { @MainActor in
             do {
                 let result = try await music.handle(request)
@@ -31,6 +36,13 @@ final class MusicBridge: NSObject, WKScriptMessageHandlerWithReply {
                 let object = try JSONSerialization.jsonObject(with: data)
                 replyHandler(object, nil)
             } catch {
+                #if DEBUG
+                let nativeError = error as NSError
+                print("[ReiPod Music] failed action=\(request.action.rawValue) domain=\(nativeError.domain) code=\(nativeError.code) description=\(nativeError.localizedDescription)")
+                if let underlying = nativeError.userInfo[NSUnderlyingErrorKey] as? NSError {
+                    print("[ReiPod Music] underlying domain=\(underlying.domain) code=\(underlying.code) description=\(underlying.localizedDescription)")
+                }
+                #endif
                 replyHandler(nil, error.localizedDescription)
             }
         }

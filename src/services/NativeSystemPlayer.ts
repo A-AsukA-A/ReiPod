@@ -50,7 +50,7 @@ export class NativeSystemPlayer extends Player {
         : 1,
       volumeControl: false,
       repeat: snapshot.repeat,
-      error: null,
+      error: snapshot.status === "playing" ? null : this.getSnapshot().error,
     });
   }
   private async command(
@@ -65,6 +65,7 @@ export class NativeSystemPlayer extends Player {
     try {
       const response = await nativeMusicRequest(action, payload);
       if (intent !== this.nativeIntent) return;
+      this.syncExternalPlayback({ error: null });
       if (response.playback) this.adopt(response.playback);
     } catch (error) {
       if (intent === this.nativeIntent)

@@ -197,13 +197,22 @@ final class NativeMusicService {
             let intent = playbackIntent
             let descriptor = MPMusicPlayerMediaItemQueueDescriptor(itemCollection: MPMediaItemCollection(items: items))
             descriptor.startItem = selected
+            #if DEBUG
+            print("[ReiPod Music] setQueue items=\(items.count) cloudItems=\(items.filter(\.isCloudItem).count) selectedCloud=\(selected.isCloudItem) protected=\(selected.hasProtectedAsset)")
+            #endif
             player.shuffleMode = .off // The interface has already chosen the queue order.
             player.setQueue(with: descriptor)
             ownedQueue = ids
+            #if DEBUG
+            print("[ReiPod Music] prepareToPlay begin")
+            #endif
             // The legacy async overlay is nonisolated in older SDKs. Start the
             // callback API on MainActor so the non-Sendable player never hops.
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
                 player.prepareToPlay { error in
+                    #if DEBUG
+                    print("[ReiPod Music] prepareToPlay completed error=\(error.map { String(describing: $0) } ?? "none")")
+                    #endif
                     if let error { continuation.resume(throwing: error) }
                     else { continuation.resume() }
                 }
@@ -213,6 +222,9 @@ final class NativeMusicService {
                 player.currentPlaybackTime = max(0, min(seconds, selected.playbackDuration))
             }
             if request.autoplay == true { player.play() } else { player.pause() }
+            #if DEBUG
+            print("[ReiPod Music] playback issued autoplay=\(request.autoplay == true) state=\(player.playbackState.rawValue) hasCurrent=\(player.nowPlayingItem != nil)")
+            #endif
         case .play:
             playbackIntent += 1
             guard player.nowPlayingItem != nil else { throw NativeMusicError.unavailableSong }
