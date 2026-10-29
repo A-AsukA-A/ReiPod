@@ -36,6 +36,14 @@
 
 歌词阅读视图的会话内保留是为减少往返操作而定的 ReiPod 约定；Apple 手册并未逐项规定这些恢复规则，不把该约定称为实机验证结果。
 
+## iPhone 本地音乐转轮音量（ReiPod 平台适配）
+
+2026-10-29：保留用户要求的转轮调音量。本地播放器在 iPhone / iPad（含桌面 UA）使用媒体元素 → Web Audio 增益节点 → 输出；音频仍由媒体元素解码，音量读回采用软件增益目标，不通过反复写入 `HTMLMediaElement.volume` 探测支持。每个曲目只连接一次音频图；快速输入在当前音频时钟替换增益目标，以 15ms 时间常数趋近新值，不暂停、重新加载或重建音频图。此常数是 ReiPod 防突变实现参数，不是原机测量值。转轮调整是系统音量之下的软件衰减，不能提高 iPhone 系统音量。
+
+依据：[Apple 旧版 Safari iOS 音量限制](https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/Device-SpecificConsiderations/Device-SpecificConsiderations.html)、[Web Audio 增益与 AudioParam 规范](https://webaudio.github.io/web-audio-api/)。本路线仅连接本地 blob 与同源演示歌曲；网易云、QQ、Apple Music 各自保留原有播放适配器，不把受保护或未允许 CORS 的远程音频接入本地图。
+
+验证：单元测试覆盖快速调节、从零恢复、源节点复用与释放；Chromium 以 iPhone UA 执行真实音频图测试，检查静音后信号恢复及暂停续播。iPhone Safari 实际扬声器输出、切后台、锁屏和中断恢复仍待真机回归，不能把浏览器模拟当作已修复真实设备无声的证据。
+
 ## 逐字歌词（ReiPod 扩展）
 
 有 YRC 时按绝对歌曲时间逐字高亮，缺少时沿用 LRC；间奏不保留过期的 YRC 活动行。暂停冻结词内进度，定位和切歌立即重新计算。转轮浏览后 2.5 秒恢复跟随，即使暂停也会恢复；减弱动态效果关闭词位移、缩放和距离模糊。动效参数与来源见 [LAZER_RESEARCH.md](LAZER_RESEARCH.md)，不是旧固件还原声明。

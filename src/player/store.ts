@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { Player } from "./Player";
+import { createLocalAudio } from "./localAudio";
 import { getDemoTracks } from "./demoTracks";
 import { parseLyrics } from "./library";
 import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
@@ -8,7 +9,7 @@ import { readSession } from "./session";
 import { clearRatings, setRating } from "./ratings";
 import { clearPlaylists, removeFromPlaylists } from "./playlists";
 import { hasNativeMusic } from "../services/nativeMusic";
-export const player = new Player();
+export const player = new Player(createLocalAudio);
 let removedDemos: string[] = [];
 let savedSession: ReturnType<typeof readSession> = null;
 try {
