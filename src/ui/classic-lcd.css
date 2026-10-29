@@ -327,46 +327,10 @@
   position: relative;
   padding: 12px 9px 4px;
 }
-.now-playing-top {
-  height: calc(var(--device-width) * 0.335);
-  gap: 12px;
-}
-.np-cover {
-  width: calc(var(--device-width) * 0.29);
-  height: calc(var(--device-width) * 0.29);
-}
-.np-cover-reflection {
-  opacity: 0.25;
-  height: 24px;
-}
-.np-cover-reflection > .album-art {
-  height: calc(var(--device-width) * 0.29);
-}
-.now-playing-top > .np-info {
-  gap: 5px;
-  justify-content: flex-start;
-  padding-top: 2px;
-}
 .np-index {
   color: #777;
   font-size: 10px;
   margin-bottom: 2px;
-}
-.now-playing-top strong {
-  font-size: 14px;
-  letter-spacing: -0.3px;
-}
-.now-playing-top span {
-  font-size: 12px;
-  color: #858585;
-}
-.now-playing-top .marquee-text {
-  color: inherit;
-  font-size: inherit;
-}
-.np-info > strong .marquee-window {
-  color: #161616;
-  font-size: inherit;
 }
 .screen-progress {
   margin-top: auto;
@@ -380,10 +344,6 @@
     #ededee var(--progress)
   );
   box-shadow: inset 0 1px #00000012;
-}
-.screen-progress > div {
-  font-size: 10px;
-  color: #4d5359;
 }
 .view-seek .screen-progress {
   outline: none;
@@ -618,12 +578,6 @@
     font-size: 13px;
   }
   .cf-caption > span {
-    font-size: 10px;
-  }
-  .now-playing-top strong {
-    font-size: 12px;
-  }
-  .now-playing-top span {
     font-size: 10px;
   }
   .view-lyrics {
@@ -1256,42 +1210,6 @@
 .classic-rating .player-icon {
   width: calc(var(--lcd-unit) * 15);
   height: calc(var(--lcd-unit) * 15);
-}
-.now-playing-screen[data-volume="true"] > .screen-progress {
-  visibility: hidden;
-}
-.classic-volume {
-  position: absolute;
-  bottom: calc(var(--lcd-unit) * 32);
-  left: calc(var(--lcd-unit) * 10);
-  right: calc(var(--lcd-unit) * 10);
-  display: flex;
-  align-items: center;
-  gap: calc(var(--lcd-unit) * 7);
-  height: calc(var(--lcd-unit) * 25);
-  background: white;
-  color: #8997a4;
-}
-.classic-volume > .player-icon {
-  width: calc(var(--lcd-unit) * 18);
-  height: calc(var(--lcd-unit) * 18);
-}
-.classic-volume > .player-icon:first-child {
-  transform: scale(0.75);
-}
-.classic-volume-track {
-  flex: 1;
-  height: calc(var(--lcd-unit) * 7);
-  background: linear-gradient(#cad2d8, #f1f4f6);
-  border: 1px solid #99a5b0;
-  border-radius: 2px;
-  overflow: hidden;
-}
-.classic-volume-track i {
-  display: block;
-  height: 100%;
-  background: linear-gradient(#7cc6f4, #3897d7);
-  box-shadow: inset 0 1px #c3e8ff;
 }
 .view-seek .screen-progress input::-webkit-slider-thumb {
   width: calc(var(--lcd-unit) * 8);

@@ -4,6 +4,7 @@ import { MarqueeText } from "./MarqueeText";
 import { Lyrics } from "./Lyrics";
 import { PlayerIcon } from "./PlayerIcon";
 import { SeekSlider } from "./SeekSlider";
+import { PlaybackControlBay } from "./PlaybackControlBay";
 import { PlaybackAlert } from "./PlaybackAlert";
 import type { PlayView } from "./nowPlaying";
 
@@ -61,22 +62,13 @@ export function NowPlayingScreen({
       ) : (
         <>
           <div className="np-indicators" aria-hidden="true">
-            <span
-              className={
-                state.shuffle || view === "shuffle" ? "is-current" : ""
-              }
-            >
-              <PlayerIcon name="shuffle" />
-            </span>
-            {state.repeat !== "off" ? (
-              <span>
+            {state.shuffle && <PlayerIcon name="shuffle" />}
+            {state.repeat !== "off" && (
+              <span className="np-repeat-indicator">
                 <PlayerIcon name="repeat" />
                 {state.repeat === "one" && <small>1</small>}
               </span>
-            ) : (
-              <PlayerIcon name="queue" />
             )}
-            {!!current.lyrics?.length && <PlayerIcon name="lyrics" filled />}
           </div>
           <div
             className="now-playing-top"
@@ -106,6 +98,16 @@ export function NowPlayingScreen({
               <span>
                 <MarqueeText text={current.album || "未知专辑"} active />
               </span>
+              {rating > 0 && (
+                <div className="np-saved-rating" aria-label={`已评分 ${rating} 星`}>
+                  {Array.from({ length: rating }, (_, index) => (
+                    <PlayerIcon key={index} name="star" filled />
+                  ))}
+                </div>
+              )}
+              <div className="np-sequence">
+                {state.queue.indexOf(current.id) + 1} / {state.queue.length}
+              </div>
               {state.status !== "playing" && state.status !== "paused" && (
                 <small>
                   {
@@ -125,7 +127,7 @@ export function NowPlayingScreen({
           </div>
         </>
       )}
-      <div className="np-control-bay" data-control={volume ? "volume" : view}>
+      <PlaybackControlBay mode={volume ? "volume" : view}>
         <div className="np-progress-slot" aria-hidden={!progress || volume}>
           <SeekSlider state={state} seeking={view === "seek"} />
         </div>
@@ -135,11 +137,11 @@ export function NowPlayingScreen({
             role="status"
             aria-label={`音量 ${Math.round(state.volume * 100)}%`}
           >
-            <PlayerIcon name="volume" />
+            <PlayerIcon name="volume-low" />
             <div className="classic-volume-track">
               <i style={{ width: `${state.volume * 100}%` }} />
             </div>
-            <PlayerIcon name="volume" />
+            <PlayerIcon name="volume-high" />
           </div>
         )}
         {view === "shuffle" && (
@@ -164,7 +166,7 @@ export function NowPlayingScreen({
             ))}
           </div>
         )}
-      </div>
+      </PlaybackControlBay>
       {state.error && (
         <PlaybackAlert message={state.error} kind={state.errorKind} />
       )}

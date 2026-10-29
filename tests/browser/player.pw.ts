@@ -863,7 +863,7 @@ test("playback controls share one bottom bay without moving the cover or creatin
     /205/,
   );
   const line = await live(page)
-    .locator(".screen-progress")
+    .locator(".np-control-surface .screen-progress")
     .evaluate((element) => {
       const times = [...element.querySelectorAll(":scope > span")].map((item) =>
         item.getBoundingClientRect(),
@@ -942,4 +942,184 @@ test("a physical or keyboard confirmation emits one press and one release click"
   expect(await page.evaluate(() => (window as any).clickFrequencies)).toEqual([
     650, 1350, 650, 1350,
   ]);
+});
+
+test("saved rating and queue position remain readable above the control bay at each viewport", async ({ page }) => {
+  await page.goto("/");
+  await key(page, "Space");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  // Pause the bundled fixture so screenshots and geometry use a settled session.
+  await key(page, "Space");
+  await expect(live(page).locator(".np-sequence")).toHaveText("1 / 3");
+  await expect(live(page).locator(".np-saved-rating")).toHaveCount(0);
+  await key(page, "Enter");
+  await key(page, "Enter");
+  await key(page, "Enter");
+  await key(page, "ArrowDown");
+  await key(page, "Enter");
+  await expect(live(page).getByLabel("已评分 1 星")).toBeVisible();
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await Promise.all([...document.images].map(image => image.decode().catch(() => {})));
+    });
+    const bounds = await live(page).locator(".now-playing-screen").evaluate(element => {
+      const info = element.querySelector(".np-info")!.getBoundingClientRect();
+      const bay = element.querySelector(".np-control-bay")!.getBoundingClientRect();
+      const children = [...element.querySelector(".np-info")!.children].map(child => child.getBoundingClientRect());
+      return {
+        aboveBay: info.bottom <= bay.top,
+        rowsSeparate: children.every((child, index) => index === 0 || children[index - 1].bottom <= child.top + 1),
+        insideWidth: info.right <= element.getBoundingClientRect().right,
+      };
+    });
+    expect(bounds).toEqual({ aboveBay: true, rowsSeparate: true, insideWidth: true });
+    await page.locator(".screen-glass").screenshot({ path: `.local/screenshots/playback-reference-layout-${width}.png` });
+    const capture = await page.evaluate(() => ({
+      viewport: { width: innerWidth, height: innerHeight },
+      dpr: devicePixelRatio,
+      userAgent: navigator.userAgent,
+      fonts: document.fonts.status,
+      lcd: document.querySelector(".screen-glass")!.getBoundingClientRect().toJSON(),
+      fixture: { track: "Carefree", status: "paused", rating: 1 },
+    }));
+    await writeFile(`.local/screenshots/playback-reference-layout-${width}.json`, JSON.stringify(capture, null, 2));
+  }
+});
+
+test("seek and volume endpoints stay clear of labels and preserve the cover", async ({ page }) => {
+  await page.goto("/");
+  await key(page, "Space");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await key(page, "Space");
+  const cover = await live(page).locator(".np-cover").boundingBox();
+  await key(page, "Enter");
+  await key(page, "ArrowUp");
+  const bar = live(page).getByRole("progressbar");
+  await expect(bar).toHaveAttribute("aria-valuenow", "0");
+  const clearOfTimes = () => live(page).locator(".np-control-surface .screen-progress").evaluate(element => {
+    const marker = element.querySelector(".firmware-progress > b")!.getBoundingClientRect();
+    const elapsed = element.querySelector(".progress-elapsed")!.getBoundingClientRect();
+    const remaining = element.querySelector(".progress-remaining")!.getBoundingClientRect();
+    return marker.left >= elapsed.right && marker.right <= remaining.left;
+  });
+  expect(await clearOfTimes()).toBe(true);
+  await page.locator(".screen-glass").screenshot({ path: ".local/screenshots/playback-seek-start.png" });
+  const duration = Number(await bar.getAttribute("aria-valuemax"));
+  for (let index = 0; index < Math.ceil(duration / 2); index++) {
+    await page.keyboard.press("ArrowDown");
+  }
+  await expect(bar).toHaveAttribute("aria-valuenow", String(duration));
+  expect(await clearOfTimes()).toBe(true);
+  await page.locator(".screen-glass").screenshot({ path: ".local/screenshots/playback-seek-end.png" });
+  for (let index = 0; index < 3; index++) await key(page, "Enter");
+  for (const [keyName, percentage] of [["ArrowDown", 100], ["ArrowUp", 0]] as const) {
+    for (let index = 0; index < 40; index++) await page.keyboard.press(keyName);
+    await expect(live(page).getByRole("status", { name: `音量 ${percentage}%` })).toBeVisible();
+    const width = await live(page).locator(".classic-volume-track").evaluate(element => ({
+      track: element.getBoundingClientRect().width,
+      fill: element.querySelector("i")!.getBoundingClientRect().width,
+    }));
+    expect(width.fill).toBeCloseTo(width.track * percentage / 100, 1);
+    expect(await live(page).locator(".np-cover").boundingBox()).toEqual(cover);
+    await page.locator(".screen-glass").screenshot({ path: `.local/screenshots/playback-volume-${percentage}.png` });
+  }
+});
+
+test("control bay slides independently, interrupts cleanly and respects reduced motion", async ({ page }) => {
+  await page.goto("/");
+  await key(page, "Space");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await key(page, "Space");
+  const cover = await live(page).locator(".np-cover").boundingBox();
+  await key(page, "Enter");
+  const transforms = await live(page).locator(".np-control-bay").evaluate(element => {
+    const animations = element.getAnimations({ subtree: true });
+    for (const animation of animations) {
+      animation.pause();
+      animation.currentTime = Number(animation.effect!.getTiming().duration) / 2;
+    }
+    const x = (selector: string) => new DOMMatrixReadOnly(getComputedStyle(element.querySelector(selector)!).transform).m41;
+    return { incoming: x(".np-control-surface"), outgoing: x(".np-control-outgoing") };
+  });
+  expect(transforms.incoming).toBeGreaterThan(0);
+  expect(transforms.outgoing).toBeLessThan(0);
+  await page.locator(".screen-glass").screenshot({ path: ".local/screenshots/playback-control-slide-midpoint.png" });
+  expect(await live(page).locator(".np-cover").boundingBox()).toEqual(cover);
+  // Another Center press replaces the in-flight snapshot, without queuing input.
+  await key(page, "Enter");
+  await expect(live(page).locator(".np-control-bay")).toHaveAttribute("data-control", "shuffle");
+  const departure = await live(page).locator(".np-control-bay").evaluate(element => {
+    const animation = element.getAnimations({ subtree: true }).find(item =>
+      ((item.effect as KeyframeEffect).target as Element)?.classList.contains("np-control-outgoing"));
+    const first = (animation!.effect as KeyframeEffect).getKeyframes()[0];
+    return new DOMMatrixReadOnly(String(first.transform)).m41;
+  });
+  expect(departure).toBeCloseTo(transforms.incoming, 1);
+  await expect(live(page).locator(".np-control-outgoing")).toHaveCount(1);
+  await expect(live(page).locator(".np-control-outgoing")).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await key(page, "Enter");
+  await expect(live(page).locator(".np-control-bay")).toHaveAttribute("data-control", "rating");
+  await expect(live(page).locator(".np-control-outgoing")).toHaveCount(0);
+  expect(await live(page).locator(".np-control-bay").evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0);
+});
+
+test("finished control panels are detached before their animation is released", async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as any).connectedControlResets = [];
+    const original = Animation.prototype.cancel;
+    Animation.prototype.cancel = function () {
+      const target = (this.effect as KeyframeEffect | null)?.target;
+      if (target instanceof HTMLElement && target.classList.contains("np-control-outgoing") &&
+          target.isConnected && this.playState === "finished") {
+        (window as any).connectedControlResets.push(getComputedStyle(target).transform);
+      }
+      return original.call(this);
+    };
+  });
+  await page.goto("/");
+  await key(page, "Space");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await key(page, "Space");
+  await key(page, "Enter");
+  await expect(live(page).locator(".np-control-outgoing")).toHaveCount(0);
+  await key(page, "Enter");
+  await expect(live(page).locator(".np-control-outgoing")).toHaveCount(0);
+  expect(await page.evaluate(() => (window as any).connectedControlResets)).toEqual([]);
+});
+
+test("Cover Flow entry parts the menu halves and can return before entry finishes", async ({ page }) => {
+  await page.goto("/");
+  await choose(page, "音乐");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await choose(page, "Cover Flow");
+  const halves = page.locator("[data-flow-opening-half]");
+  await expect(halves).toHaveCount(2);
+  const motion = await halves.evaluateAll(items => items.map(element => {
+    const animation = element.getAnimations()[0];
+    animation.pause();
+    animation.currentTime = Number(animation.effect!.getTiming().duration) / 2;
+    return {
+      side: (element as HTMLElement).dataset.flowOpeningHalf,
+      duration: animation.effect!.getTiming().duration,
+      x: new DOMMatrixReadOnly(getComputedStyle(element).transform).m41,
+      inert: (element as HTMLElement).inert,
+    };
+  }));
+  expect(motion.map(item => item.duration)).toEqual([320, 320]);
+  expect(motion[0].x).toBeLessThan(0);
+  expect(motion[1].x).toBeGreaterThan(0);
+  expect(motion.every(item => item.inert)).toBe(true);
+  await page.locator(".screen-glass").screenshot({ path: ".local/screenshots/flow-open-midpoint.png" });
+  await key(page, "Escape");
+  await expect(page.locator(".lcd-screen")).toHaveAttribute("data-page", "music");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await expect(page.locator("[data-flow-opening-half]")).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await key(page, "Enter");
+  await expect(page.locator(".lcd-screen")).toHaveAttribute("data-page", "coverflow");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await expect(live(page).locator(".coverflow-scene")).toBeVisible();
 });

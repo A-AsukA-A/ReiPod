@@ -137,12 +137,14 @@ export function useLcdMotion(
       ) {
         const style = getComputedStyle(parent);
         opacity *= Number(style.opacity);
-        if (style.overflow === "hidden") {
-          const clip = parent.getBoundingClientRect();
-          left = Math.max(left, clip.left);
-          right = Math.min(right, clip.right);
-          top = Math.max(top, clip.top);
-          bottom = Math.min(bottom, clip.bottom);
+        if (style.overflow === "hidden" || parent.dataset.motionClip) {
+          const bounds = parent.getBoundingClientRect();
+          const inset: number[] = parent.dataset.motionClip
+            ? JSON.parse(parent.dataset.motionClip) : [0, 0, 0, 0];
+          left = Math.max(left, bounds.left + inset[3]);
+          right = Math.min(right, bounds.right - inset[1]);
+          top = Math.max(top, bounds.top + inset[0]);
+          bottom = Math.min(bottom, bounds.bottom - inset[2]);
         }
       }
       if (right <= left || bottom <= top || opacity < 0.001) continue;
@@ -228,11 +230,34 @@ export function useLcdMotion(
       fill: "both",
     };
     if (direction === "flow-open") {
-      // Retail footage cuts to the fan, then brings back its caption and status.
-      // It does not push a full page horizontally like an ordinary submenu.
-      running.current = [
-        node.animate([{ opacity: 0 }, { opacity: 0 }], options),
-      ];
+      // ReiPod entry adaptation: reverse the split-menu exit, revealing the fan.
+      // Freeze both halves before changing the source tree, including interrupted layers.
+      const oldLayers = [...node.children];
+      const halves = (["left", "right"] as const).map(side => ({
+        side, ...snapshot(node),
+      }));
+      running.current = [];
+      for (const half of halves) {
+        const clip = half.side === "left"
+          ? [0, element.clientWidth / 2, 0, 0]
+          : [0, 0, 0, element.clientWidth / 2];
+        half.copy.className = "flow-opening-half";
+        Object.assign(half.copy.style, {
+          position: "absolute", inset: "0", width: "100%", height: "100%",
+          clipPath: `inset(${clip.map(value => `${value}px`).join(" ")})`,
+        });
+        half.copy.dataset.motionClip = JSON.stringify(clip);
+        half.copy.dataset.flowOpeningHalf = half.side;
+        half.copy.inert = true;
+        half.copy.setAttribute("aria-hidden", "true");
+        node.append(half.copy);
+        half.restore();
+        running.current.push(half.copy.animate([
+          { transform: "translateX(0)" },
+          { transform: `translateX(${half.side === "left" ? "-50%" : "50%"})` },
+        ], options));
+      }
+      oldLayers.forEach(layer => layer.remove());
       for (const region of element.querySelectorAll<HTMLElement>(
         ".screen-status, .cf-caption",
       ))

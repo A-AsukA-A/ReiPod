@@ -10,6 +10,9 @@ export function durationInMilliseconds(value: string) {
 export const classicMotion = {
   page: 360,
   view: 300,
+  // Supplied My Classic clip: control travel ~300ms ±100ms; volume <=100ms.
+  control: 300,
+  volume: 100,
   album: 360,
   flowEnter: 320,
   flowExit: 480,

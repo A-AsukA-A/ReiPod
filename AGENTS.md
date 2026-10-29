@@ -2,7 +2,7 @@
 
 ## Project scope
 
-ReiPod is a classic-style player with local web playback, an iPhone WKWebView/MediaPlayer transport, and optional self-hosted NetEase/QQ services. Continue the existing implementation. UI work must preserve provider isolation, queues, native authorization, background playback, and local imports.
+ReiPod simulates the full iPod nano, iPod mini, and iPod/classic families, with local web playback, an iPhone WKWebView/MediaPlayer transport, and optional self-hosted NetEase/QQ services. Continue the existing implementation. UI work must preserve provider isolation, queues, native authorization, background playback, and local imports.
 
 ## Third-party music architecture
 
@@ -19,7 +19,8 @@ Product decision (2026-10-29): local apps provide built-in backend capabilities;
 
 Before changing UI, read [UI_STANDARDS.md](UI_STANDARDS.md), [REPLICA.md](REPLICA.md), [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md), and [PLAYBACK_INTERACTIONS.md](PLAYBACK_INTERACTIONS.md).
 
-- The existing shell/menu target is the 2007 iPod classic 6G. Keep later Classic revisions, fifth-generation iPod video, nano, My Classic, and web replicas distinct.
+- The product scope includes all generations of iPod nano, iPod mini, and iPod/classic, including the pre-classic iPod generations. The existing shell/menu baseline remains the 2007 iPod classic 6G; this is the current implementation baseline, not a limit on product scope. Keep each family, generation, hardware revision and firmware distinct; My Classic and web replicas remain comparison samples.
+- Use [MacDB’s iPod/classic catalog](https://macdb.cn/ipod-classic) as a third-party model/specification index and an entry point to Apple technical documents; see [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md). Verify specifications against the corresponding Apple source before adopting them. The linked page does not establish nano/mini coverage or firmware UI geometry.
 - Cite evidence for restoration claims. Record model, firmware when known, source URL/revision, coordinate normalization, and measurement uncertainty. An existing CSS value or passing browser test is not proof of a hardware value.
 - Prefer matching physical-device evidence and verified original-system behavior. Use Apple manuals for documented behavior, and treat their illustrations as illustrations. Modern HIG guides ReiPod additions and accessibility; it does not specify legacy firmware geometry.
 - Label numeric values as documented, measured with uncertainty, provisional, or a ReiPod adaptation. Do not call estimates “pixel-perfect,” “manufacturer-specified,” or “hardware calibrated.”

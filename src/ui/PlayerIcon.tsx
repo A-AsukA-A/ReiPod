@@ -11,7 +11,8 @@ type IconName =
   | "queue"
   | "lyrics"
   | "star"
-  | "volume";
+  | "volume-low"
+  | "volume-high";
 const paths: Record<IconName, string> = {
   more: "M4 12h1m6 0h1m6 0h1",
   back: "M14 4 6 12l8 8",
@@ -28,7 +29,8 @@ const paths: Record<IconName, string> = {
   lyrics:
     "M4 5h6v7c0 4-2 6-5 7v-3c2-1 2-2 2-4H4Zm10 0h6v7c0 4-2 6-5 7v-3c2-1 2-2 2-4h-3Z",
   star: "m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z",
-  volume: "M3 9h4l5-5v16l-5-5H3Zm13-1a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14",
+  "volume-low": "M3 9h3.5l4.5-3.5q1-.7 1 .5v12q0 1-1 .5L6.5 15H3q-1 0-1-1v-4q0-1 1-1Z",
+  "volume-high": "M3 9h3.5l4.5-3.5q1-.7 1 .5v12q0 1-1 .5L6.5 15H3q-1 0-1-1v-4q0-1 1-1Z",
 };
 export function PlayerIcon({
   name,
@@ -37,6 +39,27 @@ export function PlayerIcon({
   name: IconName;
   filled?: boolean;
 }) {
+  if (name === "volume-low" || name === "volume-high") {
+    return (
+      <svg
+        className={`player-icon icon-${name}`}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path d={paths[name]} fill="currentColor" />
+        <path
+            className="volume-waves"
+            d={name === "volume-low"
+              ? "M15 9Q18 12 15 15"
+              : "M15 9Q18 12 15 15M17.5 6.5Q22 12 17.5 17.5M20 4Q26 12 20 20"}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+      </svg>
+    );
+  }
   return (
     <svg
       className={`player-icon icon-${name}`}
