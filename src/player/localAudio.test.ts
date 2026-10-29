@@ -13,13 +13,13 @@ function setup() {
   });
   const volumeWrite = vi.fn();
   Object.defineProperty(audio, "volume", { get: () => 1, set: volumeWrite });
-  const param = { value: 1, cancelScheduledValues: vi.fn(), setTargetAtTime: vi.fn() };
+  const param = { value: 1, cancelAndHoldAtTime: vi.fn(), setTargetAtTime: vi.fn() };
   const gain = { gain: param, connect: vi.fn(), disconnect: vi.fn() };
   const source = { connect: vi.fn(), disconnect: vi.fn() };
-  const context = {
-    currentTime: 10, destination: {}, resume: vi.fn().mockResolvedValue(undefined),
+  const context = Object.assign(new EventTarget(), {
+    state: "running", currentTime: 10, destination: {}, resume: vi.fn().mockResolvedValue(undefined),
     createGain: vi.fn(() => gain), createMediaElementSource: vi.fn(() => source),
-  };
+  });
   const port = new LocalGainAudio(audio as unknown as HTMLAudioElement, () => context as unknown as AudioContext);
   return { port, audio, context, source, gain, param, volumeWrite };
 }
@@ -38,7 +38,7 @@ it("keeps rapid local volume changes on one graph and can recover from zero with
   player.setVolume(0.6);
   expect(player.getSnapshot()).toMatchObject({ status: "playing", volume: 0.6, volumeControl: true });
   expect(param.setTargetAtTime).toHaveBeenLastCalledWith(0.6, 10, 0.015);
-  expect(param.cancelScheduledValues).toHaveBeenLastCalledWith(10);
+  expect(param.cancelAndHoldAtTime).toHaveBeenLastCalledWith(10);
   expect(context.createMediaElementSource).toHaveBeenCalledTimes(1);
   expect(audio.play).toHaveBeenCalledTimes(playCalls);
   expect(audio.pause).not.toHaveBeenCalled();
@@ -72,4 +72,30 @@ it.each([
   vi.stubGlobal("navigator", navigator);
   vi.stubGlobal("Audio", class extends EventTarget {});
   expect(createLocalAudio() instanceof LocalGainAudio).toBe(gain);
+});
+
+it("recovers interrupted output after buffering, coalesces resumes, and respects pause and release", async () => {
+  const { port, audio, context } = setup();
+  await port.play();
+  let resolveResume!: () => void;
+  context.resume.mockImplementationOnce(() => new Promise<void>(resolve => { resolveResume = resolve; }));
+  context.state = "interrupted";
+  context.dispatchEvent(new Event("statechange"));
+  audio.dispatchEvent(new Event("waiting"));
+  audio.dispatchEvent(new Event("playing"));
+  for (let i = 0; i < 100; i++) port.volume = (i % 10) / 10;
+  expect(context.resume).toHaveBeenCalledTimes(2);
+  expect(audio.play).toHaveBeenCalledTimes(1);
+  expect(context.createMediaElementSource).toHaveBeenCalledTimes(1);
+  context.state = "running";
+  resolveResume();
+  await Promise.resolve();
+  port.pause();
+  context.state = "interrupted";
+  context.dispatchEvent(new Event("statechange"));
+  audio.dispatchEvent(new Event("playing"));
+  expect(context.resume).toHaveBeenCalledTimes(2);
+  port.removeAttribute("src");
+  context.dispatchEvent(new Event("statechange"));
+  expect(context.resume).toHaveBeenCalledTimes(2);
 });

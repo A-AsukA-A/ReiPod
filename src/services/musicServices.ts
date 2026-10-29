@@ -738,6 +738,7 @@ if ("mediaSession" in navigator && !hasNativeMusic()) {
       /* Optional browser support. */
     }
   let lastMetadata = "";
+  let lastPosition = "";
   const sync = () => {
     const current = activePlayer().getSnapshot();
     const track = current.tracks.find(
@@ -767,12 +768,19 @@ if ("mediaSession" in navigator && !hasNativeMusic()) {
             })
           : null;
     }
-    navigator.mediaSession.playbackState =
+    const playbackState =
       current.status === "playing"
         ? "playing"
         : current.currentId
           ? "paused"
           : "none";
+    if (navigator.mediaSession.playbackState !== playbackState)
+      navigator.mediaSession.playbackState = playbackState;
+    const positionKey = JSON.stringify([
+      state.playback, current.currentId, current.duration, current.position,
+    ]);
+    if (positionKey === lastPosition) return;
+    lastPosition = positionKey;
     if (typeof navigator.mediaSession.setPositionState === "function")
       try {
         if (current.duration > 0 && Number.isFinite(current.duration))

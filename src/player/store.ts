@@ -8,7 +8,6 @@ import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
 import { readSession } from "./session";
 import { clearRatings, setRating } from "./ratings";
 import { clearPlaylists, removeFromPlaylists } from "./playlists";
-import { hasNativeMusic } from "../services/nativeMusic";
 export const player = new Player(createLocalAudio);
 let removedDemos: string[] = [];
 let savedSession: ReturnType<typeof readSession> = null;
@@ -41,7 +40,16 @@ const persistSession = () => {
     /* Listening is still available without persistent storage. */
   }
 };
-player.subscribe(persistSession);
+let sessionSaveTimer: ReturnType<typeof setTimeout> | undefined;
+player.subscribe(() => {
+  // Wheel events can arrive faster than frames. Persist after input settles;
+  // pagehide and explicit library operations still flush synchronously.
+  if (sessionSaveTimer !== undefined) clearTimeout(sessionSaveTimer);
+  sessionSaveTimer = setTimeout(() => {
+    sessionSaveTimer = undefined;
+    persistSession();
+  }, 200);
+});
 window.addEventListener("pagehide", persistSession);
 let showDemos = true;
 try {
@@ -281,86 +289,12 @@ player.subscribe(() => {
   }
 });
 
-// The browser may expose these controls on a lock screen; native background support is a separate milestone.
-if ("mediaSession" in navigator && !hasNativeMusic()) {
-  const handlers: Partial<
-    Record<MediaSessionAction, MediaSessionActionHandler>
-  > = {
-    play: () => player.play(),
-    pause: () => player.pause(),
-    previoustrack: () => player.previous(),
-    nexttrack: () => player.next(),
-    seekbackward: (details) =>
-      player.seek(player.getSnapshot().position - (details.seekOffset ?? 10)),
-    seekforward: (details) =>
-      player.seek(player.getSnapshot().position + (details.seekOffset ?? 10)),
-    stop: () => {
-      player.pause();
-      player.seek(0);
-    },
-    seekto: (details) => {
-      if (details.seekTime !== undefined) player.seek(details.seekTime);
-    },
-  };
-  for (const [action, handler] of Object.entries(handlers)) {
-    try {
-      navigator.mediaSession.setActionHandler(
-        action as MediaSessionAction,
-        handler!,
-      );
-    } catch {
-      /* Optional host capability. */
-    }
-  }
-  let lastMetadata = "";
-  player.subscribe(() => {
-    const state = player.getSnapshot();
-    const track = state.tracks.find((item) => item.id === state.currentId);
-    const metadataKey = JSON.stringify([
-      track?.id,
-      track?.title,
-      track?.artist,
-      track?.artwork,
-    ]);
-    if (metadataKey !== lastMetadata) {
-      lastMetadata = metadataKey;
-      navigator.mediaSession.metadata =
-        track && typeof MediaMetadata !== "undefined"
-          ? new MediaMetadata({
-              title: track.title,
-              artist: track.artist ?? "本地音乐",
-              album: track.album ?? "ReiPod",
-              artwork: track.artwork
-                ? [{ src: new URL(track.artwork, location.href).href }]
-                : [],
-            })
-          : null;
-    }
-    if (typeof navigator.mediaSession.setPositionState === "function") {
-      try {
-        if (state.duration > 0 && Number.isFinite(state.duration))
-          navigator.mediaSession.setPositionState({
-            duration: state.duration,
-            position: Math.max(0, Math.min(state.position, state.duration)),
-            playbackRate: 1,
-          });
-        else navigator.mediaSession.setPositionState();
-      } catch {
-        /* Some hosts expose this API without implementing it. */
-      }
-    }
-    navigator.mediaSession.playbackState =
-      state.status === "playing"
-        ? "playing"
-        : state.currentId
-          ? "paused"
-          : "none";
-  });
-}
+// musicServices owns the single media-session publisher for every provider.
 
 if (import.meta.hot)
   import.meta.hot.dispose(() => {
     epoch++;
+    if (sessionSaveTimer !== undefined) clearTimeout(sessionSaveTimer);
     sessionReady = false;
     window.removeEventListener("pagehide", persistSession);
     player.clear();
