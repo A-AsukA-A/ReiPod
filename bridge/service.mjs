@@ -85,7 +85,7 @@ export function createMusicService({ providers, storage, now = Date.now }) {
         expires: now() + 180000,
       };
       await save();
-      return { key, image: challenge.image };
+      return { key, image: challenge.image, loginUrl: challenge.loginUrl };
     }
     if (action === "login-check" || action === "login-cancel") {
       const item = state.pending[body.key];

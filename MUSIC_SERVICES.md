@@ -108,8 +108,12 @@ npm run build
 
 2026-10-27 核对 Apple 官方 v3 SDK 的队列描述符：传入未加载歌曲时使用 `{ id, kind: "song" }`，而不是缺少 attributes 的 `{ id, type }` API resource；SDK 根据 library ID 加载个人歌曲。监听 `playbackStateDidChange`、`playbackTimeDidChange` 和 `mediaPlaybackError`。SDK 文件只保留在忽略的本地研究目录，产品运行时从官方 CDN 加载，不重新托管。
 
-### 手机登录入口（2026-10-29）
+### 手机 App 授权与结果接收（2026-10-29）
 
-手机网页（含 iPad 桌面 UA）不再显示扫码入口，改为直接打开对应平台官网；iOS App 通过受限原生操作先尝试打开网易云音乐 / QQ 音乐 App，系统报告无法打开时回退 HTTPS 官网。桌面网页保留原有 QQ / 微信 / 网易云扫码流程。Apple 系统音乐授权不变。
+手机网页（含 iPad 桌面 UA）与 iOS App 先向自己的服务创建登录挑战，再打开与该挑战绑定的官方授权链接。网易云链接携带 `codekey`；QQ 手机入口使用 `qqmusic` 通道，从平台实际 PNG 二维码提取官方短链，仅解析固定的 `c6.y.qq.com/base/fcgi-bin/u` 到 `y.qq.com/m/client/qr_code_login/authorize.html`，不提供任意 URL 代理。QQ 授权事件连接保留在服务器或原生隔离环境内。桌面原有手机 QQ / 微信扫码通道不变。
 
-此改动只完成平台入口跳转，**尚未完成跳转授权回传**：当前适配器只有扫码会话，独立在官网或音乐 App 登录不会给 ReiPod 建立会话，不能据此显示已授权或同步资料库。手机页面明确提示该限制。App 唤起、未安装回退以及真实账号授权均需 iPhone 实测；URL scheme 本身不能保证进入平台登录页。后续需要平台支持的授权回调接入，不能通过读取其他 App 或 Safari 的 Cookie 补足。
+用户确认后返回 ReiPod，客户端继续用同一不透明挑战查询结果；后端验证平台返回的凭证与账号，再返回 ReiPod 会话和公开资料。平台 Cookie 不进入 UI。这里采用轮询结果接收，不宣称平台支持自动跳回 ReiPod。手机浏览器可能拦截异步唤起，此时再按中心键“打开…确认”，复用已有挑战。未完成的挑战暂存在当前标签页 sessionStorage，有效期三分钟；刷新会恢复查询，不新建另一会话。取消、过期与成功均清理暂存。
+
+唤起协议参照平台自身公开脚本：网易云 [移动端脚本 app.665f3835.js](https://s3.music.126.net/mobile-new/app.665f3835.js) 使用 `orpheus://openurl?url=`；QQ [H5 SDK music-react-2.3.0](https://y.qq.com/lib/commercial/h5/music-react-2.3.0.min.js) 将 `ui.openUrl` 编码为 `qqmusic://qq.com/ui/openUrl?p=`。原生仅允许指定平台、路径和参数，无法打开时回退对应官网。浏览器不能可靠检测 App 是否安装，只在唤起标签页保持可见时尝试延时官网回退；进入 App 或平台接管导航后取消回退。
+
+验证边界：浏览器替身覆盖会话绑定、唤起拦截后重试、刷新恢复、确认后保存会话与资料库同步；原生需重新打包安装。匿名真实挑战仅验证链接生成、解码和 QQ 事件订阅，不能证明真实账号授权已通过。尤其网易云通用 openurl 是否直接进入扫码确认页，仍需手机实测；不得把打开普通登录页面误记为授权成功。两家真实手机授权确认、未安装回退和返回后完整播放尚待验证。

@@ -151,31 +151,55 @@ test("an unavailable self-hosted backend remains disconnected and local music is
   );
 });
 
-for (const [label, website] of [
-  ["网易云音乐", "https://music.163.com/"],
-  ["QQ 音乐", "https://y.qq.com/"],
+for (const [service, label, loginUrl, target] of [
+  ["netease", "网易云音乐", "https://music.163.com/login?codekey=fixture", "orpheus://openurl?url="],
+  ["qq", "QQ 音乐", "qqmusic://qq.com/other/openid?p=fixture", "qqmusic://qq.com/other/openid"],
 ] as const) {
-  test(`${label} mobile opens the official site without a QR challenge`, async ({ page }) => {
+  test(`${label} mobile opens a bound App authorization and receives its login session`, async ({ page }) => {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, "userAgent", { value: "Mozilla/5.0 (iPhone) Mobile" });
-      Object.defineProperty(window, "open", { value: () => ({
-        opener: null,
-        location: { replace: (url: string) => { document.documentElement.dataset.loginDestination = url; } },
-      }) });
+      let attempts = 0;
+      Object.defineProperty(window, "open", { value: () => {
+        if (++attempts === 1) return null; // Simulate Safari rejecting the asynchronous launch.
+        return { opener: null, location: { replace: (url: string) => {
+          document.documentElement.dataset.loginDestination = url;
+        } } };
+      } });
     });
     const actions: string[] = [];
+    let approved = false;
     await page.route("**/api/music/**", async route => {
-      actions.push(new URL(route.request().url()).pathname.split("/").at(-1)!);
-      await route.fulfill({ json: { authorized: false } });
+      const action = new URL(route.request().url()).pathname.split("/").at(-1)!;
+      actions.push(action);
+      const body = route.request().postDataJSON();
+      if (action === "login-check") expect(body.key).toBe("bound-challenge");
+      if (action === "login-start" && service === "qq") expect(body.channel).toBe("qqmusic");
+      await route.fulfill({ json:
+        action === "status" ? { authorized: false } :
+        action === "login-start" ? { key: "bound-challenge", image: "data:image/png;base64,fixture", loginUrl } :
+        action === "login-check" ? (approved ? { status: "authorized", token: "mobile-fixture-session", profile: { id: "123", name: "手机授权用户" } } : { status: "waiting" }) :
+        { tracks: [], playlists: [] }
+      });
     });
     await page.goto("/");
     await choose(page, "设置");
     await choose(page, "音乐服务");
     await choose(page, label);
     await choose(page, `打开 ${label} 登录`);
-    await expect(page.locator("html")).toHaveAttribute("data-login-destination", website);
+    await expect(live(page)).toContainText("再次按中心键");
+    await choose(page, `打开 ${label} 确认`);
+    expect(await page.locator("html").getAttribute("data-login-destination")).toContain(target);
     await expect(live(page).locator(".music-login-qr")).toHaveCount(0);
-    await expect(live(page)).toContainText("尚不支持手机跳转授权回传");
-    expect(actions).not.toContain("login-start");
+    expect(actions.filter(action => action === "login-start")).toHaveLength(1);
+    await page.reload();
+    await choose(page, "设置");
+    await choose(page, "音乐服务");
+    await choose(page, label);
+    await expect(live(page)).toContainText(`打开 ${label} 确认`);
+    expect(actions.filter(action => action === "login-start")).toHaveLength(1);
+    approved = true;
+    await expect(live(page).getByRole("status")).toContainText(`已连接 ${label}`);
+    await expect(live(page).locator(".music-account-name strong")).toHaveText("手机授权用户");
+    expect(await page.evaluate(service => localStorage.getItem(`reipod-${service}-session`), service)).toBe("mobile-fixture-session");
   });
 }

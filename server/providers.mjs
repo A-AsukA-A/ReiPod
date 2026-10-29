@@ -1,3 +1,4 @@
+import { qrLoginURL, resolveQQLoginURL } from "./login-links.mjs";
 export class ServiceError extends Error {
   constructor(message, status = 502, kind) {
     super(message);
@@ -158,13 +159,17 @@ export function createProviders(netease, qqRequest) {
         if (!key) throw new ServiceError("未能生成网易云音乐登录二维码");
         const image = (await net("login_qr_create", { key, qrimg: true })).data
           ?.qrimg;
-        return { key, image };
+        return { key, image, loginUrl: `https://music.163.com/login?codekey=${encodeURIComponent(key)}` };
       }
-      if (!["qq", "wechat"].includes(channel)) channel = "qq";
+      if (!["qq", "wechat", "qqmusic"].includes(channel)) channel = "qq";
       const key = (await qq("/login/qr/key", { channel })).data?.unikey;
       if (!key) throw new ServiceError("未能生成 QQ 音乐登录二维码");
-      const image = (await qq("/login/qr/create", { key })).data?.qrimg;
-      return { key, image };
+      const image = (await qq("/login/qr/create", { key: channel === "qqmusic" ? `app:${key}` : key })).data?.qrimg;
+      let loginUrl;
+      if (channel === "qqmusic") {
+        try { loginUrl = await resolveQQLoginURL(qrLoginURL(image)); } catch { /* Desktop QR remains usable. */ }
+      }
+      return { key: channel === "qqmusic" ? `app:${key}` : key, image, loginUrl };
     },
     async check(source, key) {
       const body =

@@ -45,6 +45,7 @@ type ServiceState = {
   playlists: Playlist[];
   searchResults: Track[];
   qrImage?: string;
+  loginUrl?: string;
   loginMessage?: string;
   profile?: MusicAccountProfile;
 };

@@ -107,6 +107,7 @@ import {
   isThirdParty,
   thirdPartyNames,
   loadThirdPartyLyrics,
+  reopenThirdPartyLogin,
 } from "./services/thirdPartyMusic";
 import type { MusicService } from "./services/musicServices";
 
@@ -768,7 +769,7 @@ export function App() {
               key: "login",
               label:
                 services.auth === "loading"
-                  ? "正在连接…"
+                  ? services.loginUrl ? `打开 ${serviceName} 确认` : "正在连接…"
                   : externalMusic
                     ? usesExternalMusicLogin()
                       ? `打开 ${serviceName} 登录`
@@ -782,8 +783,12 @@ export function App() {
                           : "允许访问音乐资料库"
                         : "登录 Apple Music"
                       : "重新检查连接",
-              disabled: services.auth === "loading",
+              disabled: services.auth === "loading" && !services.loginUrl,
               action: () => {
+                if (services.loginUrl && isThirdParty(services.selected)) {
+                  void reopenThirdPartyLogin(services.selected);
+                  return;
+                }
                 if (
                   nativeMusic &&
                   ["denied", "restricted"].includes(
@@ -2059,7 +2064,7 @@ export function App() {
                                 : nativeMusic
                                   ? "允许访问后显示系统歌单，本地音乐独立保留。"
                                   : externalMusic && usesExternalMusicLogin()
-                                    ? services.loginMessage || "打开平台登录；当前尚不支持跳转授权回传。"
+                                    ? services.loginMessage || "在音乐 App 确认授权，返回后自动连接资料库。"
                                     : "扫码登录后同步歌单，本地音乐独立保留。"
                         }
                         error={services.error}

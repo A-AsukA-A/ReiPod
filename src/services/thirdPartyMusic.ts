@@ -19,6 +19,7 @@ type ServiceView = {
   playlists: Playlist[];
   searchResults: Track[];
   qrImage?: string;
+  loginUrl?: string;
   loginMessage?: string;
   profile?: MusicAccountProfile;
 };
@@ -42,6 +43,20 @@ const controllers = {
   qq: new AbortController(),
 };
 const challenges: Partial<Record<ThirdPartyService, string>> = {};
+type PendingLogin = { key: string; loginUrl: string; expires: number };
+const pendingKey = (service: ThirdPartyService) => `reipod-${service}-pending-login`;
+function pendingLogin(service: ThirdPartyService): PendingLogin | undefined {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(pendingKey(service)) || "null");
+    if (value && typeof value.key === "string" && typeof value.loginUrl === "string" && value.expires > Date.now()) return value;
+  } catch { /* Session storage can be disabled. */ }
+}
+function savePendingLogin(service: ThirdPartyService, value?: PendingLogin) {
+  try {
+    if (value) sessionStorage.setItem(pendingKey(service), JSON.stringify(value));
+    else sessionStorage.removeItem(pendingKey(service));
+  } catch { /* The current document can still finish its login. */ }
+}
 const listeners = new Set<() => void>();
 const loaded = new Set<string>();
 const storageKey = (service: ThirdPartyService) => `reipod-${service}-session`;
@@ -280,6 +295,10 @@ export async function prepareThirdParty(service: ThirdPartyService) {
       profile: result.authorized ? result.profile : undefined,
     });
     if (result.authorized) await refreshThirdParty(service);
+    else {
+      const pending = pendingLogin(service);
+      if (pending && usesExternalMusicLogin()) await runThirdPartyLogin(service, "qq", pending);
+    }
   } catch (error) {
     if (epoch === epochs[service])
       update(service, { auth: "error", ready: false, error: message(error) });
@@ -290,12 +309,14 @@ const message = (error: unknown) =>
 export function cancelThirdPartyLogin(service: ThirdPartyService) {
   const key = challenges[service];
   delete challenges[service];
+  savePendingLogin(service);
   if (!key && states[service].auth !== "loading") return;
   epochs[service]++;
   controllers[service].abort();
   controllers[service] = new AbortController();
   update(service, {
     qrImage: undefined,
+    loginUrl: undefined,
     loginMessage: undefined,
     auth: tokens[service] ? "authorized" : "signed-out",
   });
@@ -306,18 +327,10 @@ export async function authorizeThirdParty(
   channel = "qq",
 ) {
   cancelThirdPartyLogin(service);
-  if (usesExternalMusicLogin()) {
-    update(service, { error: "", qrImage: undefined, loginMessage: "正在打开平台登录…" });
-    try {
-      await openMusicLogin(service);
-      update(service, {
-        loginMessage: "请在平台完成登录。平台登录不会自动授权 ReiPod；当前接口尚不支持手机跳转授权回传。",
-      });
-    } catch (error) {
-      update(service, { loginMessage: undefined, error: message(error) });
-    }
-    return;
-  }
+  await runThirdPartyLogin(service, channel);
+}
+async function runThirdPartyLogin(service: ThirdPartyService, channel: string, resume?: PendingLogin) {
+  const external = usesExternalMusicLogin();
   const epoch = ++epochs[service];
   controllers[service].abort();
   controllers[service] = new AbortController();
@@ -326,21 +339,28 @@ export async function authorizeThirdParty(
     auth: "loading",
     error: "",
     qrImage: undefined,
-    loginMessage: "正在生成二维码…",
+    loginUrl: undefined,
+    loginMessage: external ? "正在准备 App 授权…" : "正在生成二维码…",
   });
   try {
-    const result = await request(service, "login-start", { channel });
+    const result = resume ?? await request(service, "login-start", { channel: external && service === "qq" ? "qqmusic" : channel });
     if (epoch !== epochs[service]) return;
     challenges[service] = result.key;
     update(service, {
-      qrImage: result.image,
-      loginMessage:
+      qrImage: external ? undefined : result.image,
+      loginUrl: external ? result.loginUrl : undefined,
+      loginMessage: external ? "请在音乐 App 确认授权，然后返回 ReiPod；未打开可再次按中心键。" :
         service === "netease"
           ? "请用网易云音乐 App 扫码确认"
           : channel === "wechat"
             ? "请用微信扫码确认"
             : "请用手机 QQ 扫码确认",
     });
+    if (external) {
+      if (!result.loginUrl) throw new Error("音乐后端尚未提供 App 授权链接，请更新后端或稍后重试");
+      savePendingLogin(service, { key: result.key, loginUrl: result.loginUrl, expires: resume?.expires ?? Date.now() + 180000 });
+      if (!resume) void reopenThirdPartyLogin(service);
+    }
     for (
       let attempts = 0;
       attempts < 90 && epoch === epochs[service];
@@ -361,28 +381,47 @@ export async function authorizeThirdParty(
       if (check.status === "authorized" && check.token) {
         saveToken(service, check.token);
         delete challenges[service];
+        savePendingLogin(service);
         update(service, {
           auth: "authorized",
           ready: true,
           profile: check.profile,
           qrImage: undefined,
+          loginUrl: undefined,
           loginMessage: undefined,
         });
         await refreshThirdParty(service);
         return;
       }
       if (check.status === "scanned")
-        update(service, { loginMessage: "已扫码，请在手机上确认" });
+        update(service, { loginMessage: external ? "请在音乐 App 确认授权，然后返回 ReiPod" : "已扫码，请在手机上确认" });
     }
-    throw new Error("二维码已过期，请重新扫码");
+    throw new Error(external ? "授权已过期，请重新打开登录" : "二维码已过期，请重新扫码");
   } catch (error) {
-    if (epoch === epochs[service])
+    if (epoch === epochs[service]) {
+      const key = challenges[service];
+      delete challenges[service];
+      savePendingLogin(service);
+      if (key) void request(service, "login-cancel", { key }).catch(() => {});
       update(service, {
         auth: "signed-out",
         qrImage: undefined,
+        loginUrl: undefined,
         loginMessage: undefined,
         error: message(error),
       });
+    }
+  }
+}
+export async function reopenThirdPartyLogin(service: ThirdPartyService) {
+  const url = states[service].loginUrl;
+  if (!url) return;
+  const epoch = epochs[service];
+  try {
+    await openMusicLogin(service, url);
+    if (epoch === epochs[service]) update(service, { error: "" });
+  } catch (error) {
+    if (epoch === epochs[service]) update(service, { error: message(error) });
   }
 }
 export async function signOutThirdParty(service: ThirdPartyService) {

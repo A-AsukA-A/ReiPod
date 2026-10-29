@@ -392,3 +392,20 @@ test("new NetEase lyrics expose YRC with LRC fallback and preserve authorization
   );
   assert.equal(legacyCalls, 0);
 });
+
+test("mobile QQ authorization keeps its transport marker through create/check/cancel", async () => {
+  const calls = [];
+  const providers = createProviders({}, async (path, params) => {
+    calls.push([path, params]);
+    return path.endsWith('/key') ? { data: { unikey: 'sealed-fixture' } } :
+      path.endsWith('/create') ? { data: { qrimg: 'data:image/png;base64,invalid' } } : { code: 801 };
+  });
+  const result = await providers.start('qq', 'qqmusic');
+  assert.equal(result.key, 'app:sealed-fixture');
+  assert.equal(calls[0][1].channel, 'qqmusic');
+  assert.equal(calls[1][1].key, 'app:sealed-fixture');
+  await providers.check('qq', result.key);
+  await providers.cancel('qq', result.key);
+  assert.equal(calls[2][1].key, result.key);
+  assert.equal(calls[3][1].key, result.key);
+});

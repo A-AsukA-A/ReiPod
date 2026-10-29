@@ -1,3 +1,4 @@
+import { createQQRelay } from "./qq-relay.mjs";
 import http from "node:http";
 import { createRequire } from "node:module";
 import { randomBytes } from "node:crypto";
@@ -18,7 +19,10 @@ const { handleRequest } = await import(
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const vault = await openVault(resolve(root, ".local/music-sessions"));
 const qqEnv = { QQ_SESSION_SECRET: vault.key.toString("hex") };
+const qqRelay = createQQRelay();
 const providers = createProviders(netease, async (path, params = {}, token) => {
+  const appLogin = params.channel === "qqmusic" || String(params.key ?? "").startsWith("app:");
+  if (String(params.key ?? "").startsWith("app:")) params = { ...params, key: params.key.slice(4) };
   const url = new URL(path, "https://reipod-music.local");
   for (const [key, value] of Object.entries(params))
     if (value !== undefined) url.searchParams.set(key, String(value));
@@ -28,6 +32,7 @@ const providers = createProviders(netease, async (path, params = {}, token) => {
   const response = await handleRequest(
     new Request(url, { headers: rawToken ? { "X-QQ-Session": rawToken } : {} }),
     qqEnv,
+    appLogin ? { qqRelay } : {},
   );
   const body = await response.json();
   if (!response.ok)
@@ -119,7 +124,7 @@ const server = http.createServer(async (req, res) => {
           upstreamKey: challenge.key,
           expires: Date.now() + 180000,
         });
-        json(res, 200, { key, image: challenge.image });
+        json(res, 200, { key, image: challenge.image, loginUrl: challenge.loginUrl });
         return;
       }
       if (action === "login-cancel") {

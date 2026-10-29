@@ -55,7 +55,33 @@ final class ThirdPartyMusicBridge: NSObject, WKScriptMessageHandlerWithReply {
                     replyHandler(nil, "无效音乐服务"); return
                 }
                 // Fixed provider destinations; never accept a URL supplied by the page.
-                let appURL = URL(string: service == "netease" ? "orpheus://" : "qqmusic://")!
+                guard let raw = body["loginUrl"] as? String, raw.utf8.count <= 8192,
+                      let authorization = URL(string: raw), authorization.user == nil,
+                      authorization.password == nil, authorization.port == nil else {
+                    replyHandler(nil, "无效平台授权链接"); return
+                }
+                let appURL: URL
+                if service == "netease", authorization.scheme == "https",
+                   authorization.host == "music.163.com", authorization.path == "/login",
+                   URLComponents(url: authorization, resolvingAgainstBaseURL: false)?.queryItems?.contains(where: { $0.name == "codekey" && !($0.value ?? "").isEmpty }) == true {
+                    var target = URLComponents()
+                    target.scheme = "orpheus"; target.host = "openurl"
+                    target.queryItems = [URLQueryItem(name: "url", value: raw)]
+                    guard let url = target.url else { replyHandler(nil, "无效平台授权链接"); return }
+                    appURL = url
+                } else if service == "qq", authorization.scheme == "qqmusic",
+                          authorization.host == "qq.com", authorization.path == "/other/openid" {
+                    appURL = authorization
+                } else if service == "qq", authorization.scheme == "https",
+                          authorization.host == "y.qq.com", authorization.path == "/m/client/qr_code_login/authorize.html" {
+                    guard let data = try? JSONSerialization.data(withJSONObject: ["url": raw, "_from_outside": "1"]),
+                          let payload = String(data: data, encoding: .utf8) else { replyHandler(nil, "无效平台授权链接"); return }
+                    var target = URLComponents()
+                    target.scheme = "qqmusic"; target.host = "qq.com"; target.path = "/ui/openUrl"
+                    target.queryItems = [URLQueryItem(name: "p", value: payload)]
+                    guard let url = target.url else { replyHandler(nil, "无效平台授权链接"); return }
+                    appURL = url
+                } else { replyHandler(nil, "无效平台授权链接"); return }
                 let website = URL(string: service == "netease" ? "https://music.163.com/" : "https://y.qq.com/")!
                 UIApplication.shared.open(appURL, options: [:]) { opened in
                     if opened { replyHandler(["opened": true], nil); return }

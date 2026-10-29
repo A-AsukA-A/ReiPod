@@ -1,3 +1,4 @@
+import { createQQRelay } from "../server/qq-relay.mjs";
 import { createProviders, ServiceError } from "../server/providers.mjs";
 import { handleRequest } from "@yakult-green-tea/qq-music-api/serverless";
 import { createNetEase } from "./netease.mjs";
@@ -16,9 +17,12 @@ export async function createRuntime({ fetcher, storage, secret }) {
       throw error;
     }
   };
+  const qqRelay = createQQRelay();
   const providers = createProviders(
     createNetEase(fetcher, { deviceId: secret.slice(0, 32) }),
     async (path, params = {}, token) => {
+      const appLogin = params.channel === "qqmusic" || String(params.key ?? "").startsWith("app:");
+      if (String(params.key ?? "").startsWith("app:")) params = { ...params, key: params.key.slice(4) };
       const url = new URL(path, "https://reipod-music.local");
       for (const [key, value] of Object.entries(params))
         if (value !== undefined) url.searchParams.set(key, String(value));
@@ -29,6 +33,7 @@ export async function createRuntime({ fetcher, storage, secret }) {
       const response = await handleRequest(
         new Request(url, { headers: raw ? { "X-QQ-Session": raw } : {} }),
         { QQ_SESSION_SECRET: secret },
+        appLogin ? { qqRelay } : {},
       );
       const body = await response.json();
       if (path === "/login/qr/check" && body.code === 801 && qqNetworkFailure)

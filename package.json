@@ -23,6 +23,8 @@
   "dependencies": {
     "@yakult-green-tea/qq-music-api": "3.3.5",
     "crypto-js": "4.2.0",
+    "fast-png": "8.0.0",
+    "jsqr": "1.4.0",
     "music-metadata": "12.3.2",
     "qrcode": "1.5.4",
     "react": "19.3.1",
