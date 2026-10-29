@@ -1,3 +1,4 @@
+import { usesExternalMusicLogin } from "./services/musicLogin";
 import {
   useEffect,
   useLayoutEffect,
@@ -769,7 +770,9 @@ export function App() {
                 services.auth === "loading"
                   ? "正在连接…"
                   : externalMusic
-                    ? `扫码登录 ${serviceName}`
+                    ? usesExternalMusicLogin()
+                      ? `打开 ${serviceName} 登录`
+                      : `扫码登录 ${serviceName}`
                     : services.ready
                       ? nativeMusic
                         ? ["denied", "restricted"].includes(
@@ -803,7 +806,9 @@ export function App() {
             },
             ...(externalMusic
               ? [
-                  ...(services.selected === "qq" && services.auth !== "loading"
+                  ...(services.selected === "qq" &&
+                  !usesExternalMusicLogin() &&
+                  services.auth !== "loading"
                     ? [
                         {
                           key: "wechat-login",
@@ -2053,7 +2058,9 @@ export function App() {
                                 ? `${services.libraryTracks.length} 首歌曲 · ${services.playlists.length} 个歌单`
                                 : nativeMusic
                                   ? "允许访问后显示系统歌单，本地音乐独立保留。"
-                                  : "扫码登录后同步歌单，本地音乐独立保留。"
+                                  : externalMusic && usesExternalMusicLogin()
+                                    ? services.loginMessage || "打开平台登录；当前尚不支持跳转授权回传。"
+                                    : "扫码登录后同步歌单，本地音乐独立保留。"
                         }
                         error={services.error}
                       />

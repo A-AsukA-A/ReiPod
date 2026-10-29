@@ -1,6 +1,7 @@
 import Foundation
 import Security
 import WebKit
+import UIKit
 
 private final class NoMusicRedirects: NSObject, URLSessionTaskDelegate, Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask,
@@ -47,6 +48,24 @@ final class ThirdPartyMusicBridge: NSObject, WKScriptMessageHandlerWithReply {
             replyHandler(nil, "当前页面无权访问内置音乐服务"); return
         }
         if message.name == "reipodService" {
+            if body["action"] as? String == "open-login" {
+                guard body["version"] as? Int == 1,
+                      let service = body["service"] as? String,
+                      ["netease", "qq"].contains(service) else {
+                    replyHandler(nil, "无效音乐服务"); return
+                }
+                // Fixed provider destinations; never accept a URL supplied by the page.
+                let appURL = URL(string: service == "netease" ? "orpheus://" : "qqmusic://")!
+                let website = URL(string: service == "netease" ? "https://music.163.com/" : "https://y.qq.com/")!
+                UIApplication.shared.open(appURL, options: [:]) { opened in
+                    if opened { replyHandler(["opened": true], nil); return }
+                    UIApplication.shared.open(website, options: [:]) { openedWebsite in
+                        replyHandler(openedWebsite ? ["opened": true] : nil,
+                                     openedWebsite ? nil : "无法打开音乐平台，请稍后重试")
+                    }
+                }
+                return
+            }
             guard let webView, body["version"] as? Int == 1,
                   ["netease", "qq"].contains(body["service"] as? String ?? ""),
                   let data = try? JSONSerialization.data(withJSONObject: body), data.count <= 16384 else {

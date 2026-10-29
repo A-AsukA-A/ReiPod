@@ -107,3 +107,9 @@ npm run build
 ## 官方 SDK 核对
 
 2026-10-27 核对 Apple 官方 v3 SDK 的队列描述符：传入未加载歌曲时使用 `{ id, kind: "song" }`，而不是缺少 attributes 的 `{ id, type }` API resource；SDK 根据 library ID 加载个人歌曲。监听 `playbackStateDidChange`、`playbackTimeDidChange` 和 `mediaPlaybackError`。SDK 文件只保留在忽略的本地研究目录，产品运行时从官方 CDN 加载，不重新托管。
+
+### 手机登录入口（2026-10-29）
+
+手机网页（含 iPad 桌面 UA）不再显示扫码入口，改为直接打开对应平台官网；iOS App 通过受限原生操作先尝试打开网易云音乐 / QQ 音乐 App，系统报告无法打开时回退 HTTPS 官网。桌面网页保留原有 QQ / 微信 / 网易云扫码流程。Apple 系统音乐授权不变。
+
+此改动只完成平台入口跳转，**尚未完成跳转授权回传**：当前适配器只有扫码会话，独立在官网或音乐 App 登录不会给 ReiPod 建立会话，不能据此显示已授权或同步资料库。手机页面明确提示该限制。App 唤起、未安装回退以及真实账号授权均需 iPhone 实测；URL scheme 本身不能保证进入平台登录页。后续需要平台支持的授权回调接入，不能通过读取其他 App 或 Safari 的 Cookie 补足。

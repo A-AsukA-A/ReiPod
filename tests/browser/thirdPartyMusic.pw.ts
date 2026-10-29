@@ -150,3 +150,32 @@ test("an unavailable self-hosted backend remains disconnected and local music is
     "local",
   );
 });
+
+for (const [label, website] of [
+  ["网易云音乐", "https://music.163.com/"],
+  ["QQ 音乐", "https://y.qq.com/"],
+] as const) {
+  test(`${label} mobile opens the official site without a QR challenge`, async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "userAgent", { value: "Mozilla/5.0 (iPhone) Mobile" });
+      Object.defineProperty(window, "open", { value: () => ({
+        opener: null,
+        location: { replace: (url: string) => { document.documentElement.dataset.loginDestination = url; } },
+      }) });
+    });
+    const actions: string[] = [];
+    await page.route("**/api/music/**", async route => {
+      actions.push(new URL(route.request().url()).pathname.split("/").at(-1)!);
+      await route.fulfill({ json: { authorized: false } });
+    });
+    await page.goto("/");
+    await choose(page, "设置");
+    await choose(page, "音乐服务");
+    await choose(page, label);
+    await choose(page, `打开 ${label} 登录`);
+    await expect(page.locator("html")).toHaveAttribute("data-login-destination", website);
+    await expect(live(page).locator(".music-login-qr")).toHaveCount(0);
+    await expect(live(page)).toContainText("尚不支持手机跳转授权回传");
+    expect(actions).not.toContain("login-start");
+  });
+}

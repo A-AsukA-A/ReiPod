@@ -1,3 +1,4 @@
+import { openMusicLogin, usesExternalMusicLogin } from "./musicLogin";
 import { bridgeMusicRequest, useMusicBridge } from "./musicTransport";
 import { Player, PlaybackError } from "../player/Player";
 import type { AudioPort, Track, PlaybackErrorKind } from "../player/Player";
@@ -305,6 +306,18 @@ export async function authorizeThirdParty(
   channel = "qq",
 ) {
   cancelThirdPartyLogin(service);
+  if (usesExternalMusicLogin()) {
+    update(service, { error: "", qrImage: undefined, loginMessage: "正在打开平台登录…" });
+    try {
+      await openMusicLogin(service);
+      update(service, {
+        loginMessage: "请在平台完成登录。平台登录不会自动授权 ReiPod；当前接口尚不支持手机跳转授权回传。",
+      });
+    } catch (error) {
+      update(service, { loginMessage: undefined, error: message(error) });
+    }
+    return;
+  }
   const epoch = ++epochs[service];
   controllers[service].abort();
   controllers[service] = new AbortController();
