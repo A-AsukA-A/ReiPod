@@ -1,34 +1,35 @@
-import type { RefObject } from "react";
 import type { Photo } from "../media/photos";
-import { deletePhoto } from "../media/photos";
 import type { Album } from "../player/library";
 import type { Page, NavigationState } from "./navigation";
 import type { MenuItem } from "./MenuRows";
+type PhotoSummary = Pick<Photo, "id" | "name" | "album" | "url">;
 type MediaMenuContext = {
-  photos: Photo[];
-  activePhotos: Photo[];
+  photos: readonly PhotoSummary[];
+  activePhotos: readonly PhotoSummary[];
   podcastShows: Album[];
-  photoInput: RefObject<HTMLInputElement | null>;
-  podcastInput: RefObject<HTMLInputElement | null>;
+  openPhotos: (folder: boolean) => void;
+  openPodcasts: () => void;
+  deletePhoto: (id: string) => Promise<void>;
   groupKey?: string;
   open: (page: Page, key?: string, group?: string) => void;
   back: (levels?: number) => void;
   setNotice: (message: string) => void;
   setSlideshow: (value: boolean) => void;
-  navigationRef: RefObject<NavigationState>;
+  getNavigation: () => NavigationState;
 };
 export function createMediaMenus({
   photos,
   activePhotos,
   podcastShows,
-  photoInput,
-  podcastInput,
+  openPhotos,
+  openPodcasts,
+  deletePhoto,
   groupKey,
   open,
   back,
   setNotice,
   setSlideshow,
-  navigationRef,
+  getNavigation,
 }: MediaMenuContext): Partial<Record<Page, MenuItem[]>> {
   return {
     photos: [
@@ -55,18 +56,12 @@ export function createMediaMenus({
       {
         key: "photo-import",
         label: "导入照片…",
-        action: () => {
-          photoInput.current?.removeAttribute("webkitdirectory");
-          photoInput.current?.click();
-        },
+        action: () => openPhotos(false),
       },
       {
         key: "photo-folder",
         label: "导入相册文件夹…",
-        action: () => {
-          photoInput.current?.setAttribute("webkitdirectory", "");
-          photoInput.current?.click();
-        },
+        action: () => openPhotos(true),
       },
     ],
     "photo-grid": activePhotos.map((photo) => ({
@@ -104,9 +99,10 @@ export function createMediaMenus({
           if (groupKey)
             void deletePhoto(groupKey)
               .then(() => {
+                const { screen } = getNavigation();
                 if (
-                  navigationRef.current.screen.page === "photo-delete" &&
-                  navigationRef.current.screen.groupKey === groupKey
+                  screen.page === "photo-delete" &&
+                  screen.groupKey === groupKey
                 )
                   back(3);
                 setNotice("已删除浏览器中的照片副本");
@@ -125,7 +121,7 @@ export function createMediaMenus({
       {
         key: "podcast-import",
         label: "导入播客…",
-        action: () => podcastInput.current?.click(),
+        action: openPodcasts,
       },
     ],
   };

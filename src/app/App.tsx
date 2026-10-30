@@ -65,7 +65,7 @@ import { canShowLyrics } from "../ui/nowPlaying";
 import { createMediaMenus } from "../ui/mediaMenus";
 import { createLibraryMenus } from "../ui/libraryMenus";
 import { FileImports } from "../ui/FileImports";
-import { restorePhotos, usePhotos } from "../media/photos";
+import { deletePhoto, restorePhotos, usePhotos } from "../media/photos";
 import { usePodcastIds, playPodcast } from "../media/podcasts";
 import { useWheelTextEntry } from "../ui/WheelTextEntry";
 import {
@@ -644,14 +644,19 @@ export function App() {
       photos,
       activePhotos,
       podcastShows,
-      photoInput,
-      podcastInput,
+      openPhotos: folder => {
+        if (folder) photoInput.current?.setAttribute("webkitdirectory", "");
+        else photoInput.current?.removeAttribute("webkitdirectory");
+        photoInput.current?.click();
+      },
+      openPodcasts: () => podcastInput.current?.click(),
+      deletePhoto,
       groupKey,
       open,
       back,
       setNotice,
       setSlideshow,
-      navigationRef,
+      getNavigation: () => navigationRef.current,
     }),
     ...settingsRows,
     ...createTextMenus({ texts, groupKey, isLocalText, importingTexts, deleting, open, back,
