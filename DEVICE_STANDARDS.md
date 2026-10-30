@@ -83,3 +83,6 @@ nano 7 的 2012 与 2015 配色修订须分开；上表不证明两版全部固�
 
 
 检索未取得正文的一手线索：[Scroll Wheel SP103](https://support.apple.com/kb/SP103)、[photo SP66](https://support.apple.com/kb/SP66)。本轮工具无法访问，尚未采纳其数值；后续优先查原始 Apple 页面归档或对应说明书，不以百科表格填补。
+
+
+实现入口补充（2026-10-30）：当前配置 `src/models/classic.ts` 覆盖既有 classic-2007 实现，LCD 规格引用 C07；capacity/firmware 均为 null，尚不区分 80/160GB 外壳厚度，也不把所有后期手册行为标为首发固件。它不等于本目录全部机型已接入。

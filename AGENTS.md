@@ -13,7 +13,7 @@ Start every task with [DEVELOPMENT.md](DEVELOPMENT.md) and [TASK_LOG.md](TASK_LO
 
 ## Repository structure
 
-Use [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for file placement. Keep application composition in `src/app/`, playback logic in `src/player/`, platform/service integration in `src/services/`, and model presentation/input in `src/ui/` and `src/input/`. Update the structure map, imports, scripts and documentation together when moving files. Do not equate a directory move with completed architectural separation.
+Use [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for file placement. Keep implemented model identity/LCD/input policy in `src/models/` with evidence labels, application composition in `src/app/`, playback logic in `src/player/`, platform/service integration in `src/services/`, and model presentation/input in `src/ui/` and `src/input/`. Update the structure map, imports, scripts and documentation together when moving files. Do not equate a directory move with completed architectural separation.
 
 ## Project scope
 

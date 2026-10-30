@@ -32,7 +32,7 @@ import {
 } from "./thirdPartyMusic";
 
 export type MusicService = "local" | "apple-music" | "netease" | "qq";
-type ServiceState = {
+export type MusicServiceState = {
   transport: "web" | "ios";
   nativeAuthorization?: NativeReply["authorization"];
   selected: MusicService;
@@ -64,7 +64,7 @@ const save = (key: string, value: string | null) => {
     /* Session works without persistence. */
   }
 };
-let state: ServiceState = {
+let state: MusicServiceState = {
   transport: hasNativeMusic() ? "ios" : "web",
   selected: ["apple-music", "netease", "qq"].includes(
     read("reipod-music-service") ?? "",
@@ -88,7 +88,7 @@ function publish() {
     : state;
   listeners.forEach((fn) => fn());
 }
-function update(patch: Partial<ServiceState>) {
+function update(patch: Partial<MusicServiceState>) {
   state = { ...state, ...patch };
   publish();
 }

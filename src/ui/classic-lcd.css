@@ -178,34 +178,13 @@
 }
 .screen-row,
 .screen-song-list .screen-row {
-  height: 30px;
-  padding-inline: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  gap: 5px;
   letter-spacing: -0.15px;
-}
-.screen-row.selected {
-  background: linear-gradient(
-    #4f9ade 0%,
-    #2e86cf 48%,
-    #1472bf 49%,
-    #1475c5 100%
-  );
-  box-shadow:
-    inset 0 1px #72aee1,
-    inset 0 -1px #075899;
 }
 .row-title {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 5px;
-}
-.screen-row .row-chevron .player-icon {
-  width: 10px;
-  height: 13px;
-  stroke-width: 2.6;
 }
 .screen-row .row-value {
   font-size: 11px;
@@ -560,11 +539,6 @@
   .screen-status > strong {
     font-size: 12px;
   }
-  .screen-row,
-  .screen-song-list .screen-row {
-    height: 26px;
-    font-size: 12px;
-  }
   .album-row {
     height: 39px;
   }
@@ -828,7 +802,7 @@
 /* Baseline: 320×240 LCD; 61.8×103.5 mm body. UI measurements are visual calibrations. */
 .app-shell {
   --lcd-width: calc(var(--device-width) * 0.8220065);
-  --lcd-unit: calc(var(--lcd-width) / 320);
+  --lcd-unit: calc(var(--lcd-width) / var(--lcd-native-width, 320));
 }
 .classic-device {
   height: calc(var(--device-width) * 1.6747573);
@@ -836,7 +810,7 @@
 }
 .screen-glass {
   width: calc(var(--lcd-width) + 6px);
-  height: calc(var(--lcd-width) * 0.75 + 6px);
+  height: calc(var(--lcd-width) * var(--lcd-aspect, 0.75) + 6px);
   aspect-ratio: auto;
   margin-inline: auto;
   padding: 0;
@@ -982,12 +956,6 @@
   width: 50%;
   z-index: 3;
   border-right: 1px solid #9c9fa3;
-}
-.split-settings-screen .screen-row .row-value {
-  font-size: calc(var(--lcd-unit) * 11);
-}
-.split-settings-screen .screen-row {
-  font-size: calc(var(--lcd-unit) * 14);
 }
 .classic-battery {
   position: relative;

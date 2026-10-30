@@ -1,3 +1,16 @@
+import { createSettingsMenus } from "../ui/settingsMenus";
+import { createTextMenus } from "../ui/textMenus";
+import { createClassicMenuModel } from "../ui/classicMenuModel";
+import { createTrackMenuOverrides } from "../ui/trackMenuOverrides";
+import { ClassicScreenContent } from "../ui/ClassicScreenContent";
+import { classicScreenTitle } from "../ui/classicScreenModel";
+import { createClassicInputController } from "../ui/classicInputController";
+import { ClassicShell } from "../ui/ClassicShell";
+import { ClassicStatusBar } from "../ui/ClassicStatusBar";
+import { backgroundColors } from "../ui/appearance";
+import { useClassicPlaybackController } from "../ui/useClassicPlaybackController";
+import { createMusicServiceActions } from "./musicServiceActions";
+import { createMusicServiceMenus } from "../ui/musicServiceMenus";
 import { usesExternalMusicLogin } from "../services/musicLogin";
 import {
   useEffect,
@@ -7,14 +20,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { ClickWheel } from "../input/ClickWheel";
-import type { WheelCommand } from "../input/ClickWheel";
 import type { Track } from "../player/Player";
 import { feedback } from "../input/feedback";
 import {
   addDemos,
   clearLibrary,
   importFiles,
+  removeTrack,
   initializeLibrary,
   onLibraryNotice,
   player as localPlayer,
@@ -33,49 +45,29 @@ import {
   splitPages,
 } from "../ui/navigation";
 import type { Page } from "../ui/navigation";
-import { CoverFlow } from "../ui/CoverFlow";
-import { MenuPreview } from "../ui/MenuPreview";
-import { menuPreview } from "../ui/menuPreviewModel";
-import { BatteryIndicator } from "../ui/BatteryIndicator";
-import {
-  backlightTimes,
-  optionalMainItems,
-  optionalMusicItems,
-  mainMenuOrder,
-} from "../ui/classicSettings";
-import { HoldSwitch } from "../ui/HoldSwitch";
 import { useBacklight } from "../ui/useBacklight";
-import { ClassicClock } from "../ui/ClassicClock";
-import { ClassicGlyph } from "../ui/ClassicGlyph";
 import { setPreferences, usePreferences } from "../ui/preferences";
-import { PlayerIcon } from "../ui/PlayerIcon";
 import { useLcdMotion } from "../ui/useLcdMotion";
-import { lcdMotionStyle } from "../ui/motion";
 import { searchTracks } from "../player/search";
 import { useRatings, setRating } from "../player/ratings";
 import {
   usePlaylists,
   createPlaylist,
   renamePlaylist,
+  deletePlaylist, togglePlaylistTrack, removePlaylistTrack, addToOnTheGo,
 } from "../player/playlists";
 
-import { MenuRows } from "../ui/MenuRows";
 import type { MenuItem } from "../ui/MenuRows";
-import { createPrimaryMenus, repeatText } from "../ui/primaryMenus";
+import { createPrimaryMenus } from "../ui/primaryMenus";
 
-import { NowPlayingScreen } from "../ui/NowPlayingScreen";
 import { MusicAccountHeader } from "../ui/MusicAccountHeader";
-import { canShowLyrics, playingViews, restingPlayView } from "../ui/nowPlaying";
-import type { PlayView } from "../ui/nowPlaying";
+import { canShowLyrics } from "../ui/nowPlaying";
 import { createMediaMenus } from "../ui/mediaMenus";
 import { createLibraryMenus } from "../ui/libraryMenus";
 import { FileImports } from "../ui/FileImports";
-import { ReadOnlyScreen } from "../ui/ReadOnlyScreen";
-import { settingChoices } from "../ui/settingChoices";
 import { restorePhotos, usePhotos } from "../media/photos";
 import { usePodcastIds, playPodcast } from "../media/podcasts";
-import { PhotoScreen } from "../ui/PhotoScreen";
-import { useWheelTextEntry, WheelTextEntry } from "../ui/WheelTextEntry";
+import { useWheelTextEntry } from "../ui/WheelTextEntry";
 import {
   builtinDocuments,
   deleteText,
@@ -84,7 +76,6 @@ import {
   saveReadingPosition,
   useTexts,
 } from "../media/textDocuments";
-import { TextReader } from "../ui/TextReader";
 import type { TextReaderHandle } from "../ui/TextReader";
 import { applePlayer } from "../services/applePlayer";
 import {
@@ -194,14 +185,16 @@ export function App() {
   const [contextPlaylist, setContextPlaylist] = useState<string | null>(null);
   const optionQueue = useRef<string[] | undefined>(undefined);
   const [deleting, setDeleting] = useState(false);
-  const [playView, setPlayView] = useState<PlayView>("art");
-  const [lyricWheel, setLyricWheel] = useState(0);
-  const [volumeOverlay, setVolumeOverlay] = useState(false);
-  const previousPlaybackPage = useRef({ page, trackId: current?.id });
-  const [transportHint, setTransportHint] = useState<
-    "seek-forward" | "seek-backward" | null
-  >(null);
-  const transportTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const {
+    playView, lyricWheel, volumeOverlay, transportHint,
+    cyclePlayView, resetPlayView, openLyrics, scrollLyrics, showVolume,
+    showTransportHint,
+  } = useClassicPlaybackController({
+    page, current, lyricsEnabled: prefs.lyricsEnabled, volume: state.volume,
+    // Invoked by effects/events after capture is initialized below.
+    replace: () => capture("replace"),
+    loadLyrics: loadThirdPartyLyrics,
+  });
   const [slideshow, setSlideshow] = useState(false);
   const textEntry = useWheelTextEntry(
     state.tracks
@@ -416,7 +409,7 @@ export function App() {
     if (podcastIds.includes(id)) {
       playbackFrom("local");
       playPodcast(id, queue);
-      setPlayView("art");
+      resetPlayView();
       open("playing");
       return;
     }
@@ -432,7 +425,7 @@ export function App() {
       id,
       page === "queue" ? undefined : queue.length ? queue : undefined,
     );
-    setPlayView("art");
+    resetPlayView();
     open("playing");
   };
   const playAlbum = (albumId: string) => {
@@ -485,7 +478,7 @@ export function App() {
       first.id,
     );
     target.activate(first.id);
-    setPlayView("art");
+    resetPlayView();
     open("playing");
   };
   const toggleFavorite = (id?: string) => {
@@ -561,141 +554,44 @@ export function App() {
     openDocument,
     beginText: textEntry.begin,
   });
-  const settingsItems: MenuItem[] = [
-    originalSettingsItems[0],
-    {
-      key: "music-services",
-      label: "音乐服务",
-      value: cloud ? serviceName : "本地音乐",
-      action: () => open("music-services", services.selected),
+  const { settingsItems, confirmItems, managedRows: settingsRows } = createSettingsMenus({
+    prefs, state, originalSettingsItems, cloud, serviceName, selectedService: services.selected,
+    localMusicCount: localMusicTracks.length, open, back, setPreferences,
+    shuffle: value => player.setShuffle(value), repeat: value => player.setRepeat(value),
+    clear: () => { capture("back"); clearLibrary(); dispatch({ type: "reset" }); setNotice("资料库已清空"); },
+  });
+  const serviceActions = createMusicServiceActions({
+    getServices: getMusicServices,
+    getNavigation: () => navigationRef.current,
+    open,
+    back,
+    setNotice,
+    ports: {
+      select: selectMusicService,
+      authorize: authorizeSelectedMusicService,
+      prepare: prepareSelectedMusicService,
+      refresh: refreshSelectedMusicLibrary,
+      signOut: signOutSelectedMusicService,
+      reopenLogin: reopenThirdPartyLogin,
+      openSettings: openNativeMusicSettings,
+      loadPlaylist: loadMusicPlaylist,
     },
-    ...originalSettingsItems.slice(1).map((item) =>
-      item.key === "clear"
-        ? {
-            ...item,
-            label: "清空本地音乐资料库",
-            disabled: !localMusicTracks.length,
-          }
-        : item,
-    ),
-  ];
-  const account = () =>
-    open("music-account", services.auth === "authorized" ? "refresh" : "login");
-  const cloudAccess: MenuItem[] = [
-    {
-      key: "music-account",
-      label:
-        services.auth === "authorized"
-          ? `${serviceName} 账户`
-          : nativeMusic
-            ? "连接系统音乐"
-            : `登录 ${serviceName}`,
-      action: account,
-    },
-  ];
-  const musicItems: MenuItem[] = cloud
-    ? [
-        ...(services.auth === "authorized"
-          ? [
-              {
-                key: "coverflow",
-                label: "Cover Flow",
-                action: () => open("coverflow"),
-              },
-              {
-                key: "playlists",
-                label: "播放列表",
-                action: () => open("playlists"),
-              },
-              { key: "artists", label: "艺人", action: () => open("artists") },
-              { key: "albums", label: "专辑", action: () => open("albums") },
-              { key: "songs", label: "歌曲", action: () => open("songs") },
-              {
-                key: "search",
-                label: nativeMusic ? "搜索资料库" : `搜索 ${serviceName}`,
-                action: () => {
-                  setQuery("");
-                  textEntry.begin();
-                  open("search");
-                },
-              },
-            ]
-          : []),
-        ...cloudAccess,
-        {
-          key: "local-songs",
-          label: "本地音乐",
-          action: () =>
-            open("local-songs", localMusicTracks[0]?.id ?? "import"),
-        },
-      ]
-    : localMusicItems;
-  const playlistItems: MenuItem[] = cloud
-    ? [
-        ...services.playlists.map((list) => ({
-          key: list.id,
-          label: list.name,
-          action: () => {
-            void loadMusicPlaylist(list.id).then((loaded) => {
-              if (
-                navigationRef.current.screen.page !== "playlists" ||
-                navigationRef.current.screen.selectedKey !== list.id
-              )
-                return;
-              if (loaded) open("playlist-tracks", undefined, list.id);
-              else
-                setNotice(getMusicServices().error || "歌单未能载入，请重试");
-            });
-          },
-        })),
-        {
-          key: "refresh",
-          label: services.syncing ? "正在同步…" : `刷新 ${serviceName} 歌单`,
-          disabled: services.syncing,
-          action: () => {
-            void refreshSelectedMusicLibrary();
-          },
-        },
-        ...cloudAccess,
-      ]
-    : localPlaylistItems;
-  const emptyItems: MenuItem[] = cloud
-    ? [
-        ...(page === "search"
-          ? [
-              {
-                key: "edit-search",
-                label: "修改搜索…",
-                action: textEntry.begin,
-              },
-            ]
-          : []),
-        ...cloudAccess,
-      ]
-    : [
-        { key: "import", label: "导入音乐", action: openFiles },
-        { key: "demo", label: "试听音乐", action: loadDemos },
-      ];
-  const confirmItems: MenuItem[] = [
-    { key: "cancel", label: "取消", action: () => back() },
-    {
-      key: "confirm",
-      label: "清空资料库",
-      action: () => {
-        capture("back");
-        clearLibrary();
-        dispatch({ type: "reset" });
-        setNotice("资料库已清空");
-      },
-    },
-  ];
-  const choices = settingChoices(
-    prefs,
-    state,
-    setPreferences,
-    (value) => player.setShuffle(value),
-    (value) => player.setRepeat(value),
-  );
+  });
+  const { account, musicItems, playlistItems, emptyItems, managedRows: serviceRows } = createMusicServiceMenus({
+    services,
+    serviceName,
+    externalLogin: usesExternalMusicLogin(),
+    localFirstId: localMusicTracks[0]?.id,
+    page,
+    localMusicItems,
+    localPlaylistItems,
+    open,
+    beginText: textEntry.begin,
+    clearQuery: () => setQuery(""),
+    openFiles,
+    loadDemos,
+    actions: serviceActions,
+  });
   const splitMenu = splitPages.has(page) && page !== "home" && page !== "music";
   const photoIndex = Math.max(
     0,
@@ -704,146 +600,7 @@ export function App() {
     ),
   );
   const managedRows: Partial<Record<Page, MenuItem[]>> = {
-    "music-services": [
-      {
-        key: "apple-music",
-        label: "Apple Music",
-        value: services.selected === "apple-music" ? "✓" : "",
-        action: () => {
-          selectMusicService("apple-music");
-          back();
-        },
-      },
-      {
-        key: "local",
-        label: "本地音乐",
-        value: services.selected === "local" ? "✓" : "",
-        action: () => {
-          selectMusicService("local");
-          back();
-        },
-      },
-      {
-        key: "netease",
-        label: "网易云音乐",
-        value: services.selected === "netease" ? "✓" : "",
-        action: () => {
-          selectMusicService("netease");
-          open("music-account", "login");
-        },
-      },
-      {
-        key: "qq",
-        label: "QQ 音乐",
-        value: services.selected === "qq" ? "✓" : "",
-        action: () => {
-          selectMusicService("qq");
-          open("music-account", "login");
-        },
-      },
-    ],
-    "music-account":
-      services.auth === "authorized"
-        ? [
-            {
-              key: "refresh",
-              label: services.syncing ? "正在同步…" : "刷新资料库",
-              disabled: services.syncing,
-              leaf: true,
-              action: () => {
-                void refreshSelectedMusicLibrary();
-              },
-            },
-            {
-              key: "logout",
-              label: nativeMusic ? "断开系统音乐" : "退出登录",
-              destructive: true,
-              leaf: true,
-              action: () => {
-                void signOutSelectedMusicService();
-              },
-            },
-          ]
-        : [
-            {
-              key: "login",
-              label:
-                services.auth === "loading"
-                  ? services.loginUrl ? `打开 ${serviceName} 确认` : "正在连接…"
-                  : externalMusic
-                    ? usesExternalMusicLogin()
-                      ? `打开 ${serviceName} 登录`
-                      : `扫码登录 ${serviceName}`
-                    : services.ready
-                      ? nativeMusic
-                        ? ["denied", "restricted"].includes(
-                            services.nativeAuthorization ?? "",
-                          )
-                          ? "打开系统设置"
-                          : "允许访问音乐资料库"
-                        : "登录 Apple Music"
-                      : "重新检查连接",
-              disabled: services.auth === "loading" && !services.loginUrl,
-              action: () => {
-                if (services.loginUrl && isThirdParty(services.selected)) {
-                  void reopenThirdPartyLogin(services.selected);
-                  return;
-                }
-                if (
-                  nativeMusic &&
-                  ["denied", "restricted"].includes(
-                    services.nativeAuthorization ?? "",
-                  )
-                ) {
-                  void openNativeMusicSettings().catch((error: unknown) =>
-                    setNotice(
-                      error instanceof Error
-                        ? error.message
-                        : "未能打开系统设置",
-                    ),
-                  );
-                  return;
-                }
-                void (services.ready || externalMusic
-                  ? authorizeSelectedMusicService()
-                  : prepareSelectedMusicService());
-              },
-            },
-            ...(externalMusic
-              ? [
-                  ...(services.selected === "qq" &&
-                  !usesExternalMusicLogin() &&
-                  services.auth !== "loading"
-                    ? [
-                        {
-                          key: "wechat-login",
-                          label: "用微信扫码登录",
-                          action: () => {
-                            void authorizeSelectedMusicService("wechat");
-                          },
-                        },
-                      ]
-                    : []),
-                  ...(services.auth === "loading"
-                    ? [
-                        {
-                          key: "cancel-login",
-                          label: "取消登录",
-                          action: () => {
-                            void signOutSelectedMusicService();
-                          },
-                        },
-                      ]
-                    : []),
-                ]
-              : []),
-            {
-              key: "local-songs",
-              label: "本地音乐",
-              action: () =>
-                open("local-songs", localMusicTracks[0]?.id ?? "import"),
-            },
-          ],
+    ...serviceRows,
     "local-songs": [
       ...songsByTitle(localMusicTracks).map((track) => ({
         key: track.id,
@@ -883,21 +640,6 @@ export function App() {
         label: name,
         action: () => open("composer-tracks", undefined, name),
       })),
-    ...Object.fromEntries(
-      Object.entries(choices).map(([name, items]) => [
-        name,
-        items.map((item) => ({
-          key: item.key,
-          label: item.label,
-          value: item.selected ? "✓" : undefined,
-          leaf: true,
-          action: () => {
-            item.apply();
-            back();
-          },
-        })),
-      ]),
-    ),
     ...createMediaMenus({
       photos,
       activePhotos,
@@ -911,140 +653,13 @@ export function App() {
       setSlideshow,
       navigationRef,
     }),
-    about: [{ key: "done", label: "返回", action: () => back() }],
-    "main-menu": [
-      {
-        key: "music",
-        label: "音乐",
-        value: "固定",
-        disabled: true,
-        action: () => {},
-      },
-      {
-        key: "settings",
-        label: "设置",
-        value: "固定",
-        disabled: true,
-        action: () => {},
-      },
-      ...optionalMainItems.map((item) => ({
-        key: item.key,
-        label: item.label,
-        value: prefs.mainMenu.includes(item.key) ? "✓" : "—",
-        leaf: true,
-        action: () =>
-          setPreferences({
-            mainMenu: prefs.mainMenu.includes(item.key)
-              ? prefs.mainMenu.filter((key) => key !== item.key)
-              : [...prefs.mainMenu, item.key],
-          }),
-      })),
-    ].sort(
-      (a, b) => mainMenuOrder.indexOf(a.key) - mainMenuOrder.indexOf(b.key),
-    ),
-    "music-menu": optionalMusicItems.map((item) => ({
-      ...item,
-      value: prefs.musicMenu.includes(item.key) ? "✓" : "—",
-      leaf: true,
-      action: () =>
-        setPreferences({
-          musicMenu: prefs.musicMenu.includes(item.key)
-            ? prefs.musicMenu.filter((key) => key !== item.key)
-            : [...prefs.musicMenu, item.key],
-        }),
-    })),
-    backlight: backlightTimes.map((seconds) => ({
-      key: `backlight-${seconds}`,
-      label: seconds ? `${seconds} 秒` : "始终开启",
-      value: prefs.backlight === seconds ? "✓" : undefined,
-      leaf: true,
-      action: () => {
-        setPreferences({ backlight: seconds });
-        back();
-      },
-    })),
-    brightness: [{ key: "done", label: "完成", action: () => back() }],
-    "volume-limit": [{ key: "done", label: "完成", action: () => back() }],
-    extras: [
-      { key: "clock", label: "时钟", action: () => open("clock", "done") },
-      {
-        key: "notes",
-        label: "文本阅读",
-        action: () => open("notes", texts[0]?.id ?? "reader-guide"),
-      },
-    ],
-    notes: [
-      ...texts.map((doc) => ({
-        key: doc.id,
-        label: doc.title,
-        action: () => open("text-reader", undefined, doc.id),
-      })),
-      {
-        key: "reader-guide",
-        label: "阅读说明",
-        action: () => open("text-reader", undefined, "reader-guide"),
-      },
-      {
-        key: "text-import",
-        label: importingTexts ? "正在导入…" : "导入文本",
-        disabled: importingTexts,
-        action: () => textInput.current?.click(),
-      },
-    ],
-    "text-options": [
-      { key: "resume", label: "继续阅读", action: () => back() },
-      {
-        key: "start",
-        label: "回到开头",
-        action: () => {
-          if (groupKey) saveReadingPosition(groupKey, 0);
-          back();
-        },
-      },
-      ...(isLocalText
-        ? [
-            {
-              key: "delete",
-              label: "删除文本…",
-              action: () => open("confirm-delete-text", "cancel", groupKey),
-            },
-          ]
-        : []),
-    ],
-    "confirm-delete-text": [
-      { key: "cancel", label: "取消", action: () => back() },
-      {
-        key: "delete",
-        label: "删除文本",
-        action: () => {
-          if (!groupKey || deleting) return;
-          setDeleting(true);
-          void deleteText(groupKey)
-            .then((persisted) => {
-              if (persisted) {
-                const latest = navigationRef.current;
-                if (
-                  latest.screen.groupKey === groupKey &&
-                  [
-                    "text-reader",
-                    "text-options",
-                    "confirm-delete-text",
-                  ].includes(latest.screen.page)
-                ) {
-                  // Also handle MENU while deletion was still saving.
-                  const listIndex = latest.history
-                    .map((screen) => screen.page)
-                    .lastIndexOf("notes");
-                  back(latest.history.length - listIndex);
-                }
-              } else setNotice("删除失败，请重试");
-            })
-            .finally(() => setDeleting(false));
-        },
-      },
-    ],
-    clock: [{ key: "done", label: "返回", action: () => back() }],
+    ...settingsRows,
+    ...createTextMenus({ texts, groupKey, isLocalText, importingTexts, deleting, open, back,
+      openImport: () => textInput.current?.click(), setDeleting, setNotice,
+      getNavigation: () => navigationRef.current, saveReadingPosition, deleteText }),
     ...createLibraryMenus({
+      operations: { deletePlaylist, togglePlaylistTrack, removePlaylistTrack, addToOnTheGo, removeTrack,
+        playNext: id => localPlayer.playNext(id) },
       page,
       groupKey,
       playlists: localPlaylists,
@@ -1066,449 +681,45 @@ export function App() {
       playTrack,
       toggleFavorite,
     }),
-    ...(cloud
-      ? {
-          "playlist-tracks": [
-            ...visibleTracks.map((track) => ({
-              key: track.id,
-              label: track.title,
-              detail: track.artist,
-              action: () => playTrack(track.id),
-            })),
-            ...(!visibleTracks.length
-              ? [
-                  {
-                    key: "empty",
-                    label: "此歌单暂无可播放歌曲",
-                    disabled: true,
-                    action: () => {},
-                  },
-                ]
-              : []),
-          ],
-        }
-      : {}),
-    ...(cloud && optionTrack && trackService(optionTrack) === "local"
-      ? {
-          "track-options": [
-            {
-              key: "favorite",
-              label: localState.favorites.includes(optionTrack.id)
-                ? "取消本地收藏"
-                : "加入本地收藏",
-              action: () => toggleFavorite(optionTrack.id),
-            },
-            { key: "queue", label: "播放队列", action: () => open("queue") },
-            {
-              key: "play-next",
-              label: "下一首播放",
-              action: () => {
-                localPlayer.playNext(optionTrack.id);
-                back();
-              },
-            },
-            {
-              key: "delete",
-              label: "删除歌曲…",
-              action: () =>
-                open("confirm-delete-track", "cancel", optionTrack.id),
-            },
-          ],
-        }
-      : {}),
-    ...(optionTrack && trackService(optionTrack) !== "local"
-      ? {
-          "track-options": [
-            { key: "queue", label: "播放队列", action: () => open("queue") },
-            {
-              key: "play-next",
-              label: "下一首播放",
-              action: () => {
-                playerFor(trackService(optionTrack)).playNext(optionTrack.id);
-                back();
-              },
-            },
-          ],
-        }
-      : {}),
   };
-  if (optionTrack && canShowLyrics(optionTrack, prefs.lyricsEnabled)) {
-    const track = optionTrack;
-    managedRows["track-options"] = [
-      {
-        key: "lyrics",
-        label: "歌词",
-        action: () => {
-          const source = trackService(track);
-          if (source !== "local" && services.auth !== "authorized") {
-            open("music-account", "login");
-            return;
-          }
-          if (current?.id !== track.id)
-            playTrack(track.id, optionQueue.current);
-          else if (navigation.history.at(-1)?.page === "playing") back();
-          else open("playing");
-          setPlayView("lyrics");
-          setVolumeOverlay(false);
-        },
-      },
-      ...(managedRows["track-options"] ?? []),
-    ];
-  }
-  const albumRows: MenuItem[] = (
-    page === "coverflow" ? flowAlbums : page === "albums" ? browseAlbums : []
-  ).map((album) => ({
-    key: album.id,
-    label: album.title,
-    detail:
-      browseArtist !== undefined
-        ? `${album.tracks.length} 首歌曲`
-        : album.artist,
-    artwork: album.artwork,
-    action: () =>
-      open(
-        page === "coverflow" ? "coverflow-album" : "album-tracks",
-        album.tracks[0]?.id,
-        album.id,
-        page === "albums" ? browseArtist : undefined,
-      ),
+  Object.assign(managedRows, createTrackMenuOverrides({
+    cloud, optionTrack, localTrack: trackService(optionTrack) === "local",
+    localFavorites: localState.favorites, visibleTracks,
+    baseOptions: managedRows["track-options"] ?? [],
+    showLyrics: !!optionTrack && canShowLyrics(optionTrack, prefs.lyricsEnabled),
+    open, back, playTrack, toggleFavorite,
+    playNext: id => playerFor(trackService(optionTrack)).playNext(id),
+    onLyrics: track => {
+      const source = trackService(track);
+      if (source !== "local" && services.auth !== "authorized") {
+        open("music-account", "login");
+        return;
+      }
+      if (current?.id !== track.id)
+        playTrack(track.id, optionQueue.current);
+      else if (navigation.history.at(-1)?.page === "playing") back();
+      else open("playing");
+      openLyrics();
+    },
   }));
-  const rows: MenuItem[] =
-    managedRows[page] ??
-    (page === "home"
-      ? homeItems
-      : page === "music"
-        ? musicItems
-        : page === "playlists"
-          ? playlistItems
-          : page === "settings"
-            ? settingsItems
-            : page === "confirm-clear"
-              ? confirmItems
-              : page === "coverflow" || page === "albums"
-                ? (page === "albums" ? browseAlbums : flowAlbums).length
-                  ? page === "albums"
-                    ? [
-                        {
-                          key: "all-songs",
-                          label: "全部歌曲",
-                          detail: `${browseTracks.length} 首歌曲`,
-                          aggregate: true,
-                          action: () =>
-                            browseArtist !== undefined
-                              ? open("artist-tracks", undefined, browseArtist)
-                              : open("songs"),
-                        },
-                        ...albumRows,
-                      ]
-                    : albumRows
-                  : emptyItems
-                : page === "artists"
-                  ? artists.length
-                    ? [
-                        {
-                          key: "all-albums",
-                          label: "全部专辑",
-                          action: () => open("albums"),
-                        },
-                        ...artists.map((artist) => ({
-                          key: artist,
-                          label: artist,
-                          action: () =>
-                            open("albums", undefined, undefined, artist),
-                        })),
-                      ]
-                    : emptyItems
-                  : isTrackList && visibleTracks.length
-                    ? [
-                        ...visibleTracks.map((track) => ({
-                          key: track.id,
-                          label: track.title,
-                          detail: track.artist || track.album || track.filename,
-                          action: () => playTrack(track.id),
-                        })),
-                        ...(page === "search"
-                          ? [
-                              {
-                                key: "edit-search",
-                                label: "修改搜索…",
-                                action: textEntry.begin,
-                              },
-                            ]
-                          : []),
-                      ]
-                    : page === "favorites" ||
-                        page === "search" ||
-                        page === "playlist-tracks" ||
-                        page === "playlist-add-tracks"
-                      ? page === "search"
-                        ? [
-                            {
-                              key: "edit-search",
-                              label: "修改搜索…",
-                              action: textEntry.begin,
-                            },
-                          ]
-                        : []
-                      : !current || isTrackList
-                        ? emptyItems
-                        : []);
-  const selectedIndex = Math.max(
-    0,
-    rows.findIndex(
-      (row) =>
-        row.key === navigation.screen.selectedKey &&
-        (!row.disabled || (page === "music-account" && services.syncing)),
-    ),
-  );
-  const focusedRow =
-    rows[selectedIndex]?.disabled &&
-    !(page === "music-account" && services.syncing)
-      ? rows.find((row) => !row.disabled)
-      : rows[selectedIndex];
-  const rotate = (
-    steps: number,
-    _source: "pointer" | "wheel" | "keyboard" = "pointer",
-  ) => {
-    if (held) return;
-    activate();
-    if (sleeping) {
-      setSleeping(false);
-      return;
-    }
-    if (textEntry.editing && (page === "search" || page === "playlist-name")) {
-      textEntry.rotate(steps);
-      return;
-    }
-    if (page === "text-reader") {
-      reader.current?.scroll(steps);
-      return;
-    }
-    if (page === "photo-grid" || page === "photo-full") {
-      const destination = Math.max(
-        0,
-        Math.min(activePhotos.length - 1, photoIndex + steps),
-      );
-      setSlideshow(false);
-      if (destination === photoIndex || !activePhotos[destination]) return;
-      if (page === "photo-full") capture("replace");
-      dispatch({ type: "select", key: activePhotos[destination].id });
-      return;
-    }
-    if (page === "brightness") {
-      setPreferences({ brightness: prefs.brightness + steps * 0.05 });
-      return;
-    }
-    if (page === "volume-limit") {
-      setPreferences({ volumeLimit: prefs.volumeLimit + steps * 0.05 });
-      return;
-    }
-    if (page === "playing" && current) {
-      if (playView === "seek")
-        player.seek(player.getSnapshot().position + steps * 2);
-      else if (playView === "shuffle") player.setShuffle(steps > 0);
-      else if (playView === "rating") {
-        if (!setRating(current.id, (ratings[current.id] ?? 0) + steps))
-          setNotice("评分未能保存，本次仍生效");
-      } else if (playView === "lyrics") setLyricWheel((value) => value + steps);
-      else if (state.volumeControl) {
-        player.setVolume(player.getSnapshot().volume + steps * 0.025);
-        setVolumeOverlay(true);
-      } else setNotice("侧键调音量 · 中心键调进度");
-      return;
-    }
-    const keys = rows
-      .filter(
-        (row) =>
-          !row.disabled ||
-          (page === "music-account" && services.auth === "authorized"),
-      )
-      .map((row) => row.key);
-    const index = Math.max(0, keys.indexOf(focusedRow?.key ?? ""));
-    if (
-      keys[Math.max(0, Math.min(keys.length - 1, index + steps))] !==
-      keys[index]
-    )
-      feedback("step");
-    dispatch({ type: "move", keys, steps });
-  };
-  const chooseRow = (row: MenuItem) => {
-    if (!row.disabled) {
-      dispatch({ type: "select", key: row.key });
-      row.action();
-    }
-  };
-  const changePlayView = (view: PlayView) => {
-    if ((view === "lyrics") !== (playView === "lyrics")) capture("replace");
-    setPlayView(view);
-    setVolumeOverlay(false);
-  };
-  const playViews = playingViews(current, prefs.lyricsEnabled);
-  const cyclePlayView = () =>
-    changePlayView(
-      playViews[(playViews.indexOf(playView) + 1) % playViews.length],
-    );
-  const command = (value: WheelCommand) => {
-    if (held) return;
-    activate();
-    if (sleeping) {
-      setSleeping(false);
-      return;
-    }
-    if (textEntry.editing && (page === "search" || page === "playlist-name")) {
-      if (value === "select") {
-        const next = textEntry.pick(page === "search" ? query : playlistName);
-        if (next === null) {
-          textEntry.setEditing(false);
-          if (page === "playlist-name") saveName();
-          else
-            dispatch({
-              type: "select",
-              key: visibleTracks[0]?.id ?? "edit-search",
-            });
-        } else if (page === "search") setQuery(next);
-        else setPlaylistName(next);
-        return;
-      }
-      if (value === "menu") {
-        textEntry.setEditing(false);
-        return;
-      }
-    }
-    if (page === "photo-grid" || page === "photo-full") {
-      if (value === "next" || value === "previous") {
-        rotate(value === "next" ? 1 : -1);
-        return;
-      }
-      if (value === "seek-forward" || value === "seek-backward") {
-        const destination = activePhotos.at(
-          value === "seek-forward" ? -1 : 0,
-        )?.id;
-        if (!destination || destination === navigation.screen.selectedKey)
-          return;
-        capture("replace");
-        dispatch({
-          type: "select",
-          key: activePhotos.at(value === "seek-forward" ? -1 : 0)?.id ?? "",
-        });
-        return;
-      }
-      if (value === "options" && activePhotos[photoIndex]) {
-        setSlideshow(false);
-        open("photo-options", "slideshow", activePhotos[photoIndex].id);
-        return;
-      }
-      if (value === "play") {
-        if (page === "photo-grid")
-          open("photo-full", activePhotos[photoIndex]?.id, groupKey);
-        setSlideshow(!slideshow);
-        return;
-      }
-      if (value === "select" && page === "photo-full") {
-        setSlideshow(!slideshow);
-        return;
-      }
-    }
-    if (value === "sleep") {
-      player.pause();
-      setSleeping(true);
-      return;
-    }
-    if (page === "text-reader") {
-      if (value === "next" || value === "previous") {
-        reader.current?.scroll(value === "next" ? 1 : -1, true);
-        return;
-      }
-      if (value === "seek-forward" || value === "seek-backward") {
-        reader.current?.edge(value === "seek-forward");
-        return;
-      }
-      if (value === "select" || value === "options") {
-        if (!reader.current?.retry()) open("text-options", "resume", groupKey);
-        return;
-      }
-    }
-    if (value === "seek-forward" || value === "seek-backward") {
-      setTransportHint(value);
-      if (transportTimer.current) clearTimeout(transportTimer.current);
-      transportTimer.current = setTimeout(() => setTransportHint(null), 180);
-      player.seek(
-        player.getSnapshot().position + (value === "seek-forward" ? 2 : -2),
-      );
-      return;
-    }
-    if (value === "options") {
-      const id =
-        page === "playing"
-          ? current?.id
-          : isTrackList && visibleIds.has(focusedRow?.key ?? "")
-            ? focusedRow?.key
-            : undefined;
-      if (id) trackOptions(id);
-      return;
-    }
-    if (value === "home") {
-      textEntry.setEditing(false);
-      setSlideshow(false);
-      if (page !== "home")
-        capture(
-          page === "coverflow" ? "flow-close" : "back",
-          splitPages.has(page),
-        );
-      dispatch({ type: "home" });
-      setNotice("");
-    }
-    if (value === "menu") back();
-    if (value === "favorite")
-      toggleFavorite(
-        page === "playing"
-          ? current?.id
-          : isTrackList
-            ? focusedRow?.key
-            : undefined,
-      );
-    if (value === "select") {
-      if (page === "playing" && current) {
-        if (state.error || state.status === "error") player.play();
-        else cyclePlayView();
-      } else if (focusedRow) chooseRow(focusedRow);
-    }
-    if (value === "play") {
-      if (
-        page === "playlist-add-tracks" &&
-        focusedRow &&
-        trackById.has(focusedRow.key)
-      ) {
-        playTrack(
-          focusedRow.key,
-          state.tracks.map((track) => track.id),
-        );
-      } else if (page === "coverflow" || page === "albums") {
-        if (page === "albums" && focusedRow?.key === "all-songs") {
-          const tracks = songsByTitle(browseTracks);
-          if (tracks[0])
-            playTrack(
-              tracks[0].id,
-              tracks.map((track) => track.id),
-            );
-        } else if (albums.length && focusedRow) playAlbum(focusedRow.key);
-        else if (focusedRow) chooseRow(focusedRow);
-      } else if (page === "artists" && focusedRow) {
-        const tracks = songsByTitle(
-          focusedRow.key === "all-albums"
-            ? musicTracks
-            : tracksForArtist(musicTracks, focusedRow.key),
-        );
-        if (tracks[0])
-          playTrack(
-            tracks[0].id,
-            tracks.map((track) => track.id),
-          );
-      } else if (isTrackList && visibleIds.has(focusedRow?.key ?? "")) {
-        if (focusedRow!.key === player.getSnapshot().currentId) player.toggle();
-        else chooseRow(focusedRow!);
-      } else if (player.getSnapshot().currentId) player.toggle();
-      else {
+  const { rows, selectedIndex, focusedRow } = createClassicMenuModel({
+    page, selectedKey: navigation.screen.selectedKey, browseArtist, managedRows,
+    primaryRows: { home: homeItems, music: musicItems, playlists: playlistItems,
+      settings: settingsItems, "confirm-clear": confirmItems },
+    browseAlbums, flowAlbums, browseTracks, artists, visibleTracks, isTrackList,
+    current, accountSyncing: services.syncing, emptyItems, open, playTrack,
+    beginText: textEntry.begin,
+  });
+  const { rotate, command } = createClassicInputController({
+    device: { held, sleeping, activate, setSleeping },
+    navigation: { page, groupKey, selectedKey: navigation.screen.selectedKey,
+      dispatch, open, back, capture, setNotice },
+    menu: { rows, focusedRow, isTrackList, visibleIds, visibleTracks,
+      accountAuthorized: services.auth === "authorized", feedback },
+    playback: { player, state, current, playView, ratings, setRating, toggleFavorite,
+      cyclePlayView, scrollLyrics, showVolume, showTransportHint, trackOptions },
+    library: { trackById, musicTracks, browseTracks, albums, playTrack, playAlbum,
+      playDefault: () => {
         const local = page === "local-songs" || !cloud;
         if (local && !localPlayer.getSnapshot().tracks.length) addDemos();
         const tracks = local
@@ -1521,52 +732,13 @@ export function App() {
             tracks.map((track) => track.id),
           );
         else if (!local) account();
-      }
-    }
-    if (value === "next" || value === "previous") {
-      if (page === "coverflow") {
-        rotate(value === "next" ? 1 : -1);
-        return;
-      }
-      if (!state.tracks.length) {
-        setNotice("先选择一首歌曲");
-        return;
-      }
-      if (value === "next") player.next();
-      else player.previous();
-      if (!current) open("playing");
-    }
-  };
+      },
+    },
+    photos: { activePhotos, photoIndex, slideshow, setSlideshow },
+    text: { textEntry, query, playlistName, setQuery, setPlaylistName, saveName, reader },
+    settings: { prefs, setPreferences },
+  });
 
-  useLayoutEffect(() => {
-    const previous = previousPlaybackPage.current;
-    previousPlaybackPage.current = { page, trackId: current?.id };
-    if (
-      (previous.page === "playing" && page !== "playing") ||
-      previous.trackId !== current?.id
-    ) {
-      setPlayView((view) =>
-        canShowLyrics(current, prefs.lyricsEnabled)
-          ? restingPlayView(view)
-          : "art",
-      );
-      setVolumeOverlay(false);
-      setLyricWheel(0);
-    }
-  }, [page, current?.id]);
-  useEffect(() => {
-    if (!prefs.lyricsEnabled && playView === "lyrics") changePlayView("art");
-  }, [prefs.lyricsEnabled, playView]);
-  useEffect(() => {
-    if (
-      prefs.lyricsEnabled &&
-      page === "playing" &&
-      playView === "lyrics" &&
-      current
-    )
-      void loadThirdPartyLyrics(current);
-    // Loading is keyed by song/view, not by the playback clock or metadata updates.
-  }, [prefs.lyricsEnabled, page, playView, current?.id]);
   useEffect(() => {
     localPlayer.setVolumeLimit(prefs.volumeLimit);
     applePlayer.setVolumeLimit(prefs.volumeLimit);
@@ -1577,12 +749,6 @@ export function App() {
     if (page === "search" && cloud && !textEntry.editing)
       void searchSelectedMusicService(query);
   }, [page, cloud, services.selected, textEntry.editing, query]);
-  useEffect(
-    () => () => {
-      if (transportTimer.current) clearTimeout(transportTimer.current);
-    },
-    [],
-  );
   useEffect(() => {
     void restorePhotos();
     void restoreTexts();
@@ -1613,7 +779,7 @@ export function App() {
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute(
         "content",
-        prefs.background === "transparent" ? "transparent" : prefs.background === "dark" ? "#202124" : "#e8e3dc",
+        backgroundColors[prefs.background],
       );
   }, [prefs.background]);
   useLayoutEffect(() => {
@@ -1637,108 +803,31 @@ export function App() {
     const timer = setTimeout(() => setNotice(""), 2200);
     return () => clearTimeout(timer);
   }, [notice]);
-  useEffect(() => {
-    if (!volumeOverlay) return;
-    const timer = setTimeout(() => setVolumeOverlay(false), 1300);
-    return () => clearTimeout(timer);
-  }, [volumeOverlay, state.volume]);
-  const title =
-    page === "album-tracks"
-      ? (selectedAlbum?.title ?? "专辑")
-      : page === "podcast-episodes"
-        ? (podcastShows.find((show) => show.id === groupKey)?.title ?? "播客")
-        : page === "artist-tracks" ||
-            page === "genre-tracks" ||
-            page === "composer-tracks"
-          ? (groupKey ?? "艺人")
-          : {
-              about: "关于本机",
-              "main-menu": "主菜单",
-              "music-menu": "音乐菜单",
-              backlight: "背光时间",
-              brightness: "亮度",
-              "volume-limit": "音量上限",
-              extras: "附加功能",
-              clock: "时钟",
-              notes: "文本阅读",
-              "text-reader": textDocument?.title ?? "文本阅读",
-              "text-options": "阅读选项",
-              "confirm-delete-text": "删除文本",
-              home: "ReiPod",
-              music: "音乐",
-              "music-services": "音乐服务",
-              "music-account": serviceName,
-              "local-songs": "本地音乐",
-              songs: "歌曲",
-              demos: "试听音乐",
-              playing: playView === "lyrics" ? "歌词" : "正在播放",
-              settings: "设置",
-              "confirm-clear": "清空资料库",
-              coverflow: "Cover Flow",
-              "coverflow-album": "Cover Flow",
-              photos: "照片",
-              "photo-grid": "所有照片",
-              "photo-full": "照片",
-              "photo-options": "照片选项",
-              "photo-delete": "删除照片",
-              podcasts: "播客",
-              finish: "机身颜色",
-              background: "背景",
-              "click-sound": "转轮声音",
-              "lyrics-display": "歌词显示",
-              "shuffle-mode": "随机播放",
-              "repeat-mode": "重复播放",
-              artists: "艺人",
-              genres: "风格",
-              composers: "作曲者",
-              albums: browseArtist ?? "专辑",
-              favorites: "我的收藏",
-              recent: "最近添加",
-              playlists: "播放列表",
-              queue: "播放队列",
-              search: "搜索",
-              "playlist-tracks": selectedPlaylist?.name ?? "歌单",
-              "playlist-options": "管理歌单",
-              "playlist-name": groupKey ? "重命名歌单" : "新建歌单",
-              "playlist-add-tracks": "选择歌曲",
-              "pick-playlist": "添加到歌单",
-              "track-options": "歌曲选项",
-              "confirm-delete-track": "删除歌曲",
-              "confirm-delete-playlist": "删除歌单",
-            }[page];
-  const renderRows = () => (
-    <MenuRows
-      rows={rows}
-      focusedKey={focusedRow?.key}
-      page={page}
-      currentId={state.currentId}
-      active={active}
-      trackIds={isTrackList ? visibleIds : new Set<string>()}
-      tracks={trackById}
-      playlistIds={playlistTrackIds}
-      selectedRow={selectedRow}
-    />
-  );
+  const title = classicScreenTitle({ page, groupKey, browseArtist, playView,
+    albumTitle: selectedAlbum?.title,
+    podcastTitle: podcastShows.find(show => show.id === groupKey)?.title,
+    documentTitle: textDocument?.title, playlistTitle: selectedPlaylist?.name, serviceName });
   return (
-    <main
-      className="app-shell"
-      aria-label="ReiPod 音乐播放器"
-      data-finish={prefs.finish}
-      onPointerDownCapture={(event) => {
-        if (!(event.target as Element).closest(".screen-glass") && !held)
-          activate();
-      }}
-      onKeyDownCapture={() => {
-        if (!held) activate();
-      }}
-      onWheelCapture={(event) => {
-        if (!(event.target as Element).closest(".screen-glass") && !held)
-          activate();
-      }}
-      data-background={prefs.background}
-      data-music-service={services.selected}
-      data-playback-source={services.playback}
-    >
+    <ClassicShell
+      appearance={prefs}
+      selectedService={services.selected}
+      playbackSource={services.playback}
+      page={page}
+      view={page === "playing" ? playView : undefined}
+      split={splitMenu || page === "home" || page === "music"}
+      held={held}
+      sleeping={sleeping}
+      dimmed={dimmed}
+      brightness={prefs.brightness}
+      notice={notice}
+      contentRef={content}
+      onActivity={activate}
+      onToggleHold={() => { activate(); setHeld(!held); }}
+      wheel={{ onRotate: rotate, onCommand: command, onFeedback: feedback,
+        playLabel: busy ? "取消载入" : active ? "暂停" : "播放" }}
+      header={<ClassicStatusBar title={title} shuffle={state.shuffle} repeat={state.repeat}
+        held={held} hasCurrent={!!current} active={active} busy={busy} transportHint={transportHint} />}
+      imports={
       <FileImports
         audio={input}
         photos={photoInput}
@@ -1770,465 +859,62 @@ export function App() {
           if (!persisted) setNotice("播客分类未能保存，本次仍可播放");
         }}
       />
-      <section className="classic-device" aria-label="classic 播放器">
-        <HoldSwitch
-          held={held}
-          onToggle={() => {
-            activate();
-            setHeld(!held);
-          }}
-        />
-        <ReadOnlyScreen scene={page}>
-          <div
-            className="lcd-screen"
-            data-page={page}
-            data-split={
-              splitMenu || page === "home" || page === "music"
-                ? "true"
-                : undefined
+      }
+    >
+      <ClassicScreenContent
+        page={page} groupKey={groupKey} title={title}
+        menu={{ rows, focusedRow, selectedIndex, isTrackList, visibleIds, visibleTracks,
+          trackById, playlistTrackIds, selectedRow, hasManagedRows: managedRows[page] !== undefined, splitMenu }}
+        library={{ albums, flowAlbums, artistCount: artists.length,
+          browseAlbumCount: browseAlbums.length, playlistTitle: selectedPlaylist?.name, optionTrack }}
+        playback={{ state, current, active, playView, lyricWheel,
+          rating: current ? ratings[current.id] ?? 0 : 0, volumeOverlay }}
+        text={{ textEntry, query, playlistName, textDocument, reader }}
+        photos={{ activePhotos, photoIndex, slideshow }} prefs={prefs}
+        preview={{ page, focusedRow, albums, current, sleeping, tracks: state.tracks }}
+        qrImage={services.qrImage} serviceName={serviceName}
+        accountHeader={page === "music-account" ? (
+          <MusicAccountHeader
+            profile={externalMusic ? services.profile : undefined}
+            serviceName={
+              nativeMusic ? "iPhone 系统音乐" : serviceName
             }
-            data-sleeping={sleeping}
-            style={{
-              ...lcdMotionStyle,
-              filter: `brightness(${prefs.brightness})`,
-            }}
-            data-view={page === "playing" ? playView : undefined}
-          >
-            <div className="screen-viewport" inert={held || sleeping}>
-              <div className="screen-content" ref={content}>
-                <div className="screen-status">
-                  <strong>{title}</strong>
-                  <span className="play-modes">
-                    {state.shuffle && (
-                      <span title="随机播放" aria-label="随机播放">
-                        <PlayerIcon name="shuffle" />
-                      </span>
-                    )}
-                    {state.repeat !== "off" && (
-                      <span
-                        title={`重复${repeatText[state.repeat]}`}
-                        aria-label={`重复${repeatText[state.repeat]}`}
-                      >
-                        <PlayerIcon name="repeat" />
-                        {state.repeat === "one" && <small>1</small>}
-                      </span>
-                    )}
-                  </span>
-                  {held && (
-                    <svg
-                      className="hold-icon"
-                      viewBox="0 0 12 14"
-                      aria-label="已锁定"
-                      role="img"
-                    >
-                      <path d="M3 6V4a3 3 0 0 1 6 0v2M2 6h8v7H2Z" />
-                    </svg>
-                  )}
-                  {current ? (
-                    <span
-                      className="screen-playing-link"
-                      aria-label={active ? "正在播放" : "已暂停"}
-                    >
-                      <span aria-hidden="true">
-                        {transportHint ? (
-                          <PlayerIcon name={transportHint} filled />
-                        ) : busy ? (
-                          <i className="lcd-loading" />
-                        ) : (
-                          <PlayerIcon
-                            name={active ? "play" : "pause"}
-                            filled={active}
-                          />
-                        )}
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="screen-header-spacer" />
-                  )}
-                  <BatteryIndicator />
-                </div>
-                {(page === "search" || page === "playlist-name") &&
-                  (textEntry.editing ? (
-                    <WheelTextEntry
-                      text={page === "search" ? query : playlistName}
-                      title={page === "search" ? "搜索音乐" : "歌单名称"}
-                      characters={textEntry.characters}
-                      index={textEntry.index}
-                    />
-                  ) : (
-                    <div className="lcd-text-display">
-                      {page === "search" ? query || "全部歌曲" : playlistName}
-                    </div>
-                  ))}
-                {(page === "playlist-tracks" ||
-                  page === "playlist-add-tracks") && (
-                  <div className="lcd-toolbar">
-                    <span>{selectedPlaylist?.name ?? "歌单"}</span>
-                  </div>
-                )}
-                {page === "about" && (
-                  <div className="classic-about">
-                    <strong>ReiPod</strong>
-                    <span>Classic 音乐播放器</span>
-                    <dl>
-                      <dt>歌曲</dt>
-                      <dd>{state.tracks.length}</dd>
-                      <dt>专辑</dt>
-                      <dd>{albums.length}</dd>
-                      <dt>艺人</dt>
-                      <dd>{artists.length}</dd>
-                      <dt>版本</dt>
-                      <dd>0.1.0</dd>
-                    </dl>
-                    <nav>{renderRows()}</nav>
-                  </div>
-                )}
-                {(page === "brightness" || page === "volume-limit") && (
-                  <div className="classic-adjustment">
-                    <ClassicGlyph
-                      name={page === "brightness" ? "background" : "speaker"}
-                    />
-                    <progress
-                      className="adjustment-meter"
-                      max={1}
-                      value={
-                        page === "brightness"
-                          ? prefs.brightness
-                          : prefs.volumeLimit
-                      }
-                      aria-label={
-                        page === "brightness" ? "屏幕亮度" : "最高音量"
-                      }
-                    />
-                    <strong>
-                      {Math.round(
-                        (page === "brightness"
-                          ? prefs.brightness
-                          : prefs.volumeLimit) * 100,
-                      )}
-                      %
-                    </strong>
-                    <small>
-                      {page === "volume-limit" && !state.volumeControl
-                        ? "此设备使用侧键调节音量"
-                        : "转动转轮调整，中心键完成"}
-                    </small>
-                    <nav>{renderRows()}</nav>
-                  </div>
-                )}
-                {page === "clock" && (
-                  <div className="clock-screen">
-                    <ClassicClock />
-                    <nav>{renderRows()}</nav>
-                  </div>
-                )}
-                {page === "text-reader" && textDocument && (
-                  <TextReader
-                    source={textDocument}
-                    ref={reader}
-                    key={textDocument.id}
-                  />
-                )}
-                {(page === "home" || page === "music") && (
-                  <div className="home-screen">
-                    <nav
-                      className="screen-menu"
-                      aria-label={page === "home" ? "主菜单" : "音乐菜单"}
-                    >
-                      {renderRows()}
-                    </nav>
-                    <MenuPreview
-                      spec={menuPreview(
-                        page,
-                        focusedRow?.key ?? "music",
-                        focusedRow?.label ?? "音乐",
-                        focusedRow?.value ?? focusedRow?.detail,
-                      )}
-                      albums={albums}
-                      current={current}
-                      initialAlbumId={
-                        albums.find((album) =>
-                          album.tracks.some(
-                            (track) => track.id === current?.id,
-                          ),
-                        )?.id
-                      }
-                      suspended={sleeping}
-                      count={state.tracks.length}
-                      bytes={state.tracks.reduce(
-                        (sum, track) => sum + track.size,
-                        0,
-                      )}
-                    />
-                  </div>
-                )}
-                {(page === "photo-grid" || page === "photo-full") && (
-                  <PhotoScreen
-                    photos={activePhotos}
-                    index={photoIndex}
-                    full={page === "photo-full"}
-                    slideshow={slideshow}
-                  />
-                )}
-                {(page === "coverflow" || page === "coverflow-album") &&
-                  (albums.length ? (
-                    <CoverFlow
-                      albums={flowAlbums}
-                      index={
-                        page === "coverflow-album"
-                          ? Math.max(
-                              0,
-                              flowAlbums.findIndex(
-                                (album) => album.id === groupKey,
-                              ),
-                            )
-                          : selectedIndex
-                      }
-                      animate
-                      albumOpen={page === "coverflow-album"}
-                    >
-                      {page === "coverflow-album" && (
-                        <div
-                          className="screen-song-list"
-                          role="group"
-                          aria-label="专辑曲目"
-                        >
-                          {renderRows()}
-                        </div>
-                      )}
-                    </CoverFlow>
-                  ) : (
-                    <div className="screen-empty">
-                      <strong>暂无专辑</strong>
-                      <nav className="empty-actions" aria-label="添加音乐">
-                        {renderRows()}
-                      </nav>
-                    </div>
-                  ))}
-                {(page === "settings" ||
-                  page === "music-services" ||
-                  page === "music-account" ||
-                  page === "notes" ||
-                  page === "text-options" ||
-                  page === "confirm-delete-text" ||
-                  page === "confirm-clear" ||
-                  page === "artists" ||
-                  page === "albums" ||
-                  page === "playlists" ||
-                  (managedRows[page] !== undefined &&
-                    !isTrackList &&
-                    ![
-                      "about",
-                      "brightness",
-                      "volume-limit",
-                      "clock",
-                      "photo-grid",
-                      "photo-full",
-                    ].includes(page) &&
-                    !(page === "playlist-name" && textEntry.editing))) && (
-                  <div
-                    className={`settings-screen ${splitMenu ? "split-settings-screen" : ""} ${page === "photos" ? "photo-album-list" : ""} ${page === "music-account" ? "music-account-screen" : ""} ${page === "music-account" && services.qrImage ? "has-login-qr" : ""}`}
-                  >
-                    {page === "music-account" && (
-                      <MusicAccountHeader
-                        profile={externalMusic ? services.profile : undefined}
-                        serviceName={
-                          nativeMusic ? "iPhone 系统音乐" : serviceName
-                        }
-                        authorized={services.auth === "authorized"}
-                        syncing={services.syncing}
-                        qr={!!services.qrImage}
-                        status={
-                          nativeMusic
-                              ? services.auth === "authorized"
-                                ? "已连接系统音乐"
-                                : "访问 iPhone 音乐资料库"
-                              : services.auth === "unconfigured"
-                                ? externalMusic
-                                  ? "音乐服务尚未连接"
-                                  : "网站尚未配置 Apple Music"
-                                : services.auth === "authorized"
-                                  ? `已连接 ${serviceName}`
-                                  : services.auth === "loading"
-                                    ? services.loginMessage ||
-                                      `正在连接 ${serviceName}…`
-                                    : `连接你的 ${serviceName}`
-                        }
-                        detail={
-                          services.auth === "unconfigured"
-                            ? "配置完成后即可登录并同步资料库。"
-                            : services.syncing
-                              ? "正在同步资料库…"
-                              : services.auth === "authorized"
-                                ? `${services.libraryTracks.length} 首歌曲 · ${services.playlists.length} 个歌单`
-                                : nativeMusic
-                                  ? "允许访问后显示系统歌单，本地音乐独立保留。"
-                                  : externalMusic && usesExternalMusicLogin()
-                                    ? services.loginMessage || "在音乐 App 确认授权，返回后自动连接资料库。"
-                                    : "扫码登录后同步歌单，本地音乐独立保留。"
-                        }
-                        error={services.error}
-                      />
-                    )}
-                    {page === "music-account" && services.qrImage && (
-                      <div className="music-login-qr">
-                        <img
-                          src={services.qrImage}
-                          alt={`${serviceName}登录二维码`}
-                        />
-                      </div>
-                    )}
-                    {page === "confirm-delete-text" && (
-                      <p className="clear-question">
-                        删除「{textDocument?.title ?? "此文本"}」？
-                        <span>不会删除设备上的原始文件</span>
-                      </p>
-                    )}
-                    {(page === "confirm-delete-track" ||
-                      page === "confirm-delete-playlist") && (
-                      <p className="clear-question">
-                        {page === "confirm-delete-track"
-                          ? `删除「${optionTrack?.title ?? "此歌曲"}」？`
-                          : `删除「${selectedPlaylist?.name ?? "此歌单"}」？`}
-                        <span>
-                          {page === "confirm-delete-track"
-                            ? "不会删除设备上的原始文件"
-                            : "歌曲仍保留在曲库中"}
-                        </span>
-                      </p>
-                    )}
-                    {page === "track-options" && optionTrack && (
-                      <p className="options-title">{optionTrack.title}</p>
-                    )}
-                    {page === "confirm-clear" && (
-                      <p className="clear-question">
-                        清空本地资料库及已保存的音频？
-                        <span>不会删除设备上的原始文件</span>
-                      </p>
-                    )}
-                    <nav
-                      className="screen-menu"
-                      aria-label={
-                        page === "settings"
-                          ? "设置菜单"
-                          : page === "confirm-clear"
-                            ? "清空确认"
-                            : `${title}列表`
-                      }
-                    >
-                      {renderRows()}
-                    </nav>
-                    {splitMenu && (
-                      <MenuPreview
-                        spec={menuPreview(
-                          page,
-                          focusedRow?.key ?? "music",
-                          focusedRow?.label ?? "音乐",
-                          focusedRow?.value ?? focusedRow?.detail,
-                        )}
-                        albums={albums}
-                        current={current}
-                        initialAlbumId={
-                          albums.find((album) =>
-                            album.tracks.some(
-                              (track) => track.id === current?.id,
-                            ),
-                          )?.id
-                        }
-                        suspended={sleeping}
-                        count={state.tracks.length}
-                        bytes={state.tracks.reduce(
-                          (sum, track) => sum + track.size,
-                          0,
-                        )}
-                      />
-                    )}
-                    {(page === "albums" || page === "artists") && (
-                      <div className="screen-footer">
-                        {page === "albums"
-                          ? browseAlbums.length
-                          : artists.length}{" "}
-                        {page === "albums" ? "张专辑" : "位艺人"}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {((isTrackList &&
-                  page !== "coverflow-album" &&
-                  !(page === "search" && textEntry.editing)) ||
-                  (page === "playing" && !current)) &&
-                  (isTrackList && visibleTracks.length ? (
-                    <div className="song-screen">
-                      <div
-                        className="screen-song-list"
-                        role="group"
-                        aria-label={`${title}列表`}
-                      >
-                        {renderRows()}
-                      </div>
-                      <div className="screen-footer">
-                        <span>
-                          {visibleIds.has(focusedRow?.key ?? "")
-                            ? `${visibleTracks.findIndex((track) => track.id === focusedRow?.key) + 1} / ${visibleTracks.length}`
-                            : `共 ${visibleTracks.length} 首歌曲`}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="screen-empty">
-                      <span className="music-note" aria-hidden="true">
-                        ♫
-                      </span>
-                      <strong>
-                        {page === "favorites"
-                          ? "还没有收藏的歌曲"
-                          : page === "search"
-                            ? "没有匹配的歌曲"
-                            : "暂无歌曲"}
-                      </strong>
-                      {page === "search" ? (
-                        <nav className="empty-actions">{renderRows()}</nav>
-                      ) : page === "playlist-tracks" ? (
-                        <nav className="empty-actions" aria-label="管理空歌单">
-                          {renderRows()}
-                        </nav>
-                      ) : page === "favorites" ? (
-                        <small>长按中心键，在歌曲选项中收藏</small>
-                      ) : (
-                        <nav className="empty-actions" aria-label="添加音乐">
-                          {renderRows()}
-                        </nav>
-                      )}
-                    </div>
-                  ))}
-                {page === "playing" && current && (
-                  <NowPlayingScreen
-                    state={state}
-                    current={current}
-                    view={playView}
-                    lyricWheel={lyricWheel}
-                    rating={ratings[current.id] ?? 0}
-                    volumeOverlay={volumeOverlay}
-                  />
-                )}
-              </div>
-            </div>
-            {dimmed && <div className="lcd-backlight-dim" aria-hidden="true" />}
-            {notice && (
-              <div className="screen-notice" role="status">
-                {notice}
-              </div>
-            )}
-          </div>
-        </ReadOnlyScreen>
-        <ClickWheel
-          onRotate={rotate}
-          onCommand={command}
-          disabled={held}
-          playLabel={busy ? "取消载入" : active ? "暂停" : "播放"}
-          onFeedback={feedback}
-        />
-      </section>
-    </main>
+            authorized={services.auth === "authorized"}
+            syncing={services.syncing}
+            qr={!!services.qrImage}
+            status={
+              nativeMusic
+                  ? services.auth === "authorized"
+                    ? "已连接系统音乐"
+                    : "访问 iPhone 音乐资料库"
+                  : services.auth === "unconfigured"
+                    ? externalMusic
+                      ? "音乐服务尚未连接"
+                      : "网站尚未配置 Apple Music"
+                    : services.auth === "authorized"
+                      ? `已连接 ${serviceName}`
+                      : services.auth === "loading"
+                        ? services.loginMessage ||
+                          `正在连接 ${serviceName}…`
+                        : `连接你的 ${serviceName}`
+            }
+            detail={
+              services.auth === "unconfigured"
+                ? "配置完成后即可登录并同步资料库。"
+                : services.syncing
+                  ? "正在同步资料库…"
+                  : services.auth === "authorized"
+                    ? `${services.libraryTracks.length} 首歌曲 · ${services.playlists.length} 个歌单`
+                    : nativeMusic
+                      ? "允许访问后显示系统歌单，本地音乐独立保留。"
+                      : externalMusic && usesExternalMusicLogin()
+                        ? services.loginMessage || "在音乐 App 确认授权，返回后自动连接资料库。"
+                        : "扫码登录后同步歌单，本地音乐独立保留。"
+            }
+            error={services.error}
+          />
+        ) : null}
+      />
+    </ClassicShell>
   );
 }

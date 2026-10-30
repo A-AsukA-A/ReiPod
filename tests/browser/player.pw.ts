@@ -171,6 +171,11 @@ test("artist browsing drills into scoped albums, keeps its focus and plays only 
   );
   await key(page, "Escape");
   await choose(page, "艺人");
+  // Filenames already match titles before tags load. Wait for artist metadata itself
+  // so the "unknown artist" row cannot disappear between wheel steps.
+  await expect(live(page).locator(".row-title")).toHaveText([
+    "全部专辑", "Alpha", "Zulu",
+  ]);
   await choose(page, "Alpha");
   await expect(live(page).locator(".screen-status > strong")).toHaveText(
     "Alpha",

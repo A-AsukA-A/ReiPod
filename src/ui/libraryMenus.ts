@@ -1,17 +1,18 @@
 import type { RefObject } from "react";
 import type { Track, PlayerState } from "../player/Player";
 import type { Playlist } from "../player/playlists";
-import {
-  deletePlaylist,
-  togglePlaylistTrack,
-  removePlaylistTrack,
-  addToOnTheGo,
-} from "../player/playlists";
-import { player, removeTrack } from "../player/store";
 import { albumsFor } from "../player/library";
 import type { Page, NavigationState } from "./navigation";
 import type { MenuItem } from "./MenuRows";
 type LibraryMenuContext = {
+  operations: {
+    deletePlaylist: (id: string) => boolean;
+    togglePlaylistTrack: (id: string, trackId: string) => boolean;
+    removePlaylistTrack: (id: string, trackId: string) => boolean;
+    addToOnTheGo: (trackId: string) => { persisted: boolean; added: boolean };
+    removeTrack: (id: string) => Promise<boolean>;
+    playNext: (id: string) => void;
+  };
   page: Page;
   groupKey?: string;
   playlists: Playlist[];
@@ -34,6 +35,7 @@ type LibraryMenuContext = {
   toggleFavorite: (id?: string) => void;
 };
 export function createLibraryMenus({
+  operations,
   page,
   groupKey,
   playlists,
@@ -55,6 +57,7 @@ export function createLibraryMenus({
   playTrack,
   toggleFavorite,
 }: LibraryMenuContext): Partial<Record<Page, MenuItem[]>> {
+  const { deletePlaylist, togglePlaylistTrack, removePlaylistTrack, addToOnTheGo, removeTrack, playNext } = operations;
   return {
     "playlist-name": [
       { key: "edit-name", label: "修改名称", action: beginText },
@@ -181,7 +184,7 @@ export function createLibraryMenus({
             label: "播放下一首",
             disabled: optionTrack.id === state.currentId,
             action: () => {
-              player.playNext(optionTrack.id);
+              playNext(optionTrack.id);
               setNotice("已设为下一首播放");
             },
           },
@@ -252,6 +255,7 @@ export function createLibraryMenus({
                 setNotice("歌曲已从曲库删除");
               }
             })
+            .catch(() => setNotice("删除失败，请重试"))
             .finally(() => setDeleting(false));
         },
       },

@@ -574,3 +574,25 @@ for (const width of [320, 390, 960]) {
     await expect(list).not.toContainText("逐字");
   });
 }
+
+test("classic controller expires volume feedback without restarting playback or refetching lyrics", async ({ page }) => {
+  const counts = await fixture(page, "netease");
+  await lyrics(page);
+  await expect.poll(() => counts.lyrics).toBe(1);
+  await key(page, "Space");
+  await expect(live(page).locator('.screen-playing-link')).toHaveAttribute("aria-label", "已暂停");
+  // Pause and lyric metadata updates must not issue another lyric/playback request.
+  await key(page, "Enter");
+  await expect(live(page).locator('.view-art')).toHaveCount(1);
+  await key(page, "ArrowDown");
+  await expect(live(page).locator('.classic-volume')).toBeVisible();
+  await expect(live(page).locator('.classic-volume')).toHaveCount(0, { timeout: 4000 });
+  await expect(live(page).locator('.view-art')).toHaveCount(1);
+  await key(page, "ArrowDown");
+  await expect(live(page).locator('.classic-volume')).toBeVisible();
+  await key(page, "Enter");
+  await expect(live(page).locator('.view-seek')).toHaveCount(1);
+  await expect(live(page).locator('.classic-volume')).toHaveCount(0);
+  expect(counts.lyrics).toBe(1);
+  expect(counts.playback).toBe(1);
+});

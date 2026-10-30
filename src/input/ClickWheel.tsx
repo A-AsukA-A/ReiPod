@@ -16,6 +16,7 @@ export type WheelCommand =
   | "seek-backward"
   | "sleep";
 type Props = {
+  timing: { readonly seek: number; readonly options: number; readonly sleep: number; readonly repeat: number };
   onRotate: (steps: number, source?: "pointer" | "wheel" | "keyboard") => void;
   onCommand: (command: WheelCommand) => void;
   playLabel?: string;
@@ -25,6 +26,7 @@ type Props = {
 
 /** One pointer or key owns a press. A hold never emits the short command on release. */
 export function ClickWheel({
+  timing,
   onRotate,
   onCommand,
   playLabel = "播放或暂停",
@@ -80,9 +82,9 @@ export function ClickWheel({
           seekTimer.current = setInterval(() => {
             if (!callbacks.current.disabled)
               callbacks.current.onCommand(action);
-          }, 120);
+          }, timing.repeat);
       },
-      seeking ? 350 : action === "sleep" ? 800 : 600,
+      seeking ? timing.seek : action === "sleep" ? timing.sleep : timing.options,
     );
   };
   const release = (command: WheelCommand, eligible = true) => {

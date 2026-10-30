@@ -1,6 +1,7 @@
+import { classic2007 } from "../models/classic";
 import type { Track } from "../player/Player";
 
-export type PlayView = "art" | "seek" | "shuffle" | "rating" | "lyrics";
+export type PlayView = typeof classic2007.playback.views[number];
 
 /** Classic skips information that the current song cannot supply. */
 export function canShowLyrics(track: Track | undefined, enabled: boolean) {
@@ -18,13 +19,9 @@ export function playingViews(
   track: Track | undefined,
   lyricsEnabled: boolean,
 ): PlayView[] {
-  return [
-    "art",
-    "seek",
-    "shuffle",
-    "rating",
-    ...(canShowLyrics(track, lyricsEnabled) ? ["lyrics" as const] : []),
-  ];
+  return classic2007.playback.views.filter(
+    view => view !== "lyrics" || canShowLyrics(track, lyricsEnabled),
+  );
 }
 
 /** Editing a control is temporary; choosing the lyrics reader is a lasting view choice. */

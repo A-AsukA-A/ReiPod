@@ -1,3 +1,6 @@
+import { classic2007 } from "../models/classic";
+import { parseAppearance } from "./appearance";
+import type { Appearance } from "./appearance";
 export const optionalMainItems = [
   { key: "coverflow", label: "Cover Flow" },
   { key: "photos", label: "照片" },
@@ -7,16 +10,7 @@ export const optionalMainItems = [
   { key: "playing", label: "正在播放" },
 ];
 // 2007 iPod classic order, with unsupported Videos omitted. Cover Flow is an opt-in shortcut.
-export const mainMenuOrder = [
-  "music",
-  "coverflow",
-  "photos",
-  "podcasts",
-  "extras",
-  "settings",
-  "shuffle-all",
-  "playing",
-];
+export const mainMenuOrder: readonly string[] = classic2007.menus.homeOrder;
 export const optionalMusicItems = [
   { key: "coverflow", label: "Cover Flow" },
   { key: "playlists", label: "播放列表" },
@@ -29,10 +23,8 @@ export const optionalMusicItems = [
 ];
 export const backlightTimes = [0, 5, 10, 20, 30, 60] as const;
 export type BacklightTime = (typeof backlightTimes)[number];
-export type Preferences = {
+export type Preferences = Appearance & {
   menuVersion: 3;
-  finish: "silver" | "black";
-  background: "transparent" | "warm" | "dark";
   clickSound: boolean;
   lyricsEnabled: boolean;
   brightness: number;
@@ -52,8 +44,7 @@ export function parsePreferences(value: unknown): Preferences {
       : fallback;
   return {
     menuVersion: 3,
-    finish: saved.finish === "black" ? "black" : "silver",
-    background: saved.background === "dark" || saved.background === "warm" ? saved.background : "transparent",
+    ...parseAppearance(saved),
     clickSound: saved.clickSound !== false,
     lyricsEnabled: saved.lyricsEnabled !== false,
     brightness: number(saved.brightness, 1, 0.25),

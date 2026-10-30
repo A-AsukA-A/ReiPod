@@ -245,13 +245,6 @@ button:disabled {
   line-height: 1;
 }
 
-.screen-row.selected {
-  background: linear-gradient(#77abe3, #367fc9);
-  box-shadow:
-    inset 0 1px #a6c9ee,
-    inset 0 -1px #306da9;
-  color: white;
-}
 
 .screen-preview {
   min-width: 0;
@@ -621,13 +614,6 @@ button:disabled {
   font-size: 13px;
   flex-shrink: 0;
 }
-.screen-row.selected {
-  background: linear-gradient(#2e6da8, #1f578d);
-  color: white;
-  box-shadow:
-    inset 0 1px #6da1cd,
-    inset 0 -1px #194c7e;
-}
 .screen-song-list .screen-row {
   height: 32px;
   font-size: 12px;
@@ -970,10 +956,6 @@ button:disabled {
   flex-shrink: 0;
 }
 .screen-row.selected {
-  background: linear-gradient(#367eb9, #2167a4);
-  box-shadow:
-    inset 0 1px #74a9d4,
-    inset 0 -1px #1b588d;
   color: #fff;
 }
 .screen-row.selected .row-value {
