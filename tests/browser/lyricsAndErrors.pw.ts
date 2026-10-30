@@ -21,7 +21,7 @@ async function fixture(page: Page, source: "netease" | "qq", mode = "lyrics") {
     },
     { id: "3", title: "Unrestricted", artist: "Artist", album: "Album" },
   ];
-  const audio = await readFile("public/music/carefree.mp3");
+  const audio = await readFile("public/music/carefree.m4a");
   await page.route("https://audio.reipod.test/**", (route) => {
     const range = route
       .request()
@@ -34,7 +34,7 @@ async function fixture(page: Page, source: "netease" | "qq", mode = "lyrics") {
     );
     return route.fulfill({
       status: range ? 206 : 200,
-      contentType: "audio/mpeg",
+      contentType: "audio/mp4",
       headers: {
         "Accept-Ranges": "bytes",
         ...(range

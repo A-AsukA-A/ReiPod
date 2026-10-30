@@ -522,7 +522,7 @@ test("podcasts keep show grouping and episode bookmarks apart from music", async
   const chooserPromise = page.waitForEvent("filechooser");
   await choose(page, "导入播客…");
   const chooser = await chooserPromise;
-  await chooser.setFiles("public/music/carefree.mp3");
+  await chooser.setFiles("public/music/carefree.m4a");
   await expect(live(page).locator(".screen-row")).toHaveCount(2);
   await expect
     .poll(() => live(page).locator(".screen-row").first().textContent())

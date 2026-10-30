@@ -1,32 +1,68 @@
 [
   {
-    "filename": "carefree.mp3",
+    "filename": "carefree.m4a",
     "artist": "Kevin MacLeod",
-    "bytes": 6566713,
+    "bytes": 1676934,
     "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400037",
-    "sha256": "8433b770a630d9b1594fd484442c677907ece899a4d149954cd2e74fd733e311",
+    "sha256": "8b1ef379f96519c940cc039fafc29e707fd702120e9dd2e5f852a078ac20d9eb",
     "title": "Carefree",
     "license": "https://creativecommons.org/licenses/by/4.0/",
-    "id": "USUAN1400037"
+    "id": "USUAN1400037",
+    "sourceFilename": "carefree.mp3",
+    "sourceBytes": 6566713,
+    "sourceSha256": "8433b770a630d9b1594fd484442c677907ece899a4d149954cd2e74fd733e311",
+    "encoding": {
+      "codec": "aac-lc",
+      "container": "m4a",
+      "bitrate": 64000,
+      "channels": 2,
+      "sampleRate": 32000,
+      "changes": "Re-encoded from original MP3; full length retained."
+    },
+    "duration": 205.152
   },
   {
-    "filename": "monkeys-spinning-monkeys.mp3",
+    "filename": "monkeys-spinning-monkeys.m4a",
     "artist": "Kevin MacLeod",
-    "bytes": 5005207,
+    "bytes": 1023555,
     "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400011",
-    "sha256": "a5bb345c23849ad0786aa0bc5157a9f2d4039660fe00282e55754d475f36dc14",
+    "sha256": "7329ed11d8293ed8dc6b59aa71b04dec2ce5f08b4626bf8f624fef613369a9e7",
     "title": "Monkeys Spinning Monkeys",
     "license": "https://creativecommons.org/licenses/by/4.0/",
-    "id": "USUAN1400011"
+    "id": "USUAN1400011",
+    "sourceFilename": "monkeys-spinning-monkeys.mp3",
+    "sourceBytes": 5005207,
+    "sourceSha256": "a5bb345c23849ad0786aa0bc5157a9f2d4039660fe00282e55754d475f36dc14",
+    "encoding": {
+      "codec": "aac-lc",
+      "container": "m4a",
+      "bitrate": 64000,
+      "channels": 2,
+      "sampleRate": 32000,
+      "changes": "Re-encoded from original MP3; full length retained."
+    },
+    "duration": 125.088
   },
   {
-    "filename": "sneaky-snitch.mp3",
+    "filename": "sneaky-snitch.m4a",
     "artist": "Kevin MacLeod",
-    "bytes": 5466943,
+    "bytes": 1115982,
     "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100772",
-    "sha256": "db1710333d68a215277f77e4e17e1a64bf4ed38f87c70f8d0f56b16b6aa4f884",
+    "sha256": "7229dea240770dae496731f4fc26f36a0bb073ec9c5ba9592848a8884c3432fc",
     "title": "Sneaky Snitch",
     "license": "https://creativecommons.org/licenses/by/4.0/",
-    "id": "USUAN1100772"
+    "id": "USUAN1100772",
+    "sourceFilename": "sneaky-snitch.mp3",
+    "sourceBytes": 5466943,
+    "sourceSha256": "db1710333d68a215277f77e4e17e1a64bf4ed38f87c70f8d0f56b16b6aa4f884",
+    "encoding": {
+      "codec": "aac-lc",
+      "container": "m4a",
+      "bitrate": 64000,
+      "channels": 2,
+      "sampleRate": 32000,
+      "changes": "Re-encoded from original MP3; full length retained."
+    },
+    "duration": 136.64
   }
 ]

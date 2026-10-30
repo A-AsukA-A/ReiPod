@@ -59,9 +59,9 @@ test("local YRC imports attach to the matching song and survive reload", async (
   await page.goto("/");
   await page.getByLabel("选择本地音频或歌词文件").setInputFiles([
     {
-      name: "word-song.mp3",
-      mimeType: "audio/mpeg",
-      buffer: await readFile("public/music/carefree.mp3"),
+      name: "word-song.m4a",
+      mimeType: "audio/mp4",
+      buffer: await readFile("public/music/carefree.m4a"),
     },
     {
       name: "word-song.yrc",

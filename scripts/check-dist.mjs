@@ -37,7 +37,7 @@ for (const [path, song] of approvedMusic) {
     createHash("sha256").update(data).digest("hex") !== song.sha256
   ) {
     throw new Error(
-      `Approved demo audio does not match its source manifest: ${path}`,
+      `Approved demo audio does not match its distribution manifest: ${path}`,
     );
   }
 }

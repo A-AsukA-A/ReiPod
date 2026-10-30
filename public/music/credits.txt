@@ -16,5 +16,8 @@ Sneaky Snitch
 Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100772
 Original MP3: https://incompetech.com/music/royalty-free/mp3-royaltyfree/Sneaky%20Snitch.mp3
 
-Changes: none. Full MP3 recordings are distributed without editing or re-encoding.
+Changes: re-encoded from the original MP3 recordings to AAC-LC in M4A containers
+at 64 kbps, 32 kHz stereo using Apple afconvert. Full track lengths retained.
+Original files are linked above; source and distributed-file hashes are recorded
+in src/player/demoCatalog.json.
 The creator does not endorse ReiPod.

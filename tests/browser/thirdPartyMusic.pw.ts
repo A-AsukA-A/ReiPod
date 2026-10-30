@@ -11,9 +11,9 @@ for (const [service, label] of [
   }) => {
     let loggedIn = false;
     const actions: string[] = [];
-    const audio = await readFile("public/music/carefree.mp3");
+    const audio = await readFile("public/music/carefree.m4a");
     await page.route("https://audio.reipod.test/**", (route) =>
-      route.fulfill({ contentType: "audio/mpeg", body: audio }),
+      route.fulfill({ contentType: "audio/mp4", body: audio }),
     );
     const tracks = [
       { id: "1", title: "Online First", artist: "Artist", duration: 120 },
