@@ -4,6 +4,6 @@
     "lib": ["ES2022"],
     "types": []
   },
-  "files": ["src/player/Player.ts"],
+  "files": ["src/player/Player.ts", "src/player/sessionPersistence.ts"],
   "include": []
 }

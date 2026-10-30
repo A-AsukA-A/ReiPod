@@ -190,3 +190,11 @@
 `Player` 构造必须提供音频工厂与 URL 清理回调。系统音乐适配器明确拒绝网页音频工厂回退，继续使用原生队列/播放命令。`AudioPort` 在 `src/player/ports.ts` 独立声明，兼容原有从 Player 导入的类型路径，不依赖 HTMLAudioElement/EventListener 等 DOM 类型。
 
 `npm run check:player-core` 使用 `tsconfig.player-core.json`，仅启用 ES2022、关闭宿主类型库，编译 Player 的实际依赖图；接入 PR、Pages 和 iOS 工作流。新增无 Audio/URL 全局对象的执行测试，验证端口播放、事件同步、清空/释放及监听清理；原有生命周期与账号隔离测试继续保留。此检查只覆盖指定核心图，不代表整个 player 目录或全项目已完成四层迁移。下一步先处理 store 的订阅/会话持久化边界。
+
+## 2026-10-30 会话持久化与订阅边界
+
+`sessionPersistence` 通过注入的读写、调度、pagehide 与 Player 端口承接会话/播放偏好订阅，纳入无 DOM 核心编译图。保留原存储键、200ms 合并、保存位置取整但不改实时进度，以及库恢复后才开放会话写入的规则；pagehide 即时刷新并取消待执行保存。播放偏好在试听初始化后恢复，Player 继续保证用户选歌优先、旧会话仅暂停恢复。
+
+清库使旧待恢复会话失效；dispose 取消定时器、移除 pagehide 和两份 Player 订阅，避免热更新清理旧 Player 时写空偏好。写入成功后才推进缓存；失败偏好在合并刷新/pagehide 时重试，相同值的快速音量事件不逐次重试，恢复到已保存值会撤销过时待写值。会话解析与试听隐藏数据分别容错。
+
+React 绑定移至 `src/app/useLocalPlayer.ts`，复用同一个本地 Player。store 仍负责导入/元数据任务、IndexedDB、评级/歌单协调和宿主端口装配，后者的传递依赖未全部隔离，不能称整个 store 图已无 React/浏览器能力。下一步检查本地导入与异步资料库恢复边界；本步未改变播放器或账号生命周期。

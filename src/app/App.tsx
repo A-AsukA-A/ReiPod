@@ -1,3 +1,4 @@
+import { useLocalPlayer } from "./useLocalPlayer";
 import { createSettingsMenus } from "../ui/settingsMenus";
 import { createTextMenus } from "../ui/textMenus";
 import { createClassicMenuModel } from "../ui/classicMenuModel";
@@ -30,7 +31,6 @@ import {
   initializeLibrary,
   onLibraryNotice,
   player as localPlayer,
-  usePlayer as useLocalPlayer,
 } from "../player/store";
 import {
   albumsFor,

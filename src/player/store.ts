@@ -1,16 +1,14 @@
-import { useSyncExternalStore } from "react";
 import { Player } from "./Player";
 import { createLocalAudio } from "./localAudio";
 import { getDemoTracks } from "./demoTracks";
 import { parseLyrics } from "./library";
 import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
 
-import { readSession } from "./session";
+import { createSessionPersistence } from "./sessionPersistence";
 import { clearRatings, setRating } from "./ratings";
 import { clearPlaylists, removeFromPlaylists } from "./playlists";
 export const player = new Player(createLocalAudio, URL.revokeObjectURL);
 let removedDemos: string[] = [];
-let savedSession: ReturnType<typeof readSession> = null;
 try {
   const hidden = JSON.parse(
     localStorage.getItem("reipod-removed-demos") ?? "[]",
@@ -18,39 +16,22 @@ try {
   removedDemos = Array.isArray(hidden)
     ? hidden.filter((id) => typeof id === "string")
     : [];
-  savedSession = readSession(
-    JSON.parse(localStorage.getItem("reipod-session") ?? "null"),
-  );
 } catch {
   /* Optional browser data. */
 }
-let sessionReady = false;
-let lastSession = "";
-const persistSession = () => {
-  if (!sessionReady) return;
-  // Whole seconds bound synchronous storage writes while retaining pause and queue changes.
-  const session = player.getSession();
-  session.position = Math.floor(session.position);
-  const text = JSON.stringify(session);
-  if (text === lastSession) return;
-  try {
-    localStorage.setItem("reipod-session", text);
-    lastSession = text;
-  } catch {
-    /* Listening is still available without persistent storage. */
-  }
-};
-let sessionSaveTimer: ReturnType<typeof setTimeout> | undefined;
-player.subscribe(() => {
-  // Wheel events can arrive faster than frames. Persist after input settles;
-  // pagehide and explicit library operations still flush synchronously.
-  if (sessionSaveTimer !== undefined) clearTimeout(sessionSaveTimer);
-  sessionSaveTimer = setTimeout(() => {
-    sessionSaveTimer = undefined;
-    persistSession();
-  }, 200);
+const persistence = createSessionPersistence({
+  player,
+  read: key => localStorage.getItem(key),
+  write: (key, value) => localStorage.setItem(key, value),
+  schedule: (callback, delay) => {
+    const timer = setTimeout(callback, delay);
+    return () => clearTimeout(timer);
+  },
+  onPageHide: callback => {
+    window.addEventListener("pagehide", callback);
+    return () => window.removeEventListener("pagehide", callback);
+  },
 });
-window.addEventListener("pagehide", persistSession);
 let showDemos = true;
 try {
   showDemos = localStorage.getItem("reipod-demos") !== "hidden";
@@ -73,8 +54,6 @@ export function addDemos() {
   }
   player.add(getDemoTracks(import.meta.env.BASE_URL));
 }
-export const usePlayer = () =>
-  useSyncExternalStore(player.subscribe, player.getSnapshot);
 
 let epoch = 0;
 let metadataJobs = Promise.resolve();
@@ -215,9 +194,7 @@ export function initializeLibrary() {
     .catch(() => {})
     .finally(() => {
       if (generation !== epoch) return;
-      if (savedSession) player.restoreSession(savedSession);
-      sessionReady = true;
-      persistSession();
+      persistence.finishRestore();
     });
   return restoring;
 }
@@ -244,8 +221,7 @@ export async function removeTrack(id: string) {
 
 export function clearLibrary() {
   epoch++;
-  savedSession = null;
-  sessionReady = true;
+  persistence.clearSavedSession();
   clearPlaylists();
   clearRatings();
   try {
@@ -256,46 +232,13 @@ export function clearLibrary() {
   player.clear();
   void clearFiles().catch(() => notify("曲库保存状态清理失败，请重试"));
 }
-try {
-  const saved = JSON.parse(localStorage.getItem("reipod-playback") ?? "null");
-  if (saved) {
-    player.setRepeat(
-      saved.repeat === "all" || saved.repeat === "one" ? saved.repeat : "off",
-    );
-    player.setFavorites(
-      Array.isArray(saved.favorites)
-        ? saved.favorites.filter((id: unknown) => typeof id === "string")
-        : [],
-    );
-    if (saved.shuffle === true) {
-      player.setShuffle(true);
-      player.setQueue(player.getSnapshot().tracks.map((track) => track.id));
-    }
-  }
-} catch {
-  /* Browser-local settings are optional. */
-}
-let lastSettings = "";
-player.subscribe(() => {
-  const { shuffle, repeat, favorites } = player.getSnapshot();
-  const saved = JSON.stringify({ shuffle, repeat, favorites });
-  if (saved !== lastSettings) {
-    lastSettings = saved;
-    try {
-      localStorage.setItem("reipod-playback", saved);
-    } catch {
-      /* Playback still works. */
-    }
-  }
-});
+persistence.restoreSettings();
 
 // musicServices owns the single media-session publisher for every provider.
 
 if (import.meta.hot)
   import.meta.hot.dispose(() => {
     epoch++;
-    if (sessionSaveTimer !== undefined) clearTimeout(sessionSaveTimer);
-    sessionReady = false;
-    window.removeEventListener("pagehide", persistSession);
+    persistence.dispose();
     player.clear();
   });
