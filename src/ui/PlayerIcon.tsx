@@ -60,10 +60,11 @@ export function PlayerIcon({
       </svg>
     );
   }
+  // Tight menu bounds preserve the observed chevron footprint inside its 9×15u box.
   return (
     <svg
       className={`player-icon icon-${name}`}
-      viewBox="0 0 24 24"
+      viewBox={name === "chevron" ? "7 3 12 18" : "0 0 24 24"}
       aria-hidden="true"
       fill={filled || name === "pause" ? "currentColor" : "none"}
       stroke="currentColor"

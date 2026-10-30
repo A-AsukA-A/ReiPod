@@ -212,7 +212,6 @@
 }
 .screen-preview {
   background: linear-gradient(105deg, #f9f9fa 0%, #fff 65%);
-  box-shadow: inset 3px 0 6px #16181b0b;
 }
 .screen-footer {
   height: 17px;
@@ -864,6 +863,10 @@
     inset 0 1px #88d3f6,
     inset 0 -1px #197cad;
 }
+/* The stock split menus reveal the drill-in chevron on the focused row only. */
+:is(.home-screen, .split-settings-screen) > .screen-menu .screen-row:not(.selected) > .row-chevron {
+  visibility: hidden;
+}
 .screen-row .row-chevron .player-icon {
   width: calc(var(--lcd-unit) * 9);
   height: calc(var(--lcd-unit) * 15);
@@ -880,6 +883,18 @@
   padding: 0;
   overflow: hidden;
   background: linear-gradient(#91a5b2, #46535d);
+}
+/* 2007 menu photographs show a shadow recovering over roughly 16–20u.
+   Width/opacity are provisional visual fits; see UI_METRICS task 27.
+   Overlay content so artwork/cards cannot cover the menu's cast shadow. */
+.menu-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--lcd-unit) * 18);
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(90deg, #0006, #0000);
 }
 .menu-preview > .album-preview {
   position: absolute;

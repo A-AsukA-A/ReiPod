@@ -4,12 +4,14 @@ import { home, choose, key, live } from "./dial";
 test("finish and background changes preserve the model, audio instance and active queue", async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("reipod-appearance", JSON.stringify({clickSound:false,backlight:0,model:"nano-6",lcd:{width:240,height:240}}));
-    const probe = { instances: [] as HTMLAudioElement[], active: null as HTMLAudioElement | null, loads:0, pauses:0 };
+    const probe = { instances: [] as HTMLAudioElement[], active: null as HTMLAudioElement | null, loads:0, pauses:0, events: [] as {name:string,time:number,paused:boolean,readyState:number,at:number}[] };
     (window as any).__appearanceProbe = probe;
     window.Audio = new Proxy(window.Audio, {
       construct(target, args) {
         const audio = Reflect.construct(target,args) as HTMLAudioElement;
         probe.instances.push(audio);
+        for (const name of ['play','playing','pause','waiting','stalled','error'])
+          audio.addEventListener(name,()=>probe.events.push({name,time:audio.currentTime,paused:audio.paused,readyState:audio.readyState,at:performance.now()}));
         audio.addEventListener('loadstart',()=>{if(audio===probe.active)probe.loads++;});
         audio.addEventListener('pause',()=>{if(audio===probe.active)probe.pauses++;});
         return audio;
@@ -20,6 +22,10 @@ test("finish and background changes preserve the model, audio instance and activ
   await key(page,'Space');
   await expect(live(page).locator('.screen-playing-link')).toHaveAttribute('aria-label','正在播放');
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('reipod-session') ?? '{}').currentId ?? null)).not.toBeNull();
+  await expect.poll(() => page.evaluate(() => {
+    const p = (window as any).__appearanceProbe;
+    return p.instances.some((audio: HTMLAudioElement) => !audio.paused && audio.readyState >= 2 && audio.currentTime > 0.1);
+  }), { message: 'The playback fixture must advance before appearance changes', timeout: 15000 }).toBe(true);
   const before = await page.evaluate(() => {
     const p = (window as any).__appearanceProbe;
     p.active = p.instances.find((a: HTMLAudioElement)=>!a.paused && !!a.currentSrc);
@@ -58,4 +64,13 @@ test("finish and background changes preserve the model, audio instance and activ
   expect(after.session.queue).toEqual(before.session.queue);
   expect(after.session.naturalOrder).toEqual(before.session.naturalOrder);
   await expect(live(page).locator('.screen-playing-link')).toHaveAttribute('aria-label','正在播放');
+});
+
+// Preserve media events when diagnosing a stopped or still-loading test fixture.
+test.afterEach(async ({ page }, testInfo) => {
+  const probe = await page.evaluate(() => {
+    const p = (window as any).__appearanceProbe;
+    return p ? { events: p.events, media: p.instances.map((a: HTMLAudioElement) => ({ time:a.currentTime, paused:a.paused, readyState:a.readyState, error:a.error?.code })) } : null;
+  }).catch(() => null);
+  if (probe) await testInfo.attach('playback-events', { body:JSON.stringify(probe), contentType:'application/json' });
 });
