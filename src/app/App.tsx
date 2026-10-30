@@ -1,4 +1,4 @@
-import { usesExternalMusicLogin } from "./services/musicLogin";
+import { usesExternalMusicLogin } from "../services/musicLogin";
 import {
   useEffect,
   useLayoutEffect,
@@ -7,10 +7,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { ClickWheel } from "./input/ClickWheel";
-import type { WheelCommand } from "./input/ClickWheel";
-import type { Track } from "./player/Player";
-import { feedback } from "./input/feedback";
+import { ClickWheel } from "../input/ClickWheel";
+import type { WheelCommand } from "../input/ClickWheel";
+import type { Track } from "../player/Player";
+import { feedback } from "../input/feedback";
 import {
   addDemos,
   clearLibrary,
@@ -19,63 +19,63 @@ import {
   onLibraryNotice,
   player as localPlayer,
   usePlayer as useLocalPlayer,
-} from "./player/store";
+} from "../player/store";
 import {
   albumsFor,
   artistsFor,
   tracksForArtist,
   songsByTitle,
   coverFlowOrder,
-} from "./player/library";
+} from "../player/library";
 import {
   initialNavigation,
   navigationReducer,
   splitPages,
-} from "./ui/navigation";
-import type { Page } from "./ui/navigation";
-import { CoverFlow } from "./ui/CoverFlow";
-import { MenuPreview } from "./ui/MenuPreview";
-import { menuPreview } from "./ui/menuPreviewModel";
-import { BatteryIndicator } from "./ui/BatteryIndicator";
+} from "../ui/navigation";
+import type { Page } from "../ui/navigation";
+import { CoverFlow } from "../ui/CoverFlow";
+import { MenuPreview } from "../ui/MenuPreview";
+import { menuPreview } from "../ui/menuPreviewModel";
+import { BatteryIndicator } from "../ui/BatteryIndicator";
 import {
   backlightTimes,
   optionalMainItems,
   optionalMusicItems,
   mainMenuOrder,
-} from "./ui/classicSettings";
-import { HoldSwitch } from "./ui/HoldSwitch";
-import { useBacklight } from "./ui/useBacklight";
-import { ClassicClock } from "./ui/ClassicClock";
-import { ClassicGlyph } from "./ui/ClassicGlyph";
-import { setPreferences, usePreferences } from "./ui/preferences";
-import { PlayerIcon } from "./ui/PlayerIcon";
-import { useLcdMotion } from "./ui/useLcdMotion";
-import { lcdMotionStyle } from "./ui/motion";
-import { searchTracks } from "./player/search";
-import { useRatings, setRating } from "./player/ratings";
+} from "../ui/classicSettings";
+import { HoldSwitch } from "../ui/HoldSwitch";
+import { useBacklight } from "../ui/useBacklight";
+import { ClassicClock } from "../ui/ClassicClock";
+import { ClassicGlyph } from "../ui/ClassicGlyph";
+import { setPreferences, usePreferences } from "../ui/preferences";
+import { PlayerIcon } from "../ui/PlayerIcon";
+import { useLcdMotion } from "../ui/useLcdMotion";
+import { lcdMotionStyle } from "../ui/motion";
+import { searchTracks } from "../player/search";
+import { useRatings, setRating } from "../player/ratings";
 import {
   usePlaylists,
   createPlaylist,
   renamePlaylist,
-} from "./player/playlists";
+} from "../player/playlists";
 
-import { MenuRows } from "./ui/MenuRows";
-import type { MenuItem } from "./ui/MenuRows";
-import { createPrimaryMenus, repeatText } from "./ui/primaryMenus";
+import { MenuRows } from "../ui/MenuRows";
+import type { MenuItem } from "../ui/MenuRows";
+import { createPrimaryMenus, repeatText } from "../ui/primaryMenus";
 
-import { NowPlayingScreen } from "./ui/NowPlayingScreen";
-import { MusicAccountHeader } from "./ui/MusicAccountHeader";
-import { canShowLyrics, playingViews, restingPlayView } from "./ui/nowPlaying";
-import type { PlayView } from "./ui/nowPlaying";
-import { createMediaMenus } from "./ui/mediaMenus";
-import { createLibraryMenus } from "./ui/libraryMenus";
-import { FileImports } from "./ui/FileImports";
-import { ReadOnlyScreen } from "./ui/ReadOnlyScreen";
-import { settingChoices } from "./ui/settingChoices";
-import { restorePhotos, usePhotos } from "./media/photos";
-import { usePodcastIds, playPodcast } from "./media/podcasts";
-import { PhotoScreen } from "./ui/PhotoScreen";
-import { useWheelTextEntry, WheelTextEntry } from "./ui/WheelTextEntry";
+import { NowPlayingScreen } from "../ui/NowPlayingScreen";
+import { MusicAccountHeader } from "../ui/MusicAccountHeader";
+import { canShowLyrics, playingViews, restingPlayView } from "../ui/nowPlaying";
+import type { PlayView } from "../ui/nowPlaying";
+import { createMediaMenus } from "../ui/mediaMenus";
+import { createLibraryMenus } from "../ui/libraryMenus";
+import { FileImports } from "../ui/FileImports";
+import { ReadOnlyScreen } from "../ui/ReadOnlyScreen";
+import { settingChoices } from "../ui/settingChoices";
+import { restorePhotos, usePhotos } from "../media/photos";
+import { usePodcastIds, playPodcast } from "../media/podcasts";
+import { PhotoScreen } from "../ui/PhotoScreen";
+import { useWheelTextEntry, WheelTextEntry } from "../ui/WheelTextEntry";
 import {
   builtinDocuments,
   deleteText,
@@ -83,33 +83,33 @@ import {
   restoreTexts,
   saveReadingPosition,
   useTexts,
-} from "./media/textDocuments";
-import { TextReader } from "./ui/TextReader";
-import type { TextReaderHandle } from "./ui/TextReader";
-import { applePlayer } from "./services/applePlayer";
+} from "../media/textDocuments";
+import { TextReader } from "../ui/TextReader";
+import type { TextReaderHandle } from "../ui/TextReader";
+import { applePlayer } from "../services/applePlayer";
 import {
-  authorizeAppleMusic,
+  authorizeSelectedMusicService,
   getMusicServices,
   initializeMusicServices,
-  loadApplePlaylist,
+  loadMusicPlaylist,
   playbackFrom,
-  prepareAppleMusic,
-  refreshAppleLibrary,
-  searchAppleMusic,
+  prepareSelectedMusicService,
+  refreshSelectedMusicLibrary,
+  searchSelectedMusicService,
   selectMusicService,
-  signOutAppleMusic,
-  useApplePlayer,
+  signOutSelectedMusicService,
+  useRemotePlayer,
   useMusicServices,
   openNativeMusicSettings,
   playerFor,
-} from "./services/musicServices";
+} from "../services/musicServices";
 import {
   isThirdParty,
   thirdPartyNames,
   loadThirdPartyLyrics,
   reopenThirdPartyLogin,
-} from "./services/thirdPartyMusic";
-import type { MusicService } from "./services/musicServices";
+} from "../services/thirdPartyMusic";
+import type { MusicService } from "../services/musicServices";
 
 const trackService = (track?: Track): MusicService =>
   track?.kind === "apple-music" ||
@@ -120,7 +120,7 @@ const trackService = (track?: Track): MusicService =>
 
 export function App() {
   const localState = useLocalPlayer();
-  const appleState = useApplePlayer();
+  const remoteState = useRemotePlayer();
   const services = useMusicServices();
   const cloud = services.selected !== "local";
   const externalMusic = isThirdParty(services.selected);
@@ -129,7 +129,7 @@ export function App() {
     : "Apple Music";
   const nativeMusic = services.transport === "ios";
   const player = playerFor(services.playback);
-  const state = services.playback !== "local" ? appleState : localState;
+  const state = services.playback !== "local" ? remoteState : localState;
   const prefs = usePreferences();
   const localPlaylists = usePlaylists();
   const playlists = cloud ? services.playlists : localPlaylists;
@@ -150,12 +150,12 @@ export function App() {
   const trackById = useMemo(
     () =>
       new Map(
-        [...localState.tracks, ...appleState.tracks].map((track) => [
+        [...localState.tracks, ...remoteState.tracks].map((track) => [
           track.id,
           track,
         ]),
       ),
-    [localState.tracks, appleState.tracks],
+    [localState.tracks, remoteState.tracks],
   );
   const current = state.currentId ? trackById.get(state.currentId) : undefined;
   const albums = useMemo(() => albumsFor(musicTracks), [musicTracks]);
@@ -543,7 +543,7 @@ export function App() {
     settingsItems: originalSettingsItems,
   } = createPrimaryMenus({
     state: cloud
-      ? { ...appleState, tracks: services.libraryTracks }
+      ? { ...remoteState, tracks: services.libraryTracks }
       : localState,
     prefs,
     albums,
@@ -636,7 +636,7 @@ export function App() {
           key: list.id,
           label: list.name,
           action: () => {
-            void loadApplePlaylist(list.id).then((loaded) => {
+            void loadMusicPlaylist(list.id).then((loaded) => {
               if (
                 navigationRef.current.screen.page !== "playlists" ||
                 navigationRef.current.screen.selectedKey !== list.id
@@ -653,7 +653,7 @@ export function App() {
           label: services.syncing ? "正在同步…" : `刷新 ${serviceName} 歌单`,
           disabled: services.syncing,
           action: () => {
-            void refreshAppleLibrary();
+            void refreshSelectedMusicLibrary();
           },
         },
         ...cloudAccess,
@@ -751,7 +751,7 @@ export function App() {
               disabled: services.syncing,
               leaf: true,
               action: () => {
-                void refreshAppleLibrary();
+                void refreshSelectedMusicLibrary();
               },
             },
             {
@@ -760,7 +760,7 @@ export function App() {
               destructive: true,
               leaf: true,
               action: () => {
-                void signOutAppleMusic();
+                void signOutSelectedMusicService();
               },
             },
           ]
@@ -805,8 +805,8 @@ export function App() {
                   return;
                 }
                 void (services.ready || externalMusic
-                  ? authorizeAppleMusic()
-                  : prepareAppleMusic());
+                  ? authorizeSelectedMusicService()
+                  : prepareSelectedMusicService());
               },
             },
             ...(externalMusic
@@ -819,7 +819,7 @@ export function App() {
                           key: "wechat-login",
                           label: "用微信扫码登录",
                           action: () => {
-                            void authorizeAppleMusic("wechat");
+                            void authorizeSelectedMusicService("wechat");
                           },
                         },
                       ]
@@ -830,7 +830,7 @@ export function App() {
                           key: "cancel-login",
                           label: "取消登录",
                           action: () => {
-                            void signOutAppleMusic();
+                            void signOutSelectedMusicService();
                           },
                         },
                       ]
@@ -1575,7 +1575,7 @@ export function App() {
   }, [prefs.volumeLimit]);
   useEffect(() => {
     if (page === "search" && cloud && !textEntry.editing)
-      void searchAppleMusic(query);
+      void searchSelectedMusicService(query);
   }, [page, cloud, services.selected, textEntry.editing, query]);
   useEffect(
     () => () => {

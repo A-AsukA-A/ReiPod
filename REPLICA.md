@@ -1,5 +1,7 @@
 # Classic interface reference
 
+Current development decisions: [DEVELOPMENT.md](DEVELOPMENT.md). This document includes chronological implementation history; earlier numbers are not the current specification. Use the current-state table in [UI_STANDARDS.md](UI_STANDARDS.md) and its cited evidence.
+
 ReiPod’s product scope covers all generations of iPod nano, iPod mini, and iPod/classic, including the pre-classic iPod generations. The current implementation baseline is the 2007 Classic 6G color split-screen interface; other models remain simulation targets, not claims of completed support. It is a web implementation, not original firmware. The current UI is a functional checkpoint; its bars, artwork projection, typography and motion are not yet validated against a matching physical device.
 
 Original hardware is the authority: prefer the same model/firmware's observed behavior and verified firmware analysis over My Classic, iPod.js or general modern UI recommendations. The source catalog, acquired original IPSW checks and timing observations are in [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md). Calibration choices are labelled rather than presented as recovered Apple constants.
@@ -50,7 +52,7 @@ These are provisional interpretations of the recordings, not recovered applicati
 
 The web player deliberately treats the LCD as a display. Every in-app action is reachable through the wheel, Center, Menu, transport buttons or physical Hold switch; native file selection happens outside the device screen. Mouse notches are discrete rather than accelerated. Album-sheet transitions support quick reversals without leaving outgoing frames behind.
 
-## UI standardization checkpoint — 2026-10-28
+## Historical UI standardization checkpoint — 2026-10-28 (superseded below)
 
 The current 7-unit progress/volume tracks, 110-unit artwork with `perspective(450u) rotateY(-18deg)`, gradients and reflection are pending physical-reference measurement. No replacement angle or bar height is selected in this checkpoint. The comparison with `robbiebyrd/ipod_ui`, fixed source revisions and measurement procedure are recorded in [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md) and [UI_STANDARDS.md](UI_STANDARDS.md).
 
@@ -62,7 +64,7 @@ The [research record](HARDWARE_RESEARCH.md#播放页整体对照--2026-10-29) re
 
 ### Seek and volume evidence follow-up
 
-A 2007 Classic video now directly supports the thin seek rail, larger diamond and reflection. A separate 2009 Classic tutorial supports a broad volume fill between speaker icons. Seek uses a 7u rail and 9u rotated square (about 12.7u projected); volume uses the 15u track material with roughly 20u horizontal insets. Exact firmware and the 2009 hardware revision remain unknown; volume dimensions carry roughly ±6u uncertainty, and colors/icons remain approximations. This supersedes the earlier decision to retain both old states pending imagery; see the final section of HARDWARE_RESEARCH.md for provenance and limits.
+A 2007 Classic video now directly supports the thin seek rail, larger diamond and reflection. A separate 2009 Classic tutorial supports a broad volume fill between speaker icons. At this historical step, seek used a 7u rail and 9u rotated square (about 12.7u projected), superseded by the user-supplied control reference below; volume uses the 15u track material with roughly 20u horizontal insets. Exact firmware and the 2009 hardware revision remain unknown; volume dimensions carry roughly ±6u uncertainty, and colors/icons remain approximations. This supersedes the earlier decision to retain both old states pending imagery; see the final section of HARDWARE_RESEARCH.md for provenance and limits.
 
 ### User-supplied control motion reference
 

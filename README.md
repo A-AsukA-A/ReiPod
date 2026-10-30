@@ -1,6 +1,6 @@
 # ReiPod
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+[English](README.md) · [简体中文](README.zh-CN.md) · [开发总纲](DEVELOPMENT.md) · [项目结构](PROJECT_STRUCTURE.md) · [任务日志](TASK_LOG.md)
 
 **Your music, a click wheel away.**
 

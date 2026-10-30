@@ -1,5 +1,20 @@
 # ReiPod development instructions
 
+Start every task with [DEVELOPMENT.md](DEVELOPMENT.md) and [TASK_LOG.md](TASK_LOG.md), the unified development guide and persistent task handoff. Follow them alongside the rules below; update the owning document when a decision changes.
+
+## Mandatory task log
+
+- Every task, including research, review and documentation-only work, must read TASK_LOG.md before starting and update it before the final response. On context recovery, reread its current handoff and relevant specifications before continuing.
+- At task start, record the objective, affected item IDs and current work in progress. Check the actual working tree; the log is a handoff, not proof that files or test results are still current.
+- Update at meaningful checkpoints and before a planned interruption or handoff. Before finishing, refresh completed, unfinished and uncertain items, validation actually performed, and the exact next step with relevant file/source links. If no project state changed, still append a brief task outcome.
+- Use stable item IDs. Keep unfinished work separate from uncertainty; record the evidence needed to resolve uncertainty. Never mark planned work, a partial review, a mock test or old verification as newly completed.
+- Keep the current handoff concise; append dated task records below it. Summarize older completed history when needed, preserving decisions, evidence links and all open items. Do not paste conversations, raw tool output or credentials into the log. Detailed specifications remain in their owning documents.
+- If the log cannot be read or written, report the concrete reason and include the missing handoff in the final response; do not silently claim compliance.
+
+## Repository structure
+
+Use [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for file placement. Keep application composition in `src/app/`, playback logic in `src/player/`, platform/service integration in `src/services/`, and model presentation/input in `src/ui/` and `src/input/`. Update the structure map, imports, scripts and documentation together when moving files. Do not equate a directory move with completed architectural separation.
+
 ## Project scope
 
 ReiPod simulates the full iPod nano, iPod mini, and iPod/classic families, with local web playback, an iPhone WKWebView/MediaPlayer transport, and optional self-hosted NetEase/QQ services. Continue the existing implementation. UI work must preserve provider isolation, queues, native authorization, background playback, and local imports.
@@ -17,10 +32,12 @@ Product decision (2026-10-29): local apps provide built-in backend capabilities;
 
 ## UI work
 
-Before changing UI, read [UI_STANDARDS.md](UI_STANDARDS.md), [REPLICA.md](REPLICA.md), [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md), and [PLAYBACK_INTERACTIONS.md](PLAYBACK_INTERACTIONS.md).
+Before changing UI, read [DEVICE_STANDARDS.md](DEVICE_STANDARDS.md), [UI_METRICS.md](UI_METRICS.md), [UI_STANDARDS.md](UI_STANDARDS.md), [REPLICA.md](REPLICA.md), [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md), and [PLAYBACK_INTERACTIONS.md](PLAYBACK_INTERACTIONS.md).
 
 - The product scope includes all generations of iPod nano, iPod mini, and iPod/classic, including the pre-classic iPod generations. The existing shell/menu baseline remains the 2007 iPod classic 6G; this is the current implementation baseline, not a limit on product scope. Keep each family, generation, hardware revision and firmware distinct; My Classic and web replicas remain comparison samples.
 - Use [MacDB’s iPod/classic catalog](https://macdb.cn/ipod-classic) as a third-party model/specification index and an entry point to Apple technical documents; see [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md). Verify specifications against the corresponding Apple source before adopting them. The linked page does not establish nano/mini coverage or firmware UI geometry.
+- Follow the four-layer dependency contract in DEVELOPMENT.md. A model/firmware interaction is not an appearance theme. Keep playback/session lifetime independent of model and finish changes.
+- Maintain per-state metric records in UI_METRICS.md. Provisional or unknown metrics cannot pass hardware-fidelity acceptance; browser screenshots are engineering evidence only.
 - Cite evidence for restoration claims. Record model, firmware when known, source URL/revision, coordinate normalization, and measurement uncertainty. An existing CSS value or passing browser test is not proof of a hardware value.
 - Prefer matching physical-device evidence and verified original-system behavior. Use Apple manuals for documented behavior, and treat their illustrations as illustrations. Modern HIG guides ReiPod additions and accessibility; it does not specify legacy firmware geometry.
 - Label numeric values as documented, measured with uncertainty, provisional, or a ReiPod adaptation. Do not call estimates “pixel-perfect,” “manufacturer-specified,” or “hardware calibrated.”

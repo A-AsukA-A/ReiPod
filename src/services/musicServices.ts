@@ -131,7 +131,7 @@ const changedRemote = () => {
 applePlayer.subscribe(changedRemote);
 thirdPartyPlayers.forEach((player) => player.subscribe(changedRemote));
 listeners.add(changedRemote);
-export const useApplePlayer = () =>
+export const useRemotePlayer = () =>
   useSyncExternalStore(
     (fn) => {
       remoteListeners.add(fn);
@@ -750,7 +750,7 @@ if ("mediaSession" in navigator && !hasNativeMusic()) {
       track?.artist,
       track?.artwork,
     ]);
-    // Local store may also publish metadata; always restore the active engine's.
+    // This router is the sole publisher for the active engine's metadata.
     if (
       key !== lastMetadata ||
       navigator.mediaSession.metadata?.title !== (track?.title ?? "")
@@ -801,27 +801,27 @@ if ("mediaSession" in navigator && !hasNativeMusic()) {
 }
 
 // Public UI commands select the provider; Apple callbacks above stay on their own account.
-export function prepareAppleMusic() {
+export function prepareSelectedMusicService() {
   return isThirdParty(state.selected)
     ? prepareThirdParty(state.selected)
     : prepareAppleMusicInternal();
 }
-export function authorizeAppleMusic(channel?: string) {
+export function authorizeSelectedMusicService(channel?: string) {
   return isThirdParty(state.selected)
     ? authorizeThirdParty(state.selected, channel)
     : authorizeAppleMusicInternal();
 }
-export function signOutAppleMusic() {
+export function signOutSelectedMusicService() {
   return isThirdParty(state.selected)
     ? signOutThirdParty(state.selected)
     : signOutAppleMusicInternal();
 }
-export function refreshAppleLibrary() {
+export function refreshSelectedMusicLibrary() {
   return isThirdParty(state.selected)
     ? refreshThirdParty(state.selected)
     : refreshAppleLibraryInternal();
 }
-export function loadApplePlaylist(id: string) {
+export function loadMusicPlaylist(id: string) {
   const source = id.startsWith("netease-playlist:")
     ? "netease"
     : id.startsWith("qq-playlist:")
@@ -831,7 +831,7 @@ export function loadApplePlaylist(id: string) {
     ? loadThirdPartyPlaylist(source, id)
     : loadApplePlaylistInternal(id);
 }
-export function searchAppleMusic(term: string) {
+export function searchSelectedMusicService(term: string) {
   return isThirdParty(state.selected)
     ? searchThirdParty(state.selected, term)
     : searchAppleMusicInternal(term);

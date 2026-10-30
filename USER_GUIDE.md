@@ -54,7 +54,7 @@ Choose **播客 → 导入播客…** to import local audio episodes. Embedded a
 
 ## Source layout and size
 
-`App.tsx` coordinates state and navigation. `primaryMenus`, `libraryMenus` and `mediaMenus` build menu commands; `MenuRows`, `NowPlayingScreen`, `ReadOnlyScreen`, `WheelTextEntry` and `FileImports` handle separate presentation/input responsibilities. Photo storage and podcast bookmarks live in `src/media/`; no new runtime UI/animation framework is added. Audio tag parsers load only when needed.
+`src/app/App.tsx` coordinates state and navigation. `primaryMenus`, `libraryMenus` and `mediaMenus` build menu commands; `MenuRows`, `NowPlayingScreen`, `ReadOnlyScreen`, `WheelTextEntry` and `FileImports` handle separate presentation/input responsibilities. Photo storage and podcast bookmarks live in `src/media/`; no new runtime UI/animation framework is added. Audio tag parsers load only when needed.
 
 Run `npm run size` after building to report program bytes, compressed code and demo audio separately. CI caps the entry bundle at 150 kB gzip and total JS/CSS/HTML at 350 kB gzip. User photos, podcasts, recording references and IPA files are never bundled. Static web assets are not an iOS installer-size measurement.
 
