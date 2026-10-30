@@ -1,7 +1,8 @@
 import { Player } from "./Player";
 import { createLocalAudio } from "./localAudio";
 import { getDemoTracks } from "./demoTracks";
-import { parseLyrics } from "./library";
+import { createLocalLibrary } from "./localLibrary";
+import { readLocalMetadata } from "./readLocalMetadata";
 import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
 
 import { createSessionPersistence } from "./sessionPersistence";
@@ -55,9 +56,6 @@ export function addDemos() {
   player.add(getDemoTracks(import.meta.env.BASE_URL));
 }
 
-let epoch = 0;
-let metadataJobs = Promise.resolve();
-let restoring: Promise<void> | null = null;
 const events = new Set<(message: string) => void>();
 export const onLibraryNotice = (listener: (message: string) => void) => {
   events.add(listener);
@@ -68,136 +66,13 @@ export const onLibraryNotice = (listener: (message: string) => void) => {
 const notify = (message: string) =>
   events.forEach((listener) => listener(message));
 
-export function importFiles(files: File[], persist = true) {
-  const generation = epoch;
-  const previous = new Set(
-    player.getSnapshot().tracks.map((track) => track.id),
-  );
-  let rejected = 0;
-  const tracks = files.flatMap((file) => {
-    if (/\.(?:lrc|yrc)$/i.test(file.name)) return [];
-    if (
-      !/\.(mp3|m4a|aac|wav|wave|flac|ogg|oga|opus|aif|aiff|mp4)$/i.test(
-        file.name,
-      ) &&
-      !file.type.startsWith("audio/")
-    ) {
-      rejected++;
-      return [];
-    }
-    return [
-      {
-        id: `${file.name}:${file.size}:${file.lastModified}`,
-        title: file.name.replace(/\.[^.]+$/, ""),
-        filename: file.name,
-        size: file.size,
-        url: URL.createObjectURL(file),
-        importedAt: Date.now(),
-        kind: "local" as const,
-      },
-    ];
-  });
-  const added = player.add(tracks);
-  const audioFiles = files.filter((file) =>
-    tracks.some(
-      (track) => track.id === `${file.name}:${file.size}:${file.lastModified}`,
-    ),
-  );
-  for (const file of audioFiles) {
-    const id = `${file.name}:${file.size}:${file.lastModified}`;
-    if (previous.has(id)) continue;
-    metadataJobs = metadataJobs.then(async () => {
-      if (generation !== epoch) return;
-      try {
-        const { parseBlob, selectCover } = await import("music-metadata");
-        const metadata = await parseBlob(file, {
-          duration: false,
-          skipPostHeaders: true,
-        });
-        if (generation !== epoch) return;
-        const cover = selectCover(metadata.common.picture);
-        const artwork =
-          cover && cover.data.byteLength < 8 * 1024 * 1024
-            ? URL.createObjectURL(
-                new Blob([new Uint8Array(cover.data)], { type: cover.format }),
-              )
-            : undefined;
-        const text = metadata.common.lyrics?.[0]?.text;
-        player.updateTrack(id, {
-          title:
-            metadata.common.title?.trim() || file.name.replace(/\.[^.]+$/, ""),
-          artist: metadata.common.artist?.trim(),
-          album: metadata.common.album?.trim(),
-          albumArtist: metadata.common.albumartist?.trim(),
-          genres: metadata.common.genre,
-          composers: metadata.common.composer,
-          trackNumber: metadata.common.track.no ?? undefined,
-          duration: metadata.format.duration,
-          ...(artwork ? { artwork } : {}),
-          ...(text &&
-          !player.getSnapshot().tracks.find((track) => track.id === id)?.lyrics
-            ?.length
-            ? { lyrics: parseLyrics(text) }
-            : {}),
-        });
-      } catch {
-        /* A bad or missing tag does not prevent decoding the original audio. */
-      }
-    });
-  }
-  const lyricFiles = files.filter((file) => /\.(?:lrc|yrc)$/i.test(file.name));
-  for (const file of lyricFiles)
-    void file
-      .text()
-      .then((text) => {
-        if (generation !== epoch) return;
-        const stem = file.name.replace(/\.(?:lrc|yrc)$/i, "").toLocaleLowerCase();
-        const matches = player
-          .getSnapshot()
-          .tracks.filter(
-            (track) =>
-              track.filename.replace(/\.[^.]+$/, "").toLocaleLowerCase() ===
-                stem || track.title.toLocaleLowerCase() === stem,
-          );
-        for (const track of matches)
-          player.updateTrack(track.id, { lyrics: parseLyrics(text) });
-        if (!matches.length && persist)
-          notify(`歌词「${file.name}」未找到同名歌曲`);
-      })
-      .catch(() => {
-        if (persist) notify("歌词文件读取失败");
-      });
-  if (persist && (audioFiles.length || lyricFiles.length))
-    void saveFiles([...audioFiles, ...lyricFiles]).catch(() =>
-      notify("浏览器未能保存文件，本次仍可播放"),
-    );
-  return { added, rejected, lyrics: lyricFiles.length };
-}
-
-export function initializeLibrary() {
-  const generation = epoch;
-  restoring ??= readFiles()
-    .then((records) => {
-      if (generation === epoch) {
-        importFiles(
-          records.map((record) => record.file),
-          false,
-        );
-        for (const { file, importedAt } of records)
-          player.updateTrack(`${file.name}:${file.size}:${file.lastModified}`, {
-            importedAt,
-          });
-        if (!player.getSnapshot().currentId)
-          player.setQueue(player.getSnapshot().tracks.map((track) => track.id));
-      }
-    })
-    .catch(() => {})
-    .finally(() => {
-      if (generation !== epoch) return;
-      persistence.finishRestore();
-    });
-  return restoring;
-}
+const library = createLocalLibrary<File>({
+  player, createUrl: file => URL.createObjectURL(file), revokeUrl: URL.revokeObjectURL,
+  readMetadata: readLocalMetadata, readFiles, saveFiles, now: Date.now,
+  finishRestore: () => persistence.finishRestore(), notify,
+});
+export const importFiles = library.importFiles;
+export const initializeLibrary = library.initialize;
 export async function removeTrack(id: string) {
   const track = player.getSnapshot().tracks.find((item) => item.id === id);
   if (!track) return false;
@@ -213,6 +88,7 @@ export async function removeTrack(id: string) {
     notify("未能删除已保存的歌曲，请重试");
     return false;
   }
+  library.forget(id);
   player.remove(id);
   setRating(id, 0);
   if (!removeFromPlaylists(id)) notify("歌单更改未能保存，本次仍生效");
@@ -220,7 +96,7 @@ export async function removeTrack(id: string) {
 }
 
 export function clearLibrary() {
-  epoch++;
+  library.invalidate();
   persistence.clearSavedSession();
   clearPlaylists();
   clearRatings();
@@ -238,7 +114,7 @@ persistence.restoreSettings();
 
 if (import.meta.hot)
   import.meta.hot.dispose(() => {
-    epoch++;
+    library.invalidate();
     persistence.dispose();
     player.clear();
   });

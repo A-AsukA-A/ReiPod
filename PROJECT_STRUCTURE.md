@@ -43,10 +43,12 @@ ReiPod/
 | `src/app/App.tsx` | 连接播放/账户/导航/输入，当前仍有较多编排逻辑 | 后续逐用例抽离控制器；不能增加所有机型的巨型条件分支 |
 | `src/app/musicServiceActions.ts` | 连接注入的登录/服务端口与导航，约束歌单异步结果适用范围 | 不持有第二份账户或队列；离开页面/切换服务/退出后的旧结果不跳转 |
 | `src/ui/musicServiceMenus.ts` | 根据快照生成当前 classic 的服务/账户/远程资料库菜单 | 只通过注入命令调用应用，不运行平台传输；类型引用不建立运行时服务实例 |
-| `src/player/Player.ts`、`store.ts`、`session.ts` | 本地播放与会话、队列、资料库状态连接 | 不依赖机身组件；核心与 React 绑定仍须按实际依赖逐步梳理 |
+| `src/player/Player.ts`、`store.ts`、`session.ts` | 本地播放与会话、队列、资料库状态连接 | 不依赖机身组件；store 保留宿主装配与评级/歌单删除协调，不能称整个目录为纯核心 |
 | `src/player/ports.ts`、`tsconfig.player-core.json` | 不依赖 DOM 的音频端口与核心编译检查 | Player 必须显式接收音频工厂和资源释放命令；store/服务适配器继续负责宿主装配 |
 | `src/player/sessionPersistence.ts` | 本地会话/播放偏好保存与订阅生命周期 | 存储、调度和 pagehide 端口由 store 注入；控制器无 DOM/React 依赖并纳入核心编译图 |
-| `src/app/useLocalPlayer.ts` | 现有本地 Player 的 React 订阅绑定 | 不创建新 Player；store 的导入、元数据和存储装配仍待后续审查 |
+| `src/player/localLibrary.ts` | 导入、串行元数据、旁挂歌词及异步库恢复协调 | 通过端口使用文件/存储/URL/解码；结果按库代际和资源实例隔离，纳入无 DOM 编译 |
+| `src/player/readLocalMetadata.ts`、`storage.ts` | 浏览器元数据解码和 IndexedDB 文件存储 | 宿主适配器，由 store 注入；存储读写一致性及连接生命周期仍待审查 |
+| `src/app/useLocalPlayer.ts` | 现有本地 Player 的 React 订阅绑定 | 不创建新 Player；复用 store 导出的单例，不承担导入或浏览器持久化 |
 | `src/services/musicServices.ts` | 选择服务、路由播放、远程快照、Media Session | 使用服务中性命名；浏览服务与实际播放服务分别处理 |
 | `src/services/thirdPartyMusic.ts` | 网易云/QQ 的账户、请求与播放器连接 | 切换取消旧请求，保持 provider/account/library/queue 隔离 |
 | `src/services/musicTransport.ts` | iOS 内置网络服务传输 | 不扩展成任意 URL 代理 |
