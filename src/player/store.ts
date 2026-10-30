@@ -2,6 +2,7 @@ import { Player } from "./Player";
 import { createLocalAudio } from "./localAudio";
 import { getDemoTracks } from "./demoTracks";
 import { createLocalLibrary } from "./localLibrary";
+import { createLibraryMutations } from "./libraryMutations";
 import { readLocalMetadata } from "./readLocalMetadata";
 import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
 
@@ -73,47 +74,27 @@ const library = createLocalLibrary<File>({
 });
 export const importFiles = library.importFiles;
 export const initializeLibrary = library.initialize;
-export async function removeTrack(id: string) {
-  const track = player.getSnapshot().tracks.find((item) => item.id === id);
-  if (!track) return false;
-  try {
-    if (track.kind === "demo") {
-      removedDemos = [...new Set([...removedDemos, id])];
-      localStorage.setItem(
-        "reipod-removed-demos",
-        JSON.stringify(removedDemos),
-      );
-    } else await removeFile(id);
-  } catch {
-    notify("未能删除已保存的歌曲，请重试");
-    return false;
-  }
-  library.forget(id);
-  player.remove(id);
-  setRating(id, 0);
-  if (!removeFromPlaylists(id)) notify("歌单更改未能保存，本次仍生效");
-  return true;
-}
-
-export function clearLibrary() {
-  library.invalidate();
-  persistence.clearSavedSession();
-  clearPlaylists();
-  clearRatings();
-  try {
-    localStorage.setItem("reipod-demos", "hidden");
-  } catch {
-    /* Optional storage. */
-  }
-  player.clear();
-  void clearFiles().catch(() => notify("曲库保存状态清理失败，请重试"));
-}
+const mutations = createLibraryMutations({
+  player, library, clearSavedSession: () => persistence.clearSavedSession(),
+  removeSavedTrack(track) {
+    if (track.kind !== "demo") return removeFile(track.id);
+    const next = [...new Set([...removedDemos, track.id])];
+    localStorage.setItem("reipod-removed-demos", JSON.stringify(next));
+    removedDemos = next;
+  },
+  clearSavedFiles: clearFiles,
+  hideDemos: () => localStorage.setItem("reipod-demos", "hidden"),
+  removeRating: id => setRating(id, 0), removeFromPlaylists, clearRatings, clearPlaylists, notify,
+});
+export const removeTrack = mutations.removeTrack;
+export const clearLibrary = mutations.clearLibrary;
 persistence.restoreSettings();
 
 // musicServices owns the single media-session publisher for every provider.
 
 if (import.meta.hot)
   import.meta.hot.dispose(() => {
+    mutations.dispose();
     library.invalidate();
     persistence.dispose();
     player.clear();

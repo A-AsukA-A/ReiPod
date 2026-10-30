@@ -1,5 +1,6 @@
 import type { RefObject } from "react";
 import type { Track, PlayerState } from "../player/Player";
+import type { RemoveTrackResult } from "../player/libraryMutations";
 import type { Playlist } from "../player/playlists";
 import { albumsFor } from "../player/library";
 import type { Page, NavigationState } from "./navigation";
@@ -10,7 +11,7 @@ type LibraryMenuContext = {
     togglePlaylistTrack: (id: string, trackId: string) => boolean;
     removePlaylistTrack: (id: string, trackId: string) => boolean;
     addToOnTheGo: (trackId: string) => { persisted: boolean; added: boolean };
-    removeTrack: (id: string) => Promise<boolean>;
+    removeTrack: (id: string) => Promise<RemoveTrackResult>;
     playNext: (id: string) => void;
   };
   page: Page;
@@ -244,7 +245,7 @@ export function createLibraryMenus({
           if (!groupKey || deleting) return;
           setDeleting(true);
           void removeTrack(groupKey)
-            .then((removed) => {
+            .then(({ removed, persistenceError }) => {
               if (removed) {
                 const screen = navigationRef.current.screen;
                 if (
@@ -252,8 +253,9 @@ export function createLibraryMenus({
                   screen.groupKey === groupKey
                 )
                   back(2);
-                setNotice("歌曲已从曲库删除");
-              }
+                setNotice(persistenceError === "related-data"
+                  ? "歌曲已删除，但评级或歌单更改未能保存，本次仍生效" : "歌曲已从曲库删除");
+              } else if (persistenceError === "track") setNotice("未能删除已保存的歌曲，请重试");
             })
             .catch(() => setNotice("删除失败，请重试"))
             .finally(() => setDeleting(false));

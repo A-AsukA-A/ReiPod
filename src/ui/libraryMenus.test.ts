@@ -1,4 +1,5 @@
 import { expect, it, vi } from "vitest";
+import type { RemoveTrackResult } from "../player/libraryMutations";
 import { createLibraryMenus } from "./libraryMenus";
 import type { PlayerState, Track } from "../player/Player";
 
@@ -8,7 +9,7 @@ function fixture() {
     position: 0, duration: 0, volume: 1, volumeControl: true, shuffle: false, repeat: "off", favorites: [], error: null };
   const operations = { deletePlaylist: vi.fn(() => true), togglePlaylistTrack: vi.fn(() => false),
     removePlaylistTrack: vi.fn(() => true), addToOnTheGo: vi.fn(() => ({ persisted: true, added: true })),
-    removeTrack: vi.fn(async () => true), playNext: vi.fn() };
+    removeTrack: vi.fn(async (): Promise<RemoveTrackResult> => ({ removed: true })), playNext: vi.fn() };
   const context: Parameters<typeof createLibraryMenus>[0] = {
     operations, page: "playlist-add-tracks", groupKey: "list", playlists: [{ id: "list", name: "List", trackIds: [track.id] }],
     state, musicTracks: [track], visibleTracks: [track], playlistTrackIds: new Set([track.id]),
@@ -56,11 +57,11 @@ it("playlist deletion preserves songs and reports a non-persisted edit", () => {
 
 it("late song deletion does not navigate away from a different page", async () => {
   const f = fixture();
-  let complete!: (value: boolean) => void;
+  let complete!: (value: RemoveTrackResult) => void;
   f.operations.removeTrack.mockImplementation(() => new Promise(resolve => { complete = resolve; }));
   f.menus()["confirm-delete-track"]?.[1].action();
   f.context.navigationRef.current.screen = { page: "home", selectedKey: "music" };
-  complete(true);
+  complete({ removed: true });
   await vi.waitFor(() => expect(f.context.setDeleting).toHaveBeenLastCalledWith(false));
   expect(f.context.back).not.toHaveBeenCalled();
   expect(f.context.setNotice).toHaveBeenCalledWith("歌曲已从曲库删除");
@@ -75,4 +76,23 @@ it("a rejected deletion releases the busy state and permits retry", async () => 
   expect(f.context.back).not.toHaveBeenCalled();
   f.menus()["confirm-delete-track"]?.[1].action();
   await vi.waitFor(() => expect(f.context.back).toHaveBeenCalledWith(2));
+});
+
+it("a superseded deletion releases busy state without navigation or a stale notice", async () => {
+  const f = fixture();
+  f.operations.removeTrack.mockResolvedValueOnce({ removed: false });
+  f.menus()["confirm-delete-track"]?.[1].action();
+  await vi.waitFor(() => expect(f.context.setDeleting).toHaveBeenLastCalledWith(false));
+  expect(f.context.back).not.toHaveBeenCalled();
+  expect(f.context.setNotice).not.toHaveBeenCalled();
+});
+it.each(["track", "related-data"] as const)("deletion preserves the specific %s persistence feedback", async persistenceError => {
+  const f = fixture();
+  f.operations.removeTrack.mockResolvedValueOnce({ removed: persistenceError === "related-data", persistenceError });
+  f.menus()["confirm-delete-track"]?.[1].action();
+  await vi.waitFor(() => expect(f.context.setDeleting).toHaveBeenLastCalledWith(false));
+  expect(f.context.setNotice).toHaveBeenCalledOnce();
+  expect(f.context.setNotice).toHaveBeenCalledWith(persistenceError === "track"
+    ? "未能删除已保存的歌曲，请重试" : "歌曲已删除，但评级或歌单更改未能保存，本次仍生效");
+  expect(f.context.back).toHaveBeenCalledTimes(persistenceError === "track" ? 0 : 1);
 });
