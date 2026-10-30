@@ -47,7 +47,7 @@ ReiPod/
 | `src/player/ports.ts`、`tsconfig.player-core.json` | 不依赖 DOM 的音频端口与核心编译检查 | Player 必须显式接收音频工厂和资源释放命令；store/服务适配器继续负责宿主装配 |
 | `src/player/sessionPersistence.ts` | 本地会话/播放偏好保存与订阅生命周期 | 存储、调度和 pagehide 端口由 store 注入；控制器无 DOM/React 依赖并纳入核心编译图 |
 | `src/player/localLibrary.ts` | 导入、串行元数据、旁挂歌词及异步库恢复协调 | 通过端口使用文件/存储/URL/解码；结果按库代际和资源实例隔离，纳入无 DOM 编译 |
-| `src/player/readLocalMetadata.ts`、`storage.ts` | 浏览器元数据解码和 IndexedDB 文件存储 | 宿主适配器，由 store 注入；存储读写一致性及连接生命周期仍待审查 |
+| `src/player/readLocalMetadata.ts`、`storage.ts` | 浏览器元数据解码和 IndexedDB 文件存储 | 宿主适配器，由 store 注入；音频存储统一读写队列并管理连接/事务失败，保持 v1 格式；照片/文本存储独立待审查 |
 | `src/app/useLocalPlayer.ts` | 现有本地 Player 的 React 订阅绑定 | 不创建新 Player；复用 store 导出的单例，不承担导入或浏览器持久化 |
 | `src/services/musicServices.ts` | 选择服务、路由播放、远程快照、Media Session | 使用服务中性命名；浏览服务与实际播放服务分别处理 |
 | `src/services/thirdPartyMusic.ts` | 网易云/QQ 的账户、请求与播放器连接 | 切换取消旧请求，保持 provider/account/library/queue 隔离 |

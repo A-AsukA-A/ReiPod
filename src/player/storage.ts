@@ -6,81 +6,102 @@ type SavedFile = {
   blob: Blob;
   importedAt: number;
 };
-let database: Promise<IDBDatabase> | null = null;
-let writes = Promise.resolve();
-function openDatabase() {
-  database ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open("reipod-library", 1);
-    request.onupgradeneeded = () =>
-      request.result.createObjectStore("files", { keyPath: "id" });
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => {
-      database = null;
-      reject(request.error);
-    };
-    request.onblocked = () => {
-      database = null;
-      reject(new Error("Library database blocked"));
-    };
-  });
-  return database;
-}
-async function transaction(action: (store: IDBObjectStore) => void) {
-  const db = await openDatabase();
-  await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction("files", "readwrite");
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error);
-    action(tx.objectStore("files"));
-  });
-}
-function enqueue(action: () => Promise<void>) {
-  const next = writes.catch(() => {}).then(action);
-  writes = next.catch(() => {});
-  return next;
-}
-export const saveFiles = (files: File[]) =>
-  enqueue(() =>
-    transaction((store) => {
-      for (const file of files)
-        store.put({
+
+/** Browser file adapter. Reads and writes share one submission order. */
+export function createFileStorage(open = () => indexedDB.open("reipod-library", 1)) {
+  let opening: Promise<IDBDatabase> | null = null;
+  let operations = Promise.resolve();
+  function database() {
+    if (opening) return opening;
+    const attempt = new Promise<IDBDatabase>((resolve, reject) => {
+      // A synchronous SecurityError also rejects this attempt and permits retry.
+      const request = open();
+      let abandoned = false;
+      request.onupgradeneeded = () => {
+        if (abandoned) request.transaction?.abort();
+        else request.result.createObjectStore("files", { keyPath: "id" });
+      };
+      request.onblocked = () => {
+        abandoned = true;
+        reject(new Error("Library database blocked"));
+      };
+      request.onerror = () => reject(request.error ?? new Error("Library database open failed"));
+      request.onsuccess = () => {
+        const db = request.result;
+        // An open request cannot be cancelled; close any late successful result.
+        if (abandoned) { db.close(); return; }
+        const forget = () => { if (opening === attempt) opening = null; };
+        db.onversionchange = () => { forget(); db.close(); };
+        db.onclose = forget;
+        resolve(db);
+      };
+    });
+    opening = attempt;
+    void attempt.catch(() => { if (opening === attempt) opening = null; });
+    return attempt;
+  }
+  async function begin(mode: IDBTransactionMode) {
+    const db = await database();
+    try { return db.transaction("files", mode); }
+    catch (error) {
+      if (!(error instanceof DOMException) || error.name !== "InvalidStateError") throw error;
+      // Retry only before any requests were submitted; never replay a failed write.
+      opening = null;
+      db.close();
+      return (await database()).transaction("files", mode);
+    }
+  }
+  async function transaction<T>(mode: IDBTransactionMode, action: (store: IDBObjectStore) => () => T) {
+    const tx = await begin(mode);
+    return new Promise<T>((resolve, reject) => {
+      let result: () => T;
+      let failure: unknown;
+      tx.oncomplete = () => resolve(result());
+      tx.onabort = () => reject(failure ?? tx.error ?? new DOMException("Library transaction aborted", "AbortError"));
+      try { result = action(tx.objectStore("files")); }
+      catch (error) {
+        failure = error;
+        // A synchronous put failure must roll back earlier requests in this batch.
+        try { tx.abort(); } catch { reject(error); }
+      }
+    });
+  }
+  function enqueue<T>(action: () => Promise<T>) {
+    const next = operations.then(action);
+    operations = next.then(() => {}, () => {});
+    return next;
+  }
+  return {
+    saveFiles(files: File[]) {
+      const batch = [...files];
+      return enqueue(() => transaction("readwrite", store => {
+        for (const file of batch) store.put({
           id: `${file.name}:${file.size}:${file.lastModified}`,
-          name: file.name,
-          type: file.type,
-          lastModified: file.lastModified,
-          blob: file,
-          importedAt: Date.now(),
+          name: file.name, type: file.type, lastModified: file.lastModified,
+          blob: file, importedAt: Date.now(),
         } satisfies SavedFile);
-    }),
-  );
-export const removeFile = (id: string) =>
-  enqueue(() =>
-    transaction((store) => {
-      store.delete(id);
-    }),
-  );
-export const clearFiles = () =>
-  enqueue(() =>
-    transaction((store) => {
-      store.clear();
-    }),
-  );
-export async function readFiles() {
-  const db = await openDatabase();
-  const records = await new Promise<SavedFile[]>((resolve, reject) => {
-    const request = db
-      .transaction("files", "readonly")
-      .objectStore("files")
-      .getAll();
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-  return records.map((record) => ({
-    file: new File([record.blob], record.name, {
-      type: record.type,
-      lastModified: record.lastModified,
-    }),
-    importedAt: record.importedAt ?? record.lastModified,
-  }));
+        return () => {};
+      }));
+    },
+    removeFile(id: string) {
+      return enqueue(() => transaction("readwrite", store => { store.delete(id); return () => {}; }));
+    },
+    clearFiles() {
+      return enqueue(() => transaction("readwrite", store => { store.clear(); return () => {}; }));
+    },
+    readFiles() {
+      return enqueue(async () => {
+        const records = await transaction("readonly", store => {
+          const request = store.getAll();
+          return () => request.result as SavedFile[];
+        });
+        return records.map(record => ({
+          file: new File([record.blob], record.name, { type: record.type, lastModified: record.lastModified }),
+          importedAt: record.importedAt ?? record.lastModified,
+        }));
+      });
+    },
+  };
 }
+
+export const { saveFiles, removeFile, clearFiles, readFiles } = createFileStorage();
