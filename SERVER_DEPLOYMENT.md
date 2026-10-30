@@ -48,3 +48,11 @@ journalctl -u reipod-music -n 50 --no-pager
 
 
 2026-10-29 更新：nginx 的 8443 仅监听回环地址，公网使用现有域名入口，勿恢复对外监听或覆盖个人站点首页。手机授权需要同时发布前端、`login-links.mjs`、`qq-relay.mjs` 与 server 依赖锁文件，并重启音乐服务。QQ App 通道需服务器到固定 `wss://mu.y.qq.com` 的出站连接；桌面 QQ / 微信 HTTP 扫码通道不切换。手机登录结果通过原挑战轮询接收，不是平台 OAuth 自动回跳。真实账号验证状态见 MUSIC_SERVICES；匿名挑战不能作为授权验收。
+
+## 2026-10-30 发布记录
+
+代码提交 `8ed4065` 已推送 origin/main，VPS 静态页面同步至该版本。显式使用维护者 HTTPS API 构建；程序资源 8700706 bytes，程序 gzip 261090 bytes。167 项单元、22 项服务端和 71 项完整浏览器回归通过，生产产物检查通过。
+
+逐文件 SHA-256 确认线上 5 个后端模块及 package/lock 与仓库一致，本次只更新静态页面，未重装后端依赖或重启服务。旧静态内容备份为 `/opt/reipod/backups/dist-before-8ed4065-20261030T052622Z.tgz`；新资源先复制、index.html 最后原子替换，保留旧哈希资源供已打开的页面使用。未覆盖 `.local/`、会话、证书或个人站点；个人首页文件校验和保持一致。服务器 `/opt/reipod/release.json` 记录应用代码版本。
+
+公网首页和 `/ReiPod/` 均为 HTTP 200，公开入口及引用 JS/CSS 与发布包字节一致；网易云/QQ 匿名 status 为 200、未授权，Pages 来源为 200、非允许来源为 403；nginx 与音乐服务保持 active。首次服务器 Python urllib 请求公网返回 403，随后通过 curl 从服务器和本机交叉检查正常；未更改 CDN 安全配置。这些是发布/匿名接口检查，无新增真实账户授权、会员播放或 iPhone 后台验收。
