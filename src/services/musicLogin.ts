@@ -11,8 +11,7 @@ export function musicLoginTarget(service: keyof typeof musicWebsites, raw: strin
   const url = new URL(raw);
   if (url.username || url.password || url.port || raw.length > 8192) throw new Error("无效平台授权链接");
   if (service === "netease" && url.protocol === "https:" && url.hostname === "music.163.com" && url.pathname === "/login" && url.searchParams.get("codekey"))
-    // The official mobile bundle wraps HTTPS destinations with this openurl route.
-    return `orpheus://openurl?url=${encodeURIComponent(url.href)}`;
+    throw new Error("网易云请使用 App 扫描 ReiPod 二维码；网页登录不能完成扫码授权");
   if (service === "qq" && url.protocol === "qqmusic:" && url.hostname === "qq.com" && url.pathname === "/other/openid") return url.href;
   if (service === "qq" && url.protocol === "https:" && url.hostname === "y.qq.com" && url.pathname === "/m/client/qr_code_login/authorize.html")
     return `qqmusic://qq.com/ui/openUrl?p=${encodeURIComponent(JSON.stringify({ url: url.href, _from_outside: "1" }))}`;

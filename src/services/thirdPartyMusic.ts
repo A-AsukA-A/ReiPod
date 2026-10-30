@@ -43,12 +43,13 @@ const controllers = {
   qq: new AbortController(),
 };
 const challenges: Partial<Record<ThirdPartyService, string>> = {};
-type PendingLogin = { key: string; loginUrl: string; expires: number };
+type PendingLogin = { key: string; loginUrl?: string; image?: string; expires: number };
 const pendingKey = (service: ThirdPartyService) => `reipod-${service}-pending-login`;
 function pendingLogin(service: ThirdPartyService): PendingLogin | undefined {
   try {
     const value = JSON.parse(sessionStorage.getItem(pendingKey(service)) || "null");
-    if (value && typeof value.key === "string" && typeof value.loginUrl === "string" && value.expires > Date.now()) return value;
+    if (service === "netease" && typeof value?.image !== "string") return;
+    if (value && typeof value.key === "string" && (typeof value.loginUrl === "string" || typeof value.image === "string") && value.expires > Date.now()) return value;
   } catch { /* Session storage can be disabled. */ }
 }
 function savePendingLogin(service: ThirdPartyService, value?: PendingLogin) {
@@ -330,7 +331,9 @@ export async function authorizeThirdParty(
   await runThirdPartyLogin(service, channel);
 }
 async function runThirdPartyLogin(service: ThirdPartyService, channel: string, resume?: PendingLogin) {
-  const external = usesExternalMusicLogin();
+  const mobile = usesExternalMusicLogin();
+  // NetEase openurl only opens a web login, never consumes the QR challenge.
+  const external = mobile && service === "qq";
   const epoch = ++epochs[service];
   controllers[service].abort();
   controllers[service] = new AbortController();
@@ -342,6 +345,7 @@ async function runThirdPartyLogin(service: ThirdPartyService, channel: string, r
     loginUrl: undefined,
     loginMessage: external ? "正在准备 App 授权…" : "正在生成二维码…",
   });
+  const loginDeadline = Date.now() + 180000;
   try {
     const result = resume ?? await request(service, "login-start", { channel: external && service === "qq" ? "qqmusic" : channel });
     if (epoch !== epochs[service]) return;
@@ -351,19 +355,19 @@ async function runThirdPartyLogin(service: ThirdPartyService, channel: string, r
       loginUrl: external ? result.loginUrl : undefined,
       loginMessage: external ? "请在音乐 App 确认授权，然后返回 ReiPod；未打开可再次按中心键。" :
         service === "netease"
-          ? "请用网易云音乐 App 扫码确认"
+          ? mobile ? "截图此二维码，在网易云扫一扫中从相册识别，确认后手动返回 ReiPod。" : "请用网易云音乐 App 扫码确认"
           : channel === "wechat"
             ? "请用微信扫码确认"
             : "请用手机 QQ 扫码确认",
     });
+    if (mobile) savePendingLogin(service, { key: result.key, loginUrl: result.loginUrl, image: external ? undefined : result.image, expires: resume?.expires ?? Date.now() + 180000 });
     if (external) {
       if (!result.loginUrl) throw new Error("音乐后端尚未提供 App 授权链接，请更新后端或稍后重试");
-      savePendingLogin(service, { key: result.key, loginUrl: result.loginUrl, expires: resume?.expires ?? Date.now() + 180000 });
       if (!resume) void reopenThirdPartyLogin(service);
     }
     for (
       let attempts = 0;
-      attempts < 90 && epoch === epochs[service];
+      attempts < 90 && Date.now() < (resume?.expires ?? loginDeadline) && epoch === epochs[service];
       attempts++
     ) {
       await new Promise<void>((resolve) => {
@@ -376,7 +380,20 @@ async function runThirdPartyLogin(service: ThirdPartyService, channel: string, r
         signal.addEventListener("abort", done, { once: true });
       });
       if (signal.aborted) return;
-      const check = await request(service, "login-check", { key: result.key });
+      let check;
+      try {
+        check = await request(service, "login-check", { key: result.key });
+      } catch (error) {
+        if (signal.aborted || epoch !== epochs[service]) return;
+        // A suspended mobile tab or a transient upstream failure must not cancel
+        // the challenge after the user has already confirmed it in the provider.
+        if (!(error instanceof MusicServiceError) || error.status === 429 || error.status >= 500) {
+          update(service, { error: "登录状态连接暂时中断，正在重试…" });
+          continue;
+        }
+        throw error;
+      }
+      update(service, { error: "" });
       if (epoch !== epochs[service]) return;
       if (check.status === "authorized" && check.token) {
         saveToken(service, check.token);

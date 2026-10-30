@@ -17,18 +17,24 @@ test("native login passes the session-bound URL and propagates launch failure", 
   await expect(openMusicLogin("qq", qq)).rejects.toThrow("launch failed");
   expect(postMessage).toHaveBeenCalledWith({ version: 1, service: "qq", action: "open-login", loginUrl: qq });
 });
+test("NetEase rejects web-login wrapping instead of opening an unrelated account", async () => {
+  const open = vi.fn();
+  vi.stubGlobal("window", { open });
+  await expect(openMusicLogin("netease", netease)).rejects.toThrow("二维码");
+  expect(open).not.toHaveBeenCalled();
+});
 test("blocked mobile popup preserves ReiPod and requests a fresh user gesture", async () => {
   const assign = vi.fn();
   vi.stubGlobal("window", { open: vi.fn(() => null), location: { assign } });
-  await expect(openMusicLogin("netease", netease)).rejects.toThrow("再次按中心键");
+  await expect(openMusicLogin("qq", qq)).rejects.toThrow("再次按中心键");
   expect(assign).not.toHaveBeenCalled();
 });
-test("launches the actual authorization route without an opener", async () => {
+test("launches the QQ authorization route without an opener", async () => {
   const tab = { opener: {}, location: { replace: vi.fn() } };
   vi.stubGlobal("window", { open: vi.fn(() => tab) });
-  await openMusicLogin("netease", netease);
+  await openMusicLogin("qq", qq);
   expect(tab.opener).toBeNull();
-  expect(tab.location.replace).toHaveBeenCalledWith(`orpheus://openurl?url=${encodeURIComponent(netease)}`);
+  expect(tab.location.replace).toHaveBeenCalledWith(qq);
 });
 test.each(["javascript:alert(1)", "https://evil.test/login?codekey=x", "https://music.163.com.evil.test/login?codekey=x", "qqmusic://evil.test/other/openid", "qqmusic://qq.com/unrelated", "https://user@music.163.com/login?codekey=x"])("rejects unrelated authorization destination %s", raw => {
   expect(() => musicLoginTarget("netease", raw)).toThrow();

@@ -1,3 +1,4 @@
+import { loginConfirmation } from "../server/login-confirmation.mjs";
 import { ServiceError } from "../server/providers.mjs";
 const actions = new Set([
   "status",
@@ -100,34 +101,21 @@ export function createMusicService({ providers, storage, now = Date.now }) {
         await providers.cancel(source, item.key).catch(() => {});
         return {};
       }
-      if (item.token && state.sessions[item.token])
+      if (item.token && !state.sessions[item.token])
+        throw new ServiceError("登录会话已撤销，请重新扫码", 410);
+      if (item.token)
         return {
           status: "authorized",
           token: item.token,
           profile: state.sessions[item.token].profile,
         };
-      const check = await providers.check(source, item.key);
-      if (check.code !== 803) {
-        if (![801, 802].includes(check.code))
-          throw new ServiceError("二维码已过期或登录未完成，请重新扫码", 410);
-        return { status: check.code === 802 ? "scanned" : "waiting" };
-      }
-      if (!check.cookie) throw new ServiceError("平台未返回登录会话");
-      const candidate = { source, cookie: check.cookie };
-      // Confirmation cookies may precede the account endpoint becoming ready.
-      for (let attempt = 0; ; attempt++) {
-        try {
-          candidate.profile = await providers.profile(source, candidate);
-          break;
-        } catch (error) {
-          if (source !== "netease" || error.status !== 401 || attempt >= 2)
-            throw error;
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
-      }
+      const confirmation = await loginConfirmation(source, item, providers, save);
+      if (!confirmation.candidate) return confirmation;
+      const candidate = confirmation.candidate;
       const id = randomID();
       state.sessions[id] = candidate;
       item.token = id;
+      delete item.cookie;
       await save();
       return { status: "authorized", token: id, profile: candidate.profile };
     }

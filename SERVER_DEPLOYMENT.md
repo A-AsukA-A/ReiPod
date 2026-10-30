@@ -25,7 +25,7 @@ node scripts/check-dist.mjs
 npm run size
 ```
 
-上传范围仅包括 `dist/`、`server/index.mjs`、`server/providers.mjs`、`server/login-links.mjs`、`server/qq-relay.mjs`、`server/vault.mjs` 和 server 的 package/lock 文件。服务器执行 `npm --prefix /opt/reipod/server ci --omit=dev --ignore-scripts`，再重启 `reipod-music`。更新前备份旧发布内容，保留服务器 `.local/`，勿用本机目录覆盖服务器会话。SSH 密钥和口令不进入构建或文档。
+上传范围仅包括 `dist/`、`server/index.mjs`、`server/providers.mjs`、`server/login-links.mjs`、`server/login-confirmation.mjs`、`server/qq-relay.mjs`、`server/vault.mjs` 和 server 的 package/lock 文件。服务器执行 `npm --prefix /opt/reipod/server ci --omit=dev --ignore-scripts`，再重启 `reipod-music`。更新前备份旧发布内容，保留服务器 `.local/`，勿用本机目录覆盖服务器会话。SSH 密钥和口令不进入构建或文档。
 
 GitHub Pages 工作流支持仓库变量 `MUSIC_API_URL`，值为上述音乐 API 地址；未设置时使用维护者的 API 默认值。工作流修改需要发布后才生效，Pages 部署结果与匿名检查仍不能代替真实账号验收。服务器当前发布包已显式配置 API，因此该入口无需扩展。
 
@@ -116,3 +116,10 @@ journalctl -u reipod-music -n 50 --no-pager
 210 项单元、22 项服务端、85 项完整浏览器回归、无 DOM 编译和生产产物检查通过；总构建 12522204 bytes，程序 gzip 262800 bytes，试听 3816471 bytes。首轮外观用例在音频 time=0、未暂停状态下失败，补实际起播前置及媒体事件附件后，12 项重复和完整 85 项通过；原播放连续性断言保留，旧 U05 的暂停/QQ 现象未据此关闭。
 
 完整暂存/线上哈希、公网入口/引用资源、首页、匿名 API/来源限制及服务正常，个人首页校验不变。最近静态回滚包为 `/opt/reipod/backups/dist-before-aa97b50-20261030T130531Z.tgz`；核对覆盖旧发布 41 个文件后清理旧 02e9923 暂存/旧静态备份，继续保留后端备份。未修改后端或服务器会话，无新增 iPhone/真实账号验收。
+
+
+## 2026-10-30 网易云手机登录故障修复（任务 28）
+
+用户实测证实网易云 openurl 进入普通网页，不能完成扫码授权；前端改为手机截图后从网易云扫一扫相册识别。账户查询失败保留已确认凭证，网络/5xx 在挑战期限内重试；HTTP 成功结果可重取，取消撤销会话。新后端模块 `login-confirmation.mjs` 必须与 `index.mjs` 一起部署。当前登录挑战在 HTTP 内存中，服务重启后需重新生成二维码；已有持久会话不迁移。
+
+匿名线上检查：原版本服务 active，网易云生成二维码、waiting 轮询与取消正常；日志曾有 QQ 上游 credential-exchange 超时，不据此归因为网易云故障。真实手机/账号授权与播放仍未新增验收。修复部署与最终验证见 TASK_LOG 任务 28。

@@ -899,7 +899,7 @@ export function App() {
                     : services.auth === "authorized"
                       ? `已连接 ${serviceName}`
                       : services.auth === "loading"
-                        ? services.loginMessage ||
+                        ? services.error || services.loginMessage ||
                           `正在连接 ${serviceName}…`
                         : `连接你的 ${serviceName}`
             }

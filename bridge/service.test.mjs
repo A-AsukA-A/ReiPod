@@ -161,3 +161,33 @@ test("NetEase confirmation waits briefly for the account endpoint before adoptin
   });
   expect(calls).toBe(2);
 });
+
+test("confirmed credentials survive a profile failure and cancellation revokes a recovered session", async () => {
+  const f = fixture();
+  let checks = 0, profiles = 0;
+  f.providers.check = async () => { checks++; return { code: 803, cookie: "MUSIC_U=private" }; };
+  f.providers.profile = async () => {
+    if (++profiles === 1) throw new Error("network timeout");
+    return { id: "123", name: "Recovered" };
+  };
+  const start = await f.handle(request("login-start"));
+  expect((await f.handle(request("login-check", { key: start.data.key }))).status).toBe(502);
+  expect(f.getState().pending[start.data.key].cookie).toBe("MUSIC_U=private");
+  const recovered = await f.handle(request("login-check", { key: start.data.key }));
+  expect(recovered.data.status).toBe("authorized");
+  const replay = await f.handle(request("login-check", { key: start.data.key }));
+  expect(replay.data.token).toBe(recovered.data.token);
+  expect(checks).toBe(1);
+  expect(JSON.stringify(replay)).not.toContain("MUSIC_U");
+  await f.handle(request("login-cancel", { key: start.data.key }));
+  expect((await f.handle(request("status", {}, recovered.data.token))).data.authorized).toBe(false);
+});
+
+test("logout cannot be undone by replaying an already completed login challenge", async () => {
+  const f = fixture();
+  const start = await f.handle(request("login-start"));
+  const signedIn = await f.handle(request("login-check", { key: start.data.key }));
+  await f.handle(request("logout", {}, signedIn.data.token));
+  expect((await f.handle(request("login-check", { key: start.data.key }))).status).toBe(410);
+  expect(Object.keys(f.getState().sessions)).toHaveLength(0);
+});

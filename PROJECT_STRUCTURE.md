@@ -105,3 +105,5 @@ ReiPod/
 4. 用户说明：README / README.zh-CN / USER_GUIDE；许可与归属：THIRD_PARTY_NOTICES。
 
 详细文档职责只维护在开发总纲，当前进度只维护在任务日志。移动文件时同步 import、构建/测试入口、配置和所有当前路径说明，并执行适用检查；历史记录注明原路径即可。
+
+任务 28：`server/login-confirmation.mjs` 为 HTTP/内置服务共用的登录确认与账户恢复逻辑，平台 cookie 只保留在所属宿主，不返回前端。

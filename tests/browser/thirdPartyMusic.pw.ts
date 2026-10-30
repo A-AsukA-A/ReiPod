@@ -152,7 +152,6 @@ test("an unavailable self-hosted backend remains disconnected and local music is
 });
 
 for (const [service, label, loginUrl, target] of [
-  ["netease", "网易云音乐", "https://music.163.com/login?codekey=fixture", "orpheus://openurl?url="],
   ["qq", "QQ 音乐", "qqmusic://qq.com/other/openid?p=fixture", "qqmusic://qq.com/other/openid"],
 ] as const) {
   test(`${label} mobile opens a bound App authorization and receives its login session`, async ({ page }) => {
@@ -203,3 +202,46 @@ for (const [service, label, loginUrl, target] of [
     expect(await page.evaluate(service => localStorage.getItem(`reipod-${service}-session`), service)).toBe("mobile-fixture-session");
   });
 }
+
+
+test("NetEase mobile keeps its QR through reload and retries temporary backend failure", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "userAgent", { value: "Mozilla/5.0 (iPhone) Mobile" });
+    window.open = () => { throw new Error("NetEase must not launch a web login"); };
+  });
+  let starts = 0, checks = 0, approved = false;
+  await page.route("**/api/music/**", async route => {
+    const action = new URL(route.request().url()).pathname.split("/").at(-1)!;
+    if (action === "login-start") starts++;
+    if (action === "login-check") {
+      expect(route.request().postDataJSON().key).toBe("netease-qr-challenge");
+      if (++checks === 1) {
+        await route.fulfill({ status: 503, json: { error: "temporary upstream failure" } });
+        return;
+      }
+    }
+    await route.fulfill({ json:
+      action === "status" ? { authorized: false } :
+      action === "login-start" ? { key: "netease-qr-challenge", image: "data:image/png;base64,fixture", loginUrl: "https://music.163.com/login?codekey=fixture" } :
+      action === "login-check" ? approved ? { status: "authorized", token: "netease-mobile-session", profile: { id: "123", name: "扫码用户" } } : { status: "waiting" } :
+      { tracks: [], playlists: [] }
+    });
+  });
+  await page.goto("/");
+  await choose(page, "设置");
+  await choose(page, "音乐服务");
+  await choose(page, "网易云音乐");
+  await choose(page, "扫码登录 网易云音乐");
+  await expect(live(page).locator(".music-login-qr")).toHaveCount(1);
+  await expect(live(page)).toContainText("从相册识别");
+  await expect(live(page)).toContainText("正在重试");
+  await page.reload();
+  await choose(page, "设置");
+  await choose(page, "音乐服务");
+  await choose(page, "网易云音乐");
+  await expect(live(page).locator(".music-login-qr")).toHaveCount(1);
+  expect(starts).toBe(1);
+  approved = true;
+  await expect(live(page).getByRole("status")).toContainText("已连接 网易云音乐");
+  expect(await page.evaluate(() => localStorage.getItem("reipod-netease-session"))).toBe("netease-mobile-session");
+});

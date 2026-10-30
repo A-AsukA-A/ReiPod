@@ -185,7 +185,7 @@ export function createMusicServiceMenus({
                 services.auth === "loading"
                   ? services.loginUrl ? `打开 ${serviceName} 确认` : "正在连接…"
                   : externalMusic
-                    ? externalLogin
+                    ? externalLogin && services.selected === "qq"
                       ? `打开 ${serviceName} 登录`
                       : `扫码登录 ${serviceName}`
                     : services.ready

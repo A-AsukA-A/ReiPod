@@ -1,3 +1,4 @@
+import { loginConfirmation } from "./login-confirmation.mjs";
 import { createQQRelay } from "./qq-relay.mjs";
 import http from "node:http";
 import { createRequire } from "node:module";
@@ -131,6 +132,10 @@ const server = http.createServer(async (req, res) => {
         const item = pending.get(data.key);
         if (item?.source === source) {
           pending.delete(data.key);
+          if (item.result) {
+            vault.sessions.delete(item.result.token);
+            await vault.save();
+          }
           await providers.cancel(source, item.upstreamKey).catch(() => {});
         }
         json(res, 200, {});
@@ -140,29 +145,36 @@ const server = http.createServer(async (req, res) => {
         const item = pending.get(data.key);
         if (!item || item.source !== source || item.expires < Date.now())
           throw new ServiceError("登录二维码已过期，请重新生成", 410);
+        if (item.result) {
+          if (!vault.sessions.has(item.result.token))
+            throw new ServiceError("登录会话已撤销，请重新扫码", 410);
+          json(res, 200, item.result);
+          return;
+        }
         let check = inFlightChecks.get(data.key);
         if (!check) {
           check = (async () => {
-            const result = await providers.check(source, item.upstreamKey);
-            if (result.code !== 803) {
-              if (![801, 802].includes(result.code))
-                throw new ServiceError(
-                  "二维码已过期或登录未完成，请重新扫码",
-                  410,
-                );
-              return { status: result.code === 802 ? "scanned" : "waiting" };
-            }
-            if (!result.cookie || pending.get(data.key) !== item)
-              throw new ServiceError("登录已取消，请重新扫码", 410);
-            const candidate = { source, cookie: result.cookie };
-            candidate.profile = await providers.profile(source, candidate);
+            const result = await loginConfirmation(source, item, providers);
             if (pending.get(data.key) !== item)
               throw new ServiceError("登录已取消，请重新扫码", 410);
+            if (!result.candidate) return result;
+            const candidate = result.candidate;
             const token = randomBytes(32).toString("hex");
             vault.sessions.set(token, candidate);
-            await vault.save();
-            pending.delete(data.key);
-            return { status: "authorized", token, profile: candidate.profile };
+            try {
+              await vault.save();
+            } catch (error) {
+              vault.sessions.delete(token);
+              throw error;
+            }
+            if (pending.get(data.key) !== item) {
+              vault.sessions.delete(token);
+              await vault.save();
+              throw new ServiceError("登录已取消，请重新扫码", 410);
+            }
+            item.result = { status: "authorized", token, profile: candidate.profile };
+            delete item.cookie;
+            return item.result;
           })();
           inFlightChecks.set(data.key, check);
         }
