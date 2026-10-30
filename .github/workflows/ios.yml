@@ -22,6 +22,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - run: npm run check:player-core
       - run: npm run ios:prepare
       - run: brew install xcodegen
       - run: xcodegen generate

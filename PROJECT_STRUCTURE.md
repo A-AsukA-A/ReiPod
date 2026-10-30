@@ -44,6 +44,7 @@ ReiPod/
 | `src/app/musicServiceActions.ts` | 连接注入的登录/服务端口与导航，约束歌单异步结果适用范围 | 不持有第二份账户或队列；离开页面/切换服务/退出后的旧结果不跳转 |
 | `src/ui/musicServiceMenus.ts` | 根据快照生成当前 classic 的服务/账户/远程资料库菜单 | 只通过注入命令调用应用，不运行平台传输；类型引用不建立运行时服务实例 |
 | `src/player/Player.ts`、`store.ts`、`session.ts` | 本地播放与会话、队列、资料库状态连接 | 不依赖机身组件；核心与 React 绑定仍须按实际依赖逐步梳理 |
+| `src/player/ports.ts`、`tsconfig.player-core.json` | 不依赖 DOM 的音频端口与核心编译检查 | Player 必须显式接收音频工厂和资源释放命令；store/服务适配器继续负责宿主装配 |
 | `src/services/musicServices.ts` | 选择服务、路由播放、远程快照、Media Session | 使用服务中性命名；浏览服务与实际播放服务分别处理 |
 | `src/services/thirdPartyMusic.ts` | 网易云/QQ 的账户、请求与播放器连接 | 切换取消旧请求，保持 provider/account/library/queue 隔离 |
 | `src/services/musicTransport.ts` | iOS 内置网络服务传输 | 不扩展成任意 URL 代理 |

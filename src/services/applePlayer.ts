@@ -149,4 +149,4 @@ class AppleAudio extends EventTarget implements AudioPort {
 }
 export const applePlayer = hasNativeMusic()
   ? new NativeSystemPlayer()
-  : new Player(() => new AppleAudio());
+  : new Player(() => new AppleAudio(), URL.revokeObjectURL);

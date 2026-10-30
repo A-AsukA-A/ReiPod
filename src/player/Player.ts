@@ -1,3 +1,5 @@
+import type { AudioPort } from "./ports";
+export type { AudioPort } from "./ports";
 import type { PlaybackSession } from "./session";
 import { shuffled, shuffleAfterCurrent } from "./ordering";
 
@@ -65,23 +67,6 @@ export type PlayerState = {
   errorKind?: PlaybackErrorKind;
 };
 
-export type AudioPort = Pick<
-  HTMLAudioElement,
-  | "src"
-  | "preload"
-  | "volume"
-  | "paused"
-  | "currentTime"
-  | "duration"
-  | "error"
-  | "play"
-  | "pause"
-  | "load"
-  | "addEventListener"
-  | "removeEventListener"
-  | "removeAttribute"
->;
-
 /** One shared queue, one live backend. Themes only send commands. */
 export class Player {
   private state: PlayerState = {
@@ -109,8 +94,8 @@ export class Player {
   private volumeLimit = 1;
 
   constructor(
-    private createAudio: () => AudioPort = () => new Audio(),
-    private revoke = URL.revokeObjectURL,
+    private createAudio: () => AudioPort,
+    private revoke: (url: string) => void,
   ) {}
   getSnapshot = () => this.state;
   subscribe = (callback: () => void) => {

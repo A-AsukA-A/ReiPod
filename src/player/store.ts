@@ -8,7 +8,7 @@ import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
 import { readSession } from "./session";
 import { clearRatings, setRating } from "./ratings";
 import { clearPlaylists, removeFromPlaylists } from "./playlists";
-export const player = new Player(createLocalAudio);
+export const player = new Player(createLocalAudio, URL.revokeObjectURL);
 let removedDemos: string[] = [];
 let savedSession: ReturnType<typeof readSession> = null;
 try {

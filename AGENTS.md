@@ -48,6 +48,8 @@ Before changing UI, read [DEVICE_STANDARDS.md](DEVICE_STANDARDS.md), [UI_METRICS
 
 ## Validation
 
+For shared playback or audio-port changes, run `npm run check:player-core`; Player and its imported core modules must compile with ES2022 and no DOM/host type libraries. Audio construction and URL cleanup must be injected by the owning adapter/composition root.
+
 Use checks appropriate to the change. For a playback/account change: `npm test`, `npm run test:music-server`, `npm run build`, and relevant Playwright cases. Broaden browser testing when shared navigation/rendering changes. Use a configured browser executable if the bundled browser is unavailable.
 
 For production artifacts run `node scripts/check-dist.mjs` and `npm run size`. iOS resources are generated with `npm run ios:prepare`; generated web resources and Xcode build outputs remain ignored. Do not claim a device installation or real-account test from a mock or compile result.

@@ -30,6 +30,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Check shared player without DOM types
+        run: npm run check:player-core
       - name: Test playback and wheel input
         run: npm test
       - name: Prepare Apple Music configuration when available

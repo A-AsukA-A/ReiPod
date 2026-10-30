@@ -14,7 +14,7 @@ export class NativeSystemPlayer extends Player {
   private issuedQueue = false;
   private queueKnown = false;
   constructor() {
-    super();
+    super(() => { throw new Error("System music does not use web audio"); }, URL.revokeObjectURL);
     this.syncExternalPlayback({ volumeControl: false });
   }
   adopt(snapshot: NativePlayback) {

@@ -576,8 +576,8 @@ class ServiceAudio implements AudioPort {
   }
 }
 const players: Record<ThirdPartyService, Player> = {
-  netease: new Player(() => new ServiceAudio()),
-  qq: new Player(() => new ServiceAudio()),
+  netease: new Player(() => new ServiceAudio(), URL.revokeObjectURL),
+  qq: new Player(() => new ServiceAudio(), URL.revokeObjectURL),
 };
 export const thirdPartyPlayerFor = (service: ThirdPartyService) =>
   players[service];
