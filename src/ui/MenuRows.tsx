@@ -4,6 +4,7 @@ import type { Track } from "../player/Player";
 import { AlbumArt } from "./AlbumArt";
 import { MarqueeText } from "./MarqueeText";
 import { PlayerIcon } from "./PlayerIcon";
+import { ClassicLcdIcon } from "./ClassicLcdIcon";
 import { ClassicGlyph } from "./ClassicGlyph";
 export type MenuItem = {
   key: string;
@@ -73,7 +74,7 @@ export function MenuRows({
           <span className="row-title">
             {trackIds.has(row.key) && currentId === row.key && (
               <span className="track-playing-marker">
-                <PlayerIcon name={active ? "play" : "pause"} filled={active} />
+                <ClassicLcdIcon name={active ? "play" : "pause"} tone="current" />
               </span>
             )}
             <MarqueeText text={row.label} active={row.key === focusedKey} />

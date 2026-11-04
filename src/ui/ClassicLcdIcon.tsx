@@ -14,16 +14,23 @@ const paths: Record<Icon, string> = {
   repeat: "M0 10V6q0-4 4-4h10V0l5 3.5L14 7V4.5H4Q2.5 4.5 2.5 6v4ZM20 6v4q0 4-4 4H6v2l-5-3.5L6 9v2.5h10q1.5 0 1.5-1.5V6Z",
 };
 
-export function ClassicLcdIcon({ name }: { name: Icon }) {
+export function ClassicLcdIcon({
+  name,
+  tone = "blue",
+}: {
+  name: Icon;
+  tone?: "blue" | "current";
+}) {
   const gradient = useId();
   const transport = name !== "shuffle" && name !== "repeat";
+  const glossy = transport && tone === "blue";
   return (
     <svg
       className={`player-icon classic-lcd-icon ${transport ? "status-transport " : ""}icon-${name}`}
       viewBox={transport ? "0 0 10 12" : "0 0 20 16"}
       aria-hidden="true"
     >
-      {transport && (
+      {glossy && (
         <defs>
           <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#7ccbf4" />
@@ -35,9 +42,9 @@ export function ClassicLcdIcon({ name }: { name: Icon }) {
       )}
       <path
         d={paths[name]}
-        fill={transport ? `url(#${gradient})` : "currentColor"}
-        stroke={transport ? "#3c85af" : "none"}
-        strokeWidth={transport ? 0.3 : 0}
+        fill={glossy ? `url(#${gradient})` : "currentColor"}
+        stroke={glossy ? "#3c85af" : "none"}
+        strokeWidth={glossy ? 0.3 : 0}
         strokeLinejoin="round"
       />
     </svg>

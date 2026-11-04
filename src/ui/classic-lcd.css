@@ -28,7 +28,7 @@
 }
 .classic-device .click-wheel .wheel-button:is(:hover, :active, .is-pressed) {
   transform: none;
-  color: #90969c;
+  color: var(--wheel-ink);
 }
 .classic-device
   .click-wheel
@@ -37,18 +37,8 @@
   box-shadow: none;
 }
 .classic-device .click-wheel .wheel-select:is(:hover, :active, .is-pressed) {
-  background: linear-gradient(125deg, #e9ebec, #d1d5d7 45%, #bfc6c9);
-  box-shadow:
-    inset 0 1px 2px #fff9,
-    0 1px 2px #959fa95e;
-}
-.app-shell[data-finish="black"]
-  .classic-device
-  .wheel-select:is(:hover, :active, .is-pressed) {
-  background: linear-gradient(125deg, #444b54, #2c3239);
-  box-shadow:
-    inset 0 1px 2px #68707844,
-    0 1px 1px #020304;
+  background: var(--wheel-center-surface);
+  box-shadow: var(--wheel-center-depth);
 }
 
 .screen-glass {
@@ -165,18 +155,23 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 5px;
-}
-.screen-row .row-value {
-  font-size: 11px;
-  color: #64696f;
+  gap: calc(var(--lcd-unit) * 5);
 }
 .track-row .row-chevron {
   display: none;
 }
+.track-playing-marker {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--lcd-blue);
+}
+.screen-row.selected .track-playing-marker {
+  color: #fff;
+}
 .track-playing-marker .player-icon {
-  width: 9px;
-  height: 9px;
+  width: calc(var(--lcd-unit) * 9);
+  height: calc(var(--lcd-unit) * 11);
 }
 .album-row {
   height: 43px;

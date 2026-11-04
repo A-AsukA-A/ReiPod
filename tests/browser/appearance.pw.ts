@@ -74,3 +74,46 @@ test.afterEach(async ({ page }, testInfo) => {
   }).catch(() => null);
   if (probe) await testInfo.attach('playback-events', { body:JSON.stringify(probe), contentType:'application/json' });
 });
+
+for (const finish of ["silver", "black"] as const) {
+  test(`${finish} shell keeps HOLD proportions, touch target and wheel engraving consistent`, async ({ page }, testInfo) => {
+    await page.addInitScript(finish => {
+      localStorage.setItem("reipod-appearance", JSON.stringify({ finish, background: finish === "black" ? "dark" : "warm", backlight: 0, clickSound: false }));
+    }, finish);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    const proportions: number[] = [];
+    for (const width of [1280, 390, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      const measure = () => page.evaluate(() => {
+        const rect = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+        const body = rect(".classic-device"), target = rect(".top-hold"), track = rect(".hold-track"), thumb = rect(".hold-track > i");
+        return { ratio: track.width / body.width, target: [target.width, target.height], thumbX: thumb.left - track.left, thumbRight: thumb.right, trackRight: track.right };
+      });
+      const before = await measure();
+      expect(before.target[0]).toBeGreaterThanOrEqual(44);
+      expect(before.target[1]).toBeGreaterThanOrEqual(44);
+      proportions.push(before.ratio);
+      await page.getByRole("switch", { name: "HOLD 锁定" }).click();
+      await expect(page.getByRole("switch")).toBeChecked();
+      const held = await measure();
+      expect(held.thumbX).toBeGreaterThan(before.thumbX);
+      expect(held.thumbRight).toBeLessThanOrEqual(held.trackRight + 0.5);
+      await page.getByRole("switch").click();
+      expect((await measure()).thumbX).toBeCloseTo(before.thumbX, 1);
+      const ink = await page.locator(".wheel-menu").evaluate(el => getComputedStyle(el).color);
+      const center = page.locator(".wheel-select");
+      const bounds = await center.boundingBox();
+      await page.locator(".wheel-menu").hover();
+      expect(await page.locator(".wheel-menu").evaluate(el => getComputedStyle(el).color)).toBe(ink);
+      expect(await center.boundingBox()).toEqual(bounds);
+      const shadow = await center.evaluate(el => getComputedStyle(el).boxShadow);
+      expect(shadow.split(/,(?![^()]*\))/).every(part => part.includes("inset"))).toBe(true);
+      const channels = ink.match(/\d+/g)!.map(Number);
+      expect(channels.every(c => finish === "black" ? c > 200 : c < 180)).toBe(true);
+      await testInfo.attach(`${finish}-${width}.png`, { body: await page.locator(".classic-device").screenshot(), contentType: "image/png" });
+    }
+    // Compare the drawing at different scales, without asserting a new hardware size.
+    expect(Math.max(...proportions) - Math.min(...proportions)).toBeLessThan(0.001);
+  });
+}

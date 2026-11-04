@@ -72,3 +72,50 @@ for (const width of [320, 390, 1280]) {
     }
   });
 }
+
+test("setting values keep blue/white states while unrelated disabled values remain muted", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("reipod-appearance", JSON.stringify({ backlight: 0, clickSound: false })));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await choose(page, "设置");
+  const shuffle = live(page).locator(".screen-row").filter({ has: page.locator('.row-title', { hasText: /^随机播放$/ }) });
+  const value = shuffle.locator('.row-value');
+  const blue = await value.evaluate(el => getComputedStyle(el).color);
+  const [r,g,b] = blue.match(/\d+/g)!.map(Number);
+  expect(b - r).toBeGreaterThan(50); expect(g - r).toBeGreaterThan(40);
+  await key(page, "ArrowDown"); await key(page, "ArrowDown"); await key(page, "ArrowDown");
+  await expect(shuffle).toHaveAttribute('aria-current', 'true');
+  expect(await value.evaluate(el => getComputedStyle(el).color)).toBe(await shuffle.evaluate(el => getComputedStyle(el).color));
+  await choose(page, "主菜单");
+  const disabled = live(page).locator('.screen-row.is-disabled').first();
+  expect(await disabled.locator('.row-value').evaluate(el => getComputedStyle(el).color)).toBe(await disabled.evaluate(el => getComputedStyle(el).color));
+});
+
+test("track transport markers stay legible, inherit focus contrast and follow pause/play", async ({ page }, testInfo) => {
+  await page.addInitScript(() => localStorage.setItem("reipod-appearance", JSON.stringify({ backlight: 0, clickSound: false })));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await key(page, "Space");
+  await expect(live(page).locator('.screen-playing-link .icon-play')).toBeVisible();
+  await key(page, "Space");
+  await home(page); await choose(page, "音乐"); await choose(page, "歌曲");
+  const marker = live(page).locator('.track-playing-marker');
+  await expect(marker.locator('.icon-pause')).toBeVisible();
+  for (const width of [320,390,1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const ink = await marker.locator('path').evaluate(path => {
+      const rect = path.getBoundingClientRect(), unit = document.querySelector('.lcd-screen')!.getBoundingClientRect().width / 320;
+      return { w: rect.width / unit, h: rect.height / unit, color: getComputedStyle(path).fill };
+    });
+    expect(ink.w).toBeGreaterThan(6); expect(ink.h).toBeGreaterThan(8);
+    expect(ink.color).toBe('rgb(255, 255, 255)');
+  }
+  await key(page, "ArrowDown");
+  const color = await marker.evaluate(el => getComputedStyle(el).color);
+  const [r,,b] = color.match(/\d+/g)!.map(Number); expect(b-r).toBeGreaterThan(100);
+  await key(page, "ArrowUp"); await key(page, "Space");
+  await expect(marker.locator('.icon-play')).toBeVisible();
+  await expect(marker).toHaveCount(1);
+  await key(page, "Space"); await expect(marker.locator('.icon-pause')).toBeVisible();
+  await testInfo.attach('track-markers.png', { body: await page.locator('.lcd-screen').screenshot(), contentType: 'image/png' });
+});

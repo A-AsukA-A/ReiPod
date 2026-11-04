@@ -28,9 +28,19 @@
   font-style: normal;
   line-height: inherit;
   letter-spacing: inherit;
+  color: #64696f;
+  flex-shrink: 0;
 }
-.split-settings-screen .screen-row .row-value {
-  font-size: inherit;
+/* G-S (2007): setting values are blue, while the focused row stays white.
+   Color is a provisional fit; camera RGB is not a firmware color specification. */
+.split-settings-screen .row-value {
+  color: #3b91b8;
+}
+.screen-row.selected .row-value {
+  color: #fff;
+}
+.screen-row.is-disabled .row-value {
+  color: inherit;
 }
 .split-settings-screen .screen-row {
   font-size: calc(var(--lcd-unit) * 16);
