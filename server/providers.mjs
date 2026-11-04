@@ -113,7 +113,8 @@ export function createProviders(netease, qqRequest) {
     for (const text of [before, ...received]) {
       for (const part of String(text || "").split(/;\s*/)) {
         const at = part.indexOf("=");
-        if (at > 0) jar.set(part.slice(0, at), part.slice(at + 1));
+        if (at > 0 && !["path", "domain", "expires", "max-age", "samesite", "priority", "version"].includes(part.slice(0, at).toLowerCase()))
+          jar.set(part.slice(0, at), part.slice(at + 1));
       }
     }
     return [...jar].map(([key, value]) => `${key}=${value}`).join("; ");
