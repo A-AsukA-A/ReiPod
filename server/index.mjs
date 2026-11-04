@@ -1,3 +1,4 @@
+import { installQQPlaybackCompat } from "./qq-playback-compat.mjs";
 import { loginConfirmation } from "./login-confirmation.mjs";
 import { createQQRelay } from "./qq-relay.mjs";
 import http from "node:http";
@@ -14,9 +15,8 @@ process.env.ENABLE_RANDOM_CN_IP = "false";
 process.env.QQ_DISABLE_UPDATE_CHECK = "true";
 const require = createRequire(import.meta.url);
 const netease = require("@neteasecloudmusicapienhanced/api");
-const { handleRequest } = await import(
-  "@yakult-green-tea/qq-music-api/serverless"
-);
+installQQPlaybackCompat(require);
+const { handleRequest } = require("@yakult-green-tea/qq-music-api/serverless");
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const vault = await openVault(resolve(root, ".local/music-sessions"));
 const qqEnv = { QQ_SESSION_SECRET: vault.key.toString("hex") };

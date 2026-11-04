@@ -109,3 +109,5 @@ ReiPod/
 任务 28：`server/login-confirmation.mjs` 为 HTTP/内置服务共用的登录确认与账户恢复逻辑，平台 cookie 只保留在所属宿主，不返回前端。
 
 `src/services/musicEndpoint.ts` 集中服务端地址解析（配置优先、公网维护者 HTTPS 后端、本地根路径），避免页面子路径改变 API 路由；不参与账户/播放状态。
+
+`server/qq-playback-compat.mjs`：固定 QQ 依赖 HTTP 宿主的有界取链接兼容钩子与 MP3 头探测；由 index 显式安装，不写依赖文件，不改变原生路线或权限判定。

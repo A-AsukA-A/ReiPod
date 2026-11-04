@@ -133,3 +133,32 @@ QQ 手机入口仍使用 `qqmusic` 通道，从平台 PNG 二维码提取官方�
 ### 2026-11-04 扫码协议一致性修正
 
 官方电脑版可登录；本地经代理/换节点/用户声明 DIRECT 的测试仍被平台拦截，尚无成功账号结果。HTTP QR 生成与轮询现显式选择 `crypto=api`、`music.163.com` 与桌面 UA，匹配现有原生扫码表单流程，避免依赖库默认 EAPI/桌面字段与 iPhone UA 的混合。来源为固定依赖源码、bridge/netease.mjs 与 LAZER_RESEARCH 对应固定修订研究；这能证明实现差异，不能证明它是此次安全拦截的唯一原因。8821 明确终止并提示官方安全验证；不随机改 IP 或绕过检查。
+
+### 2026-11-04 海外后端与登录可靠性研究（任务 42）
+
+结论：美国出口是需要验证的部署变量，尚非已确认根因。现有失败至少分为网易云扫码设备风控、QQ 登录票据/播放 RPC、单曲权限与 CDN 获取四个阶段，不能以“两个平台封 IP”统一解释。本节为研究建议，未更改当前 Web HTTPS / App 内置服务产品决定，未购买或迁移主机。
+
+| 证据 | 对 ReiPod 的意义与限制 |
+| --- | --- |
+| 网易云 [issue #1](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/issues/1) 报告第三方扫码设备异常而官方网页扫码正常；[#4](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/issues/4) 给出官方网页登录思路并链接 [4f4aa134](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/commit/4f4aa134d53704932b9fe0e09b7170f2a2451731) 修复 | 与用户现象相似，但这是 2025 年历史问题，不是本次根因证明；当前已固定 Enhanced 4.41.1，不能把采用 Enhanced 或盲目升级作为新方案。需对比修复、固定包与宿主实际请求 |
+| 网易云 [#176](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/issues/176) 记录 randomCNIP 缺陷并由 #178 关闭 | realIP/randomCNIP 是请求参数/头层面的处理，不能证明真实网络出口已改变；该记录针对 check/music，不证明 8821 登录问题可解 |
+| QQ [当前上游说明](https://github.com/yakult-green-tea/qq-music-api) 提醒宿主间播放差异、稳定设备文件/会话密钥、设备数限制和续期边界 | ReiPod 已用该库 3.3.5。不能仅凭容器、Serverless 或新实例启动成功认定播放可靠；不要重建身份来反复扫码 |
+| Music Assistant [#6628](https://github.com/music-assistant/support/issues/6628) 用户报告同账号同歌 UrlGetVkey=104003、CgiGetEVkey 成功，并验证完整音频；后续注明英国环境 | 这是用户个案，部分分析由 AI 辅助，未形成通用正式修复。值得与当前 Node 库进行受控对照，不能照抄或当成官方地区判据 |
+| 本地固定包 `node_modules/@yakult-green-tea/qq-music-api/dist/src/services/auth/playback.js` 对应[上游源码](https://github.com/yakult-green-tea/qq-music-api/blob/main/src/services/auth/playback.ts) | 当前登录态确实使用 music.vkey.GetVkey / UrlGetVkey，未发现 CgiGetEVkey；因此上条线索与实际调用路径有关。但尚未以用户账号测试替代 RPC |
+| [L-1124/QQMusicApi](https://github.com/L-1124/QQMusicApi) 为独立 Python 封装；[ncm-api-rs](https://github.com/SPlayer-Dev/ncm-api-rs) 为 Rust 原生网易云实现 | 可用于协议交叉核对或未来原生技术评估；换语言本身不会消除相同平台的权限/风控条件，不建议立即全量替换 |
+
+建议按以下顺序推进：
+
+1. QQ 先做隔离的取链接协议对照：同账号、同歌曲版本/音质、同出口，比较当前 UrlGetVkey 与候选 CgiGetEVkey。检查登录票据是否具备播放能力、media_mid/文件名、返回 sip；只记布尔状态和白名单数字码，不输出票据或签名链接。拿到 URL 后仍须验证客户端 Range/解码/完整时长及听感，不能把 URL 非空当成成功。失败时保留现有权限反馈，不自动换源或绕过付费。
+2. 网易云先审查单个挑战的上下文：QR key/check 的设备标识、cookie jar、UA、os/appver 和协议是否一致，确认临时 cookie 是否应在服务端保留。当前依赖 processCookieObject 在缺失时逐次生成部分标识；这只说明应检查会话连续性，尚非已确诊缺陷。任务 38 普通 API/桌面 UA 修正后仍缺真实验收，不反复叠加未验证参数。
+3. Web 部署做同版本的美国出口与中国大陆真实出口对照。优先临时测试节点或用户本机真实直连，固定版本/设备上下文并遵守平台冷却要求，得到结果后才选择常驻主机。香港仍不是大陆出口，不应承诺能解决。验收包括生成码、确认、资料库、指定歌曲完整播放、刷新恢复与重启恢复。
+4. 如果大陆节点验证稳定，可保留现有美国静态站，将受限音乐操作放在维护者控制的大陆 HTTPS 服务；若保留美国 API 入口，则仅认证转发白名单操作至固定大陆服务。登录、轮询、资料库、取链接在同一服务/稳定出口完成，挑战固定路由，平台凭证保留在该边界。前端仍只接现有不透明会话协议。音频 CDN 通常由浏览器访问，API 换地区不能保证客户端音频可达；本轮不引入任意音频代理。
+5. App 继续内置本机服务，减少对集中美国出口的依赖。网易云官方登录页作为原生宿主内候选备用流程，只能由宿主隔离处理凭证，需另做平台与安全边界验证；普通网页无法跨域读取官网 cookie，不采用手动复制 cookie 或恢复浏览器扩展作为默认体验。
+
+本轮只做公开资料和本地固定源码核对、文档 diff/链接检查；没有新增扫码、读取真实账户凭证、迁移部署或运行播放验证。O06/U04 保持开放。
+
+### QQ 104003 兼容重试（任务 44）
+
+HTTP 后端在固定 3.3.5 CommonJS 服务图中安装显式兼容钩子，不改 node_modules 文件或原生服务。原请求成功、试听、非 128 音质、明确权限分类均不改；仅 `url_unavailable + 104003/1` 才按同会话/设备重新读取曲目 media_mid，使用 `music.vkey.GetEVkey/CgiGetEVkey` 请求同歌同 128 音质，最多十首。候选必须明确 result=0、songmid 与文件匹配，只用响应 sip 中 QQ HTTPS CDN（禁止跳转），限时 Range 探测 MP3 头；拒绝、异常、非 MP3 均保留原权限提示。没有解密、替代音源或绕过会员/地区授权。
+
+候选来源为 [Music Assistant #6628](https://github.com/music-assistant/support/issues/6628) 的同症状实测个案；不是官方通用修复。数据头检查不证明完整时长/解码或听感，真实账号仍须验收。依赖版本变更必须审查内部模块接口，不静默继续 hook；CJS/ESM 会话封装契约由固定库提供，原生保留旧路径，未宣称原生已修复。
