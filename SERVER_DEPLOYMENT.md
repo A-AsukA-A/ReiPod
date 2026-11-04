@@ -176,3 +176,12 @@ QR key/check 显式采用既有原生的普通 API 与桌面 UA；修正此前�
 HTTP provider 最终 abf75e2：单挑战隔离稳定匿名标识和生成/轮询/确认cookie；Set-Cookie属性不作为Cookie键发送，不把临时cookie返回页面。35服务端/218单元/6定向浏览器、构建/dist/size和ios:prepare通过。参考仓库被Vitest默认扫描的问题通过独立测试配置排除研究目录解决，首轮第三方7套件失败不记为项目成功。
 
 最终文件哈希一致、服务active，备份 /opt/reipod/backups/backend-before-abf75e2-20261104T081510Z.tgz；此前状态修正前备份 /opt/reipod/backups/backend-before-128fdb7-20261104T081419Z.tgz。前端和持久会话未改，QQ实验保持关闭。真实网易云手机授权仍未重新验收，不因匿名生成/轮询正常宣称风控解决；原生资源未安装。
+
+
+## 2026-11-04 classic 电池与LCD图标修订（任务51）
+
+前端 `f516b54` 已推送并部署至VPS。首稿99e35fb被用户指出白色内空隙和图标风格问题，未替换VPS，最终修订取消电池内边距，统一蓝色传输/实心模式矢量，并将随机/重复成组放在播放页右上。依据与暂定边界见 UI_METRICS，本轮不宣称固件资源已恢复。
+
+最终218项单元、88项完整浏览器、显式维护者HTTPS API生产构建、dist/size、文档链接/diff通过。总构建12523631 bytes、程序gzip263417 bytes、试听3816471 bytes。41文件暂存/线上SHA-256全部匹配，公网入口、直接JS/CSS匹配；浏览器实际播放/暂停后确认电池padding=0和新LCD图标。个人首页文件与后端provider哈希保持，nginx/music均active，没有重启服务或改持久会话。
+
+回滚包 `/opt/reipod/backups/dist-before-f516b54-20261104T151611Z.tgz` 包含旧dist和release.json，旧哈希资源保留供已打开页面使用。release.json记录前端f516b54、后端abf75e2。GitHub Pages源码工作流 [41855801368](https://github.com/A-AsukA-A/ReiPod/actions/runs/41855801368) 成功，公网CSS与最终构建匹配；iPhone工作流仍待执行/核验，未进行安装、真实账号或后台播放验收。
