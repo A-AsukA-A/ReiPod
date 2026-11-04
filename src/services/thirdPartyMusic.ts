@@ -1,3 +1,4 @@
+import { musicEndpoint } from "./musicEndpoint";
 import { openMusicLogin, usesExternalMusicLogin } from "./musicLogin";
 import { bridgeMusicRequest, useMusicBridge } from "./musicTransport";
 import { Player, PlaybackError } from "../player/Player";
@@ -99,19 +100,7 @@ class MusicServiceError extends Error {
   }
 }
 function endpoint(service: ThirdPartyService, action: string) {
-  const base =
-    import.meta.env.VITE_MUSIC_API_URL ||
-    new URL("api/music/", location.href).href;
-  const root = new URL(base.endsWith("/") ? base : base + "/", location.href);
-  if (
-    root.protocol !== "https:" &&
-    !(
-      root.protocol === "http:" &&
-      ["localhost", "127.0.0.1", "[::1]"].includes(root.hostname)
-    )
-  )
-    throw new Error("请为音乐服务配置 HTTPS 接口地址");
-  return new URL(`${service}/${action}`, root);
+  return musicEndpoint(service, action, location.href, import.meta.env.VITE_MUSIC_API_URL);
 }
 async function request(
   service: ThirdPartyService,
@@ -148,7 +137,7 @@ async function request(
       error instanceof Error &&
         (error.message.includes("HTTPS") || useMusicBridge())
         ? error.message
-        : "音乐服务暂未连接，请确认自托管音乐服务已启动",
+        : "音乐后端暂时无法连接，请稍后重试",
     );
   }
   if (epoch !== epochs[service] || token !== tokens[service])
@@ -282,7 +271,9 @@ export async function refreshThirdParty(service: ThirdPartyService) {
 export async function prepareThirdParty(service: ThirdPartyService) {
   if (states[service].auth === "loading") return;
   const epoch = epochs[service];
-  update(service, { auth: "loading", error: "" });
+  // Checking backend availability is not an authorization attempt. A signed-out
+  // user can start QR login even while this status request is slow.
+  update(service, { auth: tokens[service] ? "loading" : "signed-out", error: "", loginMessage: undefined });
   try {
     const result = await request(service, "status");
     if (epoch !== epochs[service]) return;

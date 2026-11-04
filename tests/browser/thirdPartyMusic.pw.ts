@@ -245,3 +245,36 @@ test("NetEase mobile keeps its QR through reload and retries temporary backend f
   await expect(live(page).getByRole("status")).toContainText("已连接 网易云音乐");
   expect(await page.evaluate(() => localStorage.getItem("reipod-netease-session"))).toBe("netease-mobile-session");
 });
+
+test("subpath API stays at root and a slow anonymous status does not lock login", async ({ page }) => {
+  let release!: () => void;
+  const delayed = new Promise<void>(resolve => { release = resolve; });
+  const requested: string[] = [];
+  await page.route("**/api/music/**", async route => {
+    const path = new URL(route.request().url()).pathname;
+    requested.push(path);
+    if (path.endsWith("/status")) {
+      await delayed;
+      await route.fulfill({ json: { authorized: false } }).catch(() => {});
+      return;
+    }
+    await route.fulfill({ json: path.endsWith("/login-start")
+      ? { key: "slow-status-qr", image: "data:image/png;base64,fixture" }
+      : { status: "waiting" } });
+  });
+  await page.goto("/");
+  await page.evaluate(() => history.replaceState(null, "", "/ReiPod/"));
+  try {
+    await choose(page, "设置");
+    await choose(page, "音乐服务");
+    await choose(page, "网易云音乐");
+    await expect(live(page)).toContainText("扫码登录 网易云音乐");
+    await expect(live(page)).not.toContainText("正在连接…");
+    await choose(page, "扫码登录 网易云音乐");
+    await expect(live(page).locator(".music-login-qr")).toHaveCount(1);
+    expect(requested).toContain("/api/music/netease/login-start");
+    expect(requested.every(path => !path.startsWith("/ReiPod/"))).toBe(true);
+    release();
+    await expect(live(page).locator(".music-login-qr")).toHaveCount(1);
+  } finally { release(); }
+});
