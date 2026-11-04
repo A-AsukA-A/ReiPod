@@ -166,3 +166,17 @@ HTTP 后端在固定 3.3.5 CommonJS 服务图中安装显式兼容钩子，不�
 ### 任务 46：候选真实验收失败，默认关闭
 
 用户重试表明原 UrlGetVkey=104003/1，网页信封候选 CgiGetEVkey=104003/0，均无 purl；不进入 CDN 检查。另一个歌曲也同样失败，候选并未修复当前环境。生产默认关闭候选额外请求，仅保留 REIPOD_QQ_EVKEY_EXPERIMENT=1 的隔离实验入口和安全失败诊断。不得把任务 44/45 的单元/匿名结果宣传为账号播放通过。下一步必须受控核对 QQ 会话播放票据与真实出口；此前网易云本地测试不是 QQ 大陆出口对照。
+
+### 2026-11-04 用户候选仓库核对（任务 47）
+
+[xgxdmx/NeteaseMusic-API](https://github.com/xgxdmx/NeteaseMusic-API) 为 Enhanced 的 fork；本次固定 main 提交 `0395d087d9e99ceef480c54e7932c2332e5c0c39`（提交日期 2026-04-19），package.json 仍为 @neteasecloudmusicapienhanced/api 4.32.0、MIT；GitHub 元数据 pushed_at 2026-04-21，非 archived。源码只下载至忽略研究目录，未安装或运行。
+
+与当前安装的 4.41.1 逐字节比较，module/login_qr_key.js、login_qr_check.js、login_qr_create.js、login_status.js 四文件完全相同。候选默认 encrypt=true，request 仍生成缺失标识并默认采用 iPhone UA；未见所查扫码核心提供与当前症状相关的新机制。README 的“增强/维护”以及历史 CHANGELOG“修复登录冻结”不能证明当前账号设备拦截已修复。未断言整个仓库完全相同，也未做真实账号验证。
+
+结论：不为名称/功能列表全量替换现有依赖；如将来发现具体有效提交，再按挑战 cookie/设备上下文和真实账号结果作隔离对照。该项目是网易云适配器，不是 QQ 播放 104003 的解决方案；当前两个服务故障仍开放。
+
+### 网易云单挑战 cookie 连续性（任务 49）
+
+HTTP 生成二维码后曾丢弃上游 Set-Cookie，未提供稳定匿名标识，后续轮询可能与生成阶段上下文不一致。现为每个挑战保留独立 _ntes_nuid/_ntes_nnid 及上游临时 cookie，确认时合并轮换 MUSIC_U/__csrf 等；成功、过期、取消释放，三分钟/20项上限，不返回网页。原生适配器补齐与固定库一致的 result.cookie 元数据，供特权服务合并，不暴露给 UI；需新安装资源才生效。
+
+这修正状态管理缺陷，不证明设备拦截已解除；此前失败不据此改记成功。HTTP 内存挑战在进程重启后失效，既有授权会话不迁移；本轮仍未完成原生进程重启期间未确认挑战的持久恢复验收。QQ 已有会话与 QQ 单曲播放失败分开，继续保持失败候选关闭，不再次要求 QQ 登录。

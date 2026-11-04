@@ -459,3 +459,20 @@ test("QQ failed playback attaches only bounded diagnostics, never provider crede
     return true;
   });
 });
+
+test('NetEase concurrent challenges keep stable isolated anonymous cookies and rotated confirmation cookies',async()=>{
+ let serial=0;const seen=[];
+ const providers=createProviders({
+  login_qr_key:async q=>{seen.push(q.cookie);return {status:200,cookie:[`NMTID=server-${++serial}; Path=/; Secure`],body:{data:{unikey:String(serial)}}};},
+  login_qr_create:async()=>({status:200,body:{data:{qrimg:'data:image/png;base64,fixture'}}}),
+  login_qr_check:async q=>{seen.push(q.cookie);return {status:200,cookie:['MUSIC_U=PRIVATE; Path=/'],body:{code:803,cookie:'__csrf=rotated'}};},
+ });
+ const a=await providers.start('netease'),b=await providers.start('netease');
+ const checked=await providers.check('netease',a.key);
+ assert.ok(seen[2].includes(seen[0]));assert.ok(seen[2].includes('NMTID=server-1'));
+ assert.ok(!seen[2].includes('server-2'));assert.notEqual(seen[0],seen[1]);
+ assert.match(checked.cookie,/MUSIC_U=PRIVATE/);assert.match(checked.cookie,/__csrf=rotated/);
+ assert.match(checked.cookie,/NMTID=server-1/);
+ assert.equal(JSON.stringify(a).includes('server-1'),false);
+ await providers.cancel('netease',a.key);
+});

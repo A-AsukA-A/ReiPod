@@ -111,3 +111,5 @@ ReiPod/
 `src/services/musicEndpoint.ts` 集中服务端地址解析（配置优先、公网维护者 HTTPS 后端、本地根路径），避免页面子路径改变 API 路由；不参与账户/播放状态。
 
 `server/qq-playback-compat.mjs`：固定 QQ 依赖 HTTP 宿主的有界取链接兼容钩子与 MP3 头探测；由 index 显式安装，不写依赖文件，不改变原生路线或权限判定。
+
+`vitest.config.ts` 复用 Vite 配置，排除 `.local/analysis/docs` 研究目录，避免下载的第三方参考测试被当作本项目套件执行。

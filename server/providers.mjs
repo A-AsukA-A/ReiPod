@@ -107,6 +107,17 @@ const next = (offset, size, total) =>
 
 /** Only expose read/play operations. No unlock, replacement-source or account-write routes. */
 export function createProviders(netease, qqRequest) {
+  const loginContexts = new Map();
+  const mergeCookies = (before, received) => {
+    const jar = new Map();
+    for (const text of [before, ...received]) {
+      for (const part of String(text || "").split(/;\s*/)) {
+        const at = part.indexOf("=");
+        if (at > 0) jar.set(part.slice(0, at), part.slice(at + 1));
+      }
+    }
+    return [...jar].map(([key, value]) => `${key}=${value}`).join("; ");
+  };
   async function net(name, args = {}, session) {
     try {
       const result = await netease[name]({
@@ -124,6 +135,11 @@ export function createProviders(netease, qqRequest) {
         randomCNIP: false,
       });
       const body = result.body;
+      if (session?.transientLogin) {
+        const received = Array.isArray(result.cookie) ? result.cookie.map(c => c.split(";")[0]) : [];
+        session.cookie = mergeCookies(session.cookie, [...received, body.cookie]);
+        if (name === "login_qr_check") body.cookie = session.cookie;
+      }
       if (body.code === 8821)
         throw new ServiceError("网易云要求安全验证（8821），请先在官方客户端完成验证；不要反复扫码。", 422);
       if (
@@ -164,10 +180,17 @@ export function createProviders(netease, qqRequest) {
     profile,
     async start(source, channel) {
       if (source === "netease") {
-        const key = (await net("login_qr_key")).data?.unikey;
+        for (const [key, context] of loginContexts)
+          if (context.expires < Date.now()) loginContexts.delete(key);
+        if (loginContexts.size >= 20) throw new ServiceError("登录请求过多，请稍后重试", 429);
+        const nuid = [...crypto.getRandomValues(new Uint8Array(16))].map(n => n.toString(16).padStart(2, "0")).join("");
+        const context = { transientLogin: true, expires: Date.now() + 180000,
+          cookie: `_ntes_nuid=${nuid}; _ntes_nnid=${nuid},${Date.now()}` };
+        const key = (await net("login_qr_key", {}, context)).data?.unikey;
         if (!key) throw new ServiceError("未能生成网易云音乐登录二维码");
         const image = (await net("login_qr_create", { key, qrimg: true })).data
           ?.qrimg;
+        loginContexts.set(key, context);
         return { key, image, loginUrl: `https://music.163.com/login?codekey=${encodeURIComponent(key)}` };
       }
       if (!["qq", "wechat", "qqmusic"].includes(channel)) channel = "qq";
@@ -183,11 +206,13 @@ export function createProviders(netease, qqRequest) {
     async check(source, key) {
       const body =
         source === "netease"
-          ? await net("login_qr_check", { key })
+          ? await net("login_qr_check", { key }, loginContexts.get(key))
           : await qq("/login/qr/check", { key });
+      if (source === "netease" && [800, 803].includes(body.code)) loginContexts.delete(key);
       return { code: body.code, cookie: body.cookie, message: body.message };
     },
     async cancel(source, key) {
+      if (source === "netease") loginContexts.delete(key);
       if (source === "qq") await qq("/login/qr/cancel", { key });
     },
     async logout(source, session) {

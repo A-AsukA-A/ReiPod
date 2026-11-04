@@ -197,7 +197,7 @@ export function createNetEase(
             .map(([key, value]) => `${key}=${value}`)
             .join("; ");
         if (name === "logout") jar.clear();
-        return { status: response.status, body };
+        return { status: response.status, body, cookie: received };
       },
     ]),
   );
