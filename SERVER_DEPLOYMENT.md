@@ -25,7 +25,7 @@ node scripts/check-dist.mjs
 npm run size
 ```
 
-上传范围仅包括 `dist/`、`server/index.mjs`、`server/providers.mjs`、`server/login-links.mjs`、`server/login-confirmation.mjs`、`server/qq-relay.mjs`、`server/vault.mjs` 和 server 的 package/lock 文件。服务器执行 `npm --prefix /opt/reipod/server ci --omit=dev --ignore-scripts`，再重启 `reipod-music`。更新前备份旧发布内容，保留服务器 `.local/`，勿用本机目录覆盖服务器会话。SSH 密钥和口令不进入构建或文档。
+上传范围仅包括 `dist/`、`server/index.mjs`、`server/providers.mjs`、`server/login-links.mjs`、`server/login-confirmation.mjs`、`server/qq-playback-compat.mjs`、`server/qq-relay.mjs`、`server/vault.mjs` 和 server 的 package/lock 文件。服务器执行 `npm --prefix /opt/reipod/server ci --omit=dev --ignore-scripts`，再重启 `reipod-music`。更新前备份旧发布内容，保留服务器 `.local/`，勿用本机目录覆盖服务器会话。SSH 密钥和口令不进入构建或文档。
 
 GitHub Pages 工作流支持仓库变量 `MUSIC_API_URL`，值为上述音乐 API 地址；未设置时使用维护者的 API 默认值。工作流修改需要发布后才生效，Pages 部署结果与匿名检查仍不能代替真实账号验收。服务器当前发布包已显式配置 API，因此该入口无需扩展。
 
@@ -152,3 +152,10 @@ QR key/check 显式采用既有原生的普通 API 与桌面 UA；修正此前�
 后端 `1b2f167` 仅增加失败日志：公共歌曲 ID、音质、是否有服务会话、限制提示类别及白名单整数错误码；不记录账号标识、凭证、URL 或原始响应，前端响应/授权/播放请求保持。旧 index/providers 与 release 备份 `/opt/reipod/backups/backend-before-1b2f167-20261104T073344Z.tgz`，部署两文件哈希一致，服务 active；静态前端未改、持久会话保留。218 单元、28 服务端、6 定向浏览器与构建/dist/size通过。
 
 用户报告 Bishop Briggs 的 River 在官方 QQ App 同账号可播放，ReiPod 提示可能地区限制；公开搜索原版 songmid 0001AV2L4JYlzN（Church Of Scars），混音等版本独立。不能据此认定封 IP。下一步用户在已有会话中重试实际歌曲一次，以新日志核对单曲错误码与提示来源，不读取会话 vault 或再次要求登录。真实播放故障仍未解决。
+
+
+## 2026-11-04 QQ 104003 兼容修复（任务 44）
+
+后端 a8b8a20 部署 index 与新增 qq-playback-compat，哈希核对通过；回滚包 /opt/reipod/backups/backend-before-a8b8a20-20261104T075044Z.tgz，恢复旧 index 即不再加载新增钩子。静态前端/账户持久会话保持。HTTP 固定 3.3.5 通过显式 CJS 服务图钩子接入有界同账号 EVkey 重试；不是写入 node_modules 的隐式补丁。部署必须一起包含新增模块，变更依赖版本需先审查钩子。
+
+本地 218 单元、33 服务端、6 定向浏览器、构建/dist/size 与真实 CJS 服务启动通过。候选要求明确单曲授权、精确曲目/文件、QQ HTTPS CDN、限时无跳转 MP3 Range 数据头，失败保留原限制。真实账号完整播放仍待用户重试；MP3 数据头/非空 URL 均不能替代完整解码/时长/听感验收，原生路线未更新。
