@@ -6,8 +6,6 @@ type IconName =
   | "pause"
   | "seek-forward"
   | "seek-backward"
-  | "shuffle"
-  | "repeat"
   | "queue"
   | "lyrics"
   | "star"
@@ -21,10 +19,6 @@ const paths: Record<IconName, string> = {
   pause: "M6 4h4v16H6Zm8 0h4v16h-4Z",
   "seek-forward": "M2 5v14l9-7Zm10 0v14l9-7Z",
   "seek-backward": "M22 5v14l-9-7ZM12 5v14l-9-7Z",
-  shuffle:
-    "M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4",
-  repeat:
-    "m17 2 4 4-4 4M3 10V8a2 2 0 0 1 2-2h16M7 22l-4-4 4-4m14 0v2a2 2 0 0 1-2 2H3",
   queue: "M8 6h13M8 12h13M8 18h13M2 6h1M2 12h1M2 18h1",
   lyrics:
     "M4 5h6v7c0 4-2 6-5 7v-3c2-1 2-2 2-4H4Zm10 0h6v7c0 4-2 6-5 7v-3c2-1 2-2 2-4h-3Z",

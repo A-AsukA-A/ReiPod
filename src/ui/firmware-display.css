@@ -170,29 +170,29 @@
    Projection parameters fit visible corners, not recovered firmware values. */
 .np-indicators {
   position: absolute;
-  top: calc(var(--lcd-unit) * 3);
-  left: calc(var(--lcd-unit) * 10);
+  top: var(--lcd-unit);
+  left: auto;
   right: calc(var(--lcd-unit) * 10);
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: calc(var(--lcd-unit) * 4);
   color: #555;
 }
 .np-indicators > span {
   position: relative;
 }
-.np-repeat-indicator {
-  margin-left: auto;
-}
 .np-indicators .player-icon {
-  width: calc(var(--lcd-unit) * 15);
-  height: calc(var(--lcd-unit) * 15);
+  width: calc(var(--lcd-unit) * 18);
+  height: calc(var(--lcd-unit) * 14);
 }
 .np-indicators small {
   position: absolute;
-  top: 0;
-  right: 0;
-  font-size: calc(var(--lcd-unit) * 8);
-  background: #fff;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: calc(var(--lcd-unit) * 7);
+  font-weight: 700;
+  line-height: 1;
 }
 .now-playing-top {
   --np-cover-size: calc(var(--lcd-unit) * 138);

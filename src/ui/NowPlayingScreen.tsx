@@ -3,6 +3,7 @@ import { AlbumArt } from "./AlbumArt";
 import { MarqueeText } from "./MarqueeText";
 import { Lyrics } from "./Lyrics";
 import { PlayerIcon } from "./PlayerIcon";
+import { ClassicLcdIcon } from "./ClassicLcdIcon";
 import { SeekSlider } from "./SeekSlider";
 import { PlaybackControlBay } from "./PlaybackControlBay";
 import { PlaybackAlert } from "./PlaybackAlert";
@@ -62,10 +63,10 @@ export function NowPlayingScreen({
       ) : (
         <>
           <div className="np-indicators" aria-hidden="true">
-            {state.shuffle && <PlayerIcon name="shuffle" />}
+            {state.shuffle && <ClassicLcdIcon name="shuffle" />}
             {state.repeat !== "off" && (
               <span className="np-repeat-indicator">
-                <PlayerIcon name="repeat" />
+                <ClassicLcdIcon name="repeat" />
                 {state.repeat === "one" && <small>1</small>}
               </span>
             )}

@@ -76,7 +76,7 @@ ReiPod/
 
 `src/ui/appearance.ts` 只解析 finish/background，供 classic 设置沿用原存储结构，并提供网页状态栏背景色。外观不包含机型、LCD 或平台能力字段；机身 CSS 仍是现有实现，不宣称已完成通用主题注册器。ClassicShell 将机型 LCD 配置传给 CSS；App 注入内容、状态与命令，主题选择不设置 React key 或重建 Player。
 
-机身渲染入口为 `src/ui/ClassicShell.tsx`，组合 HOLD、只读 LCD、转轮、背光与提示；保留原 DOM 层级，并通过 contentRef 连接 App 的动画捕获。`ClassicStatusBar.tsx` 只消费标题/播放模式/提示等呈现状态。两者不直接调用服务或创建 Player。`classicInputController.ts` 将转轮命令按当前页面路由到注入端口；默认播放的服务选择、试听导入与账户入口仍在 App。
+机身渲染入口为 `src/ui/ClassicShell.tsx`，组合 HOLD、只读 LCD、转轮、背光与提示；保留原 DOM 层级，并通过 contentRef 连接 App 的动画捕获。`ClassicStatusBar.tsx` 只消费标题/播放模式/提示等呈现状态；`ClassicLcdIcon.tsx` 集中LCD传输/随机/重复的独立矢量，播放页与状态栏共享，不替代轮盘实体标记或音量图标。两者不直接调用服务或创建 Player。`classicInputController.ts` 将转轮命令按当前页面路由到注入端口；默认播放的服务选择、试听导入与账户入口仍在 App。
 
 页面 JSX 已集中到 `ClassicScreenContent`，使用 Fragment 保留原 DOM；菜单行、文本阅读器仍使用原 ref。账户 Header 由 App 根据平台能力装配后注入，二维码只传展示数据。`classicScreenModel` 集中标题与原先重复的预览 props；预览仅在相应页面呈现时派生，避免在每次播放进度更新时扫描资料库。其余菜单生成与导航装配仍待整理。
 

@@ -35,6 +35,8 @@ test("status silhouettes and battery fill stay legible and aligned as the LCD sc
         glyphWidth: icon.width / unit,
         glyphHeight: icon.height / unit,
         fillHeight: fill.height / unit,
+        insetX: (fill.left - battery.left) / unit,
+        insetY: (fill.top - battery.top) / unit,
         fillRatio: fill.width / (battery.width - 2 * (fill.left - battery.left)),
       };
     });
@@ -48,6 +50,9 @@ test("status silhouettes and battery fill stay legible and aligned as the LCD sc
     expect(geometry.glyphHeight).toBeGreaterThan(9);
     expect(geometry.glyphHeight).toBeLessThan(15);
     expect(geometry.fillRatio).toBeCloseTo(0.5, 1);
+    // Only the metal border separates the charge from the outside; no white inset.
+    expect(geometry.insetX).toBeLessThan(1.5);
+    expect(geometry.insetY).toBeLessThan(1.5);
     fillHeights.push(geometry.fillHeight);
     await testInfo.attach(`status-${width}.json`, { body: JSON.stringify(geometry), contentType: "application/json" });
     await testInfo.attach(`status-${width}.png`, { body: await live(page).locator(".screen-status").screenshot(), contentType: "image/png" });
@@ -58,6 +63,43 @@ test("status silhouettes and battery fill stay legible and aligned as the LCD sc
   await expect(live(page).locator(".classic-battery")).toBeVisible();
   await key(page, "Space");
   await expect(live(page).locator(".icon-pause")).toBeVisible();
+});
+
+test("filled Classic shuffle and repeat indicators fit above the artwork without a number badge", async ({ page }, testInfo) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("reipod-appearance", JSON.stringify({ backlight: 0, clickSound: false }));
+    localStorage.setItem("reipod-playback", JSON.stringify({ shuffle: true, repeat: "one" }));
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await key(page, "Space");
+  await expect(live(page).locator(".np-indicators .classic-lcd-icon")).toHaveCount(2);
+  await key(page, "Space");
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const result = await live(page).locator(".np-indicators").evaluate(element => {
+      const cover = element.parentElement!.querySelector(".np-cover")!.getBoundingClientRect();
+      const icons = [...element.querySelectorAll("svg")];
+      const lcd = document.querySelector(".lcd-screen")!.getBoundingClientRect();
+      const first = icons[0].getBoundingClientRect(), last = icons[1].getBoundingClientRect();
+      const repeat = element.querySelector(".icon-repeat")!.getBoundingClientRect();
+      const one = element.querySelector("small")!;
+      const number = one.getBoundingClientRect();
+      return {
+        filled: icons.every(icon => {
+          const style = getComputedStyle(icon.querySelector("path")!);
+          return style.fill !== "none" && style.stroke === "none";
+        }),
+        aboveArt: icons.every(icon => icon.getBoundingClientRect().bottom <= cover.top + 0.5),
+        groupedRight: first.left > lcd.left + lcd.width / 2 && (last.right - first.left) / (lcd.width / 320) < 50,
+        numberInside: number.left >= repeat.left && number.right <= repeat.right && number.top >= repeat.top && number.bottom <= repeat.bottom,
+        badgeBackground: getComputedStyle(one).backgroundColor,
+      };
+    });
+    expect(result).toEqual({ filled: true, aboveArt: true, groupedRight: true, numberInside: true, badgeBackground: "rgba(0, 0, 0, 0)" });
+    await testInfo.attach(`modes-${width}.png`, { body: await live(page).locator(".screen-status").screenshot(), contentType: "image/png" });
+    await testInfo.attach(`playback-modes-${width}.png`, { body: await page.locator(".lcd-screen").screenshot(), contentType: "image/png" });
+  }
 });
 
 test("the battery follows device drain, charging and resume even when an event was missed", async ({
