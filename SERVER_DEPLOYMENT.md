@@ -159,3 +159,8 @@ QR key/check 显式采用既有原生的普通 API 与桌面 UA；修正此前�
 后端 a8b8a20 部署 index 与新增 qq-playback-compat，哈希核对通过；回滚包 /opt/reipod/backups/backend-before-a8b8a20-20261104T075044Z.tgz，恢复旧 index 即不再加载新增钩子。静态前端/账户持久会话保持。HTTP 固定 3.3.5 通过显式 CJS 服务图钩子接入有界同账号 EVkey 重试；不是写入 node_modules 的隐式补丁。部署必须一起包含新增模块，变更依赖版本需先审查钩子。
 
 本地 218 单元、33 服务端、6 定向浏览器、构建/dist/size 与真实 CJS 服务启动通过。候选要求明确单曲授权、精确曲目/文件、QQ HTTPS CDN、限时无跳转 MP3 Range 数据头，失败保留原限制。真实账号完整播放仍待用户重试；MP3 数据头/非空 URL 均不能替代完整解码/时长/听感验收，原生路线未更新。
+
+
+## 2026-11-04 QQ 候选请求信封补齐（任务 45）
+
+首版 EVkey 兼容在用户两次真实重试中 granted=false、未进入 CDN 探测，未修复该账号播放。复查发现仍使用库默认 Android comm，与候选网页 ct24/cv0 参数不一致；afd0bfb 补显式网页 comm/uin，保留同一 authst/tmeLoginType，并新增序列化测试与候选白名单错误码日志。仅兼容模块更新，哈希一致，服务 active，备份 /opt/reipod/backups/backend-before-afd0bfb-20261104T075542Z.tgz。218 单元、34 服务端、6 定向浏览器、构建/dist/size通过，匿名 QQ status 正常；真实播放仍待用户复验，不能记作通过。
