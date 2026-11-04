@@ -194,3 +194,12 @@ HTTP provider 最终 abf75e2：单挑战隔离稳定匿名标识和生成/轮询
 218项单元、92项完整浏览器、显式HTTPS API生产构建、dist/size、文档链接/diff通过。总构建12524057 bytes、程序gzip263518 bytes、试听3816471 bytes。41文件暂存及线上SHA-256一致，公网HTML及直接JS/CSS匹配，实际线上黑色设置页核对蓝色值、浅色印刷标记、中心键内阴影和HOLD比例/54×44点击区域。
 
 回滚包 `/opt/reipod/backups/dist-before-ef0e180-20261104T160350Z.tgz` 包含旧dist/release.json；个人首页与后端provider哈希保持，nginx/music active，没有重启后端、修改凭证或会话。前端ef0e180，后端abf75e2。GitHub Pages应用提交流程41863532749在VPS核验时仍排队，后续发布记录提交会触发同应用代码的新流程；镜像新版尚未核验，不宣称已上线。iPhone流程亦未核验，不增加真实账号/原生安装/后台能力结论。
+
+
+## 2026-11-05 原机菜单与实时分类搜索（任务54）
+
+前端 `bdbb0f3` 已推送并部署VPS，后端保持 `abf75e2`。恢复已支持项目的原机菜单相对顺序、顶部iPod标题、横向选字/实时分类搜索、前后键空格/退格、MENU切结果及设置还原确认；现代入口集中ReiPod设置。来源与未完成项见 [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md)。中英README/用户指南/开发资料及4张展示图同步更新。
+
+225项单元、35项服务端、95项完整浏览器、player-core、显式HTTPS API生产构建/dist/size及文档目标/diff通过。最后补歌单名称Unicode字符后3项专项重跑通过。产物12532280 bytes，程序gzip266053 bytes，试听3816471 bytes。41文件哈希一致，公网HTML及JS/CSS与本地产物相同，实际主站通过转轮进入搜索、输入/空格/MENU观察结果；没有用LCD点击代替输入。
+
+回滚 `/opt/reipod/backups/dist-before-bdbb0f3-20261104T165025Z.tgz` 包含旧dist/release.json；个人首页/provider哈希保持，nginx/music active，未改后端凭证/会话。Pages工作流 [41871475383](https://github.com/A-AsukA-A/ReiPod/actions/runs/41871475383) 已成功；iPhone工作流41871475350仍queued，未作原生安装或真实账户验收。此项不包括用户后补的Lazer动效与三首授权曲目替换，后续按日志逐项做。
