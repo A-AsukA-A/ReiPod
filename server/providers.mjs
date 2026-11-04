@@ -111,12 +111,21 @@ export function createProviders(netease, qqRequest) {
     try {
       const result = await netease[name]({
         ...args,
+        // QR login uses the plain desktop API, matching our native adapter.
+        // The library default instead selects EAPI and an iPhone User-Agent.
+        ...(["login_qr_key", "login_qr_check"].includes(name) ? {
+          crypto: "api",
+          domain: "https://music.163.com",
+          ua: "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/3.1.29.205117",
+        } : {}),
         cookie: session?.cookie,
         timeout: 20000,
         unblock: "false",
         randomCNIP: false,
       });
       const body = result.body;
+      if (body.code === 8821)
+        throw new ServiceError("网易云要求安全验证（8821），请先在官方客户端完成验证；不要反复扫码。", 422);
       if (
         result.status >= 400 ||
         (body.code && ![200, 800, 801, 802, 803].includes(body.code))

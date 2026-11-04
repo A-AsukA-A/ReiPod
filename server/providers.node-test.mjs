@@ -409,3 +409,38 @@ test("mobile QQ authorization keeps its transport marker through create/check/ca
   assert.equal(calls[2][1].key, result.key);
   assert.equal(calls[3][1].key, result.key);
 });
+
+test("NetEase QR generation and polling use the same plain desktop API as native", async () => {
+  const calls = [];
+  const providers = createProviders({
+    login_qr_key: async options => {
+      calls.push(options);
+      return { status: 200, body: { data: { unikey: "fixture" } } };
+    },
+    login_qr_create: async () => ({ status: 200, body: { data: { qrimg: "data:image/png;base64,fixture" } } }),
+    login_qr_check: async options => {
+      calls.push(options);
+      return { status: 200, body: { code: 801 } };
+    },
+    login_status: async options => {
+      assert.equal(options.crypto, undefined);
+      assert.equal(options.domain, undefined);
+      return { status: 200, body: { data: { account: { id: 1 } } } };
+    },
+  });
+  await providers.start("netease");
+  await providers.check("netease", "fixture");
+  await providers.profile("netease", { cookie: "private" });
+  assert.equal(calls.length, 2);
+  for (const options of calls) {
+    assert.equal(options.crypto, "api");
+    assert.equal(options.domain, "https://music.163.com");
+    assert.match(options.ua, /NeteaseMusicDesktop/);
+    assert.equal(options.randomCNIP, false);
+    assert.equal(options.realIP, undefined);
+  }
+});
+test("NetEase safety verification is a terminal actionable error, not repeated transient polling", async () => {
+  const providers = createProviders({ login_qr_check: async () => ({ status: 200, body: { code: 8821 } }) });
+  await assert.rejects(providers.check("netease", "fixture"), e => e.status === 422 && e.message.includes("8821"));
+});
