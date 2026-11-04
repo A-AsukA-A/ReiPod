@@ -169,3 +169,10 @@ QR key/check 显式采用既有原生的普通 API 与桌面 UA；修正此前�
 ## 2026-11-04 关闭未奏效 QQ 候选（任务 46）
 
 用户真实验收仍失败，候选返回 104003/subcode0、无链接，原请求104003/subcode1。c0300b3 将候选安装改为显式实验环境开关（REIPOD_QQ_EVKEY_EXPERIMENT=1）；生产默认不装，避免持续无效 RPC。入口哈希一致、服务 active，备份 /opt/reipod/backups/backend-before-c0300b3-20261104T080104Z.tgz，前端/会话保留。218 单元、34 服务端、构建/dist/size通过，不能称 QQ 播放故障已修复。接续为真实出口/票据播放能力对照，非继续随机 RPC 参数。
+
+
+## 2026-11-04 网易云挑战上下文（任务 49）
+
+HTTP provider 最终 abf75e2：单挑战隔离稳定匿名标识和生成/轮询/确认cookie；Set-Cookie属性不作为Cookie键发送，不把临时cookie返回页面。35服务端/218单元/6定向浏览器、构建/dist/size和ios:prepare通过。参考仓库被Vitest默认扫描的问题通过独立测试配置排除研究目录解决，首轮第三方7套件失败不记为项目成功。
+
+最终文件哈希一致、服务active，备份 /opt/reipod/backups/backend-before-abf75e2-20261104T081510Z.tgz；此前状态修正前备份 /opt/reipod/backups/backend-before-128fdb7-20261104T081419Z.tgz。前端和持久会话未改，QQ实验保持关闭。真实网易云手机授权仍未重新验收，不因匿名生成/轮询正常宣称风控解决；原生资源未安装。
