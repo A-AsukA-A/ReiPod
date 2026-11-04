@@ -243,6 +243,8 @@ const server = http.createServer(async (req, res) => {
     });
     res.end(content);
   } catch (error) {
+    if (error instanceof ServiceError && error.playbackDiagnostic)
+      console.info("reipod.playback-unavailable", JSON.stringify(error.playbackDiagnostic));
     json(
       res,
       error instanceof ServiceError

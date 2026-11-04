@@ -444,3 +444,18 @@ test("NetEase safety verification is a terminal actionable error, not repeated t
   const providers = createProviders({ login_qr_check: async () => ({ status: 200, body: { code: 8821 } }) });
   await assert.rejects(providers.check("netease", "fixture"), e => e.status === 422 && e.message.includes("8821"));
 });
+
+test("QQ failed playback attaches only bounded diagnostics, never provider credentials or URLs", async () => {
+  const providers = createProviders({}, async () => ({ data: { playUrl: {
+    '0001AV2L4JYlzN': { url: '', cookie: 'PRIVATE', token: 'PRIVATE',
+      restriction: { key: 'url_unavailable', codes: { result: 104003, subcode: 1, errtype: 'PRIVATE', arbitrary: 'PRIVATE' },
+        hint: { key: 'playback.maybe-region-restricted', message: 'PRIVATE' } } },
+  } } }));
+  await assert.rejects(providers.read('qq', 'playback', { id: '0001AV2L4JYlzN' }, { cookie: 'PRIVATE' }), error => {
+    assert.deepEqual(error.playbackDiagnostic, { service: 'qq', songId: '0001AV2L4JYlzN', quality: '128', authenticated: true,
+      reason: 'possible-region', codes: { result: 104003, subcode: 1 } });
+    assert.equal(JSON.stringify(error.playbackDiagnostic).includes('PRIVATE'), false);
+    assert.equal(error.status, 422);
+    return true;
+  });
+});

@@ -266,7 +266,22 @@ export function createProviders(netease, qqRequest) {
               if (error.status === 401) throw error;
             }
           }
-          throw playbackRestriction(source, { ...detail, ...entry });
+          const failure = playbackRestriction(source, { ...detail, ...entry });
+          if (source === "qq") {
+            const codes = {};
+            for (const key of ["result", "errtype", "code", "subcode"]) {
+              const value = entry?.restriction?.codes?.[key];
+              if (typeof value === "number" && Number.isSafeInteger(value)) codes[key] = value;
+            }
+            failure.playbackDiagnostic = {
+              service: "qq", songId: id, quality: "128",
+              authenticated: Boolean(session?.cookie),
+              reason: entry?.restriction?.hint?.key === "playback.maybe-region-restricted"
+                ? "possible-region" : failure.kind,
+              codes,
+            };
+          }
+          throw failure;
         }
         return { url };
       }
