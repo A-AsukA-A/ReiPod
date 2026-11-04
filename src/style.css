@@ -154,22 +154,6 @@ button:disabled {
   flex-direction: column;
 }
 
-.screen-status {
-  height: 23px;
-  flex-shrink: 0;
-  background: linear-gradient(#f7faf6, #c7cfc8);
-  border-bottom: 1px solid #a4b0a6;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 7px;
-  font-size: 12px;
-}
-
-.screen-status > strong {
-  font-weight: 700;
-}
-
 .screen-indicators {
   display: flex;
   align-items: center;
@@ -597,10 +581,6 @@ button:disabled {
 .lcd-screen {
   position: relative;
 }
-.screen-status {
-  height: 26px;
-  font-size: 13px;
-}
 .screen-menu {
   overflow-y: auto;
   scrollbar-width: none;
@@ -748,26 +728,12 @@ button:disabled {
   color: #46553e;
   background-color: #dce2d5;
 }
-.screen-status {
-  gap: 3px;
-  padding: 0 3px;
-}
-.screen-status > strong {
-  flex: 1;
-  text-align: center;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.screen-back,
-.screen-playing-link,
-.screen-header-spacer {
+.screen-back {
   width: 25px;
   height: 25px;
   flex-shrink: 0;
 }
-.screen-back,
-.screen-playing-link {
+.screen-back {
   display: grid;
   place-items: center;
   padding: 0;
@@ -894,14 +860,7 @@ button:disabled {
   border-radius: 3px;
   font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
-.screen-status {
-  height: 26px;
-  background: linear-gradient(#fff, #d4d8de);
-  border-bottom: 1px solid #9ba3ad;
-  color: #171c24;
-}
-.screen-back,
-.screen-playing-link {
+.screen-back {
   color: #275b88;
 }
 .screen-content {

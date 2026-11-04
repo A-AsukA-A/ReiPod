@@ -252,3 +252,9 @@ nano 6 p.21 与 nano 7 p.19 已渲染查看，确认精细定位手指方向分�
 新增 dyobmit 的 [2007-09-15 classic 6G 实拍及许可/历史](https://commons.wikimedia.org/w/index.php?title=File:IPod_classic_6G_black_new_interface-2007-09-15.jpg&oldid=1063785372)，原图 2592×1944，CC BY 2.0。原机身份为黑色 6G，容量/固件未知；英文首页 Music 选中，时钟标题，无播放。已保存原图哈希/角点并做四角单应归一；明显摩尔纹使该样本适合确认轮廓/分屏关系，不适合恢复字体 bitmap 或 RGB。
 
 结合此前 Gadgeteer 的 G-H/G-S，确认当前 chevron 的正方形 SVG 留白压缩了可见笔画；G-S 的平滑预览背景可观察分界右侧的亮度恢复带。[Ars 同期第一手评测](https://arstechnica.com/gadgets/2007/09/the-ipod-gets-a-makeover-a-review-of-the-ipod-nano-and-ipod-classic/) 也明确描述左菜单投影到右侧预览。测量、取样敏感性、CSS 拟合和本轮工程对照统一见 [UI_METRICS](UI_METRICS.md#2026-10-30-菜单箭头与分屏投影c-m01-局部修正)。数值为粗测或暂定拟合，不是 Apple 明示规范；不因新增清晰照片而声称所有菜单指标已完成。
+
+## 电池与状态栏复核 — 2026-11-04
+
+针对用户要求，复看既有 Gadgeteer 2007 160GB 主菜单/设置原图、Register 2007 LCD 播放照片和 iLounge 2007 机身播放照片（来源见上文）。Gadgeteer 的灰色电池框、右端帽和上下高光层次，Register 的较大蓝色播放箭头，均与旧通用图标/固定像素内边距存在可见差异。没有将 My Classic 状态栏作为原机依据。
+
+本次模型/固件身份、LCD四角、归一方法、人工轮廓/采样误差、实现差异和暂定边界统一记入 [UI_METRICS 状态栏记录](UI_METRICS.md#2026-11-04-电池与状态栏chromeheader-局部修正)。原图及放大图、标志点、敏感性输出只保存在 `.local/status-51/` 和既有研究目录。颜色、高光曲线、暂停/快进等独立矢量不是恢复出的原资源；没有取得低电量/充满/充电切换的匹配固件连续证据。

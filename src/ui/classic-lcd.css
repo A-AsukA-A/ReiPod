@@ -61,28 +61,7 @@
 .lcd-screen {
   border-radius: 2px;
 }
-.screen-status {
-  height: var(--lcd-header-height);
-  flex-shrink: 0;
-  padding: 0 5px;
-  gap: 4px;
-  background: linear-gradient(
-    #fdfdfd 0%,
-    #f3f3f4 44%,
-    #d8dce0 48%,
-    #e8e9eb 100%
-  );
-  border-color: #969ca2;
-  box-shadow: inset 0 1px #fff;
-}
-.screen-status > strong {
-  text-align: left;
-  font-size: 13px;
-  letter-spacing: -0.2px;
-}
-.screen-back,
-.screen-playing-link,
-.screen-header-spacer {
+.screen-back {
   height: 22px;
   width: 15px;
   border-radius: 0;
@@ -92,9 +71,6 @@
 }
 .screen-back {
   color: #34383e;
-}
-.screen-playing-link {
-  color: var(--lcd-blue);
 }
 .player-icon {
   display: block;
@@ -124,8 +100,9 @@
   background: #e4e7ea;
 }
 .lcd-loading {
-  width: 5px;
-  height: 5px;
+  display: block;
+  width: calc(var(--lcd-unit) * 5);
+  height: calc(var(--lcd-unit) * 5);
   background: #79838e;
   border-radius: 50%;
 }
@@ -822,32 +799,45 @@
   font-family: var(--font-lcd);
   -webkit-font-smoothing: auto;
 }
+/* CHROME.header: 2007 photo fit; colors and vector paths remain provisional. */
 .screen-status {
-  padding-inline: calc(var(--lcd-unit) * 4);
-  gap: calc(var(--lcd-unit) * 3);
-  background: linear-gradient(#fdfdfd, #e6e9eb 45%, #c4cbd1 100%);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: var(--lcd-header-height);
+  padding: 0 calc(var(--lcd-unit) * 4);
+  gap: calc(var(--lcd-unit) * 4);
+  color: #161616;
+  background: linear-gradient(#fafafa 0%, #eeeeee 45%, #c9c9c9 100%);
+  border-bottom: var(--lcd-unit) solid #999;
+  box-shadow: inset 0 var(--lcd-unit) #fff;
 }
 .screen-status > strong {
-  font-size: calc(var(--lcd-unit) * 14);
   flex: 1;
   min-width: 0;
+  font-size: calc(var(--lcd-unit) * 14);
+  font-weight: 700;
+  line-height: 1;
+  text-align: left;
+  letter-spacing: calc(var(--lcd-unit) * -0.25);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: -0.25px;
 }
-.screen-playing-link,
-.screen-header-spacer {
-  width: calc(var(--lcd-unit) * 11);
-  height: calc(var(--lcd-unit) * 16);
+.screen-playing-link {
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
+  width: calc(var(--lcd-unit) * 11);
+  height: calc(var(--lcd-unit) * 14);
+}
+.screen-playing-link .status-transport {
+  width: calc(var(--lcd-unit) * 10);
+  height: calc(var(--lcd-unit) * 12);
+  stroke: none;
 }
 .screen-header-spacer {
   display: none;
-}
-.screen-playing-link .player-icon {
-  width: calc(var(--lcd-unit) * 9);
-  height: calc(var(--lcd-unit) * 11);
 }
 .screen-row,
 .screen-song-list .screen-row {
@@ -976,49 +966,41 @@
   position: relative;
   display: block;
   flex-shrink: 0;
-  width: calc(var(--lcd-unit) * 22);
-  height: calc(var(--lcd-unit) * 11);
-  border: 1px solid #65716b;
-  border-radius: 1px;
-  padding: 1px;
-  margin-right: 2px;
-  box-shadow:
-    0 1px #fff9,
-    inset 0 0 1px #fff;
-  background: linear-gradient(#c5d0cd, #f3f5f0);
+  width: calc(var(--lcd-unit) * 24);
+  height: calc(var(--lcd-unit) * 13);
+  border: var(--lcd-unit) solid #7d8487;
+  border-radius: var(--lcd-unit);
+  padding: var(--lcd-unit);
+  margin-right: calc(var(--lcd-unit) * 2);
+  background: linear-gradient(#a9afb2, #f8faf9 48%, #d5d9d8);
+  box-shadow: 0 var(--lcd-unit) #fff9;
 }
 .classic-battery::after {
   content: "";
   position: absolute;
-  right: -3px;
-  top: 2px;
-  height: calc(100% - 4px);
-  width: 2px;
-  background: #65716b;
+  right: calc(var(--lcd-unit) * -3);
+  top: calc(var(--lcd-unit) * 3);
+  width: calc(var(--lcd-unit) * 2);
+  height: calc(var(--lcd-unit) * 5);
+  border-radius: 0 var(--lcd-unit) var(--lcd-unit) 0;
+  background: linear-gradient(#a7afb1, #707a7e);
 }
 .classic-battery > i {
   display: block;
   height: 100%;
-  background: linear-gradient(#b5eb82 0%, #8dc950 45%, #5da12c 51%, #96ce65);
-  box-shadow: inset 0 1px #eaffc5;
+  background: linear-gradient(#d8edcb 0%, #a9cf91 44%, #5b9e43 52%, #77ad5b 100%);
+  box-shadow: inset 0 var(--lcd-unit) #f1ffe399;
 }
 .classic-battery.is-low > i {
-  background: linear-gradient(#ffb49f, #d74030);
+  background: linear-gradient(#f6d5ce, #df9685 44%, #bf4939 52%, #d16c57);
 }
 .classic-battery > svg {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  fill: #3a4938;
-}
-.classic-battery > span {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 8px;
-  color: #6a7974;
+  top: var(--lcd-unit);
+  left: calc(var(--lcd-unit) * 8);
+  width: calc(var(--lcd-unit) * 8);
+  height: calc(var(--lcd-unit) * 11);
+  fill: #354638;
 }
 .click-wheel {
   margin-top: calc(var(--device-width) * 0.16);

@@ -1,4 +1,64 @@
 import { test, expect } from "@playwright/test";
+import { key, live } from "./dial";
+
+test("status silhouettes and battery fill stay legible and aligned as the LCD scales", async ({ page }, testInfo) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("reipod-appearance", JSON.stringify({ backlight: 0, clickSound: false }));
+    Object.defineProperty(navigator, "getBattery", {
+      value: async () => Object.assign(new EventTarget(), { level: 0.5, charging: false }),
+    });
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await key(page, "Space");
+  await expect(live(page).locator(".screen-playing-link .icon-play")).toBeVisible();
+  // Pause the bundled track before collecting deterministic geometry.
+  await key(page, "Space");
+  await expect(live(page).locator(".screen-playing-link .icon-pause")).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  const fillHeights: number[] = [];
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const geometry = await live(page).locator(".screen-status").evaluate((header) => {
+      const lcd = document.querySelector(".lcd-screen")!.getBoundingClientRect();
+      const unit = lcd.width / 320;
+      const rect = (selector: string) => header.querySelector(selector)!.getBoundingClientRect();
+      const bar = header.getBoundingClientRect();
+      const title = rect("strong"), battery = rect(".classic-battery"), fill = rect(".classic-battery > i");
+      const icon = header.querySelector<SVGPathElement>(".status-transport > path")!.getBoundingClientRect();
+      return {
+        titleInside: title.top >= bar.top - 0.5 && title.bottom <= bar.bottom + 0.5,
+        iconInside: icon.top >= bar.top && icon.bottom <= bar.bottom,
+        separate: title.right <= icon.left && icon.right <= battery.left,
+        batteryInside: battery.top >= bar.top && battery.bottom <= bar.bottom && battery.right + 2 * unit <= bar.right,
+        centered: Math.abs((battery.top + battery.bottom - icon.top - icon.bottom) / unit) < 1,
+        glyphWidth: icon.width / unit,
+        glyphHeight: icon.height / unit,
+        fillHeight: fill.height / unit,
+        fillRatio: fill.width / (battery.width - 2 * (fill.left - battery.left)),
+      };
+    });
+    expect(geometry.titleInside).toBe(true);
+    expect(geometry.iconInside).toBe(true);
+    expect(geometry.separate).toBe(true);
+    expect(geometry.batteryInside).toBe(true);
+    expect(geometry.centered).toBe(true);
+    // Broad footprint bounds catch the former 24×24 viewBox shrinking and fixed-pixel inset loss.
+    expect(geometry.glyphWidth).toBeGreaterThan(7);
+    expect(geometry.glyphHeight).toBeGreaterThan(9);
+    expect(geometry.glyphHeight).toBeLessThan(15);
+    expect(geometry.fillRatio).toBeCloseTo(0.5, 1);
+    fillHeights.push(geometry.fillHeight);
+    await testInfo.attach(`status-${width}.json`, { body: JSON.stringify(geometry), contentType: "application/json" });
+    await testInfo.attach(`status-${width}.png`, { body: await live(page).locator(".screen-status").screenshot(), contentType: "image/png" });
+  }
+  expect(Math.max(...fillHeights) - Math.min(...fillHeights)).toBeLessThan(1);
+  await page.getByRole("switch", { name: "HOLD 锁定" }).click();
+  await expect(live(page).getByRole("img", { name: "已锁定" })).toBeVisible();
+  await expect(live(page).locator(".classic-battery")).toBeVisible();
+  await key(page, "Space");
+  await expect(live(page).locator(".icon-pause")).toBeVisible();
+});
 
 test("the battery follows device drain, charging and resume even when an event was missed", async ({
   page,
