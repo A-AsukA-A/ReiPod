@@ -185,3 +185,12 @@ HTTP provider 最终 abf75e2：单挑战隔离稳定匿名标识和生成/轮询
 最终218项单元、88项完整浏览器、显式维护者HTTPS API生产构建、dist/size、文档链接/diff通过。总构建12523631 bytes、程序gzip263417 bytes、试听3816471 bytes。41文件暂存/线上SHA-256全部匹配，公网入口、直接JS/CSS匹配；浏览器实际播放/暂停后确认电池padding=0和新LCD图标。个人首页文件与后端provider哈希保持，nginx/music均active，没有重启服务或改持久会话。
 
 回滚包 `/opt/reipod/backups/dist-before-f516b54-20261104T151611Z.tgz` 包含旧dist和release.json，旧哈希资源保留供已打开页面使用。release.json记录前端f516b54、后端abf75e2。GitHub Pages源码工作流 [41855801368](https://github.com/A-AsukA-A/ReiPod/actions/runs/41855801368) 成功，公网CSS与最终构建匹配；iPhone工作流仍待执行/核验，未进行安装、真实账号或后台播放验收。
+
+
+## 2026-11-05 classic 银黑外观与菜单修正（任务53）
+
+应用代码 `ef0e180` 已推送并部署VPS静态前端：设置值恢复蓝色/选中白色，曲目列表使用紧凑传输轮廓，银黑中心键改为内凹明暗，黑色轮盘标记对比度及HOLD可见绘图缩放修正。来源/工程适配/暂定色值见 [UI_METRICS任务53](UI_METRICS.md#2026-11-04-主菜单与银黑机身外观任务53)。用户澄清要求现在自主实施，误建的定时任务已删除。
+
+218项单元、92项完整浏览器、显式HTTPS API生产构建、dist/size、文档链接/diff通过。总构建12524057 bytes、程序gzip263518 bytes、试听3816471 bytes。41文件暂存及线上SHA-256一致，公网HTML及直接JS/CSS匹配，实际线上黑色设置页核对蓝色值、浅色印刷标记、中心键内阴影和HOLD比例/54×44点击区域。
+
+回滚包 `/opt/reipod/backups/dist-before-ef0e180-20261104T160350Z.tgz` 包含旧dist/release.json；个人首页与后端provider哈希保持，nginx/music active，没有重启后端、修改凭证或会话。前端ef0e180，后端abf75e2。GitHub Pages应用提交流程41863532749在VPS核验时仍排队，后续发布记录提交会触发同应用代码的新流程；镜像新版尚未核验，不宣称已上线。iPhone流程亦未核验，不增加真实账号/原生安装/后台能力结论。

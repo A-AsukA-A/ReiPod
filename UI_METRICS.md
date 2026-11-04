@@ -235,7 +235,7 @@ G-H 沿用上文原始 LCD 四角及 ±2px 角点误差，单应归一到 320×2
 
 | metricId / 状态 | 实现与检查 | 状态 |
 | --- | --- | --- |
-| MENU.value / C-M02 | 非选中设置值灰色#64696f→蓝色#3b91b8；选中值白色，禁用值继承。值样式收敛至firmware-display.css，清除style/classic中的旧Arial/字号/颜色覆盖。字体沿用替代字体，数字继续采用LCD的等宽数码策略 | 蓝色关系M；色值P，选中/禁用一致性A |
+| MENU.value / C-M02 | 非选中设置值灰色#64696f→蓝色#3b91b8；选中值白色，禁用值继承。值样式收敛至firmware-display.css，清除style/classic中的旧Arial/字号/颜色覆盖。字体沿用替代字体，移除旧font shorthand后值数字继承LCD等宽数码策略，原机数字度量仍未知 | 蓝色关系M；色值P，选中/禁用一致性A |
 | MENU.transport-marker / 曲目列表 | 旧24×24通用视框内的9CSSpx图形→复用ClassicLcdIcon紧凑轮廓，9×11LCDu布局盒，按选中白色/非选中蓝色继承；文字间距5u随LCD缩放 | P/A一致性修复；原机列表标记位图/精确尺寸U，不称恢复原资源 |
 | HW.controls.center.material / 银、黑 | 改为浅凹面方向的明暗和内阴影，移除使其悬起的外投影；黑色键面减少与黑轮盘的亮度断层。`--wheel-center-surface/depth`为唯一材质源，hover/press消费同源 | 内凹方向有同期M定性依据；渐变/阴影/边缘颜色P |
 | HW.controls.ink / 黑色 | 黑机按键文字/运输标记由与银机共用的#90969c改为#e3e6e8；银机保持原色；hover/press不改变印刷标记色，`--wheel-ink`统一 | 亮标记关系M；RGB P，不从照片曝光反推数值 |
