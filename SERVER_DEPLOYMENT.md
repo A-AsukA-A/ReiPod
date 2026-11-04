@@ -164,3 +164,8 @@ QR key/check 显式采用既有原生的普通 API 与桌面 UA；修正此前�
 ## 2026-11-04 QQ 候选请求信封补齐（任务 45）
 
 首版 EVkey 兼容在用户两次真实重试中 granted=false、未进入 CDN 探测，未修复该账号播放。复查发现仍使用库默认 Android comm，与候选网页 ct24/cv0 参数不一致；afd0bfb 补显式网页 comm/uin，保留同一 authst/tmeLoginType，并新增序列化测试与候选白名单错误码日志。仅兼容模块更新，哈希一致，服务 active，备份 /opt/reipod/backups/backend-before-afd0bfb-20261104T075542Z.tgz。218 单元、34 服务端、6 定向浏览器、构建/dist/size通过，匿名 QQ status 正常；真实播放仍待用户复验，不能记作通过。
+
+
+## 2026-11-04 关闭未奏效 QQ 候选（任务 46）
+
+用户真实验收仍失败，候选返回 104003/subcode0、无链接，原请求104003/subcode1。c0300b3 将候选安装改为显式实验环境开关（REIPOD_QQ_EVKEY_EXPERIMENT=1）；生产默认不装，避免持续无效 RPC。入口哈希一致、服务 active，备份 /opt/reipod/backups/backend-before-c0300b3-20261104T080104Z.tgz，前端/会话保留。218 单元、34 服务端、构建/dist/size通过，不能称 QQ 播放故障已修复。接续为真实出口/票据播放能力对照，非继续随机 RPC 参数。
