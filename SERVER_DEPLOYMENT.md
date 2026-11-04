@@ -146,3 +146,9 @@ GitHub main 推送此前被自动审批拒绝；2026-11-04 用户明确授权后
 后端 provider `05db8e9` 已部署并重启，文件 SHA-256 一致；旧文件保留于 `/opt/reipod/backups/providers-before-05db8e9-20261104T072152Z.mjs`。静态前端仍 9b8f2df，本次没有更新静态资源、个人首页、会话目录或依赖版本。release.json 另记 backendRevision/frontendRevision。
 
 QR key/check 显式采用既有原生的普通 API 与桌面 UA；修正此前依赖库默认 EAPI/桌面字段/iPhone UA 差异。8821 返回明确的终止错误，保留官方安全验证要求。218 单元、27 服务端、6 定向浏览器、构建/dist/size通过；本地与公网匿名生成/轮询/取消、来源限制和服务状态正常。用户此前官方电脑版扫码成功、ReiPod 三次本地条件测试仍被拦截，最后一次 DIRECT 是用户配置声明而非逐请求验证；以上发生在协议修正前。修正后未再要求用户扫码，不能声称真实授权或播放通过。
+
+## 2026-11-04 QQ 单曲播放失败诊断（任务 41）
+
+后端 `1b2f167` 仅增加失败日志：公共歌曲 ID、音质、是否有服务会话、限制提示类别及白名单整数错误码；不记录账号标识、凭证、URL 或原始响应，前端响应/授权/播放请求保持。旧 index/providers 与 release 备份 `/opt/reipod/backups/backend-before-1b2f167-20261104T073344Z.tgz`，部署两文件哈希一致，服务 active；静态前端未改、持久会话保留。218 单元、28 服务端、6 定向浏览器与构建/dist/size通过。
+
+用户报告 Bishop Briggs 的 River 在官方 QQ App 同账号可播放，ReiPod 提示可能地区限制；公开搜索原版 songmid 0001AV2L4JYlzN（Church Of Scars），混音等版本独立。不能据此认定封 IP。下一步用户在已有会话中重试实际歌曲一次，以新日志核对单曲错误码与提示来源，不读取会话 vault 或再次要求登录。真实播放故障仍未解决。
