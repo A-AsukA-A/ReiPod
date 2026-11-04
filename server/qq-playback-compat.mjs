@@ -18,8 +18,12 @@ export function compatiblePlayback(original, call, probe = probeMP3, report = ()
           filename: [`M500${media}.mp3`], songmid: [mid], songtype: [0],
           guid: String(Date.now()) + String(Math.floor(Math.random() * 1000000)).padStart(6, '0'),
           uin: String(auth.credential.str_musicid ?? auth.credential.musicid), loginflag: 1, platform: '20', xcdn: 1,
-        }, auth.credential);
-        report({ songId: mid, stage: 'candidate-response', granted: Boolean(data.midurlinfo?.some(item => item.songmid === mid && item.result === 0 && item.purl)) });
+        }, auth.credential, { ct: 24, cv: 0, format: 'json', uin: String(auth.credential.str_musicid ?? auth.credential.musicid) });
+        const matched = data.midurlinfo?.find(item => item.songmid === mid);
+        const codes = {};
+        for (const key of ['result', 'subcode', 'errtype', 'code'])
+          if (Number.isSafeInteger(matched?.[key])) codes[key] = matched[key];
+        report({ songId: mid, stage: 'candidate-response', codes, hasMatchingEntry: Boolean(matched), hasPurl: Boolean(matched?.purl), granted: Boolean(data.midurlinfo?.some(item => item.songmid === mid && item.result === 0 && item.purl)) });
         const granted = data.midurlinfo?.find(item => item.songmid === mid && item.result === 0 && item.purl);
         if (!granted || granted.preview || granted.purl.split('?')[0] !== `M500${media}.mp3`) continue;
         const roots = Array.isArray(data.sip) ? data.sip.slice(0, 3) : [];

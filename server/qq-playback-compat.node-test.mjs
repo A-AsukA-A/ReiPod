@@ -14,6 +14,7 @@ test('same-account same-track RPC retry requires a grant and a readable MP3', as
   const result=await fn({},auth,{},mid,128);
   assert.ok(result[mid].url);assert.equal(calls[1][3],'music.vkey.GetEVkey');assert.equal(calls[1][4],'CgiGetEVkey');
   assert.deepEqual(calls[1][5].filename,[`M500${media}.mp3`]);
+  assert.deepEqual(calls[1][7],{ct:24,cv:0,format:'json',uin:'123'});
 });
 test('denial, mismatched song, foreign CDN and unreadable audio preserve restriction',async()=>{
   for(const mode of ['denied','mismatch','foreign','unreadable','exception']) {
@@ -45,4 +46,18 @@ test('MP3 probe rejects HTML, encrypted/unrecognized bytes and redirects', async
    assert.equal(await probeMP3('https://isure.stream.qqmusic.qq.com/test'),expected);
   }
  } finally {globalThis.fetch=previous;}
+});
+
+test('candidate web comm preserves the same auth credential in the real protocol serializer',async()=>{
+ const require=createRequire(import.meta.url);
+ const {dirname,join}=await import('node:path');
+ const root=dirname(require.resolve('@yakult-green-tea/qq-music-api/package.json'));
+ const {callMusicu}=require(join(root,'dist/src/services/auth/musicuProtocol.js'));
+ const credential={musicid:123,str_musicid:'123',musickey:'PRIVATE',loginType:2};
+ const http={post:async(_url,body)=>{
+  assert.equal(body.comm.ct,24);assert.equal(body.comm.cv,0);assert.equal(body.comm.uin,'123');
+  assert.equal(body.comm.authst,'PRIVATE');assert.equal(body.comm.tmeLoginType,2);
+  return {status:200,data:{code:0,req_0:{code:0,data:{midurlinfo:[]}}}};
+ }};
+ await callMusicu(http,{},'test','music.vkey.GetEVkey','CgiGetEVkey',{},credential,{ct:24,cv:0,format:'json',uin:'123'});
 });
