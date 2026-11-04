@@ -162,3 +162,7 @@ QQ 手机入口仍使用 `qqmusic` 通道，从平台 PNG 二维码提取官方�
 HTTP 后端在固定 3.3.5 CommonJS 服务图中安装显式兼容钩子，不改 node_modules 文件或原生服务。原请求成功、试听、非 128 音质、明确权限分类均不改；仅 `url_unavailable + 104003/1` 才按同会话/设备重新读取曲目 media_mid，使用 `music.vkey.GetEVkey/CgiGetEVkey` 请求同歌同 128 音质，最多十首。候选必须明确 result=0、songmid 与文件匹配，只用响应 sip 中 QQ HTTPS CDN（禁止跳转），限时 Range 探测 MP3 头；拒绝、异常、非 MP3 均保留原权限提示。没有解密、替代音源或绕过会员/地区授权。
 
 候选来源为 [Music Assistant #6628](https://github.com/music-assistant/support/issues/6628) 的同症状实测个案；不是官方通用修复。数据头检查不证明完整时长/解码或听感，真实账号仍须验收。依赖版本变更必须审查内部模块接口，不静默继续 hook；CJS/ESM 会话封装契约由固定库提供，原生保留旧路径，未宣称原生已修复。
+
+### 任务 46：候选真实验收失败，默认关闭
+
+用户重试表明原 UrlGetVkey=104003/1，网页信封候选 CgiGetEVkey=104003/0，均无 purl；不进入 CDN 检查。另一个歌曲也同样失败，候选并未修复当前环境。生产默认关闭候选额外请求，仅保留 REIPOD_QQ_EVKEY_EXPERIMENT=1 的隔离实验入口和安全失败诊断。不得把任务 44/45 的单元/匿名结果宣传为账号播放通过。下一步必须受控核对 QQ 会话播放票据与真实出口；此前网易云本地测试不是 QQ 大陆出口对照。
