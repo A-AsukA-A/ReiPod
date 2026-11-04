@@ -660,22 +660,6 @@
 .clear-question {
   overflow-wrap: anywhere;
 }
-.lcd-screen[data-page="search"] .track-row {
-  height: 39px;
-}
-.lcd-screen[data-page="search"] .row-label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.lcd-screen[data-page="search"] .row-label small {
-  font-size: 10px;
-  font-weight: 400;
-  opacity: 0.65;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* The classic split menu keeps its cover carousel running while the wheel moves. */
 .screen-preview.album-preview {
   padding: 0;

@@ -5,6 +5,7 @@ import { AlbumArt } from "./AlbumArt";
 import { MarqueeText } from "./MarqueeText";
 import { PlayerIcon } from "./PlayerIcon";
 import { ClassicLcdIcon } from "./ClassicLcdIcon";
+import { SearchResultIcon } from "./SearchResultIcon";
 import { ClassicGlyph } from "./ClassicGlyph";
 export type MenuItem = {
   key: string;
@@ -16,6 +17,7 @@ export type MenuItem = {
   disabled?: boolean;
   destructive?: boolean;
   leaf?: boolean;
+  searchKind?: "search" | "song" | "artist" | "album" | "playlist" | "podcast";
   action: () => void;
 };
 export function MenuRows({
@@ -50,6 +52,13 @@ export function MenuRows({
       }
       className={`screen-row ${row.key === focusedKey ? "selected" : ""} ${row.disabled ? "is-disabled" : ""} ${row.key === "confirm" || row.destructive ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${trackIds.has(row.key) ? "track-row" : ""}`}
     >
+      {row.searchKind && (
+        <span className="search-result-icon" data-kind={row.searchKind}>
+          {row.artwork
+            ? <AlbumArt src={row.artwork} title={row.label} artist={row.detail} />
+            : <SearchResultIcon kind={row.searchKind} />}
+        </span>
+      )}
       {page === "photos" && (
         <span className="photo-album-thumb">
           {row.artwork ? (

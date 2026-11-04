@@ -11,6 +11,7 @@ import type { MenuItem } from "./MenuRows";
 import { NowPlayingScreen } from "./NowPlayingScreen";
 import { PhotoScreen } from "./PhotoScreen";
 import { WheelTextEntry } from "./WheelTextEntry";
+import { ClassicSearchScreen } from "./ClassicSearchScreen";
 import { TextReader } from "./TextReader";
 import type { TextReaderHandle } from "./TextReader";
 import { classicPreviewModel } from "./classicScreenModel";
@@ -28,7 +29,7 @@ type Props = {
     lyricWheel: number; rating: number; volumeOverlay: boolean };
   text: { textEntry: Pick<ComponentProps<typeof WheelTextEntry>, "characters" | "index"> & { editing: boolean };
     query: string; playlistName: string; textDocument?: ComponentProps<typeof TextReader>["source"];
-    reader: RefObject<TextReaderHandle | null> };
+    reader: RefObject<TextReaderHandle | null>; searchCount: number; searchPending: boolean; searchError?: string };
   photos: { activePhotos: ComponentProps<typeof PhotoScreen>["photos"];
     photoIndex: number; slideshow: boolean };
   prefs: { brightness: number; volumeLimit: number };
@@ -46,10 +47,10 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
   const { textEntry, query, playlistName, textDocument, reader } = text;
   const { activePhotos, photoIndex, slideshow } = photos;
   const renderPreview = () => <MenuPreview {...classicPreviewModel(preview)} />;
-  const renderRows = () => (
+  const renderRows = (showFocus = true) => (
     <MenuRows
       rows={rows}
-      focusedKey={focusedRow?.key}
+      focusedKey={showFocus ? focusedRow?.key : undefined}
       page={page}
       currentId={state.currentId}
       active={active}
@@ -60,17 +61,24 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
     />
   );
   return (<>
-      {(page === "search" || page === "playlist-name") &&
+      {page === "search" && (
+        <ClassicSearchScreen query={query} editing={textEntry.editing}
+          characters={textEntry.characters} index={textEntry.index}
+          count={text.searchCount} pending={text.searchPending} error={text.searchError}>
+          {renderRows(!textEntry.editing)}
+        </ClassicSearchScreen>
+      )}
+      {page === "playlist-name" &&
         (textEntry.editing ? (
           <WheelTextEntry
-            text={page === "search" ? query : playlistName}
-            title={page === "search" ? "搜索音乐" : "歌单名称"}
+            text={playlistName}
+            title="歌单名称"
             characters={textEntry.characters}
             index={textEntry.index}
           />
         ) : (
           <div className="lcd-text-display">
-            {page === "search" ? query || "全部歌曲" : playlistName}
+            {playlistName}
           </div>
         ))}
       {(page === "playlist-tracks" ||
@@ -257,6 +265,9 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
               <span>不会删除设备上的原始文件</span>
             </p>
           )}
+          {page === "reset-settings" && (
+            <p className="clear-question">还原所有原机设置？<span>不会删除音乐和照片</span></p>
+          )}
           <nav
             className="screen-menu"
             aria-label={
@@ -280,9 +291,8 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
           )}
         </div>
       )}
-      {((isTrackList &&
-        page !== "coverflow-album" &&
-        !(page === "search" && textEntry.editing)) ||
+      {((isTrackList && page !== "search" &&
+        page !== "coverflow-album") ||
         (page === "playing" && !current)) &&
         (isTrackList && visibleTracks.length ? (
           <div className="song-screen">
@@ -309,13 +319,9 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
             <strong>
               {page === "favorites"
                 ? "还没有收藏的歌曲"
-                : page === "search"
-                  ? "没有匹配的歌曲"
-                  : "暂无歌曲"}
+                : "暂无歌曲"}
             </strong>
-            {page === "search" ? (
-              <nav className="empty-actions">{renderRows()}</nav>
-            ) : page === "playlist-tracks" ? (
+            {page === "playlist-tracks" ? (
               <nav className="empty-actions" aria-label="管理空歌单">
                 {renderRows()}
               </nav>

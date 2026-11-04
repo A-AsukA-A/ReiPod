@@ -185,3 +185,26 @@ it("only an empty live session delegates default playback to the application", (
   expect(f.context.library.playDefault).toHaveBeenCalledOnce();
   expect(f.player.toggle).toHaveBeenCalledOnce();
 });
+
+it("search editing captures transport keys for space/backspace, including a Unicode codepoint, without changing playback", () => {
+  const f = fixture("search");
+  f.context.text.query = "a🙂";
+  f.context.text.textEntry.editing = true;
+  f.input().command("previous");
+  expect(f.context.text.setQuery).toHaveBeenLastCalledWith("a");
+  f.input().command("next");
+  expect(f.context.text.setQuery).toHaveBeenLastCalledWith("a🙂 ");
+  for (const key of ["seek-forward", "seek-backward", "options", "favorite"] as const) f.input().command(key);
+  expect(f.player.previous).not.toHaveBeenCalled();
+  expect(f.player.next).not.toHaveBeenCalled();
+  expect(f.player.seek).not.toHaveBeenCalled();
+  expect(f.context.playback.trackOptions).not.toHaveBeenCalled();
+  expect(f.context.playback.toggleFavorite).not.toHaveBeenCalled();
+  f.input().command("menu");
+  expect(f.context.text.textEntry.setEditing).toHaveBeenCalledWith(false);
+  expect(f.context.navigation.dispatch).toHaveBeenCalledWith({ type: "select", key: "edit-search" });
+  expect(f.context.navigation.back).not.toHaveBeenCalled();
+  f.context.text.textEntry.editing = false;
+  f.input().command("next");
+  expect(f.player.next).toHaveBeenCalledOnce();
+});

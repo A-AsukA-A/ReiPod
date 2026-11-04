@@ -139,9 +139,7 @@ export function createPrimaryMenus({
     { key: "demo", label: "试听音乐", action: loadDemos },
   ];
   const visibleMusicItems = musicItems.filter(
-    (item) =>
-      ["import", "demo"].includes(item.key) ||
-      prefs.musicMenu.includes(item.key),
+    (item) => !["import", "demo"].includes(item.key) && prefs.musicMenu.includes(item.key),
   );
   const playlistItems: MenuItem[] = [
     {
@@ -263,6 +261,7 @@ export function createPrimaryMenus({
   return {
     homeItems,
     musicItems: visibleMusicItems,
+    localTools: musicItems.filter(item => ["import", "demo"].includes(item.key)),
     playlistItems,
     settingsItems,
   };

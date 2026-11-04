@@ -2,28 +2,37 @@ import type { PlayerState } from "../player/Player";
 import type { Page } from "./navigation";
 import type { MenuItem } from "./MenuRows";
 import type { Preferences } from "./classicSettings";
-import { backlightTimes, optionalMainItems, optionalMusicItems, mainMenuOrder } from "./classicSettings";
+import { backlightTimes, optionalMainItems, optionalMusicItems, mainMenuOrder, parsePreferences } from "./classicSettings";
+import { classic2007 } from "../models/classic";
 import { settingChoices } from "./settingChoices";
 
 type Context = {
   prefs: Preferences; state: PlayerState; originalSettingsItems: MenuItem[];
   cloud: boolean; serviceName: string; selectedService: string; localMusicCount: number;
+  localTools?: MenuItem[];
   open: (page: Page, key?: string) => void; back: () => void; clear: () => void;
   setPreferences: (patch: Partial<Preferences>) => void;
   shuffle: (value: boolean) => void; repeat: (value: PlayerState["repeat"]) => void;
 };
 export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud,
   serviceName, selectedService, localMusicCount, open, back, clear,
-  setPreferences, shuffle, repeat }: Context) {
+  setPreferences, shuffle, repeat, localTools = [] }: Context) {
+  const stockKeys: readonly string[] = classic2007.menus.settingsOrder;
   const settingsItems: MenuItem[] = [
-    originalSettingsItems[0],
+    ...originalSettingsItems.filter(item => stockKeys.includes(item.key))
+      .sort((a,b) => stockKeys.indexOf(a.key) - stockKeys.indexOf(b.key)),
+    { key: "reipod-settings", label: "ReiPod 设置", detail: "音乐服务、导入、歌词与外观", action: () => open("reipod-settings", "music-services") },
+    { key: "reset-settings", label: "还原设置", action: () => open("reset-settings", "cancel") },
+  ];
+  const extensionItems: MenuItem[] = [
     {
       key: "music-services",
       label: "音乐服务",
       value: cloud ? serviceName : "本地音乐",
       action: () => open("music-services", selectedService),
     },
-    ...originalSettingsItems.slice(1).map((item) =>
+    ...localTools,
+    ...originalSettingsItems.filter(item => !stockKeys.includes(item.key)).map((item) =>
       item.key === "clear"
         ? {
             ...item,
@@ -51,6 +60,18 @@ export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud
     repeat,
   );
   const managedRows: Partial<Record<Page, MenuItem[]>> = {
+    "reipod-settings": extensionItems,
+    "reset-settings": [
+      { key: "cancel", label: "取消", leaf: true, action: back },
+      { key: "reset", label: "还原", leaf: true, action: () => {
+        const defaults = parsePreferences(null);
+        // A physical finish, service account and ReiPod extensions are not firmware settings.
+        setPreferences({ clickSound: defaults.clickSound, brightness: defaults.brightness,
+          backlight: defaults.backlight, volumeLimit: defaults.volumeLimit,
+          mainMenu: defaults.mainMenu, musicMenu: defaults.musicMenu });
+        shuffle(false); repeat("off"); back();
+      } },
+    ],
     ...Object.fromEntries(
       Object.entries(choices).map(([name, items]) => [
         name,

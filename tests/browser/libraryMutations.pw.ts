@@ -42,7 +42,7 @@ test("clear reports a related-data write failure after the immediate UI success 
     };
   });
   await page.goto("/");
-  await choose(page, "设置"); await choose(page, "清空本地音乐资料库"); await choose(page, "清空资料库");
+  await choose(page, "设置"); await choose(page, "ReiPod 设置"); await choose(page, "清空本地音乐资料库"); await choose(page, "清空资料库");
   await expect(page.locator(".screen-notice")).toHaveText("部分评级、歌单或试听偏好未能保存，本次清空仍生效");
   await expect(page.locator(".lcd-screen")).toHaveAttribute("data-page", "home");
   expect(await page.evaluate(() => ({ demos: localStorage.getItem("reipod-demos"), playlists: localStorage.getItem("reipod-playlists") })))

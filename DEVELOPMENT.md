@@ -18,7 +18,7 @@
 
 2026-10-30 优先级确认：优先交付 UI 还原的可见结果。每轮固定一个状态，提供证据、差异、修改前后对照及验收边界；常规照片/文本等内部重构保留待办，仅在明确缺陷或阻碍当前交付时优先处理，不要求先抽象完整仓库才能校准界面。
 
-产品目标是 iPod nano、mini、iPod/classic 全代际模拟；现有实现只有以 2007 classic 6G 为基线的界面。下一阶段先收敛现有 classic 的结构、证据和验收，再扩展机型。新增服务、页面与视觉效果不能代替还原度整改。
+产品目标是 iPod nano、mini、iPod/classic 全代际模拟；现有实现只有以 2007 classic 6G 为基线的界面。下一阶段先收敛现有 classic 的结构、证据和验收，再扩展机型。新增服务、页面与视觉效果不能代替还原度整改。原机功能的当前覆盖、差异和后续验收集中在 [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md)；现代入口集中到“ReiPod 设置”，保留此前明确的歌词/外观/服务扩展。
 
 开发模式应是 **共享播放与资料库核心 + 平台/音乐服务适配器 + 机型界面与交互 + 外观主题**。目前只完成了部分分层，尚不具备任意换皮的能力，也不是把所有功能放在远程后端、前端仅作展示。
 
@@ -91,6 +91,7 @@
 | [TASK_LOG.md](TASK_LOG.md) | 每次任务必读写的接续摘要、事项状态、验证记录和下一步 |
 | [UI_STANDARDS.md](UI_STANDARDS.md) | UI 校准方法、证据规则、产品扩展 |
 | [DEVICE_STANDARDS.md](DEVICE_STANDARDS.md) | 全系列机型/固件范围、官方规格、手册与来源冲突 |
+| [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md) | 原机功能/菜单覆盖、差异、实现边界与下一步 |
 | [UI_METRICS.md](UI_METRICS.md) | 指标状态、当前数值的证据级别、逐状态验收台账 |
 | [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md) | 可追溯的原机/系统来源与按时间保存的研究，不是当前参数表 |
 | [REPLICA.md](REPLICA.md) | 已实现界面与历史变更；冲突参数查 UI_STANDARDS 与对应代码 |

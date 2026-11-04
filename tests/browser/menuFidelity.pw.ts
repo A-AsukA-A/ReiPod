@@ -83,7 +83,7 @@ test("setting values keep blue/white states while unrelated disabled values rema
   const blue = await value.evaluate(el => getComputedStyle(el).color);
   const [r,g,b] = blue.match(/\d+/g)!.map(Number);
   expect(b - r).toBeGreaterThan(50); expect(g - r).toBeGreaterThan(40);
-  await key(page, "ArrowDown"); await key(page, "ArrowDown"); await key(page, "ArrowDown");
+  await key(page, "ArrowDown");
   await expect(shuffle).toHaveAttribute('aria-current', 'true');
   expect(await value.evaluate(el => getComputedStyle(el).color)).toBe(await shuffle.evaluate(el => getComputedStyle(el).color));
   await choose(page, "主菜单");

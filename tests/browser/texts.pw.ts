@@ -14,6 +14,7 @@ test("all settings notices stay in the LCD and a failed document can be retried"
   });
   await page.goto("/");
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "开源许可");
   await expect(live(page).getByRole("status")).toContainText("文本未能载入");
   await key(page, "Enter");

@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-export function useWheelTextEntry(extra: string) {
+export function useWheelTextEntry(extra: string, mode: "search" | "name" = "name") {
   const [editing, setEditing] = useState(false);
   const [index, setIndex] = useState(0);
   const characters = useMemo(
-    () => [
+    () => mode === "search" ? [
+      ...new Set([..."ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", ...[...extra].filter(c => /[^\x00-\x7f\s]/.test(c))]),
+    ] : [
       ...new Set([
         ..."ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789我的歌单",
         ...extra.replace(/\s/g, ""),
@@ -12,7 +14,7 @@ export function useWheelTextEntry(extra: string) {
       "退格",
       "完成",
     ],
-    [extra],
+    [extra, mode],
   );
   return {
     editing,
@@ -35,7 +37,7 @@ export function useWheelTextEntry(extra: string) {
         ? null
         : key === "退格"
           ? [...text].slice(0, -1).join("")
-          : text + (key === "空格" ? " " : key);
+          : text + (key === "空格" ? " " : mode === "search" && /^[A-Z]$/.test(key) ? key.toLowerCase() : key);
     },
   };
 }

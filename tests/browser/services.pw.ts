@@ -7,6 +7,7 @@ test("service choice persists, unconfigured Apple Music is honest, and local fil
 }) => {
   await page.goto("/");
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "音乐服务");
   await expect(live(page).locator(".row-title")).toHaveText([
     "Apple Music",
@@ -33,6 +34,7 @@ test("service choice persists, unconfigured Apple Music is honest, and local fil
     "apple-music",
   );
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "音乐服务");
   await choose(page, "本地音乐");
   await home(page);

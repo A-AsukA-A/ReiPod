@@ -15,9 +15,10 @@ function fixture() {
 it("service presentation does not enable clearing an empty local library, and cancel has no clear side effect", () => {
   const f = fixture();
   const menus = f.menus();
-  expect(menus.settingsItems[1].value).toBe("QQ 音乐");
-  expect(menus.settingsItems.find(row => row.key === "clear")?.disabled).toBe(true);
-  menus.settingsItems[1].action();
+  const extensions = menus.managedRows["reipod-settings"]!;
+  expect(extensions[0].value).toBe("QQ 音乐");
+  expect(extensions.find(row => row.key === "clear")?.disabled).toBe(true);
+  extensions[0].action();
   expect(f.context.open).toHaveBeenCalledWith("music-services", "qq");
   menus.confirmItems[0].action();
   expect(f.context.clear).not.toHaveBeenCalled();
@@ -44,4 +45,29 @@ it("customization keeps fixed entries disabled and toggles optional items withou
   expect(f.context.setPreferences).toHaveBeenCalledWith({ mainMenu: original.filter(key => key !== "photos") });
   expect(f.context.prefs.mainMenu).toEqual(original);
   expect(f.context.back).not.toHaveBeenCalled();
+});
+
+it("stock settings order is stable and modern features have one labeled boundary", () => {
+  const f = fixture();
+  f.context.originalSettingsItems = ["finish", "click", "brightness", "repeat", "about", "shuffle", "lyrics-display", "music-menu", "backlight", "main-menu", "volume-limit"].map(key => ({ key, label: key, action: vi.fn() }));
+  f.context.localTools = [{ key: "import", label: "Import", action: vi.fn() }];
+  const menus = f.menus();
+  expect(menus.settingsItems.map(row => row.key)).toEqual(["about", "shuffle", "repeat", "main-menu", "music-menu", "volume-limit", "backlight", "brightness", "click", "reipod-settings", "reset-settings"]);
+  expect(menus.managedRows["reipod-settings"]!.map(row => row.key)).toEqual(["music-services", "import", "finish", "lyrics-display"]);
+  menus.settingsItems.at(-1)!.action();
+  expect(f.context.open).toHaveBeenCalledWith("reset-settings", "cancel");
+});
+it("Reset Settings restores implemented firmware preferences through their owners and leaves extensions alone", () => {
+  const f = fixture();
+  f.context.prefs = parsePreferences({ finish: "black", background: "dark", lyricsEnabled: false, clickSound: false, brightness: .25, volumeLimit: .2, backlight: 0, menuVersion: 3, mainMenu: [], musicMenu: [] });
+  const rows = f.menus().managedRows["reset-settings"]!;
+  rows[0].action();
+  expect(f.context.setPreferences).not.toHaveBeenCalled();
+  rows[1].action();
+  expect(f.context.setPreferences).toHaveBeenCalledWith({ clickSound: true, brightness: 1, volumeLimit: 1, backlight: 10, mainMenu: parsePreferences(null).mainMenu, musicMenu: parsePreferences(null).musicMenu });
+  expect(f.context.shuffle).toHaveBeenCalledWith(false);
+  expect(f.context.repeat).toHaveBeenCalledWith("off");
+  expect(f.context.clear).not.toHaveBeenCalled();
+  expect(f.context.state.tracks).toEqual([]);
+  expect(f.context.prefs).toMatchObject({ finish: "black", background: "dark", lyricsEnabled: false, brightness: .25 });
 });

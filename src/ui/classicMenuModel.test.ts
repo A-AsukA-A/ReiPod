@@ -9,7 +9,7 @@ function fixture() {
     flowAlbums: [{ id: "other", title: "Other", artist: "Zulu", tracks: [{ ...track, id: "other-song" }] }],
     browseTracks: [track], artists: ["Alpha", "Zulu"], visibleTracks: [track], isTrackList: false,
     accountSyncing: false, emptyItems: [{ key: "import", label: "Import", action: vi.fn() }],
-    open: vi.fn(), playTrack: vi.fn(), beginText: vi.fn(),
+    open: vi.fn(), playTrack: vi.fn(),
   };
   return { context, model: () => createClassicMenuModel(context) };
 }
@@ -61,24 +61,6 @@ it("an explicit empty managed menu wins over primary and browse fallbacks", () =
   f.context.primaryRows.home = [{ key: "music", label: "Music", action: vi.fn() }];
   expect(f.model().rows[0].key).toBe("music");
   f.context.managedRows.home = [];
-  expect(f.model().rows).toEqual([]);
-});
-
-it("search keeps supplied track order and metadata fallbacks plus a reachable edit command", () => {
-  const f = fixture();
-  f.context.page = "search";
-  f.context.isTrackList = true;
-  f.context.visibleTracks = [{ ...track, id: "2", album: "Album" }, track];
-  const rows = f.model().rows;
-  expect(rows.map(row => row.key)).toEqual(["2", "song", "edit-search"]);
-  expect(rows.map(row => row.detail)).toEqual(["Album", "song.mp3", undefined]);
-  rows[0].action();
-  expect(f.context.playTrack).toHaveBeenCalledWith("2");
-  rows[2].action();
-  expect(f.context.beginText).toHaveBeenCalledOnce();
-  f.context.visibleTracks = [];
-  expect(f.model().rows.map(row => row.key)).toEqual(["edit-search"]);
-  f.context.page = "favorites";
   expect(f.model().rows).toEqual([]);
 });
 

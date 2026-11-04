@@ -62,14 +62,15 @@ export async function holdCenter(page: Page) {
   await page.keyboard.up("Enter");
 }
 export async function text(page: Page, value: string) {
-  const alphabet =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789我的歌单";
+  const search = await live(page).locator('.classic-search-screen[data-editing="true"]').count() > 0;
+  const alphabet = search ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789我的歌单";
   for (const character of value) {
     const current = await page
-      .locator('.wheel-character-grid [aria-current="true"]')
+      .locator(search ? '.classic-search-letters [aria-current="true"]' : '.wheel-character-grid [aria-current="true"]')
       .textContent();
     const from = alphabet.indexOf(current!),
-      to = alphabet.indexOf(character);
+      to = alphabet.indexOf(search ? character.toUpperCase() : character);
     if (from < 0 || to < 0) throw new Error("Unsupported test character");
     for (let i = 0; i < Math.abs(to - from); i++)
       await key(page, to > from ? "ArrowDown" : "ArrowUp");

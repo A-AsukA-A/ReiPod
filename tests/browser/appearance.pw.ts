@@ -36,6 +36,7 @@ test("finish and background changes preserve the model, audio instance and activ
   });
   await home(page);
   await choose(page,'设置');
+  await choose(page, 'ReiPod 设置');
   await choose(page,'机身颜色');
   await choose(page,'黑色');
   await expect(page.locator('main')).toHaveAttribute('data-finish','black');

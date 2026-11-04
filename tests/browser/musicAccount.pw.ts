@@ -50,6 +50,7 @@ for (const [source, name] of [
     });
     await page.goto("/");
     await choose(page, "设置");
+    await choose(page, "ReiPod 设置");
     await choose(page, "音乐服务");
     await choose(page, name);
     await expect(live(page).getByRole("status")).toContainText(
@@ -143,6 +144,7 @@ test("an unavailable avatar falls back without losing public profile or overflow
   });
   await page.goto("/");
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "音乐服务");
   await choose(page, "网易云音乐");
   await expect(
@@ -157,6 +159,7 @@ test("an unavailable service keeps QR retry available without extension installa
   }));
   await page.goto("/");
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "音乐服务");
   await choose(page, "网易云音乐");
   await expect(live(page).locator(".row-title")).toContainText(["扫码登录 网易云音乐"]);

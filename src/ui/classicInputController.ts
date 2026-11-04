@@ -88,7 +88,7 @@ type Context = {
 export function createClassicInputController(context: Context) {
   const { held, sleeping, activate, setSleeping } = context.device;
   const { page, groupKey, selectedKey, dispatch, open, back, capture, setNotice } = context.navigation;
-  const { rows, focusedRow, isTrackList, visibleIds, visibleTracks, accountAuthorized, feedback } = context.menu;
+  const { rows, focusedRow, isTrackList, visibleIds, accountAuthorized, feedback } = context.menu;
   const { player, state, current, playView, ratings, setRating, toggleFavorite,
     cyclePlayView, scrollLyrics, showVolume, showTransportHint, trackOptions } = context.playback;
   const { trackById, musicTracks, browseTracks, albums, playTrack, playAlbum, playDefault } = context.library;
@@ -175,6 +175,13 @@ export function createClassicInputController(context: Context) {
       return;
     }
     if (textEntry.editing && (page === "search" || page === "playlist-name")) {
+      // Search owns the transport buttons while entering text (Apple guide pp7–8).
+      // Holds must not leak into audio seeking or song options either.
+      if (page === "search") {
+        if (value === "next") { setQuery(query + " "); return; }
+        if (value === "previous") { setQuery([...query].slice(0, -1).join("")); return; }
+        if (["seek-forward", "seek-backward", "options", "favorite"].includes(value)) return;
+      }
       if (value === "select") {
         const next = textEntry.pick(page === "search" ? query : playlistName);
         if (next === null) {
@@ -183,7 +190,7 @@ export function createClassicInputController(context: Context) {
           else
             dispatch({
               type: "select",
-              key: visibleTracks[0]?.id ?? "edit-search",
+              key: "edit-search",
             });
         } else if (page === "search") setQuery(next);
         else setPlaylistName(next);
@@ -191,6 +198,7 @@ export function createClassicInputController(context: Context) {
       }
       if (value === "menu") {
         textEntry.setEditing(false);
+        if (page === "search") dispatch({ type: "select", key: "edit-search" });
         return;
       }
     }

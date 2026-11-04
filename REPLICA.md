@@ -83,3 +83,10 @@ The first status-bar pass was rejected for its white inset and generic icon feel
 ### Settings, wheel materials and scale — 2026-11-04
 
 Setting values now use the blue relationship visible in the contemporary settings photograph, with white focused values and muted disabled values. Track-list transport markers share the tight LCD icon silhouettes and inherit focus contrast. Black wheel legends use a lighter printed appearance; silver/black center surfaces use inward shading consistent with the contemporary review's description. These colors and gradients remain authored provisional fits. Visible HOLD geometry now scales with the shell while its separate54×44 CSSpx touch target remains accessible; the existing390px fit is not a measured hardware dimension. The [metric record](UI_METRICS.md#2026-11-04-主菜单与银黑机身外观任务53) separates these engineering corrections from hardware acceptance.
+
+
+### Firmware menus and live search — 2026-11-05
+
+The supported Music/Settings items now keep the contemporary device photograph order, with the home LCD title restored to iPod. Service/import/lyrics/appearance/license additions live under the explicit ReiPod Settings group, while Reset Settings stays last. Reset uses the existing preference/playback owners, preserving music, accounts and the current session. Its full stock default matrix and confirmation geometry remain unverified.
+
+Search now uses a horizontal alphabet bay with live typed results: wheel/Center entry, Next for space, Previous for backspace, MENU for the result list and Center on Search for reentry. Local songs, artists, albums, playlists and audio podcasts search by contiguous names; collections open their own browsing scope. Online/native adapters still expose song-only search. Source revisions, original feature gaps and adaptations are tracked in [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md); photo-fit sizes and the corrected span/chevron cascade are in [UI_METRICS.md](UI_METRICS.md#2026-11-05-原机菜单与搜索任务54).

@@ -48,7 +48,9 @@ import type { Page } from "../ui/navigation";
 import { useBacklight } from "../ui/useBacklight";
 import { setPreferences, usePreferences } from "../ui/preferences";
 import { useLcdMotion } from "../ui/useLcdMotion";
-import { searchTracks } from "../player/search";
+import { searchLibrary } from "../player/librarySearch";
+import type { LibrarySearchResult } from "../player/librarySearch";
+import { createSearchMenu } from "../ui/searchMenus";
 import { useRatings, setRating } from "../player/ratings";
 import {
   usePlaylists,
@@ -181,6 +183,15 @@ export function App() {
   const [sleeping, setSleeping] = useState(false);
   const { dimmed, activate } = useBacklight(prefs.backlight, sleeping);
   const [query, setQuery] = useState("");
+  const [finishedSearch, setFinishedSearch] = useState("");
+  const searchKey = JSON.stringify([services.selected, services.auth, query]);
+  const searchResults = useMemo<LibrarySearchResult[]>(() => cloud
+    ? services.auth === "authorized" && finishedSearch === searchKey
+      ? services.searchResults.map(track => ({ kind: "song", key: track.id, title: track.title,
+          detail: track.artist || track.album, track }))
+      : []
+    : searchLibrary(localMusicTracks, localPlaylists, podcastTracks, query),
+  [cloud, services.auth, services.searchResults, finishedSearch, searchKey, localMusicTracks, localPlaylists, podcastTracks, query]);
   const [playlistName, setPlaylistName] = useState("");
   const [contextPlaylist, setContextPlaylist] = useState<string | null>(null);
   const optionQueue = useRef<string[] | undefined>(undefined);
@@ -199,7 +210,8 @@ export function App() {
   const textEntry = useWheelTextEntry(
     state.tracks
       .map((track) => `${track.title}${track.artist ?? ""}${track.album ?? ""}`)
-      .join(""),
+      .join("") + localPlaylists.map(playlist => playlist.name).join(""),
+    page === "search" ? "search" : "name",
   );
   const input = useRef<HTMLInputElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
@@ -264,9 +276,7 @@ export function App() {
       );
     if (page === "local-songs") return songsByTitle(localMusicTracks);
     if (page === "search")
-      return cloud
-        ? services.searchResults
-        : searchTracks(localMusicTracks, query);
+      return searchResults.flatMap(result => result.track ? [result.track] : []);
     if (page === "playlist-tracks") {
       return (selectedPlaylist?.trackIds ?? []).flatMap(
         (id) => trackById.get(id) ?? [],
@@ -306,6 +316,7 @@ export function App() {
     localMusicTracks,
     services.searchResults,
     cloud,
+    searchResults,
   ]);
   const visibleIds = useMemo(
     () => new Set(visibleTracks.map((track) => track.id)),
@@ -534,6 +545,7 @@ export function App() {
     musicItems: localMusicItems,
     playlistItems: localPlaylistItems,
     settingsItems: originalSettingsItems,
+    localTools,
   } = createPrimaryMenus({
     state: cloud
       ? { ...remoteState, tracks: services.libraryTracks }
@@ -555,7 +567,7 @@ export function App() {
     beginText: textEntry.begin,
   });
   const { settingsItems, confirmItems, managedRows: settingsRows } = createSettingsMenus({
-    prefs, state, originalSettingsItems, cloud, serviceName, selectedService: services.selected,
+    prefs, state, originalSettingsItems, localTools, cloud, serviceName, selectedService: services.selected,
     localMusicCount: localMusicTracks.length, open, back, setPreferences,
     shuffle: value => player.setShuffle(value), repeat: value => player.setRepeat(value),
     clear: () => { capture("back"); clearLibrary(); dispatch({ type: "reset" }); setNotice("资料库已清空"); },
@@ -707,13 +719,15 @@ export function App() {
       openLyrics();
     },
   }));
+  if (page === "search") managedRows.search = createSearchMenu({
+    results: searchResults, query, begin: textEntry.begin, open, play: playTrack,
+  });
   const { rows, selectedIndex, focusedRow } = createClassicMenuModel({
     page, selectedKey: navigation.screen.selectedKey, browseArtist, managedRows,
     primaryRows: { home: homeItems, music: musicItems, playlists: playlistItems,
       settings: settingsItems, "confirm-clear": confirmItems },
     browseAlbums, flowAlbums, browseTracks, artists, visibleTracks, isTrackList,
     current, accountSyncing: services.syncing, emptyItems, open, playTrack,
-    beginText: textEntry.begin,
   });
   const { rotate, command } = createClassicInputController({
     device: { held, sleeping, activate, setSleeping },
@@ -751,9 +765,16 @@ export function App() {
     playerFor("netease").setVolumeLimit(prefs.volumeLimit);
   }, [prefs.volumeLimit]);
   useEffect(() => {
-    if (page === "search" && cloud && !textEntry.editing)
-      void searchSelectedMusicService(query);
-  }, [page, cloud, services.selected, textEntry.editing, query]);
+    if (page !== "search" || !cloud || services.auth !== "authorized") return;
+    let cancelled = false;
+    // Network search is a ReiPod adapter: debounce wheel entry and hide stale-query results.
+    const timer = setTimeout(() => {
+      void searchSelectedMusicService(query).then(() => {
+        if (!cancelled) setFinishedSearch(searchKey);
+      });
+    }, query.trim() ? 300 : 0);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [page, cloud, services.selected, services.auth, query, searchKey]);
   useEffect(() => {
     void restorePhotos();
     void restoreTexts();
@@ -808,7 +829,7 @@ export function App() {
     const timer = setTimeout(() => setNotice(""), 2200);
     return () => clearTimeout(timer);
   }, [notice]);
-  const title = classicScreenTitle({ page, groupKey, browseArtist, playView,
+  const title = page === "search" && query.trim() ? `搜索结果：${searchResults.length}` : classicScreenTitle({ page, groupKey, browseArtist, playView,
     albumTitle: selectedAlbum?.title,
     podcastTitle: podcastShows.find(show => show.id === groupKey)?.title,
     documentTitle: textDocument?.title, playlistTitle: selectedPlaylist?.name, serviceName });
@@ -874,7 +895,10 @@ export function App() {
           browseAlbumCount: browseAlbums.length, playlistTitle: selectedPlaylist?.name, optionTrack }}
         playback={{ state, current, active, playView, lyricWheel,
           rating: current ? ratings[current.id] ?? 0 : 0, volumeOverlay }}
-        text={{ textEntry, query, playlistName, textDocument, reader }}
+        text={{ textEntry, query, playlistName, textDocument, reader,
+          searchCount: searchResults.length,
+          searchPending: cloud && services.auth === "authorized" && !!query.trim() && finishedSearch !== searchKey,
+          searchError: cloud ? services.auth === "authorized" ? services.error : "请先登录音乐服务" : undefined }}
         photos={{ activePhotos, photoIndex, slideshow }} prefs={prefs}
         preview={{ page, focusedRow, albums, current, sleeping, tracks: state.tracks }}
         qrImage={services.qrImage} serviceName={serviceName}

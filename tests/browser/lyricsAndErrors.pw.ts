@@ -117,6 +117,7 @@ async function fixture(page: Page, source: "netease" | "qq", mode = "lyrics") {
   });
   await page.goto("/");
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "音乐服务");
   await choose(page, source === "netease" ? "网易云音乐" : "QQ 音乐");
   await expect(live(page).getByRole("status")).toContainText("已连接");
@@ -189,10 +190,12 @@ for (const source of ["netease", "qq"] as const) {
     expect(counts.lyrics).toBe(2);
     await home(page);
     await choose(page, "设置");
+    await choose(page, "ReiPod 设置");
     await choose(page, "歌词显示");
     await choose(page, "关闭");
     await page.reload();
     await choose(page, "设置");
+    await choose(page, "ReiPod 设置");
     await choose(page, "歌词显示");
     await expect(
       live(page).locator('.screen-row[aria-current="true"]'),
@@ -208,6 +211,7 @@ for (const source of ["netease", "qq"] as const) {
     await key(page, "Escape");
     await home(page);
     await choose(page, "设置");
+    await choose(page, "ReiPod 设置");
     await choose(page, "歌词显示");
     await choose(page, "开启");
     await home(page);

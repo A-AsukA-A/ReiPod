@@ -20,13 +20,12 @@ type Context = {
   emptyItems: MenuItem[];
   open: (page: Page, key?: string, group?: string, artist?: string) => void;
   playTrack: (id: string) => void;
-  beginText: () => void;
 };
 
 /** Classic browse rows and focus only; commands and scoped collections come from App. */
 export function createClassicMenuModel({ page, selectedKey, browseArtist, managedRows,
   primaryRows, browseAlbums, flowAlbums, browseTracks, artists, visibleTracks,
-  isTrackList, current, accountSyncing, emptyItems, open, playTrack, beginText }: Context) {
+  isTrackList, current, accountSyncing, emptyItems, open, playTrack }: Context) {
   const { home: homeItems, music: musicItems, playlists: playlistItems,
     settings: settingsItems, "confirm-clear": confirmItems } = primaryRows;
   const albumRows: MenuItem[] = (
@@ -94,36 +93,15 @@ export function createClassicMenuModel({ page, selectedKey, browseArtist, manage
                       ]
                     : emptyItems
                   : isTrackList && visibleTracks.length
-                    ? [
-                        ...visibleTracks.map((track) => ({
-                          key: track.id,
-                          label: track.title,
-                          detail: track.artist || track.album || track.filename,
-                          action: () => playTrack(track.id),
-                        })),
-                        ...(page === "search"
-                          ? [
-                              {
-                                key: "edit-search",
-                                label: "修改搜索…",
-                                action: beginText,
-                              },
-                            ]
-                          : []),
-                      ]
-                    : page === "favorites" ||
-                        page === "search" ||
-                        page === "playlist-tracks" ||
-                        page === "playlist-add-tracks"
-                      ? page === "search"
-                        ? [
-                            {
-                              key: "edit-search",
-                              label: "修改搜索…",
-                              action: beginText,
-                            },
-                          ]
-                        : []
+                    ? visibleTracks.map((track) => ({
+                        key: track.id,
+                        label: track.title,
+                        detail: track.artist || track.album || track.filename,
+                        action: () => playTrack(track.id),
+                      }))
+                    : page === "favorites" || page === "search" ||
+                        page === "playlist-tracks" || page === "playlist-add-tracks"
+                      ? []
                       : !current || isTrackList
                         ? emptyItems
                         : []);

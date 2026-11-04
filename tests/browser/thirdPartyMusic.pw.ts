@@ -63,6 +63,7 @@ for (const [service, label] of [
     });
     await page.goto("/");
     await choose(page, "设置");
+    await choose(page, "ReiPod 设置");
     await choose(page, "音乐服务");
     await choose(page, label);
     await choose(page, `扫码登录 ${label}`);
@@ -135,6 +136,7 @@ test("an unavailable self-hosted backend remains disconnected and local music is
   );
   await page.goto("/");
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "音乐服务");
   await choose(page, "网易云音乐");
   await expect(live(page).getByRole("status")).toContainText(
@@ -182,6 +184,7 @@ for (const [service, label, loginUrl, target] of [
     });
     await page.goto("/");
     await choose(page, "设置");
+    await choose(page, "ReiPod 设置");
     await choose(page, "音乐服务");
     await choose(page, label);
     await choose(page, `打开 ${label} 登录`);
@@ -192,6 +195,7 @@ for (const [service, label, loginUrl, target] of [
     expect(actions.filter(action => action === "login-start")).toHaveLength(1);
     await page.reload();
     await choose(page, "设置");
+    await choose(page, "ReiPod 设置");
     await choose(page, "音乐服务");
     await choose(page, label);
     await expect(live(page)).toContainText(`打开 ${label} 确认`);
@@ -229,6 +233,7 @@ test("NetEase mobile keeps its QR through reload and retries temporary backend f
   });
   await page.goto("/");
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "音乐服务");
   await choose(page, "网易云音乐");
   await choose(page, "扫码登录 网易云音乐");
@@ -237,6 +242,7 @@ test("NetEase mobile keeps its QR through reload and retries temporary backend f
   await expect(live(page)).toContainText("正在重试");
   await page.reload();
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "音乐服务");
   await choose(page, "网易云音乐");
   await expect(live(page).locator(".music-login-qr")).toHaveCount(1);
@@ -266,6 +272,7 @@ test("subpath API stays at root and a slow anonymous status does not lock login"
   await page.evaluate(() => history.replaceState(null, "", "/ReiPod/"));
   try {
     await choose(page, "设置");
+    await choose(page, "ReiPod 设置");
     await choose(page, "音乐服务");
     await choose(page, "网易云音乐");
     await expect(live(page)).toContainText("扫码登录 网易云音乐");

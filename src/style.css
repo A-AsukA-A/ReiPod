@@ -223,7 +223,7 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
-.screen-row > span:last-child:not(:first-child) {
+.screen-row > .row-chevron {
   font-size: 20px;
   font-weight: 400;
   line-height: 1;

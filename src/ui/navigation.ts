@@ -1,4 +1,6 @@
 export type Page =
+  | "reipod-settings"
+  | "reset-settings"
   | "genres"
   | "composers"
   | "genre-tracks"
@@ -67,6 +69,7 @@ export const splitPages = new Set<Page>([
   "home",
   "music",
   "settings",
+  "reipod-settings",
   "podcasts",
   "finish",
   "background",

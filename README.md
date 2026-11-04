@@ -25,6 +25,10 @@ Screenshots show the current web build with included demo music. The interface c
 - **Make it yours.** Silver or black finish, light or dark surroundings, shuffle/repeat, ratings, backlight and wheel sounds.
 - **Keep more in your pocket.** Local photo albums and slideshows, podcast imports with resume positions, and a text reader with saved reading progress.
 
+Search now shows live local results for songs, artists, albums, playlists and audio podcasts. Next/Previous enter a space/delete a character while editing; MENU moves to the results. Firmware menus keep their supported original order; imports, services, lyrics options and appearance are grouped under **设置 → ReiPod 设置**. **还原设置** resets implemented firmware choices after confirmation. See [original feature coverage and remaining gaps](FIRMWARE_FEATURES.md).
+
+<img src="assets/screenshots/search.png" alt="Live local search with typed results and a horizontal alphabet strip" width="260">
+
 ## Music sources
 
 | Source              | What it needs                                                            | Current scope                                                                                                  |
@@ -39,7 +43,7 @@ Screenshots show the current web build with included demo music. The interface c
 
 ## Start listening
 
-Open the [web player](https://a-asuka-a.github.io/ReiPod/) and play an included demo track, or use **音乐 → 导入音乐** (Music → Import Music) to choose your files. MP3, AAC/M4A and PCM WAV are suggested; decoding depends on the browser.
+Open the [web player](https://a-asuka-a.github.io/ReiPod/) and play an included demo track, or use **设置 → ReiPod 设置 → 导入音乐** (Settings → ReiPod Settings → Import Music) to choose your files. MP3, AAC/M4A and PCM WAV are suggested; decoding depends on the browser.
 
 The LCD is display-only. Use the wheel and buttons:
 
@@ -74,7 +78,7 @@ npm run build
 npm run music:serve
 ```
 
-Open `http://127.0.0.1:3210/`, then **设置 → 音乐服务** (Settings → Music Services). The backend listens on localhost by default. This remains an optional development/self-hosted route. For the built-in app service, see [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md); HTTPS self-hosted configuration is documented in [MUSIC_SERVICES.md](MUSIC_SERVICES.md).
+Open `http://127.0.0.1:3210/`, then **设置 → ReiPod 设置 → 音乐服务** (Settings → ReiPod Settings → Music Services). The backend listens on localhost by default. This remains an optional development/self-hosted route. For the built-in app service, see [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md); HTTPS self-hosted configuration is documented in [MUSIC_SERVICES.md](MUSIC_SERVICES.md).
 
 For the iPhone app, follow the [Mac/Xcode installation guide](ios/README.md). A free Personal Team can sign for personal-device testing; it is not an App Store release.
 

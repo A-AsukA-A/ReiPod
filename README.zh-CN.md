@@ -25,6 +25,10 @@
 - **调整自己的播放器。** 银色或黑色机身、明暗背景、随机与重复播放、评分、背光及转轮声音。
 - **不止音乐。** 本地相册与幻灯片、可记忆进度的播客导入，以及保存阅读位置的文本阅读器。
 
+搜索支持本地歌曲、艺人、专辑、播放列表和音频播客的实时结果；编辑时前后键输入空格/退格，MENU进入结果列表。已支持的原机菜单按原顺序排列，导入、服务、歌词及外观集中在 **设置 → ReiPod 设置**；**还原设置** 经确认恢复已实现的固件选项。完整差异与下一步见[原机功能对照](FIRMWARE_FEATURES.md)。
+
+<img src="assets/screenshots/search.png" alt="带分类结果与横向字母条的实时本地搜索" width="260">
+
 ## 音乐来源
 
 | 来源             | 所需条件                                             | 当前范围                                                                      |
@@ -39,7 +43,7 @@
 
 ## 开始使用
 
-打开[网页版](https://a-asuka-a.github.io/ReiPod/)，播放内置试听曲目，或通过 **音乐 → 导入音乐** 选择自己的文件。建议使用 MP3、AAC/M4A 或 PCM WAV；实际解码能力取决于浏览器。
+打开[网页版](https://a-asuka-a.github.io/ReiPod/)，播放内置试听曲目，或通过 **设置 → ReiPod 设置 → 导入音乐** 选择自己的文件。建议使用 MP3、AAC/M4A 或 PCM WAV；实际解码能力取决于浏览器。
 
 LCD 仅用于显示，请通过转轮和按键操作：
 
@@ -74,7 +78,7 @@ npm run build
 npm run music:serve
 ```
 
-打开 `http://127.0.0.1:3210/`，进入 **设置 → 音乐服务**。后端默认仅监听本机；公网网页与 iPhone 使用时需部署 HTTPS 后端并明确允许来源，配置见 [MUSIC_SERVICES.md](MUSIC_SERVICES.md)。
+打开 `http://127.0.0.1:3210/`，进入 **设置 → ReiPod 设置 → 音乐服务**。后端默认仅监听本机；公网网页与 iPhone 使用时需部署 HTTPS 后端并明确允许来源，配置见 [MUSIC_SERVICES.md](MUSIC_SERVICES.md)。
 
 iPhone 安装请参照 [Mac / Xcode 指南](ios/README.md)。可使用免费 Personal Team 在个人设备上调试签名；当前并非 App Store 发行版。
 

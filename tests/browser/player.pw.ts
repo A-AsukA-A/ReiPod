@@ -155,6 +155,7 @@ test("artist browsing drills into scoped albums, keeps its focus and plays only 
   );
   await page.goto("/");
   await choose(page, "音乐");
+  await choose(page, "歌曲");
   const choosing = page.waitForEvent("filechooser");
   await choose(page, "导入音乐");
   await (
@@ -253,6 +254,7 @@ test("Cover Flow uses artist order while Albums retains title order", async ({
   );
   await page.goto("/");
   await choose(page, "音乐");
+  await choose(page, "歌曲");
   const choosing = page.waitForEvent("filechooser");
   await choose(page, "导入音乐");
   await (
@@ -290,6 +292,7 @@ test("settings use real choice pages, matched fonts, checkmarks and persisted ch
 }) => {
   await page.goto("/");
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   const row = live(page).locator(".screen-row").filter({ hasText: "机身颜色" });
   const fonts = await row.evaluate((element) => [
     getComputedStyle(element.querySelector(".row-title")!).fontFamily,
@@ -353,21 +356,19 @@ test("classic menu order and Music customization survive legacy settings and rel
     "风格",
     "作曲者",
     "搜索",
-    "导入音乐",
-    "试听音乐",
   ]);
   await home(page);
   await choose(page, "设置");
   expect((await labels()).slice(0, 9)).toEqual([
     "关于本机",
-    "音乐服务",
-    "歌词显示",
     "随机播放",
     "重复播放",
     "主菜单",
     "音乐菜单",
     "音量上限",
     "背光时间",
+    "亮度",
+    "转轮声音",
   ]);
   await choose(page, "音乐菜单");
   await choose(page, "Cover Flow");
@@ -663,7 +664,9 @@ test("rapid reversal, reduced motion and SVG snapshots remain clean", async ({
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "机身颜色");
+  await key(page, "Escape");
   await key(page, "Escape");
   await key(page, "Escape");
   await expect(page.locator(".screen-outgoing .screen-outgoing")).toHaveCount(
@@ -741,6 +744,7 @@ test("LCD and body aspect ratios remain stable with narrow menu scrolling", asyn
   expect(dimensions.x).toBe(false);
   expect(dimensions.y).toBe(false);
   await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
   await choose(page, "背景");
   await choose(page, "深色");
   await expect(page.locator("main")).toHaveAttribute("data-background", "dark");

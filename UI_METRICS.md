@@ -246,3 +246,22 @@ G-H 沿用上文原始 LCD 四角及 ±2px 角点误差，单应归一到 320×2
 忽略目录 `.local/ui-53/` 保存修改前后截图、computed style/几何JSON、来源哈希及独立对照图。固定中文设置页About/Shuffle选中、无播放、满格测试电池、背光常亮、声音关闭、减少动态、字体/图片ready；银色+暖背景、黑色+暗背景，320/390/1280×900，DPR1，Edge156/macOS、默认缩放。共6组外壳状态的机身/LCD/轮盘/中心键和HOLD触控盒边界前后完全相等，仅HOLD可见绘图按比例调整。曲目列表另固定Carefree暂停、首行选中，检查更清楚的暂停标记及后续焦点/播放切换。
 
 本轮没有对原机进行色彩校准、原始字体恢复、HOLD机械尺寸测量或其他代际验收；O03/U01继续开放。浏览器工程属性与实机还原进度分别记录，完整测试结果见TASK_LOG任务53。
+
+
+## 2026-11-05 原机菜单与搜索（任务54）
+
+范围：C-F01–C-F04 / O03、O04；2007 classic 6G基线，容量/固件未知，简体中文实现。主菜单标题改回iPod，音乐/设置已支持项目按原实拍相对顺序；扩展归入ReiPod设置、还原设置仍末项。未实现项目不补占位；覆盖与缺口统一见 [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md)。
+
+来源：G-S/G-M沿用前述2007 Gadgeteer实拍，[新增Music图](https://the-gadgeteer.com/assets/apple-ipod-classic-11.jpg)只用于项目顺序、不作搜索证据。搜索采用[The Register 2007评测](https://www.theregister.com/2007/09/13/review_apple_ipod_classic/?page=3)的[原始搜索照片](https://image.theregister.com/208122.webp?imageId=208122&width=960&format=jpg)，作者Tony Smith，确切固件未知；下载样本960×723，SHA256=33a2dc59e08a5d982f019b4f5e5c292e5111bde4e1bad3092cfb9a120c6d67db（以本轮实际文件校验值为准，若来源改图不可合并）。照片已为显示区域特写，无完整机身四角；工程观察按完整图边界(0,0)/(959,0)/(959,722)/(0,722)缩到320×240，无透视反解。原始裁切边界未知且文字压缩严重，边界估计至少±10源px；因此下列参数均P，不升级M或通过实机验收。
+
+| 状态/参数 | 当前实现 | 证据级别/边界 |
+| --- | --- | --- |
+| 搜索编辑/结果 | 顶部Search行+分类结果；底部横向字母条，取代25格命名输入器 | 布局关系来自2007照片；Search/歌曲/艺人/专辑/列表/播客标记为独立SVG；路径P |
+| 结果行 | 54 LCDu、图标/封面盒42u、内边距6u、间距8u、副标题13u | P：照片拟合，尚无匹配固件/字体测量；不作硬件金图 |
+| 字母条 | 两侧10u、底7u、高50u、内部7u、查询盒72×30u、字符20u | P：横排关系有照片，尺寸/圆角/渐变为暂定拟合 |
+| 编辑输入 | 首字起实时匹配；Next空格、Previous按Unicode码点退格；MENU选顶部Search行；Center恢复输入 | D：Apple Features Guide 72页版pp7–8，出版修订未确认；2008/120GB官方版同项旁证。中文字符补充/排序A |
+| 设置还原 | 默认取消、只还原已实现固件偏好及随机重复，保留播放/库/账号/扩展 | D仅证明入口及Reset；具体默认值/确认布局/返回P/A |
+
+最终级联：新搜索样式集中classic-search.css；移除classic-lcd中旧的search专用track-row覆盖。检查computed style发现style.css的“最后一个span”泛规则误作用于无chevron的row-label，导致400字重/20px；收窄为row-chevron后结果标题继承700及LCD字号。此修复按语义限定原规则，没有堆叠搜索补丁。
+
+工程证据：`.local/ui-54/before-{settings,music,search}.png`、`after-{settings,music,search,results}.png`，computed-search.json；固定390×900/DPR1/Edge、减少动态、字体加载后、同一自带曲库/查询a。浏览器追加320/390/1280的边界/继承字重检查及LCD截图；只是工程稳定性，不证明原机精度。搜索数据不复制新的播放/账号状态。

@@ -40,6 +40,8 @@ export function menuPreview(
     shuffle: "shuffle",
     repeat: "repeat",
     settings: "settings",
+    "reipod-settings": "settings",
+    "reset-settings": "settings",
     import: "import",
     playlists: "playlists",
     artists: "artists",

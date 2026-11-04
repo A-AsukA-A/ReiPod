@@ -1,0 +1,121 @@
+/* 2007 Register LCD photograph: results above a dark, horizontal alphabet bay.
+   Geometry/colors are provisional photo fits, not recovered firmware constants. */
+.classic-search-screen {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+}
+.classic-search-results {
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: none;
+}
+.classic-search-screen[data-editing="true"] .classic-search-results {
+  padding-bottom: calc(var(--lcd-unit) * 64);
+}
+.classic-search-screen .classic-search-results > .screen-row {
+  height: calc(var(--lcd-unit) * 54);
+  padding-inline: calc(var(--lcd-unit) * 6);
+  gap: calc(var(--lcd-unit) * 8);
+}
+.classic-search-screen .row-label {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--lcd-unit) * 2);
+}
+.classic-search-screen .row-label small {
+  color: #858585;
+  font: 700 calc(var(--lcd-unit) * 13) / 1.2 var(--font-lcd);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.classic-search-screen .selected .row-label small {
+  color: #fff;
+}
+.search-result-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: calc(var(--lcd-unit) * 42);
+  height: calc(var(--lcd-unit) * 42);
+  color: #8a9296;
+}
+.search-result-icon svg {
+  width: 75%;
+  height: 75%;
+}
+.search-result-icon > .album-art {
+  width: 100%;
+  height: 100%;
+}
+.classic-search-screen .selected .search-result-icon {
+  color: #fff;
+}
+.classic-search-message {
+  margin: calc(var(--lcd-unit) * 16) calc(var(--lcd-unit) * 10);
+  color: #777;
+  font-size: calc(var(--lcd-unit) * 13);
+}
+.classic-search-keyboard {
+  position: absolute;
+  left: calc(var(--lcd-unit) * 10);
+  right: calc(var(--lcd-unit) * 10);
+  bottom: calc(var(--lcd-unit) * 7);
+  height: calc(var(--lcd-unit) * 50);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 6);
+  padding: calc(var(--lcd-unit) * 7);
+  border: var(--lcd-unit) solid #777;
+  border-radius: calc(var(--lcd-unit) * 6);
+  background: linear-gradient(#b0b0b0, #4b4b4b 22%, #101010 55%, #050505 85%, #303030);
+  box-shadow: 0 calc(var(--lcd-unit) * 2) calc(var(--lcd-unit) * 7) #0007;
+}
+.classic-search-value {
+  flex: 0 0 calc(var(--lcd-unit) * 72);
+  min-width: 0;
+  height: calc(var(--lcd-unit) * 30);
+  padding-inline: calc(var(--lcd-unit) * 5);
+  border: var(--lcd-unit) solid #555;
+  border-radius: calc(var(--lcd-unit) * 3);
+  background: #fff;
+  color: #111;
+  font-size: calc(var(--lcd-unit) * 19);
+  line-height: calc(var(--lcd-unit) * 28);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.classic-search-value i {
+  display: inline-block;
+  height: calc(var(--lcd-unit) * 19);
+  border-left: var(--lcd-unit) solid #333;
+  margin-left: var(--lcd-unit);
+  vertical-align: middle;
+}
+.classic-search-letters {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--lcd-unit) * 30);
+  overflow: hidden;
+  color: #fff;
+  border-radius: calc(var(--lcd-unit) * 3);
+  background: #080808;
+}
+.classic-search-letters > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 calc(var(--lcd-unit) * 20);
+  font-size: calc(var(--lcd-unit) * 20);
+  font-weight: 700;
+  line-height: 1;
+}
+.classic-search-letters > span[aria-current="true"] {
+  color: #fff;
+  background: linear-gradient(#49b6e8, #0b88c9 52%, #0673b4);
+  box-shadow: inset 0 var(--lcd-unit) #a1ddf5;
+  border-radius: calc(var(--lcd-unit) * 3);
+}
