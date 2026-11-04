@@ -37,15 +37,19 @@ export const lcdMotionStyle = {
   "--lcd-preview-card-duration": `${classicMotion.previewCard}ms`,
 } as CSSProperties;
 
-/** ReiPod lyric additions: modest emphasis in the small LCD, not hardware measurements. */
+/** Lazer reference behavior, independently rendered for the LCD; not stock firmware. */
 export const lyricMotion = {
   focus: 0.35,
   manualHold: 2500,
   interpolationLimit: 0.3,
-  mass: 1,
-  stiffness: 100,
-  damping: 10,
-  settle: 0.5,
-  wordScale: 0.035,
-  wordLift: 0.035,
+  lineMass: 0.9,
+  lineStiffness: 170,
+  lineDamping: 29,
+  scaleStiffness: 100,
+  scaleDamping: 25,
+  lineStagger: 0.05,
+  inactiveScale: 0.97,
+  wordLift: 0.05,
+  feather: 0.5,
+  maxBlur: 5,
 } as const;

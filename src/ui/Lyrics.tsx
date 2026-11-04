@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Track, LyricLine } from "../player/Player";
 import { AlbumArt } from "./AlbumArt";
 import { MarqueeText } from "./MarqueeText";
 import { PlayerIcon } from "./PlayerIcon";
-import { activeLyric, wordEmphasis, wordProgress } from "./lyricTimeline";
+import { activeLyric, wordProgress } from "./lyricTimeline";
 import { lyricMotion } from "./motion";
+import { lyricGlyphs, lyricGlyphPose } from "./lyricEffects";
+import { useLyricLayout } from "./useLyricLayout";
 
 const emptyLyrics: LyricLine[] = [];
 
@@ -20,13 +22,12 @@ export function Lyrics({
   playing?: boolean;
 }) {
   const list = useRef<HTMLDivElement>(null);
-  const previousWheel = useRef(wheelStep);
-  const previousTrack = useRef<string | null>(null);
-  const manualUntil = useRef(0);
   const lines = track.lyrics ?? emptyLyrics;
   const synced = lines.some((line) => line.time >= 0);
   const [active, setActive] = useState(() => activeLyric(lines, position));
   const paintedActive = useRef(active);
+  const glyphs = useMemo(() => lines.map(line => line.words?.map(word => lyricGlyphs(word.text))), [lines]);
+  useLyricLayout(list, track.id, active, wheelStep, synced, lines);
   useEffect(() => {
     if (!synced) {
       paintedActive.current = -1;
@@ -35,7 +36,8 @@ export function Lyrics({
     }
     const started = performance.now();
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
+    let frame = 0, measuredIndex = -2, disposed = false;
+    let measured: { word: NonNullable<LyricLine["words"]>[number]; element: HTMLElement; width: number; font: number; glyphs: { element: HTMLElement; left: number }[] }[] = [];
     const draw = () => {
       // Bridge/audio positions remain authoritative. Interpolate only between updates;
       // cap extrapolation so a stalled transport cannot sing ahead indefinitely.
@@ -52,19 +54,29 @@ export function Lyrics({
         paintedActive.current = index;
         setActive(index);
       }
-      const row = list.current?.querySelector(`[data-line-index="${index}"]`);
-      row
-        ?.querySelectorAll<HTMLElement>(".lyric-word")
-        .forEach((element, i) => {
-          const word = lines[index]?.words?.[i];
-          if (!word) return;
-          const progress = wordProgress(word, time);
-          element.style.setProperty("--word-progress", `${progress * 100}%`);
-          const emphasis = reduced.matches ? 0 : wordEmphasis(word, time);
-          element.style.transform = emphasis
-            ? `translateY(${-emphasis * lyricMotion.wordLift}em) scale(${1 + emphasis * lyricMotion.wordScale})`
-            : "none";
+      if (measuredIndex !== index) {
+        measuredIndex = index;
+        const row = list.current?.querySelector(`[data-line-index="${index}"]`);
+        measured = [...row?.querySelectorAll<HTMLElement>(".lyric-word") ?? []].map((element, i) => {
+          let width = 0;
+          const glyphs = [...element.querySelectorAll<HTMLElement>(".lyric-glyph")].map(glyph => {
+            const left = width; width += glyph.offsetWidth;
+            return { element: glyph, left };
+          });
+          return { word: lines[index].words![i], element, width, glyphs, font: parseFloat(getComputedStyle(element).fontSize) };
         });
+      }
+      measured.forEach(({ word, element, width, font, glyphs }, wi) => {
+        const progress = wordProgress(word, time);
+        element.style.setProperty("--word-progress", `${progress * 100}%`);
+        glyphs.forEach(({ element: glyph, left }, gi) => {
+          glyph.style.setProperty("--glyph-edge", `${width * (time - word.time) / word.duration - left}px`);
+          glyph.style.setProperty("--glyph-feather", `${font * lyricMotion.feather}px`);
+          const pose = lyricGlyphPose(word, time, gi, glyphs.length, wi === measured.length - 1);
+          glyph.style.transform = reduced.matches ? "none" : `translate(${pose.x}em, ${pose.y}em) scale(${pose.scale})`;
+          glyph.style.textShadow = reduced.matches || pose.glow < 0.001 ? "none" : `0 0 ${pose.radius}em rgb(23 23 23 / ${pose.glow * .35})`;
+        });
+      });
       if (playing && !document.hidden) frame = requestAnimationFrame(draw);
     };
     draw();
@@ -72,59 +84,21 @@ export function Lyrics({
       cancelAnimationFrame(frame);
       draw();
     };
+    const resize = new ResizeObserver(() => { measuredIndex = -2; resume(); });
+    if (list.current) resize.observe(list.current);
+    reduced.addEventListener("change", resume);
     document.addEventListener("visibilitychange", resume);
+    if (document.fonts.status === "loading") void document.fonts.ready.then(() => {
+      if (!disposed) { measuredIndex = -2; resume(); }
+    });
     return () => {
+      disposed = true;
       cancelAnimationFrame(frame);
+      resize.disconnect();
+      reduced.removeEventListener("change", resume);
       document.removeEventListener("visibilitychange", resume);
     };
   }, [lines, position, playing, synced, track.id]);
-  useEffect(() => {
-    const element = list.current;
-    if (!element) return;
-    const first = previousTrack.current !== track.id;
-    previousTrack.current = track.id;
-    if (first) {
-      element.scrollTop = 0;
-      manualUntil.current = 0;
-      previousWheel.current = wheelStep;
-    }
-    if (wheelStep !== previousWheel.current) {
-      manualUntil.current = performance.now() + lyricMotion.manualHold;
-      element.scrollTop += (wheelStep - previousWheel.current) * 28;
-      previousWheel.current = wheelStep;
-    }
-    const center = () => {
-      const focus = element.clientHeight * lyricMotion.focus;
-      element.style.setProperty(
-        "--lyric-inset",
-        `${Math.max(0, focus - 15)}px`,
-      );
-      element.style.setProperty(
-        "--lyric-outset",
-        `${Math.max(0, element.clientHeight - focus - 15)}px`,
-      );
-      const row = element.querySelector<HTMLElement>(".active-lyric");
-      if (row && performance.now() >= manualUntil.current)
-        element.scrollTo({
-          top: row.offsetTop - focus + row.clientHeight / 2,
-          behavior:
-            first || matchMedia("(prefers-reduced-motion: reduce)").matches
-              ? "instant"
-              : "smooth",
-        });
-    };
-    center();
-    const timer = setTimeout(
-      center,
-      Math.max(0, manualUntil.current - performance.now()) + 1,
-    );
-    const observer = new ResizeObserver(center);
-    observer.observe(element);
-    return () => {
-      clearTimeout(timer);
-      observer.disconnect();
-    };
-  }, [active, track.id, wheelStep, lines]);
   return (
     <div className="lyrics-screen">
       <div className="lyrics-header">
@@ -173,8 +147,12 @@ export function Lyrics({
                       key={`${i}:${word.time}`}
                       aria-hidden="true"
                     >
-                      <span>{word.text}</span>
-                      <span className="lyric-word-fill">{word.text}</span>
+                      {glyphs[index]?.[i].map((glyph, gi) => (
+                        <span className="lyric-glyph" key={gi}>
+                          <span>{glyph}</span>
+                          <span className="lyric-word-fill">{glyph}</span>
+                        </span>
+                      ))}
                     </span>
                   ))
                 : line.text}

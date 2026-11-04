@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { activeLyric, wordProgress, wordEmphasis } from "./lyricTimeline";
+import { activeLyric, wordProgress } from "./lyricTimeline";
 
 test("timeline clears YRC gaps and handles reverse seeks without carrying an old word", () => {
   const lines = [
@@ -11,12 +11,9 @@ test("timeline clears YRC gaps and handles reverse seeks without carrying an old
   ).toEqual([-1, 0, 0, -1, -1, 1, -1, 0]);
   expect(activeLyric([{ time: 1, text: "LRC" }], 99)).toBe(0);
 });
-test("word masks use the audio position and emphasis resets outside long syllables", () => {
+test("word masks use the authoritative audio position", () => {
   const word = { time: 1, duration: 2, text: "长" };
   expect([0, 1, 2, 3, 4].map((t) => wordProgress(word, t))).toEqual([
     0, 0, 0.5, 1, 1,
   ]);
-  expect(wordEmphasis(word, 1.3)).toBeGreaterThan(0);
-  expect(wordEmphasis(word, 3)).toBe(0);
-  expect(wordEmphasis({ ...word, duration: 0.1 }, 1.05)).toBe(0);
 });

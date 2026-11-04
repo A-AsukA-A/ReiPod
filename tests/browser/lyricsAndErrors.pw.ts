@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { choose, home, key, live, text, holdCenter } from "./dial";
 
 async function fixture(page: Page, source: "netease" | "qq", mode = "lyrics") {
@@ -538,6 +538,11 @@ for (const width of [320, 390, 960]) {
           .map((animation) => animation.finished.catch(() => {})),
       );
     });
+    await expect.poll(() => list.getAttribute("data-moving")).not.toBe("true");
+    await writeFile(testInfo.outputPath("lyrics-computed.json"), JSON.stringify(await list.evaluate(el => {
+      const selectors = ["p", ".active-lyric", ".lyric-word", ".lyric-word-fill"];
+      return selectors.map(selector => { const node = el.querySelector(selector)!; const css = getComputedStyle(node); return { selector, rect: node.getBoundingClientRect().toJSON(), fontSize: css.fontSize, fontWeight: css.fontWeight, transform: css.transform, filter: css.filter, mask: css.maskImage, clip: css.clipPath }; });
+    }), null, 2));
     await page
       .locator(".classic-device")
       .screenshot({ path: testInfo.outputPath("word-lyrics.png") });
@@ -566,6 +571,7 @@ for (const width of [320, 390, 960]) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await seek(1.1);
     await expect(first).toHaveCSS("transform", "none");
+    await expect(first.locator(".lyric-glyph").first()).toHaveCSS("transform", "none");
     await expect(list.locator('p[data-distance="1"]').first()).toHaveCSS(
       "filter",
       "none",
@@ -578,6 +584,50 @@ for (const width of [320, 390, 960]) {
     await expect(list).not.toContainText("逐字");
   });
 }
+
+test("lyric glyph waves freeze on pause and line springs can be retargeted while moving", async ({ page }, testInfo) => {
+  await page.addInitScript(() => {
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      (window as any).lyricTestAudio = this;
+      return play.call(this);
+    };
+  });
+  await fixture(page, "netease", "word-lyrics");
+  await expect.poll(() => page.evaluate(() => (window as any).lyricTestAudio?.readyState ?? 0)).toBeGreaterThanOrEqual(2);
+  const seek = (position: number) => page.evaluate(time => {
+    const audio = (window as any).lyricTestAudio as HTMLMediaElement;
+    audio.pause(); audio.currentTime = time; audio.dispatchEvent(new Event("timeupdate"));
+  }, position);
+  await seek(1);
+  await lyrics(page);
+  const list = live(page).locator(".lyrics-lines");
+  const glyphs = list.locator('.active-lyric .lyric-word').first().locator('.lyric-glyph');
+  await expect(glyphs).toHaveCount(3); // Two Han graphemes and a trailing space.
+  const transforms = await glyphs.evaluateAll(es => es.map(el => getComputedStyle(el).transform));
+  expect(new Set(transforms).size).toBeGreaterThan(1);
+  const paused = await glyphs.evaluateAll(es => es.map(el => el.getAttribute('style')));
+  await page.waitForTimeout(150);
+  expect(await glyphs.evaluateAll(es => es.map(el => el.getAttribute('style')))).toEqual(paused);
+  const future = list.locator('.active-lyric .lyric-word').nth(1).locator('.lyric-glyph').first();
+  expect(await future.evaluate(el => parseFloat((el as HTMLElement).style.getPropertyValue('--glyph-edge')))).toBeLessThan(0);
+  expect(await glyphs.first().locator('.lyric-word-fill').evaluate(el => getComputedStyle(el).maskImage)).toContain('linear-gradient');
+  await seek(7);
+  await expect(list).toHaveAttribute('data-moving', 'true');
+  await seek(13);
+  await expect(list.locator('.active-lyric')).toHaveAttribute('data-line-index', '2');
+  await expect(list).toHaveAttribute('data-moving', 'false');
+  const focus = await list.evaluate(el => {
+    const viewport = el.getBoundingClientRect(), row = el.querySelector('.active-lyric')!.getBoundingClientRect();
+    return (row.top + row.height / 2 - viewport.top) / viewport.height;
+  });
+  expect(focus).toBeCloseTo(.35, 1);
+  await seek(1);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(list.locator('.active-lyric')).toHaveCSS('transform', 'none');
+  await expect(list.locator('.active-lyric .lyric-glyph').first()).toHaveCSS('transform', 'none');
+  await testInfo.attach('settled-lyric-motion', { body: await page.locator('.lcd-screen').screenshot(), contentType: 'image/png' });
+});
 
 test("classic controller expires volume feedback without restarting playback or refetching lyrics", async ({ page }) => {
   const counts = await fixture(page, "netease");

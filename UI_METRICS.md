@@ -265,3 +265,16 @@ G-H 沿用上文原始 LCD 四角及 ±2px 角点误差，单应归一到 320×2
 最终级联：新搜索样式集中classic-search.css；移除classic-lcd中旧的search专用track-row覆盖。检查computed style发现style.css的“最后一个span”泛规则误作用于无chevron的row-label，导致400字重/20px；收窄为row-chevron后结果标题继承700及LCD字号。此修复按语义限定原规则，没有堆叠搜索补丁。
 
 工程证据：`.local/ui-54/before-{settings,music,search}.png`、`after-{settings,music,search,results}.png`，computed-search.json；固定390×900/DPR1/Edge、减少动态、字体加载后、同一自带曲库/查询a。浏览器追加320/390/1280的边界/继承字重检查及LCD截图；只是工程稳定性，不证明原机精度。搜索数据不复制新的播放/账号状态。
+
+
+## 2026-11-05 Lazer歌词动效（任务55）
+
+状态：A，用户指定现代扩展；不参与Apple原机几何验收。参考固定Lazer87880db，源码版本/文件及许可边界见 [LAZER_RESEARCH.md](LAZER_RESEARCH.md#2026-11-05-按指定项目对齐主要歌词动效任务55)。首版词幅度0.035、整词刚性clip和浏览器smooth跟随已替代；其他播放/菜单参数不变。
+
+工程基线：原已发布bdbb0f3产物在独立4174端口复现相同确定性YRC fixture，320/390/960三组；当前构建在4173，固定媒体暂停1秒、首词2秒、间奏4–6秒、第二行6秒，均用转轮进歌词；同一曲库/字体/视口/DPR1/Edge。`.local/lyrics-55/baseline-results`保存原版computed JSON及PNG，当前对应JSON/PNG由lyricsAndErrors测试输出；before/after私有副本保留。完整动态验证不以单张截图代替。
+
+390px实际级联：前后均18px/23.39px行盒，当前行600；旧词transform≈1.0376倍、Y=-0.677px，fill为inset硬clip(50%)。新词容器不承担整体缩放，字素分别transform；半词时首字mask为约15.5px→24.5px的9px渐变边界，clip=none。统一非活动字重600；原0.35/0.7/1px三级CSS blur已删除，由近视口行按实际距离绘制，最大5px。稳定帧需等data-moving=false及字体完成；媒体暂停时高亮/字素姿态冻结，行归位仍可完成。
+
+行弹簧参数与独立积分、逐字符曲线/持续时间/尾词参数集中lyricEffects/motion，来源均属Lazer参考或ReiPod适配，不是Apple硬件常量。焦点/内外留白按容器与实际行高计算，取消固定15px补偿；LCD/机身/播放队列不因此改尺寸。
+
+新增验证覆盖字素簇、普通上浮/持续词错时/尾词、速度连续的反向目标及延迟帧；浏览器覆盖字素暂停停帧、负的未来词边界、柔边遮罩、运动途中反向定位及归位焦点。后台/iPhone真实输出与真实平台YRC仍不从fixture推断。

@@ -20,7 +20,7 @@ Screenshots show the current web build with included demo music. The interface c
 
 - **Bring your own music.** Import audio with metadata and embedded artwork. Browse artists, albums, songs and genres; search, favorite tracks and make browser-local playlists.
 - **Browse with the wheel.** Cover Flow, contextual menu previews, remembered selections, HOLD locking and keyboard controls keep navigation inside the player.
-- **Read lyrics while listening.** Import LRC or embedded lyrics, or fetch lyrics through the built-in service or HTTPS NetEase/QQ backend. Hold Center and confirm **歌词** (Lyrics) to open them quickly; turn the feature on or off in Settings.
+- **Read lyrics while listening.** YRC follows individual graphemes with soft highlighting, sustained-word waves and staggered line springs; LRC keeps line-level follow. Import LRC or embedded lyrics, or fetch lyrics through the built-in service or HTTPS NetEase/QQ backend. Hold Center and confirm **歌词** (Lyrics) to open them quickly; turn the feature on or off in Settings.
 - **Choose your music source.** Use the iPhone's system music library, configure web Apple Music, or connect NetEase Cloud Music and QQ Music through the built-in iOS service or HTTPS backend. Account sessions and libraries stay separate; catalog VIP/purchase labels and playback errors explain restrictions.
 - **Make it yours.** Silver or black finish, light or dark surroundings, shuffle/repeat, ratings, backlight and wheel sounds.
 - **Keep more in your pocket.** Local photo albums and slideshows, podcast imports with resume positions, and a text reader with saved reading progress.
