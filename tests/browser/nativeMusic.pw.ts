@@ -98,7 +98,7 @@ test("the iPhone bridge uses system permission and full queues without developer
   await expect(live(page).locator(".row-title")).not.toContainText([
     "Phone First",
   ]);
-  await choose(page, "Carefree");
+  await choose(page, "晴天");
   await expect(page.locator("main")).toHaveAttribute(
     "data-playback-source",
     "local",
@@ -140,6 +140,6 @@ test("denied iPhone music access offers system settings and retains local playba
   );
   await choose(page, "断开系统音乐");
   await choose(page, "本地音乐");
-  await choose(page, "Carefree");
-  await expect(live(page).locator(".np-info strong")).toHaveText("Carefree");
+  await choose(page, "晴天");
+  await expect(live(page).locator(".np-info strong")).toHaveText("晴天");
 });

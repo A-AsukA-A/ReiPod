@@ -21,13 +21,13 @@ test("Now Playing uses the carousel's full-pane artwork style and stays on the c
   await key(page, "Space");
   await expect(live(page).locator(".np-cover img").first()).toHaveAttribute(
     "src",
-    /carefree/,
+    /qingtian/,
   );
   await home(page);
   await choose(page, "正在播放");
   await expect(live(page).locator(".np-cover img").first()).toHaveAttribute(
     "src",
-    /carefree/,
+    /qingtian/,
   );
   await key(page, "Escape");
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
@@ -44,11 +44,11 @@ test("Now Playing uses the carousel's full-pane artwork style and stays on the c
         return { name: css.animationName, duration: css.animationDuration };
       }),
   ).toEqual(carouselMotion);
-  await expect(preview.locator("img")).toHaveAttribute("src", /carefree/);
+  await expect(preview.locator("img")).toHaveAttribute("src", /qingtian/);
   await key(page, "ArrowRight");
   await expect(preview.locator("img")).toHaveAttribute(
     "src",
-    /monkeys-spinning-monkeys/,
+    /qilixiang/,
   );
   await key(page, "Space");
   await expect(preview).toBeVisible();
@@ -56,7 +56,7 @@ test("Now Playing uses the carousel's full-pane artwork style and stays on the c
   await page.waitForTimeout(6500);
   await expect(preview.locator("img")).toHaveAttribute(
     "src",
-    /monkeys-spinning-monkeys/,
+    /qilixiang/,
   );
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
   await page
@@ -130,18 +130,18 @@ test("Cover Flow opens a dedicated album menu and returns to the same cover", as
     "coverflow-album",
   );
   await expect(live(page).locator(".coverflow-album-heading")).toContainText(
-    "Monkeys",
+    "七里香",
   );
   await key(page, "Escape");
   await expect(
     live(page).locator('.cf-card[aria-current="true"]'),
-  ).toHaveAttribute("aria-label", /Monkeys/);
+  ).toHaveAttribute("aria-label", /七里香/);
   await key(page, "Enter");
   await key(page, "Enter");
-  await expect(live(page).locator(".np-info")).toContainText("Monkeys");
+  await expect(live(page).locator(".np-info")).toContainText("七里香");
   await expect(
     live(page).getByRole("progressbar", { name: "播放进度" }),
-  ).toHaveAttribute("aria-valuemax", /12[45]/);
+  ).toHaveAttribute("aria-valuemax", /297/);
   await holdCenter(page);
   await choose(page, "查看播放队列");
   await expect(live(page).locator(".track-row")).toHaveCount(1);
@@ -426,9 +426,9 @@ test("search and playlist naming can be entered entirely on the click wheel", as
   await page.goto("/");
   await choose(page, "音乐");
   await choose(page, "搜索");
-  await text(page, "Care");
+  await text(page, "晴");
   await expect(live(page).locator(".track-row")).toHaveCount(1);
-  await choose(page, "Carefree");
+  await choose(page, "晴天");
   await expect(page.locator(".lcd-screen")).toHaveAttribute(
     "data-page",
     "playing",
@@ -441,11 +441,11 @@ test("search and playlist naming can be entered entirely on the click wheel", as
   await choose(page, "创建歌单");
   await choose(page, "ABC");
   await choose(page, "添加歌曲");
-  await choose(page, "Carefree");
-  await choose(page, "Sneaky Snitch");
+  await choose(page, "晴天");
+  await choose(page, "兰亭序");
   await choose(page, "完成选择");
   await expect(live(page).locator(".track-row")).toHaveCount(2);
-  await choose(page, "Carefree");
+  await choose(page, "晴天");
   await expect(live(page).locator(".now-playing-top")).toHaveAttribute(
     "aria-label",
     "播放队列第 1 首，共 2 首",
@@ -523,7 +523,7 @@ test("podcasts keep show grouping and episode bookmarks apart from music", async
   const chooserPromise = page.waitForEvent("filechooser");
   await choose(page, "导入播客…");
   const chooser = await chooserPromise;
-  await chooser.setFiles("public/music/carefree.m4a");
+  await chooser.setFiles("public/music/qingtian.m4a");
   await expect(live(page).locator(".screen-row")).toHaveCount(2);
   await expect
     .poll(() => live(page).locator(".screen-row").first().textContent())
@@ -540,7 +540,7 @@ test("podcasts keep show grouping and episode bookmarks apart from music", async
   await choose(page, episode);
   await expect(live(page).getByRole("progressbar")).toHaveAttribute(
     "aria-valuemax",
-    /205/,
+    /269/,
   );
   await key(page, "Enter");
   await key(page, "ArrowDown");
@@ -596,7 +596,7 @@ test("album folders retain their names and genre/composer entries are navigable"
   await home(page);
   await choose(page, "音乐");
   await choose(page, "作曲者");
-  await choose(page, "未知作曲者");
+  await choose(page, "周杰伦");
   await expect(live(page).locator(".track-row")).toHaveCount(3);
 });
 
@@ -607,7 +607,7 @@ test("HOLD, hold seeking, sleep and center views remain operable without touchin
   await key(page, "Space");
   await expect(live(page).getByRole("progressbar")).toHaveAttribute(
     "aria-valuemax",
-    /205/,
+    /269/,
   );
   await key(page, "Enter");
   await expect(live(page).locator(".view-seek")).toHaveCount(1);
@@ -621,6 +621,8 @@ test("HOLD, hold seeking, sleep and center views remain operable without touchin
   await key(page, "Enter");
   await key(page, "ArrowDown");
   await expect(live(page).locator(".classic-rating .chosen")).toHaveCount(1);
+  await key(page, "Enter");
+  await expect(live(page).locator(".view-lyrics")).toHaveCount(1);
   await key(page, "Enter");
   await expect(live(page).locator(".view-art")).toHaveCount(1);
   await page.locator(".top-hold").click();
@@ -794,7 +796,7 @@ test("Cover Flow flips the selected cover into an overlaid album sheet, includin
   await expect(live(page).locator(".cf-album-panel")).toHaveCount(0);
   await expect(
     live(page).locator('.cf-card[aria-current="true"]'),
-  ).toHaveAttribute("aria-label", /Carefree/);
+  ).toHaveAttribute("aria-label", /魔杰座/);
   expect(errors).toEqual([]);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await key(page, "Enter");
@@ -869,7 +871,7 @@ test("playback controls share one bottom bay without moving the cover or creatin
   const original = await cover.boundingBox();
   await expect(live(page).getByRole("progressbar")).toHaveAttribute(
     "aria-valuemax",
-    /205/,
+    /269/,
   );
   const line = await live(page)
     .locator(".np-control-surface .screen-progress")
@@ -901,6 +903,8 @@ test("playback controls share one bottom bay without moving the cover or creatin
   const after = await cover.boundingBox();
   expect(after!.x).toBeCloseTo(original!.x, 1);
   expect(after!.y).toBeCloseTo(original!.y, 1);
+  await key(page, "Enter");
+  await expect(live(page).locator(".view-lyrics")).toHaveCount(1);
   await key(page, "Enter");
   await expect(live(page).locator(".view-art")).toHaveCount(1);
   await key(page, "ArrowDown");
@@ -966,6 +970,8 @@ test("saved rating and queue position remain readable above the control bay at e
   await key(page, "Enter");
   await key(page, "ArrowDown");
   await key(page, "Enter");
+  await expect(live(page).locator(".view-lyrics")).toHaveCount(1);
+  await key(page, "Enter");
   await expect(live(page).getByLabel("已评分 1 星")).toBeVisible();
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 844 });
@@ -991,7 +997,7 @@ test("saved rating and queue position remain readable above the control bay at e
       userAgent: navigator.userAgent,
       fonts: document.fonts.status,
       lcd: document.querySelector(".screen-glass")!.getBoundingClientRect().toJSON(),
-      fixture: { track: "Carefree", status: "paused", rating: 1 },
+      fixture: { track: "晴天", status: "paused", rating: 1 },
     }));
     await writeFile(`.local/screenshots/playback-reference-layout-${width}.json`, JSON.stringify(capture, null, 2));
   }
@@ -1022,7 +1028,7 @@ test("seek and volume endpoints stay clear of labels and preserve the cover", as
   await expect(bar).toHaveAttribute("aria-valuenow", String(duration));
   expect(await clearOfTimes()).toBe(true);
   await page.locator(".screen-glass").screenshot({ path: ".local/screenshots/playback-seek-end.png" });
-  for (let index = 0; index < 3; index++) await key(page, "Enter");
+  for (let index = 0; index < 4; index++) await key(page, "Enter");
   for (const [keyName, percentage] of [["ArrowDown", 100], ["ArrowUp", 0]] as const) {
     for (let index = 0; index < 40; index++) await page.keyboard.press(keyName);
     await expect(live(page).getByRole("status", { name: `音量 ${percentage}%` })).toBeVisible();

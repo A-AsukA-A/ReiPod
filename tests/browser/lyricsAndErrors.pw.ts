@@ -21,7 +21,7 @@ async function fixture(page: Page, source: "netease" | "qq", mode = "lyrics") {
     },
     { id: "3", title: "Unrestricted", artist: "Artist", album: "Album" },
   ];
-  const audio = await readFile("public/music/carefree.m4a");
+  const audio = await readFile("public/music/qingtian.m4a");
   await page.route("https://audio.reipod.test/**", (route) => {
     const range = route
       .request()

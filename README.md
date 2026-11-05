@@ -28,6 +28,7 @@ Screenshots show the current web build with included demo music. The interface c
 Search now shows live local results for songs, artists, albums, playlists and audio podcasts. Next/Previous enter a space/delete a character while editing; MENU moves to the results. Firmware menus keep their supported original order; imports, services, lyrics options and appearance are grouped under **设置 → ReiPod 设置**. **还原设置** resets implemented firmware choices after confirmation. See [original feature coverage and remaining gaps](FIRMWARE_FEATURES.md).
 
 <img src="assets/screenshots/search.png" alt="Live local search with typed results and a horizontal alphabet strip" width="260">
+<img src="assets/screenshots/lyrics.png" alt="Authorized test track with word timing and Lazer-style lyric motion" width="260">
 
 ## Music sources
 
@@ -115,6 +116,6 @@ Pushes to `main` build and deploy the static site with GitHub Actions. UI work u
 
 ## Credits
 
-Click-wheel geometry is adapted from [iPod.js](https://github.com/tvillarete/ipod-classic-js); audio metadata uses [music-metadata](https://github.com/Borewit/music-metadata). Fonts use a redistributable Noto Sans SC subset. Included demo tracks **Carefree**, **Monkeys Spinning Monkeys** and **Sneaky Snitch** are by Kevin MacLeod under CC BY 4.0; covers are original ReiPod artwork. See [third-party notices](THIRD_PARTY_NOTICES.md) and in-app credits for attribution and license details.
+Click-wheel geometry is adapted from [iPod.js](https://github.com/tvillarete/ipod-classic-js); audio metadata uses [music-metadata](https://github.com/Borewit/music-metadata). Fonts use a redistributable Noto Sans SC subset. The included authorized test tracks are Jay Chou’s **晴天**, **七里香** and **兰亭序**, with album covers and synchronized lyrics. Their full-length AAC-LC files total 3.817 MB. 晴天/兰亭序 include word timing; 七里香 uses line timing. Authorization was confirmed by the project owner; underlying music/artwork/lyrics rights remain with their owners, and the old CC BY license does not apply. See [third-party notices](THIRD_PARTY_NOTICES.md) and in-app credits for attribution and license details.
 
 ReiPod is an independent project, not affiliated with Apple, NetEase or Tencent. Names and trademarks belong to their respective owners.

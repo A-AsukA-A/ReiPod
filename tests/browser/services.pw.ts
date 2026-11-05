@@ -27,7 +27,7 @@ test("service choice persists, unconfigured Apple Music is honest, and local fil
     "网站尚未配置 Apple Music",
   );
   await choose(page, "本地音乐");
-  await expect(live(page).locator(".row-title")).toContainText(["Carefree"]);
+  await expect(live(page).locator(".row-title")).toContainText(["晴天"]);
   await page.reload();
   await expect(page.locator("main")).toHaveAttribute(
     "data-music-service",
@@ -125,12 +125,12 @@ test("Apple library pagination, playlists, catalog search and playback stay sepa
   await expect(live(page).locator(".row-title")).not.toContainText([
     "Cloud First",
   ]);
-  await choose(page, "Carefree");
+  await choose(page, "晴天");
   await expect(page.locator("main")).toHaveAttribute(
     "data-playback-source",
     "local",
   );
-  await expect(live(page).locator(".np-info strong")).toHaveText("Carefree");
+  await expect(live(page).locator(".np-info strong")).toHaveText("晴天");
   await page.reload();
   await choose(page, "音乐");
   await choose(page, "Apple Music 账户");
@@ -154,7 +154,7 @@ test("Apple library pagination, playlists, catalog search and playback stay sepa
   await home(page);
   await choose(page, "音乐");
   await choose(page, "本地音乐");
-  await expect(live(page).locator(".row-title")).toContainText(["Carefree"]);
+  await expect(live(page).locator(".row-title")).toContainText(["晴天"]);
 });
 
 test("expired user authorization is cleared and can be renewed through the official login action", async ({

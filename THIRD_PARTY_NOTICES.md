@@ -23,6 +23,6 @@ Noto Sans SC：Google / Adobe，SIL Open Font License 1.1；源文件来自 [goo
 
 `scripts/create-test-audio.mjs` 合成三段原创 12 秒 PCM WAV，用于解码 / 连播检查；输出保存在忽略目录 `.local/`。
 
-公开试听：`public/music/` 包含 Kevin MacLeod 的《Carefree》《Monkeys Spinning Monkeys》《Sneaky Snitch》完整曲长 AAC-LC/M4A，使用 CC BY 4.0；从原 MP3 重新编码为 64 kbps、32 kHz 立体声，未裁剪曲长。来源、许可及署名见 [public/music/credits.txt](public/music/credits.txt)，播放器「设置 → 试听曲目版权」可查看。`src/player/demoCatalog.json` 保存官方曲目页、许可地址、原始与分发文件的字节数/SHA-256 及转码说明；构建检查只允许这些明确列出的公开音频。
+公开测试曲目：`public/music/` 现为周杰伦《晴天》《七里香》《兰亭序》。项目所有者于2026-11-05确认录音、封面和歌词使用授权；底层权利归各自所有者，不沿用旧曲目的CC BY许可。三曲均为完整源曲长AAC-LC/M4A（34.5kbps、32kHz、双声道），含内嵌标签/封面/同步歌词；合计3817420 bytes。QQ官方元数据/封面、音源固定版本、逐行/逐词来源及原始/分发hash见 [catalog](src/player/demoCatalog.json) 和 [曲目声明](public/music/credits.txt)，应用路径“设置 → ReiPod 设置 → 试听曲目版权”。晴天/兰亭序的AMLL时间标注采用CC0-1.0，原歌词本身不因此变为公版；七里香保留官方LRC，不伪造逐字轴。旧Kevin MacLeod三曲已从当前分发移除，历史版本署名仍保留在Git记录。
 
 早期私人开发试听素材：Apple iTunes Search API 返回的周杰伦《告白气球 (Live)》《千山万水》各约 30 秒 AAC 试听片段，仍仅保存在本机忽略目录 `.local/test-music/`；不进入公开仓库、构建或当前试听菜单。

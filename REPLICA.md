@@ -95,3 +95,8 @@ Search now uses a horizontal alphabet bay with live typed results: wheel/Center 
 ### Lazer lyric motion — 2026-11-05
 
 The original whole-word emphasis and browser smooth scrolling are replaced by independent grapheme waves, soft advancing masks, sustained final-word emphasis and interruptible staggered line springs. Distance blur now follows actual visible positions; inactive rows scale to97%, with consistent weight. Only near-viewport rows animate; paused glyph time, wheel browsing, background suspension and reduced motion retain their contracts. Scope, fixed reference revision and the independently authored rendering/math boundary are documented in [LAZER_RESEARCH.md](LAZER_RESEARCH.md). This modern extension does not establish legacy firmware fidelity or complete parity with every Lazer lyric feature.
+
+
+### Authorized lyric test collection — 2026-11-05
+
+The three built-in tracks are replaced by 晴天 / 七里香 / 兰亭序 with real album artwork, embedded metadata and synchronized lyrics. Source lengths are retained; AAC-LC at34.5kbps/32kHz/stereo totals3,817,420 bytes,949 bytes above the previous collection. 晴天/兰亭序 use genuine word timing converted from pinned AMLL TTML sources; 七里香 uses the original QQ LRC, with no fabricated word times. The source master tagged 台湾正式版 is297.247s versus299s in the QQ catalog, so acoustic offset calibration remains unverified. Source/rights/hash details are in [third-party notices](THIRD_PARTY_NOTICES.md) and the catalog. Importing embedded millisecond LRC now retains syncText timing instead of flattening it into plain text.

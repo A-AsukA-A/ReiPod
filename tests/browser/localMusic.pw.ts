@@ -16,18 +16,18 @@ test("browsing local songs from system music renders one list and one selection"
   await expect(live(page).locator(".settings-screen")).toHaveCount(0);
   await expect(live(page).locator(".screen-song-list")).toHaveCount(1);
   await expect(live(page).locator(".row-title")).toHaveText([
-    "Carefree",
-    "Monkeys Spinning Monkeys",
-    "Sneaky Snitch",
+    "兰亭序",
+    "七里香",
+    "晴天",
     "导入音乐",
   ]);
-  await key(page, "ArrowDown");
+  await key(page, "ArrowUp");
   await expect(
     live(page).locator('.screen-row[aria-current="true"]'),
   ).toHaveCount(1);
   await expect(
     live(page).locator('.screen-row[aria-current="true"] .row-title'),
-  ).toHaveText("Monkeys Spinning Monkeys");
+  ).toHaveText("七里香");
 });
 
 test("an empty local library renders its import action only once", async ({
@@ -61,7 +61,7 @@ test("local YRC imports attach to the matching song and survive reload", async (
     {
       name: "word-song.m4a",
       mimeType: "audio/mp4",
-      buffer: await readFile("public/music/carefree.m4a"),
+      buffer: await readFile("public/music/qingtian.m4a"),
     },
     {
       name: "word-song.yrc",
@@ -73,8 +73,8 @@ test("local YRC imports attach to the matching song and survive reload", async (
     await home(page);
     await choose(page, "音乐");
     await choose(page, "歌曲");
-    await expect(live(page).locator(".row-title")).toContainText(["Carefree"]);
-    await choose(page, "Carefree");
+    await expect(live(page).locator(".row-title")).toContainText(["晴天"]);
+    await choose(page, "晴天");
     await holdCenter(page);
     await choose(page, "歌词");
     await expect(live(page).locator(".lyric-word")).toHaveCount(2);

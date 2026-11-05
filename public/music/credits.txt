@@ -1,23 +1,38 @@
-ReiPod — Built-in listening music
+ReiPod — Authorized test music / 授权测试曲目
 
-All three recordings are by Kevin MacLeod (incompetech.com).
-Licensed under Creative Commons: By Attribution 4.0 License
-https://creativecommons.org/licenses/by/4.0/
+晴天 — 周杰伦 / 叶惠美 / track 3
+七里香 — 周杰伦 / 七里香 / track 2
+兰亭序 — 周杰伦 / 魔杰座 / track 7
 
-Carefree
-Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400037
-Original MP3: https://incompetech.com/music/royalty-free/mp3-royaltyfree/Carefree.mp3
+The project owner confirmed authorization to use these recordings, album covers
+and lyrics for ReiPod on 2026-11-05. All underlying recording, composition,
+lyric and artwork rights remain with their respective owners. These tracks
+are not distributed under the previous Kevin MacLeod CC BY license.
 
-Monkeys Spinning Monkeys
-Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400011
-Original MP3: https://incompetech.com/music/royalty-free/mp3-royaltyfree/Monkeys%20Spinning%20Monkeys.mp3
+Official catalog and cover metadata:
+晴天: https://y.qq.com/n/ryqq_v2/songDetail/0039MnYb0qxYhV
+七里香: https://y.qq.com/n/ryqq_v2/songDetail/004Z8Ihr0JIu5s
+兰亭序: https://y.qq.com/n/ryqq_v2/songDetail/00128N3r2SYKMF
 
-Sneaky Snitch
-Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100772
-Original MP3: https://incompetech.com/music/royalty-free/mp3-royaltyfree/Sneaky%20Snitch.mp3
+Audio provenance: 晴天 uses the project owner's local AAC source. The other
+two source copies are pinned to AndySkaura/qzly revision
+918d614425df4754fca1737dcd20fec7e1540364; their original and distribution hashes
+are recorded in src/player/demoCatalog.json. Repository availability does not
+establish an open license for the music; use relies on the owner's authorization.
+七里香 source is tagged 台湾正式版 (297.247s); the QQ catalog lists 299s.
+No invented timing correction has been applied.
 
-Changes: re-encoded from the original MP3 recordings to AAC-LC in M4A containers
-at 64 kbps, 32 kHz stereo using Apple afconvert. Full track lengths retained.
-Original files are linked above; source and distributed-file hashes are recorded
-in src/player/demoCatalog.json.
-The creator does not endorse ReiPod.
+Timed lyrics:
+晴天: AMLL TTML DB, Sikz1218
+兰亭序: AMLL TTML DB, WongCaihong
+Timing annotations in that database are dedicated under CC0-1.0. Underlying
+song lyrics retain their owners' rights. TTML was converted to YRC without
+inventing word times. Source hashes/links and contributor names are in the catalog.
+七里香: original line-synchronized LRC from QQ Music. No synthetic word timing.
+All three include LRC sidecars; 晴天 and 兰亭序 also include YRC sidecars.
+
+Changes: full source lengths retained, re-encoded with FFmpeg AAC-LC,
+34.5 kbps / 32 kHz / stereo; title, artist, album, track, composer, artwork and
+synchronized lyrics embedded in every M4A. Album covers were resized to 320px.
+Combined M4A size: 3,817,420 bytes (previous collection: 3,816,471 bytes).
+The original creators and lyric contributors do not endorse ReiPod.

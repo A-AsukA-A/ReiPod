@@ -11,7 +11,7 @@ for (const [service, label] of [
   }) => {
     let loggedIn = false;
     const actions: string[] = [];
-    const audio = await readFile("public/music/carefree.m4a");
+    const audio = await readFile("public/music/qingtian.m4a");
     await page.route("https://audio.reipod.test/**", (route) =>
       route.fulfill({ contentType: "audio/mp4", body: audio }),
     );
@@ -120,7 +120,7 @@ for (const [service, label] of [
       "Online Second",
     ]);
     await expect(live(page).locator(".settings-screen")).toHaveCount(0);
-    await choose(page, "Carefree");
+    await choose(page, "晴天");
     await expect(page.locator("main")).toHaveAttribute(
       "data-playback-source",
       "local",
@@ -146,7 +146,7 @@ test("an unavailable self-hosted backend remains disconnected and local music is
     "退出登录",
   ]);
   await choose(page, "本地音乐");
-  await choose(page, "Carefree");
+  await choose(page, "晴天");
   await expect(page.locator("main")).toHaveAttribute(
     "data-playback-source",
     "local",

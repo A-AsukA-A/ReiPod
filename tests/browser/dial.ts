@@ -61,20 +61,25 @@ export async function holdCenter(page: Page) {
   );
   await page.keyboard.up("Enter");
 }
-export async function text(page: Page, value: string) {
+export async function text(page: Page, value: string, finish = true) {
   const search = await live(page).locator('.classic-search-screen[data-editing="true"]').count() > 0;
   const alphabet = search ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789我的歌单";
   for (const character of value) {
-    const current = await page
-      .locator(search ? '.classic-search-letters [aria-current="true"]' : '.wheel-character-grid [aria-current="true"]')
-      .textContent();
+    const selected = page.locator(search ? '.classic-search-letters [aria-current="true"]' : '.wheel-character-grid [aria-current="true"]');
+    const current = await selected.textContent();
     const from = alphabet.indexOf(current!),
       to = alphabet.indexOf(search ? character.toUpperCase() : character);
-    if (from < 0 || to < 0) throw new Error("Unsupported test character");
-    for (let i = 0; i < Math.abs(to - from); i++)
-      await key(page, to > from ? "ArrowDown" : "ArrowUp");
+    if (from >= 0 && to >= 0) {
+      for (let i = 0; i < Math.abs(to - from); i++)
+        await key(page, to > from ? "ArrowDown" : "ArrowUp");
+    } else {
+      const target = search ? character.toUpperCase() : character;
+      let count = 0;
+      while (await selected.textContent() !== target && count++ < 512) await key(page, "ArrowDown");
+      if (count >= 512) throw new Error(`Character unavailable in the wheel palette: ${character}`);
+    }
     await key(page, "Enter");
   }
-  await key(page, "Escape");
+  if (finish) await key(page, "Escape");
 }

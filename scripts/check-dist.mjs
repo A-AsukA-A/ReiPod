@@ -7,6 +7,11 @@ const demoCatalog = JSON.parse(
 const approvedMusic = new Map(
   demoCatalog.map((song) => [`music/${song.filename}`, song]),
 );
+const approvedCompanions = new Map(demoCatalog.flatMap(song => [
+  [`artwork/${song.artworkFilename}`, { bytes: song.artworkBytes, sha256: song.artworkSha256 }],
+  [`music/${song.lyricFilename}`, { bytes: song.lyricBytes, sha256: song.lyricSha256 }],
+  [`music/${song.lrcFilename}`, { bytes: song.lrcBytes, sha256: song.lrcSha256 }],
+]));
 
 const files = await readdir("dist", { recursive: true });
 for (const file of files) {
@@ -14,6 +19,7 @@ for (const file of files) {
   if (
     (/\.(m4a|mp3|wav|flac|ipa|mp4|mov|webm|m4v|aac|p8)$/i.test(path) &&
       !approvedMusic.has(path)) ||
+    (/\.(lrc|yrc)$/i.test(path) && !approvedCompanions.has(path)) ||
     /(?:^|\/)(?:analysis|\.local|docs)\//.test(path)
   ) {
     throw new Error(`Private or unexpected file in public build: ${file}`);
@@ -30,14 +36,14 @@ for (const file of files) {
     }
   }
 }
-for (const [path, song] of approvedMusic) {
+for (const [path, song] of [...approvedMusic, ...approvedCompanions]) {
   const data = await readFile(`dist/${path}`);
   if (
     data.length !== song.bytes ||
     createHash("sha256").update(data).digest("hex") !== song.sha256
   ) {
     throw new Error(
-      `Approved demo audio does not match its distribution manifest: ${path}`,
+      `Approved demo asset does not match its distribution manifest: ${path}`,
     );
   }
 }
@@ -51,5 +57,5 @@ await readFile("dist/third-party-licenses.txt", "utf8");
 await readFile("dist/music-metadata-license.txt", "utf8");
 await readFile("dist/music/credits.txt", "utf8");
 console.log(
-  `Public build verified: ${approvedMusic.size} approved demo tracks, credits included, private test music excluded.`,
+  `Public build verified: ${approvedMusic.size} authorized demo tracks and companion hashes, credits included, unapproved music excluded.`,
 );

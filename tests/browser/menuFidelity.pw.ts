@@ -110,10 +110,10 @@ test("track transport markers stay legible, inherit focus contrast and follow pa
     expect(ink.w).toBeGreaterThan(6); expect(ink.h).toBeGreaterThan(8);
     expect(ink.color).toBe('rgb(255, 255, 255)');
   }
-  await key(page, "ArrowDown");
+  await key(page, "ArrowUp");
   const color = await marker.evaluate(el => getComputedStyle(el).color);
   const [r,,b] = color.match(/\d+/g)!.map(Number); expect(b-r).toBeGreaterThan(100);
-  await key(page, "ArrowUp"); await key(page, "Space");
+  await key(page, "ArrowDown"); await key(page, "Space");
   await expect(marker.locator('.icon-play')).toBeVisible();
   await expect(marker).toHaveCount(1);
   await key(page, "Space"); await expect(marker.locator('.icon-pause')).toBeVisible();

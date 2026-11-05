@@ -34,7 +34,7 @@ test("all settings notices stay in the LCD and a failed document can be retried"
     "开源许可",
   );
   for (const [label, content] of [
-    ["试听曲目版权", "Kevin MacLeod"],
+    ["试听曲目版权", "周杰伦"],
     ["音频解析器许可", "MIT"],
     ["字体许可", "SIL OPEN FONT LICENSE"],
   ]) {

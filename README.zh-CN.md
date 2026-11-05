@@ -28,6 +28,7 @@
 搜索支持本地歌曲、艺人、专辑、播放列表和音频播客的实时结果；编辑时前后键输入空格/退格，MENU进入结果列表。已支持的原机菜单按原顺序排列，导入、服务、歌词及外观集中在 **设置 → ReiPod 设置**；**还原设置** 经确认恢复已实现的固件选项。完整差异与下一步见[原机功能对照](FIRMWARE_FEATURES.md)。
 
 <img src="assets/screenshots/search.png" alt="带分类结果与横向字母条的实时本地搜索" width="260">
+<img src="assets/screenshots/lyrics.png" alt="授权测试曲目的逐词时间与Lazer风格歌词动效" width="260">
 
 ## 音乐来源
 
@@ -115,6 +116,6 @@ npm run test:browser
 
 ## 致谢
 
-转轮几何参考自 [iPod.js](https://github.com/tvillarete/ipod-classic-js)，音频标签解析使用 [music-metadata](https://github.com/Borewit/music-metadata)，字体使用可再分发的 Noto Sans SC 子集。内置试听曲目 **Carefree**、**Monkeys Spinning Monkeys**、**Sneaky Snitch** 由 Kevin MacLeod 创作，采用 CC BY 4.0 授权；封面为 ReiPod 原创插画。完整归属与许可证见[第三方声明](THIRD_PARTY_NOTICES.md)及应用内版权页面。
+转轮几何参考自 [iPod.js](https://github.com/tvillarete/ipod-classic-js)，音频标签解析使用 [music-metadata](https://github.com/Borewit/music-metadata)，字体使用可再分发的 Noto Sans SC 子集。内置测试曲目已换为周杰伦的 **晴天、七里香、兰亭序**，含专辑封面与同步歌词，完整曲长AAC-LC合计3.817 MB。晴天/兰亭序含逐词时间，七里香使用逐行时间；项目所有者已确认使用授权，底层录音/封面/歌词权利归原权利人，不沿用旧曲目CC BY许可。完整归属与许可证见[第三方声明](THIRD_PARTY_NOTICES.md)及应用内版权页面。
 
 ReiPod 是独立项目，与 Apple、网易或腾讯无隶属关系。相关名称与商标归其各自权利人所有。

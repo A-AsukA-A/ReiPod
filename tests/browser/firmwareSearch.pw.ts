@@ -4,7 +4,7 @@ import { choose, home, key, live, text } from "./dial";
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("reipod-appearance", JSON.stringify({ backlight: 0, clickSound: false }));
-    localStorage.setItem("reipod-playlists", JSON.stringify([{ id: "morning", name: "Care Walk", trackIds: ["demo:USUAN1400037"] }]));
+    localStorage.setItem("reipod-playlists", JSON.stringify([{ id: "morning", name: "七里漫步 A", trackIds: ["demo:jay-qilixiang"] }]));
   });
   await page.emulateMedia({ reducedMotion: "reduce" });
 });
@@ -22,9 +22,9 @@ async function chooseKind(page: Page, kind: string) {
 test("live search uses the horizontal alphabet and captures space/backspace without changing the active queue", async ({ page }, testInfo) => {
   await page.goto("/");
   await key(page, "Space");
-  await expect(live(page).locator(".np-info strong")).toHaveText("Carefree");
+  await expect(live(page).locator(".np-info strong")).toHaveText("晴天");
   const session = () => page.evaluate(() => JSON.parse(localStorage.getItem("reipod-session") ?? "{}"));
-  await expect.poll(async () => (await session()).currentId).toBe("demo:USUAN1400037");
+  await expect.poll(async () => (await session()).currentId).toBe("demo:jay-qingtian");
   const before = await session();
   await search(page);
   const editor = live(page).locator(".classic-search-screen");
@@ -32,7 +32,10 @@ test("live search uses the horizontal alphabet and captures space/backspace with
   await expect(editor.locator(".wheel-character-grid")).toHaveCount(0);
   await key(page, "Enter"); // A, inserted as a lower-case query character.
   await expect(editor.locator(".classic-search-value")).toHaveText("a");
-  await expect(editor.locator('.search-result-icon[data-kind="song"]')).not.toHaveCount(0);
+  await expect(editor.locator('.search-result-icon[data-kind="playlist"]')).toHaveCount(1);
+  await key(page, "ArrowLeft");
+  await text(page, "晴", false);
+  await expect(editor.locator('.search-result-icon[data-kind="song"]')).toHaveCount(1);
   await expect(editor.locator('.screen-row[aria-current="true"]')).toHaveCount(0);
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 900 });
@@ -47,9 +50,9 @@ test("live search uses the horizontal alphabet and captures space/backspace with
     await testInfo.attach(`search-${width}.png`, { body: await page.locator(".lcd-screen").screenshot(), contentType: "image/png" });
   }
   await key(page, "ArrowRight");
-  await expect(editor.locator(".classic-search-value")).toHaveText("a ");
+  await expect(editor.locator(".classic-search-value")).toHaveText("晴 ");
   await key(page, "ArrowLeft");
-  await expect(editor.locator(".classic-search-value")).toHaveText("a");
+  await expect(editor.locator(".classic-search-value")).toHaveText("晴");
   await key(page, "ArrowLeft");
   await expect(editor.locator(".search-result-icon:not([data-kind=search])")).toHaveCount(0);
   await expect(editor.locator(".classic-search-message")).toHaveText("转动转轮输入文字");
@@ -69,24 +72,24 @@ test("live search uses the horizontal alphabet and captures space/backspace with
 test("typed search results drill into the matching artist, album or playlist and return to the remembered result", async ({ page }) => {
   await page.goto("/");
   await search(page);
-  await text(page, "Kevin");
+  await text(page, "周");
   await chooseKind(page, "artist");
   await expect(page.locator(".lcd-screen")).toHaveAttribute("data-page", "albums");
-  await expect(live(page).locator(".screen-status > strong")).toHaveText("Kevin MacLeod");
-  await expect(live(page).locator(".row-title")).toHaveText(["全部歌曲", "Carefree", "Monkeys Spinning Monkeys", "Sneaky Snitch"]);
+  await expect(live(page).locator(".screen-status > strong")).toHaveText("周杰伦");
+  await expect(live(page).locator(".row-title")).toHaveText(["全部歌曲", "魔杰座", "七里香", "叶惠美"]);
   await key(page, "Escape");
   await expect(live(page).locator('.screen-row[aria-current="true"] .search-result-icon')).toHaveAttribute("data-kind", "artist");
   await choose(page, "搜索");
-  for (let i = 0; i < 5; i++) await key(page, "ArrowLeft");
-  await text(page, "Care");
-  await expect(live(page).locator(".row-title")).toHaveText(["搜索", "Care Walk", "Carefree", "Carefree"]);
+  await key(page, "ArrowLeft");
+  await text(page, "七");
+  await expect(live(page).locator(".row-title")).toHaveText(["搜索", "七里漫步 A", "七里香", "七里香"]);
   await chooseKind(page, "album");
   await expect(page.locator(".lcd-screen")).toHaveAttribute("data-page", "album-tracks");
-  await expect(live(page).locator(".row-title")).toHaveText(["Carefree"]);
+  await expect(live(page).locator(".row-title")).toHaveText(["七里香"]);
   await key(page, "Escape");
   await chooseKind(page, "playlist");
-  await expect(live(page).locator(".lcd-toolbar")).toContainText("Care Walk");
-  await expect(live(page).locator(".track-row .row-title")).toHaveText(["Carefree"]);
+  await expect(live(page).locator(".lcd-toolbar")).toContainText("七里漫步 A");
+  await expect(live(page).locator(".track-row .row-title")).toHaveText(["七里香"]);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("reipod-session") ?? "{}").currentId)).toBeNull();
 });
 
@@ -94,7 +97,7 @@ test("reset confirmation restores firmware choices, preserves the music session 
   await page.addInitScript(() => localStorage.setItem("reipod-appearance", JSON.stringify({ finish: "black", background: "dark", lyricsEnabled: false, brightness: .35, volumeLimit: .3, backlight: 0, clickSound: false })));
   await page.goto("/");
   await key(page, "Space");
-  await expect(live(page).locator(".np-info strong")).toHaveText("Carefree");
+  await expect(live(page).locator(".np-info strong")).toHaveText("晴天");
   await home(page); await choose(page, "设置");
   await choose(page, "随机播放"); await choose(page, "歌曲");
   await choose(page, "重复播放"); await choose(page, "单曲");
