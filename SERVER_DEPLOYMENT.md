@@ -220,3 +220,14 @@ Pages第二次尝试因同一run有2个同名github-pages artifact而失败（12
 
 
 恢复结果：修正配置4c83c69触发的[41939982156](https://github.com/A-AsukA-A/ReiPod/actions/runs/41939982156)成功发布；主站仍为同一9768a52应用。任务55原生job126732285152已cancelled且无步骤，不算native成功。
+
+
+## 2026-11-05 授权歌词测试曲目（任务56）
+
+应用代码 `bf405e8` 已推送并部署VPS，后端仍为abf75e2。内置三曲换为晴天/七里香/兰亭序，真实专辑封面、标签与内嵌歌词；62/38/37行，两首493/377词，七里香为LRC。AAC-LC/34.5kbps/32kHz双声道合计3817420 bytes，比旧曲多949 bytes；不沿用旧CC BY许可，来源/授权/固定版本和时间轴边界查 [catalog](src/player/demoCatalog.json) 与 [曲目声明](public/music/credits.txt)。原始音频/TTML/编码工具保持.local忽略。
+
+231单元、35服务端、player-core、99完整浏览器、显式HTTPS API构建/dist/size、本地文档目标/diff与ios:prepare通过。修复内嵌LRC导入丢失syncText毫秒轴；没有改变账户/服务/播放实例所有权。总产物12684054 bytes，程序gzip278840 bytes、entry140119 bytes；4MB音频预算通过。
+
+VPS暂存/分发46文件hash一致；公网HTML及13项代码/三首音频/封面/歌词资源与本地一致。实际公网三首播放、时长、封面、长Center歌词入口、同步行及逐词数据分别通过，.local/music-56/live-results保存工程证据；不是声学逐字对轴或真实账号/iPhone声明。特别是七里香台湾源版297.247秒、QQ目录299秒，未伪造偏移/逐词时间。
+
+回滚包 `/opt/reipod/backups/dist-before-bf405e8-20261105T044738Z.tgz` 包含旧dist/release.json；个人首页/provider保持，服务active、会话保留。新分发清单只含三首新曲，VPS原有旧URL资源保留，供已打开的旧页面继续使用。Pages [41969822911](https://github.com/A-AsukA-A/ReiPod/actions/runs/41969822911)成功，公网Pages HTML与生产产物一致。iOS仅完成Web/运行时资源生成，不计安装或真实设备验收；后台/锁屏/真实第三方账号事项保持原记录。
