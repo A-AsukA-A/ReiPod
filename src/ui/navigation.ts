@@ -19,6 +19,7 @@ export type Page =
   | "photo-delete"
   | "podcasts"
   | "podcast-episodes"
+  | "podcast-settings"
   | "about"
   | "main-menu"
   | "music-menu"
@@ -71,6 +72,7 @@ export const splitPages = new Set<Page>([
   "settings",
   "reipod-settings",
   "podcasts",
+  "podcast-settings",
   "finish",
   "background",
   "click-sound",

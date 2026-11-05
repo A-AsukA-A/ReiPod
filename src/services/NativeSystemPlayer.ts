@@ -52,6 +52,10 @@ export class NativeSystemPlayer extends Player {
       repeat: snapshot.repeat,
       error: snapshot.status === "playing" ? null : this.getSnapshot().error,
     });
+    const episode = this.getSnapshot().tracks.find(track => track.id === currentId);
+    if (episode?.podcast) this.updateTrack(episode.id, {
+      podcast: { ...episode.podcast, bookmark: this.getSnapshot().position },
+    });
   }
   private async command(
     action:
@@ -76,13 +80,17 @@ export class NativeSystemPlayer extends Player {
         });
     }
   }
-  override select(id: string, autoplay = true, startAt = 0) {
+  override select(id: string, autoplay = true, startAt?: number) {
     const persistentId = nativePersistentId(id);
+    const track = this.getSnapshot().tracks.find((track) => track.id === id);
     if (
       !persistentId ||
-      !this.getSnapshot().tracks.some((track) => track.id === id)
+      !track
     )
       return;
+    const bookmark = startAt ?? track.podcast?.bookmark ?? 0;
+    const position = Number.isFinite(bookmark)
+      ? Math.max(0, Math.min(bookmark, track.duration || 0)) : 0;
     if (!this.getSnapshot().queue.includes(id)) this.setQueue([id], id);
     const ids = this.getSnapshot()
       .queue.map(nativePersistentId)
@@ -91,14 +99,14 @@ export class NativeSystemPlayer extends Player {
     this.queueKnown = true;
     this.syncExternalPlayback({
       currentId: id,
-      position: startAt,
+      position,
       duration:
         this.getSnapshot().tracks.find((track) => track.id === id)?.duration ??
         0,
     });
     void this.command(
       "setQueue",
-      { ids, selectedId: persistentId, autoplay, seconds: startAt },
+      { ids, selectedId: persistentId, autoplay, seconds: position },
       "loading",
     );
   }
@@ -113,7 +121,7 @@ export class NativeSystemPlayer extends Player {
       if (this.getSnapshot().status !== "playing") this.play();
       return;
     }
-    this.select(id, true, id === before.currentId ? before.position : 0);
+    this.select(id, true, id === before.currentId ? before.position : undefined);
   }
   override play() {
     void this.command("play", {}, "loading");

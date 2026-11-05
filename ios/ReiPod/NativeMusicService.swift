@@ -7,6 +7,7 @@ final class NativeMusicService {
     var onEvent: ((NativeMusicReply) -> Void)?
     private lazy var player = MPMusicPlayerController.systemMusicPlayer
     private var songCache: [MPMediaItem]?
+    private var podcastCache: [MPMediaItem]?
     private var itemCache: [UInt64: MPMediaItem] = [:]
     private var playlistCache: [MPMediaPlaylist]?
     private var observers: [any NSObjectProtocol] = []
@@ -40,15 +41,7 @@ final class NativeMusicService {
         }
         observers.append(NotificationCenter.default.addObserver(forName: .MPMediaLibraryDidChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self else { return }
-                self.songCache = nil
-                self.itemCache.removeAll()
-                self.playlistCache = nil
-                self.artworkVersion += 1
-                self.artworkCache.removeAllObjects()
-                var reply = self.status()
-                reply.libraryChanged = true
-                self.onEvent?(reply)
+                self?.libraryDidChange()
             }
         })
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -69,6 +62,18 @@ final class NativeMusicService {
 
     func publish() { onEvent?(status()) }
 
+    func libraryDidChange() {
+        songCache = nil
+        podcastCache = nil
+        itemCache.removeAll()
+        playlistCache = nil
+        artworkVersion += 1
+        artworkCache.removeAllObjects()
+        var reply = status()
+        reply.libraryChanged = true
+        onEvent?(reply)
+    }
+
     func status() -> NativeMusicReply {
         let authorization: String = switch authorizationStatus {
         case .authorized: "authorized"
@@ -81,7 +86,9 @@ final class NativeMusicService {
 
     private func songs() -> [MPMediaItem] {
         if let songCache { return songCache }
-        let items = (MPMediaQuery.songs().items ?? []).filter { $0.persistentID > 0 }
+        let items = (MPMediaQuery.songs().items ?? []).filter {
+            $0.persistentID > 0 && !$0.mediaType.contains(.podcast)
+        }
         songCache = items
         for item in items { itemCache[item.persistentID] = item }
         return items
@@ -94,12 +101,30 @@ final class NativeMusicService {
         return items
     }
 
+    private func podcasts() -> [MPMediaItem] {
+        if let podcastCache { return podcastCache }
+        // Public API: downloaded audio podcast items exposed by the media library.
+        // This is not the Podcasts app's subscriptions or cloud library API.
+        let items = (MPMediaQuery.podcasts().items ?? []).filter {
+            $0.persistentID > 0 && $0.mediaType.contains(.podcast) && !$0.mediaType.contains(.videoPodcast)
+        }
+        podcastCache = items
+        for item in items { itemCache[item.persistentID] = item }
+        return items
+    }
+
     private func track(_ item: MPMediaItem) -> NativeTrack {
-        NativeTrack(id: String(item.persistentID), title: item.title ?? "未知歌曲",
+        let podcast = item.mediaType.contains(.podcast)
+        let showTitle = item.podcastTitle ?? item.albumTitle ?? "未知节目"
+        return NativeTrack(id: String(item.persistentID), title: item.title ?? (podcast ? "未知单集" : "未知歌曲"),
                     artist: item.artist, album: item.albumTitle, albumArtist: item.albumArtist,
                     duration: item.playbackDuration.isFinite ? item.playbackDuration : 0,
                     artwork: item.artwork == nil ? nil : "reipod-artwork://library/\(item.persistentID)?v=\(artworkVersion)",
-                    trackNumber: item.albumTrackNumber)
+                    trackNumber: item.albumTrackNumber,
+                    podcast: podcast ? NativePodcast(
+                        showId: item.podcastPersistentID > 0 ? String(item.podcastPersistentID) : showTitle,
+                        showTitle: showTitle,
+                        bookmark: item.bookmarkTime.isFinite ? max(0, item.bookmarkTime) : 0) : nil)
     }
 
     private func playback() -> NativePlayback {
@@ -127,6 +152,7 @@ final class NativeMusicService {
     private func item(_ id: String) -> MPMediaItem? {
         guard let persistentID = NativeMusicID.parse(id) else { return nil }
         _ = songs()
+        if itemCache[persistentID] == nil { _ = podcasts() }
         return itemCache[persistentID]
     }
 
@@ -158,11 +184,23 @@ final class NativeMusicService {
             await UIApplication.shared.open(url)
             return status()
         }
+        if request.action == .openPodcasts {
+            // A fixed destination, never an arbitrary URL supplied by the page.
+            guard let url = URL(string: "podcasts://"),
+                  await UIApplication.shared.open(url) else { throw NativeMusicError.podcastsUnavailable }
+            return status()
+        }
         guard isAuthorized else { throw NativeMusicError.permission }
         startObservation()
         switch request.action {
-        case .library:
-            let items = songs()
+        case .library, .podcasts:
+            if request.action == .podcasts, request.refresh == true, (request.offset ?? 0) == 0 {
+                podcastCache = nil
+                itemCache = itemCache.filter { !$0.value.mediaType.contains(.podcast) }
+                artworkVersion += 1
+                artworkCache.removeAllObjects()
+            }
+            let items = request.action == .podcasts ? podcasts() : songs()
             let page = try NativePage(count: items.count, offset: request.offset, limit: request.limit)
             var reply = status()
             reply.tracks = items[page.range].map(track)
@@ -180,7 +218,7 @@ final class NativeMusicService {
         case .playlistTracks:
             guard let id = request.id.flatMap(NativeMusicID.parse),
                   let list = playlists().first(where: { $0.persistentID == id }) else { throw NativeMusicError.unavailablePlaylist }
-            let items = list.items.filter { $0.mediaType.contains(.music) }
+            let items = list.items.filter { $0.mediaType.contains(.music) && !$0.mediaType.contains(.podcast) }
             for item in items { itemCache[item.persistentID] = item }
             let page = try NativePage(count: items.count, offset: request.offset, limit: request.limit)
             var reply = status()

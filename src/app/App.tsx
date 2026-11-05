@@ -64,11 +64,13 @@ import { createPrimaryMenus } from "../ui/primaryMenus";
 
 import { MusicAccountHeader } from "../ui/MusicAccountHeader";
 import { canShowLyrics } from "../ui/nowPlaying";
-import { createMediaMenus } from "../ui/mediaMenus";
+import { createMediaMenus, podcastShowRows } from "../ui/mediaMenus";
 import { createLibraryMenus } from "../ui/libraryMenus";
 import { FileImports } from "../ui/FileImports";
 import { deletePhoto, restorePhotos, usePhotos } from "../media/photos";
 import { usePodcastIds, playPodcast } from "../media/podcasts";
+import { nativePodcastShows } from "../services/nativeMusic";
+import { createNativePodcastRows, createNativePodcastStatusRows } from "../ui/nativePodcastMenus";
 import { useWheelTextEntry } from "../ui/WheelTextEntry";
 import {
   builtinDocuments,
@@ -94,6 +96,9 @@ import {
   useRemotePlayer,
   useMusicServices,
   openNativeMusicSettings,
+  prepareNativePodcasts,
+  refreshNativePodcasts,
+  openNativePodcastsApp,
   playerFor,
 } from "../services/musicServices";
 import {
@@ -115,6 +120,7 @@ export function App() {
   const localState = useLocalPlayer();
   const remoteState = useRemotePlayer();
   const services = useMusicServices();
+  const nativePodcastsAvailable = !!services.nativePodcasts;
   const cloud = services.selected !== "local";
   const externalMusic = isThirdParty(services.selected);
   const serviceName = externalMusic
@@ -139,7 +145,11 @@ export function App() {
     () => localState.tracks.filter((track) => podcastIds.includes(track.id)),
     [localState.tracks, podcastIds],
   );
-  const podcastShows = useMemo(() => albumsFor(podcastTracks), [podcastTracks]);
+  const systemPodcasts = services.nativePodcasts?.tracks;
+  const localPodcastShows = useMemo(() => albumsFor(podcastTracks), [podcastTracks]);
+  const systemPodcastShows = useMemo(() => nativePodcastShows(systemPodcasts ?? []), [systemPodcasts]);
+  const podcastShows = useMemo(() => [...systemPodcastShows, ...localPodcastShows], [systemPodcastShows, localPodcastShows]);
+  const browsePodcastShows = nativePodcastsAvailable ? systemPodcastShows : localPodcastShows;
   const trackById = useMemo(
     () =>
       new Map(
@@ -179,6 +189,10 @@ export function App() {
     [albums, browseTracks, browseArtist],
   );
   const [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (page === "podcasts" && nativePodcastsAvailable)
+      void prepareNativePodcasts().catch(error => setNotice(String(error)));
+  }, [page, nativePodcastsAvailable]);
   const [held, setHeld] = useState(false);
   const [sleeping, setSleeping] = useState(false);
   const { dimmed, activate } = useBacklight(prefs.backlight, sleeping);
@@ -426,7 +440,9 @@ export function App() {
     }
     const source = trackService(trackById.get(id));
     const remote = source !== "local";
-    if (remote && services.auth !== "authorized") {
+    const authorization = source === "apple-music" && services.nativePodcasts
+      ? services.nativePodcasts.auth : services.auth;
+    if (remote && authorization !== "authorized") {
       open("music-account", "login");
       return;
     }
@@ -553,7 +569,8 @@ export function App() {
     prefs,
     albums,
     photoCount: photos.length,
-    podcastShows,
+    podcastShows: browsePodcastShows,
+    podcastFirstKey: !browsePodcastShows.length ? "podcast-status" : undefined,
     musicCount: musicTracks.length,
     current,
     playlists,
@@ -613,6 +630,15 @@ export function App() {
   );
   const managedRows: Partial<Record<Page, MenuItem[]>> = {
     ...serviceRows,
+    "podcast-settings": [...createNativePodcastRows(services.nativePodcasts, {
+      retry: () => { void prepareNativePodcasts().catch(error => setNotice(String(error))); },
+      refresh: () => { void refreshNativePodcasts(); },
+      settings: () => { void openNativeMusicSettings().catch(error => setNotice(String(error))); },
+      openApp: () => { void openNativePodcastsApp().catch(error => setNotice(String(error))); },
+    }),
+      { key: "podcast-import", label: "导入播客…", action: () => podcastInput.current?.click() },
+      ...podcastShowRows(localPodcastShows, open, true),
+    ],
     "local-songs": [
       ...songsByTitle(localMusicTracks).map((track) => ({
         key: track.id,
@@ -655,13 +681,14 @@ export function App() {
     ...createMediaMenus({
       photos,
       activePhotos,
-      podcastShows,
+      podcastShows: browsePodcastShows,
+      podcastSystemRows: createNativePodcastStatusRows(services.nativePodcasts, browsePodcastShows.length > 0,
+        () => open("podcast-settings")),
       openPhotos: folder => {
         if (folder) photoInput.current?.setAttribute("webkitdirectory", "");
         else photoInput.current?.removeAttribute("webkitdirectory");
         photoInput.current?.click();
       },
-      openPodcasts: () => podcastInput.current?.click(),
       deletePhoto,
       groupKey,
       open,
@@ -881,7 +908,7 @@ export function App() {
           );
         }}
         onPodcasts={(persisted) => {
-          open("podcasts");
+          open(nativePodcastsAvailable ? "podcast-settings" : "podcasts");
           if (!persisted) setNotice("播客分类未能保存，本次仍可播放");
         }}
       />

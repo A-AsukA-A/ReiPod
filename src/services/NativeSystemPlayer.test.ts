@@ -70,3 +70,18 @@ test("a successful next command clears an earlier error even while paused", asyn
   await vi.waitFor(() => expect(player.getSnapshot().error).toBeNull());
   expect(player.getSnapshot().status).toBe("paused");
 });
+
+test("podcasts start from the reported bookmark and remember confirmed session progress", async () => {
+  const { player, postMessage } = setup();
+  player.add([nativeTrack({ id: "2", title: "Episode", duration: 900,
+    podcast: { showId: "12", showTitle: "Show", bookmark: 125 } })]);
+  postMessage.mockResolvedValue({ authorization: "authorized" });
+  player.activate("ios-song:2", ["ios-song:2"]);
+  expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ action: "setQueue", selectedId: "2", seconds: 125 }));
+  player.adopt({ ...snapshot(1, "playing"), currentId: "2", queue: ["2"], position: 200, duration: 900 });
+  player.activate("ios-song:1", ["ios-song:1"]);
+  player.activate("ios-song:2", ["ios-song:2"]);
+  expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ selectedId: "2", seconds: 200 }));
+  player.select("ios-song:2", true, 0);
+  expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ seconds: 0 }));
+});

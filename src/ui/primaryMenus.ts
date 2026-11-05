@@ -12,6 +12,7 @@ type PrimaryMenuContext = {
   albums: Album[];
   photoCount: number;
   podcastShows: Album[];
+  podcastFirstKey?: string;
   musicCount: number;
   current?: Track;
   playlists: Playlist[];
@@ -30,6 +31,7 @@ export function createPrimaryMenus({
   albums,
   photoCount,
   podcastShows,
+  podcastFirstKey,
   musicCount,
   current,
   playlists,
@@ -59,7 +61,7 @@ export function createPrimaryMenus({
       key: "podcasts",
       label: "播客",
       detail: `${podcastShows.length} 个节目`,
-      action: () => open("podcasts", podcastShows[0]?.id ?? "podcast-import"),
+      action: () => open("podcasts", podcastFirstKey ?? podcastShows[0]?.id ?? "podcast-status"),
     },
     {
       key: "coverflow",

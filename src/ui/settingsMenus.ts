@@ -32,6 +32,7 @@ export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud
       action: () => open("music-services", selectedService),
     },
     ...localTools,
+    { key: "podcast-settings", label: "播客设置", action: () => open("podcast-settings") },
     ...originalSettingsItems.filter(item => !stockKeys.includes(item.key)).map((item) =>
       item.key === "clear"
         ? {

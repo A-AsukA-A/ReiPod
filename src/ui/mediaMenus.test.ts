@@ -10,7 +10,7 @@ function fixture() {
     activePhotos: [{ id: "three", name: "Three", album: "Album B", url: "blob:three" }],
     podcastShows: [{ id: "show", title: "未知专辑", artist: "Speaker", tracks: [
       { id: "episode", title: "Episode", filename: "episode.m4a", url: "blob:episode", size: 1 }] }],
-    groupKey: "one", openPhotos: vi.fn(), openPodcasts: vi.fn(), deletePhoto: vi.fn(async () => {}),
+    groupKey: "one", openPhotos: vi.fn(), deletePhoto: vi.fn(async () => {}),
     open: vi.fn(), back: vi.fn(), setNotice: vi.fn(), setSlideshow: vi.fn(), getNavigation: () => navigation,
   };
   return { context, navigation, menus: () => createMediaMenus(context) };
@@ -23,8 +23,7 @@ it("imports are synchronous injected commands and menu construction has no media
   menus.photos!.find(row => row.key === "photo-import")!.action();
   menus.photos!.find(row => row.key === "photo-folder")!.action();
   expect(vi.mocked(f.context.openPhotos).mock.calls).toEqual([[false], [true]]);
-  menus.podcasts!.find(row => row.key === "podcast-import")!.action();
-  expect(f.context.openPodcasts).toHaveBeenCalledOnce();
+  expect(menus.podcasts!.some(row => row.key === "podcast-import")).toBe(false);
 });
 it("album counts and thumbnails reflect their own group and opening retains its scope", () => {
   const f = fixture();
@@ -40,7 +39,7 @@ it("album counts and thumbnails reflect their own group and opening retains its 
   grid[0].action();
   expect(f.context.open).toHaveBeenLastCalledWith("photo-full", "three", "Album B");
 });
-it("empty photos disable browsing but leave both import routes and podcast import reachable", () => {
+it("empty photos keep photo import routes while podcast import stays outside the show browser", () => {
   const f = fixture();
   f.context.photos = [];
   f.context.activePhotos = [];
@@ -49,7 +48,7 @@ it("empty photos disable browsing but leave both import routes and podcast impor
   expect(menus.photos![0].disabled).toBe(true);
   expect(menus.photos!.slice(1).map(row => row.key)).toEqual(["photo-import", "photo-folder"]);
   expect(menus["photo-grid"]).toEqual([]);
-  expect(menus.podcasts!.map(row => row.key)).toEqual(["podcast-import"]);
+  expect(menus.podcasts).toEqual([]);
 });
 it("podcasts use show fallback labels and retain episode selection without invoking music storage", () => {
   const f = fixture();

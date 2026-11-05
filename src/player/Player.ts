@@ -33,6 +33,7 @@ export type Track = {
   composers?: string[];
   artwork?: string;
   trackNumber?: number;
+  podcast?: { showId: string; showTitle: string; bookmark: number };
   duration?: number;
   importedAt?: number;
   lyrics?: LyricLine[];

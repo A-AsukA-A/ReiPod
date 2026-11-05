@@ -8,8 +8,10 @@ import { loadMusicKit, validDeveloperToken } from "./musicKit";
 import type { MusicKitInstance } from "./musicKit";
 import {
   hasNativeMusic,
+  hasNativePodcasts,
   nativeMusicRequest,
   nativeLibrary,
+  nativePodcasts,
   nativePlaylist,
 } from "./nativeMusic";
 import type { NativeReply } from "./nativeMusic";
@@ -48,6 +50,13 @@ export type MusicServiceState = {
   loginUrl?: string;
   loginMessage?: string;
   profile?: MusicAccountProfile;
+  nativePodcasts?: {
+    auth: MusicServiceState["auth"];
+    authorization?: NativeReply["authorization"];
+    syncing: boolean;
+    error: string;
+    tracks: Track[];
+  };
 };
 const read = (key: string) => {
   try {
@@ -81,11 +90,21 @@ let state: MusicServiceState = {
   searchResults: [],
 };
 const listeners = new Set<() => void>();
+let nativePodcastTracks: Track[] = [];
+let nativePodcastsLoaded = false;
+let nativePodcastsSyncing = false;
+let nativePodcastsError = "";
 let exposedState = state;
 function publish() {
-  exposedState = isThirdParty(state.selected)
+  const selectedState: MusicServiceState = isThirdParty(state.selected)
     ? { ...state, ...thirdPartyState(state.selected), transport: "web" }
     : state;
+  exposedState = { ...selectedState, nativePodcasts: hasNativePodcasts() ? {
+    auth: state.auth, authorization: state.nativeAuthorization,
+    syncing: nativePodcastsSyncing,
+    error: nativePodcastsError || (state.auth !== "authorized" ? state.error : ""),
+    tracks: nativePodcastTracks,
+  } : undefined };
   listeners.forEach((fn) => fn());
 }
 function update(patch: Partial<MusicServiceState>) {
@@ -154,6 +173,10 @@ function nextAccountGeneration() {
   return generation;
 }
 let preparing: Promise<void> | undefined;
+let podcastPreparing: Promise<void> | undefined;
+let podcastRefresh: Promise<void> | undefined;
+let podcastRefreshEpoch = -1;
+let podcastRefreshQueued = false;
 let initialized = false;
 let sessionReady = false;
 const loadedPlaylists = new Set<string>();
@@ -215,13 +238,16 @@ async function freshDeveloperToken() {
 export async function initializeMusicServices() {
   if (initialized) return;
   initialized = true;
-  if (isThirdParty(state.selected)) {
-    await prepareThirdParty(state.selected);
-    return;
-  }
   if (hasNativeMusic()) {
     if (!read("reipod-music-service")) update({ selected: "apple-music" });
-    await prepareAppleMusicInternal();
+    const native = prepareAppleMusicInternal();
+    if (isThirdParty(state.selected))
+      await Promise.all([native, prepareThirdParty(state.selected)]);
+    else await native;
+    return;
+  }
+  if (isThirdParty(state.selected)) {
+    await prepareThirdParty(state.selected);
     return;
   }
   await configuration();
@@ -287,6 +313,13 @@ function message(error: unknown) {
     ? error.message
     : "Apple Music 请求失败，请重试";
 }
+function adoptNativePlayback(reply: NativeReply, restore = false) {
+  if (!reply.playback || !(applePlayer instanceof NativeSystemPlayer)) return;
+  applePlayer.adopt(reply.playback);
+  if (reply.playback.currentId && (reply.playback.status === "playing" ||
+      (restore && read("reipod-playback-source") === "apple-music")))
+    playbackFrom("apple-music");
+}
 async function connectNativeMusic(reply: NativeReply) {
   const epoch = nextAccountGeneration();
   update({ ready: true, nativeAuthorization: reply.authorization });
@@ -302,22 +335,79 @@ async function connectNativeMusic(reply: NativeReply) {
   }
   save("reipod-ios-music-connected", "true");
   update({ auth: "authorized", error: "" });
+  adoptNativePlayback(reply, true);
+  // Begin podcasts before songs/playlists; a large music library cannot block them.
+  if (hasNativePodcasts()) void refreshNativePodcasts(false);
   await refreshAppleLibraryInternal();
   if (epoch !== generation) return;
   const latest = await nativeMusicRequest("status");
   if (epoch !== generation) return;
-  if (latest.playback && applePlayer instanceof NativeSystemPlayer) {
-    applePlayer.adopt(latest.playback);
-    if (
-      latest.playback.currentId &&
-      (latest.playback.status === "playing" ||
-        read("reipod-playback-source") === "apple-music")
-    )
-      playbackFrom("apple-music");
-  }
+  adoptNativePlayback(latest, true);
 }
 export function openNativeMusicSettings() {
   return nativeMusicRequest("openSettings");
+}
+export function prepareNativePodcasts() {
+  if (!hasNativePodcasts()) return Promise.resolve();
+  return (podcastPreparing ??= (async () => {
+    // Coalesce rapid navigation/StrictMode and wait for startup's permission read.
+    if (state.auth !== "authorized") await preparing;
+    if (state.auth !== "authorized") await authorizeAppleMusicInternal();
+    if (state.auth === "authorized" && !nativePodcastsLoaded)
+      await refreshNativePodcasts(false);
+  })().finally(() => { podcastPreparing = undefined; }));
+}
+export function refreshNativePodcasts(force = true): Promise<void> {
+  if (!hasNativePodcasts() || state.auth !== "authorized") return Promise.resolve();
+  if (podcastRefresh && podcastRefreshEpoch === generation) {
+    if (force) podcastRefreshQueued = true;
+    return podcastRefresh;
+  }
+  const epoch = generation;
+  podcastRefreshEpoch = epoch;
+  nativePodcastsSyncing = true;
+  nativePodcastsError = "";
+  publish();
+  const work = (async () => {
+    try {
+      const apply = (tracks: Track[]) => {
+        if (epoch !== generation) return;
+        const current = applePlayer.getSnapshot();
+        const normalized = tracks.map(track => track.id === current.currentId && track.podcast
+          ? { ...track, podcast: { ...track.podcast, bookmark: current.position } } : track);
+        applePlayer.add(normalized);
+        normalized.forEach(track => applePlayer.updateTrack(track.id, track));
+        nativePodcastTracks = normalized;
+      };
+      const tracks = await nativePodcasts(force, partial => {
+        // Show the first page immediately; keep a complete cached list during refresh.
+        if (epoch === generation && !nativePodcastsLoaded) { apply(partial); publish(); }
+      });
+      if (epoch !== generation) return;
+      apply(tracks);
+      nativePodcastsLoaded = true;
+    } catch (error) {
+      if (epoch === generation) nativePodcastsError = message(error);
+    } finally {
+      if (epoch === generation) {
+        nativePodcastsSyncing = false;
+        publish();
+      }
+    }
+  })();
+  podcastRefresh = work;
+  void work.finally(() => {
+    if (podcastRefresh !== work) return;
+    podcastRefresh = undefined;
+    if (podcastRefreshQueued && epoch === generation) {
+      podcastRefreshQueued = false;
+      void refreshNativePodcasts();
+    }
+  });
+  return work;
+}
+export function openNativePodcastsApp() {
+  return nativeMusicRequest("openPodcasts");
 }
 window.addEventListener("reipod-native-music", (event) => {
   if (!hasNativeMusic()) return;
@@ -347,12 +437,11 @@ window.addEventListener("reipod-native-music", (event) => {
     });
     return;
   }
-  if (reply.playback && applePlayer instanceof NativeSystemPlayer) {
-    applePlayer.adopt(reply.playback);
-    if (reply.playback.status === "playing") playbackFrom("apple-music");
+  adoptNativePlayback(reply);
+  if (reply.libraryChanged) {
+    if (!state.syncing) void refreshAppleLibraryInternal();
+    if (hasNativePodcasts()) void refreshNativePodcasts();
   }
-  if (reply.libraryChanged && !state.syncing)
-    void refreshAppleLibraryInternal();
 });
 class AppleApiError extends Error {
   constructor(public status: number) {
@@ -369,6 +458,12 @@ function invalidateAuthorization() {
   nextAccountGeneration();
   sessionReady = false;
   save("reipod-apple-user", null);
+  nativePodcastTracks = [];
+  nativePodcastsLoaded = false;
+  nativePodcastsSyncing = false;
+  nativePodcastsError = "";
+  podcastRefresh = undefined;
+  podcastRefreshQueued = false;
   update({
     auth: "signed-out",
     syncing: false,

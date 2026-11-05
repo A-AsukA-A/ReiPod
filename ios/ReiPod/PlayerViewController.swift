@@ -30,7 +30,7 @@ final class PlayerViewController: UIViewController, WKNavigationDelegate {
         let bridge = MusicBridge(music: music)
         configuration.userContentController.addScriptMessageHandler(bridge, contentWorld: .page, name: "reipodMusic")
         configuration.userContentController.addUserScript(WKUserScript(
-            source: "Object.defineProperty(window, '__REIPOD_NATIVE_MUSIC_VERSION__', {value: 1, writable: false});",
+            source: "Object.defineProperty(window, '__REIPOD_NATIVE_MUSIC_VERSION__', {value: 1, writable: false}); Object.defineProperty(window, '__REIPOD_NATIVE_PODCASTS_VERSION__', {value: 1, writable: false});",
             injectionTime: .atDocumentStart, forMainFrameOnly: true))
         let thirdPartyBridge = ThirdPartyMusicBridge()
         if let runtimeURL = Bundle.main.url(forResource: "music-runtime", withExtension: "js", subdirectory: "Web"),
@@ -70,7 +70,7 @@ final class PlayerViewController: UIViewController, WKNavigationDelegate {
 
     override func viewDidAppear(_ animated: Bool) { super.viewDidAppear(animated); becameActive() }
     override func viewDidDisappear(_ animated: Bool) { super.viewDidDisappear(animated); music.stopObservation() }
-    @objc private func becameActive() { music.startObservation(); music.publish() }
+    @objc private func becameActive() { music.startObservation(); music.libraryDidChange() }
     @objc private func enteredBackground() { music.stopObservation() }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {

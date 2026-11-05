@@ -117,3 +117,8 @@ ReiPod/
 `server/qq-playback-compat.mjs`：固定 QQ 依赖 HTTP 宿主的有界取链接兼容钩子与 MP3 头探测；由 index 显式安装，不写依赖文件，不改变原生路线或权限判定。
 
 `vitest.config.ts` 复用 Vite 配置，排除 `.local/analysis/docs` 研究目录，避免下载的第三方参考测试被当作本项目套件执行。
+
+
+系统播客补充（POD01）：`src/services/nativeMusic.ts` 规范化原生播客元数据/节目身份，`musicServices.ts` 保留独立于所选第三方服务的原生授权/播客快照；`src/ui/nativePodcastMenus.ts` 只生成注入动作的轮盘菜单。播放仍使用同一个 `NativeSystemPlayer` / `NativeMusicService`，不创建第二份系统播放会话。本地文件播客与书签继续归 `src/media/podcasts.ts`。
+
+任务59：原生播客独立预取/分页与会话快照仍由services管理；`ui/mediaMenus`的节目行工厂供系统主列表和设置中的本地节目复用。`podcast-settings`归导航/UI层，导入端口由App装配，不把本地文件迁入原生媒体库。

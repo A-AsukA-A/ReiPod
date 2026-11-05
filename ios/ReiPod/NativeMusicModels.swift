@@ -2,7 +2,7 @@ import Foundation
 
 struct NativeMusicRequest: Decodable {
     enum Action: String, Decodable {
-        case status, authorize, library, playlists, playlistTracks
+        case status, authorize, library, podcasts, playlists, playlistTracks, openPodcasts
         case setQueue, play, pause, next, previous, seek, `repeat`, openSettings
     }
     let version: Int
@@ -15,6 +15,7 @@ struct NativeMusicRequest: Decodable {
     let seconds: Double?
     let autoplay: Bool?
     let mode: String?
+    let refresh: Bool?
 }
 
 struct NativeTrack: Encodable {
@@ -26,6 +27,13 @@ struct NativeTrack: Encodable {
     let duration: Double
     let artwork: String?
     let trackNumber: Int
+    var podcast: NativePodcast? = nil
+}
+
+struct NativePodcast: Encodable {
+    let showId: String
+    let showTitle: String
+    let bookmark: Double
 }
 
 struct NativePlaylist: Encodable {
@@ -57,7 +65,7 @@ struct NativeMusicReply: Encodable {
 }
 
 enum NativeMusicError: LocalizedError {
-    case permission, invalidRequest, unavailableSong, unavailablePlaylist, canceled
+    case permission, invalidRequest, unavailableSong, unavailablePlaylist, canceled, podcastsUnavailable
     var errorDescription: String? {
         switch self {
         case .permission: "请在系统设置中允许访问音乐资料库"
@@ -65,6 +73,7 @@ enum NativeMusicError: LocalizedError {
         case .unavailableSong: "歌曲已不在系统资料库中，请刷新"
         case .unavailablePlaylist: "歌单已不在系统资料库中，请刷新"
         case .canceled: "操作已被较新的播放指令替代"
+        case .podcastsUnavailable: "无法打开 Apple 播客，请确认已安装该 App"
         }
     }
 }

@@ -7,8 +7,8 @@ type MediaMenuContext = {
   photos: readonly PhotoSummary[];
   activePhotos: readonly PhotoSummary[];
   podcastShows: Album[];
+  podcastSystemRows?: MenuItem[];
   openPhotos: (folder: boolean) => void;
-  openPodcasts: () => void;
   deletePhoto: (id: string) => Promise<void>;
   groupKey?: string;
   open: (page: Page, key?: string, group?: string) => void;
@@ -21,8 +21,8 @@ export function createMediaMenus({
   photos,
   activePhotos,
   podcastShows,
+  podcastSystemRows = [],
   openPhotos,
-  openPodcasts,
   deletePhoto,
   groupKey,
   open,
@@ -112,17 +112,18 @@ export function createMediaMenus({
       },
     ],
     podcasts: [
-      ...podcastShows.map((show) => ({
-        key: show.id,
-        label: show.title === "未知专辑" ? show.artist : show.title,
-        value: String(show.tracks.length),
-        action: () => open("podcast-episodes", show.tracks[0]?.id, show.id),
-      })),
-      {
-        key: "podcast-import",
-        label: "导入播客…",
-        action: openPodcasts,
-      },
+      ...podcastShowRows(podcastShows, open),
+      ...podcastSystemRows,
     ],
   };
+}
+
+export function podcastShowRows(shows: Album[], open: MediaMenuContext["open"], local = false): MenuItem[] {
+  return shows.map(show => ({
+    key: show.id,
+    label: `${local ? "本地 · " : ""}${show.title === "未知专辑" ? show.artist : show.title}`,
+    value: String(show.tracks.length),
+    detail: show.tracks[0]?.podcast ? "iPhone 系统播客" : "本地播客",
+    action: () => open("podcast-episodes", show.tracks[0]?.id, show.id),
+  }));
 }

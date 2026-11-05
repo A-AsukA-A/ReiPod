@@ -53,9 +53,15 @@ it("stock settings order is stable and modern features have one labeled boundary
   f.context.localTools = [{ key: "import", label: "Import", action: vi.fn() }];
   const menus = f.menus();
   expect(menus.settingsItems.map(row => row.key)).toEqual(["about", "shuffle", "repeat", "main-menu", "music-menu", "volume-limit", "backlight", "brightness", "click", "reipod-settings", "reset-settings"]);
-  expect(menus.managedRows["reipod-settings"]!.map(row => row.key)).toEqual(["music-services", "import", "finish", "lyrics-display"]);
+  expect(menus.managedRows["reipod-settings"]!.map(row => row.key)).toEqual(["music-services", "import", "podcast-settings", "finish", "lyrics-display"]);
   menus.settingsItems.at(-1)!.action();
   expect(f.context.open).toHaveBeenCalledWith("reset-settings", "cancel");
+});
+it("native podcast maintenance is reachable through ReiPod settings without changing the chosen music source", () => {
+  const f = fixture();
+  f.menus().managedRows["reipod-settings"]!.find(row => row.key === "podcast-settings")!.action();
+  expect(f.context.open).toHaveBeenCalledWith("podcast-settings");
+  expect(f.context.selectedService).toBe("qq");
 });
 it("Reset Settings restores implemented firmware preferences through their owners and leaves extensions alone", () => {
   const f = fixture();

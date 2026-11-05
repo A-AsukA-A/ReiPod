@@ -519,12 +519,14 @@ test("podcasts keep show grouping and episode bookmarks apart from music", async
   page,
 }) => {
   await page.goto("/");
-  await choose(page, "播客");
+  await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
+  await choose(page, "播客设置");
   const chooserPromise = page.waitForEvent("filechooser");
   await choose(page, "导入播客…");
   const chooser = await chooserPromise;
   await chooser.setFiles("public/music/qingtian.m4a");
-  await expect(live(page).locator(".screen-row")).toHaveCount(2);
+  await expect(live(page).locator(".screen-row")).toHaveCount(1);
   await expect
     .poll(() => live(page).locator(".screen-row").first().textContent())
     .not.toContain("未知");
