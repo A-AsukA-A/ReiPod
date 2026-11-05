@@ -1,5 +1,6 @@
 import { Player } from "../player/Player";
 import type { PlaybackStatus } from "../player/Player";
+import { shuffleModeOf } from "../player/ordering";
 import {
   nativeMusicRequest,
   nativePersistentId,
@@ -149,7 +150,12 @@ export class NativeSystemPlayer extends Player {
   override setVolume(_volume: number) {
     /* System output volume belongs to the iPhone side buttons. */
   }
-  override setShuffle(shuffle: boolean) {
+  override setShuffle(shuffle: boolean | "albums") {
+    if (shuffleModeOf(this.getSnapshot()) === (shuffle === "albums" ? "albums" : shuffle ? "songs" : "off")) return;
+    if (!this.queueKnown) {
+      this.syncExternalPlayback({ error: "系统的现有队列不可读取，请先在 ReiPod 中选择歌曲或歌单" });
+      return;
+    }
     super.setShuffle(shuffle);
     this.rebuildQueue();
   }

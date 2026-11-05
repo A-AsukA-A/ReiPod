@@ -122,3 +122,7 @@ ReiPod/
 系统播客补充（POD01）：`src/services/nativeMusic.ts` 规范化原生播客元数据/节目身份，`musicServices.ts` 保留独立于所选第三方服务的原生授权/播客快照；`src/ui/nativePodcastMenus.ts` 只生成注入动作的轮盘菜单。播放仍使用同一个 `NativeSystemPlayer` / `NativeMusicService`，不创建第二份系统播放会话。本地文件播客与书签继续归 `src/media/podcasts.ts`。
 
 任务59：原生播客独立预取/分页与会话快照仍由services管理；`ui/mediaMenus`的节目行工厂供系统主列表和设置中的本地节目复用。`podcast-settings`归导航/UI层，导入端口由App装配，不把本地文件迁入原生媒体库。
+
+任务66：`src/player/library.ts`提供纯标签归组/筛选；`src/ui/classicCategoryMenus.ts`生成classic风格/作曲者中间层入口和集合播放命令，`navigation.ts`保存分类范围与焦点。`App`装配当前来源资料库、筛选快照与既有播放器；不把分类菜单或第二份队列放入平台服务。`tests/browser/firmwareBrowse.pw.ts`用带真实RIFF/ID3标签的原创静音WAV覆盖合辑范围、曲序/播放、记忆与服务隔离。
+
+任务67：`src/player/ordering.ts`管理纯专辑块随机，`playlistModel.ts`只含歌单类型/稳定ID与只读展示派生；持久化仍归`playlists.ts`，UI不导入其运行时单例。`src/ui/onTheGoMenus.ts`经注入端口生成保存/清空流程，`useMenuConfirmation.ts`负责可取消的标题确认反馈；App装配本地范围与播放会话。`tests/browser/firmwarePlayback.pw.ts`覆盖三态随机/多碟曲序、集合长按、保存/重载、存储失败与歌词入口。Apple/原生碟号在各适配器规范化，Swift仅增加返回的元数据，不改变授权边界。

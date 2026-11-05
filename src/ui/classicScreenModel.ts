@@ -1,6 +1,6 @@
 import type { Page } from "./navigation";
 import type { PlayView } from "./nowPlaying";
-import type { Album } from "../player/library";
+import type { Album, MusicCategory } from "../player/library";
 import type { Track } from "../player/Player";
 import type { MenuItem } from "./MenuRows";
 import { menuPreview } from "./menuPreviewModel";
@@ -9,9 +9,10 @@ type TitleContext = {
   page: Page; groupKey?: string; browseArtist?: string; playView: PlayView;
   albumTitle?: string; podcastTitle?: string; documentTitle?: string;
   playlistTitle?: string; serviceName: string;
+  category?: MusicCategory;
 };
 export function classicScreenTitle({ page, groupKey, browseArtist, playView,
-  albumTitle, podcastTitle, documentTitle, playlistTitle, serviceName }: TitleContext) {
+  albumTitle, podcastTitle, documentTitle, playlistTitle, serviceName, category }: TitleContext) {
   return page === "album-tracks"
       ? (albumTitle ?? "专辑")
       : page === "podcast-episodes"
@@ -19,7 +20,7 @@ export function classicScreenTitle({ page, groupKey, browseArtist, playView,
         : page === "artist-tracks" ||
             page === "genre-tracks" ||
             page === "composer-tracks"
-          ? (groupKey ?? "艺人")
+          ? (browseArtist ?? groupKey ?? "艺人")
           : {
               about: "关于本机",
               "main-menu": "主菜单",
@@ -45,6 +46,7 @@ export function classicScreenTitle({ page, groupKey, browseArtist, playView,
               "reipod-settings": "ReiPod 设置",
               "reset-settings": "还原设置",
               "confirm-clear": "清空资料库",
+              "confirm-clear-on-the-go": "清空 On-The-Go",
               coverflow: "Cover Flow",
               "coverflow-album": "Cover Flow",
               photos: "照片",
@@ -60,10 +62,10 @@ export function classicScreenTitle({ page, groupKey, browseArtist, playView,
               "lyrics-display": "歌词显示",
               "shuffle-mode": "随机播放",
               "repeat-mode": "重复播放",
-              artists: "艺人",
+              artists: category?.value ?? "艺人",
               genres: "风格",
               composers: "作曲者",
-              albums: browseArtist ?? "专辑",
+              albums: browseArtist ?? category?.value ?? "专辑",
               favorites: "我的收藏",
               recent: "最近添加",
               playlists: "播放列表",

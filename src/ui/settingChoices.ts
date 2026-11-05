@@ -1,5 +1,6 @@
 import type { Preferences } from "./preferences";
 import type { PlayerState } from "../player/Player";
+import { shuffleModeOf } from "../player/ordering";
 export type SettingChoice = {
   key: string;
   label: string;
@@ -10,7 +11,7 @@ export function settingChoices(
   prefs: Preferences,
   state: PlayerState,
   save: (patch: Partial<Preferences>) => void,
-  shuffle: (value: boolean) => void,
+  shuffle: (value: boolean | "albums") => void,
   repeat: (value: PlayerState["repeat"]) => void,
 ): Record<string, SettingChoice[]> {
   return {
@@ -49,10 +50,10 @@ export function settingChoices(
       selected: prefs.clickSound === value,
       apply: () => save({ clickSound: value }),
     })),
-    "shuffle-mode": [false, true].map((value) => ({
+    "shuffle-mode": ([false, true, "albums"] as const).map((value) => ({
       key: String(value),
-      label: value ? "歌曲" : "关闭",
-      selected: state.shuffle === value,
+      label: value === "albums" ? "专辑" : value ? "歌曲" : "关闭",
+      selected: shuffleModeOf(state) === (value === "albums" ? "albums" : value ? "songs" : "off"),
       apply: () => shuffle(value),
     })),
     "repeat-mode": (["off", "all", "one"] as const).map((value) => ({

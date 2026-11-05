@@ -45,8 +45,8 @@ export function createSessionPersistence({ player, read, write, schedule, onPage
   const stopPageHide = onPageHide(flush);
   const saveSettings = () => {
     if (disposed) return;
-    const { shuffle, repeat, favorites } = player.getSnapshot();
-    const text = JSON.stringify({ shuffle, repeat, favorites });
+    const { shuffle, shuffleMode, repeat, favorites } = player.getSnapshot();
+    const text = JSON.stringify({ shuffle, shuffleMode, repeat, favorites });
     if (text === lastSettings) { pendingSettings = undefined; return; }
     if (text === pendingSettings) return;
     try { write("reipod-playback", text); lastSettings = text; pendingSettings = undefined; }
@@ -63,8 +63,8 @@ export function createSessionPersistence({ player, read, write, schedule, onPage
         player.setRepeat(settings.repeat === "all" || settings.repeat === "one" ? settings.repeat : "off");
         player.setFavorites(Array.isArray(settings.favorites)
           ? settings.favorites.filter((id): id is string => typeof id === "string") : []);
-        if (settings.shuffle === true) {
-          player.setShuffle(true);
+        if (settings.shuffleMode === "albums" || settings.shuffle === true) {
+          player.setShuffle(settings.shuffleMode === "albums" ? "albums" : true);
           player.setQueue(player.getSnapshot().tracks.map(track => track.id));
         }
       }

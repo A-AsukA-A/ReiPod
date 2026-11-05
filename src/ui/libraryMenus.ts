@@ -29,6 +29,7 @@ type LibraryMenuContext = {
   beginText: () => void;
   setDeleting: (value: boolean) => void;
   setNotice: (value: string) => void;
+  confirm?: (key: string) => void;
   open: (page: Page, key?: string, group?: string, artist?: string) => void;
   back: (levels?: number) => void;
   navigationRef: RefObject<NavigationState>;
@@ -52,6 +53,7 @@ export function createLibraryMenus({
   beginText,
   setDeleting,
   setNotice,
+  confirm,
   open,
   back,
   navigationRef,
@@ -123,7 +125,7 @@ export function createLibraryMenus({
           ]
         : [],
     "pick-playlist": [
-      ...playlists.map((item) => ({
+      ...playlists.filter(item => !item.savedOnTheGo).map((item) => ({
         key: item.id,
         label: item.name,
         value: item.trackIds.includes(groupKey ?? "") ? "已添加" : "+",
@@ -195,6 +197,8 @@ export function createLibraryMenus({
             leaf: true,
             action: () => {
               const result = addToOnTheGo(optionTrack.id);
+              back();
+              if (result.added) confirm?.(optionTrack.id);
               setNotice(
                 result.persisted
                   ? result.added
@@ -209,11 +213,11 @@ export function createLibraryMenus({
             label: "添加到歌单…",
             action: () => open("pick-playlist", undefined, optionTrack.id),
           },
-          ...(contextPlaylist
+          ...(contextPlaylist && !playlists.find(item => item.id === contextPlaylist)?.savedOnTheGo
             ? [
                 {
                   key: "remove-playlist",
-                  label: "从此歌单移除",
+                  label: contextPlaylist === "on-the-go" ? "从 On-The-Go 移除" : "从此歌单移除",
                   action: () => {
                     const persisted = removePlaylistTrack(
                       contextPlaylist,

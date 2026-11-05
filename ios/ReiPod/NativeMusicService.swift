@@ -120,7 +120,7 @@ final class NativeMusicService {
                     artist: item.artist, album: item.albumTitle, albumArtist: item.albumArtist,
                     duration: item.playbackDuration.isFinite ? item.playbackDuration : 0,
                     artwork: item.artwork == nil ? nil : "reipod-artwork://library/\(item.persistentID)?v=\(artworkVersion)",
-                    trackNumber: item.albumTrackNumber,
+                    trackNumber: item.albumTrackNumber, discNumber: max(1, item.discNumber),
                     podcast: podcast ? NativePodcast(
                         showId: item.podcastPersistentID > 0 ? String(item.podcastPersistentID) : showTitle,
                         showTitle: showTitle,

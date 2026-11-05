@@ -2,7 +2,7 @@ import type { Player, Track } from "./Player";
 import { parseLyrics } from "./library";
 
 export type ImportFile = { name: string; type: string; size: number; lastModified: number; text(): Promise<string> };
-export type LocalMetadata = Partial<Pick<Track, "title" | "artist" | "album" | "albumArtist" | "genres" | "composers" | "trackNumber" | "duration" | "artwork" | "lyrics">>;
+export type LocalMetadata = Partial<Pick<Track, "title" | "artist" | "album" | "albumArtist" | "genres" | "composers" | "trackNumber" | "discNumber" | "duration" | "artwork" | "lyrics">>;
 type Context<F extends ImportFile> = {
   player: Pick<Player, "add" | "getSnapshot" | "updateTrack" | "setQueue">;
   createUrl: (file: F) => string;

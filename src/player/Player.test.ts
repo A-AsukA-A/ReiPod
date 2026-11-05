@@ -103,6 +103,25 @@ describe("shared playback session", () => {
     player.toggleFavorite("2");
     expect(player.getSnapshot().favorites).toEqual([]);
   });
+  it("album mode preserves the active audio/position, uses album blocks and restores the original queue", () => {
+    const { player, audios } = setup();
+    player.updateTrack("1", { album: "Shared", artist: "Artist", trackNumber: 2 });
+    player.updateTrack("2", { album: "Other", artist: "Artist", trackNumber: 1 });
+    player.updateTrack("3", { album: "Shared", artist: "Artist", trackNumber: 1 });
+    player.activate("2", ["1", "2", "3"]);
+    audios[0].currentTime = 20; audios[0].emit("timeupdate");
+    player.setShuffle("albums");
+    expect(player.getSnapshot()).toMatchObject({ shuffle: true, shuffleMode: "albums", position: 20 });
+    expect(audios).toHaveLength(1);
+    expect(player.getSnapshot().queue).toEqual(["1", "2", "3"]); // already played prefix is kept
+    player.setQueue(["1", "2", "3"], "3");
+    expect(player.getSnapshot().queue).toEqual(["3", "1", "2"]);
+    player.setShuffle(true);
+    expect(player.getSnapshot().shuffleMode).toBe("songs");
+    player.setShuffle(false);
+    expect(player.getSnapshot()).toMatchObject({ shuffle: false, shuffleMode: "off", queue: ["1", "2", "3"], position: 20 });
+    expect(audios).toHaveLength(1);
+  });
   it("reopens and resumes the current song without restarting its session", () => {
     const { player, audios } = setup();
     player.activate("1");

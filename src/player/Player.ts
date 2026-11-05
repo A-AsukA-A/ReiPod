@@ -1,7 +1,8 @@
 import type { AudioPort } from "./ports";
 export type { AudioPort } from "./ports";
 import type { PlaybackSession } from "./session";
-import { shuffled, shuffleAfterCurrent } from "./ordering";
+import { shuffled, shuffleAfterCurrent, shuffleAlbums, shuffleModeOf } from "./ordering";
+import type { ShuffleMode } from "./ordering";
 
 /** A streaming adapter can provide an actionable error without changing local decoder errors. */
 export class PlaybackError extends Error {
@@ -33,6 +34,7 @@ export type Track = {
   composers?: string[];
   artwork?: string;
   trackNumber?: number;
+  discNumber?: number;
   podcast?: { showId: string; showTitle: string; bookmark: number };
   duration?: number;
   importedAt?: number;
@@ -56,6 +58,8 @@ export type PlayerState = {
   tracks: Track[];
   queue: string[];
   shuffle: boolean;
+  /** Optional for persisted pre-mode snapshots; live Player snapshots always include it. */
+  shuffleMode?: ShuffleMode;
   repeat: "off" | "all" | "one";
   favorites: string[];
   currentId: string | null;
@@ -74,6 +78,7 @@ export class Player {
     tracks: [],
     queue: [],
     shuffle: false,
+    shuffleMode: "off",
     repeat: "off",
     favorites: [],
     currentId: null,
@@ -169,7 +174,9 @@ export class Player {
       order.length === this.state.tracks.length &&
       order.every((id, index) => this.state.tracks[index]?.id === id);
     const current = selectedId ?? this.state.currentId;
-    const queue = this.state.shuffle
+    const queue = shuffleModeOf(this.state) === "albums"
+      ? shuffleAlbums(order, this.state.tracks, current ?? null)
+      : this.state.shuffle
       ? current && order.includes(current)
         ? [current, ...shuffled(order.filter((id) => id !== current))]
         : shuffled(order)
@@ -196,11 +203,15 @@ export class Player {
     this.update({ queue: insert(this.state.queue) });
   }
 
-  setShuffle(shuffle: boolean) {
-    if (shuffle === this.state.shuffle) return;
+  setShuffle(shuffle: boolean | "albums") {
+    const mode: ShuffleMode = shuffle === "albums" ? "albums" : shuffle ? "songs" : "off";
+    if (mode === shuffleModeOf(this.state)) return;
     this.update({
-      shuffle,
-      queue: shuffle
+      shuffle: mode !== "off",
+      shuffleMode: mode,
+      queue: mode === "albums"
+        ? shuffleAlbums(this.state.queue, this.state.tracks, this.state.currentId, true)
+        : shuffle
         ? shuffleAfterCurrent(this.state.queue, this.state.currentId)
         : [...this.naturalOrder],
     });

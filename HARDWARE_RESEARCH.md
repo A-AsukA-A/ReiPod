@@ -268,3 +268,19 @@ nano 6 p.21 与 nano 7 p.19 已渲染查看，确认精细定位手指方向分�
 复核G-S中的蓝色设置值，当前旧级联误将其覆盖为灰色；精确色值不能由相机RGB得出。机身参考[Gadgeteer2007评测](https://the-gadgeteer.com/2007/09/19/apple_ipod_classic/)对金属中心键略凹的文字说明、其双机照片的右侧classic，以及既有dyobmit2007黑色6G实拍的白色轮盘标记；不把左侧5G或未知固件合并到测量。当前变化限于颜色关系、凹面方向和独立拟合，几何不重新猜测。
 
 HOLD可见部分固定CSSpx导致三视口比例不同，是实现观察；沿用390px机身拟合同比缩放并保留独立触控区域，不声称补齐原机尺寸。曲目列表标记复用紧凑LCD矢量，是ReiPod一致性修复，原始bitmap仍未知。完整来源/参数状态/工程对照见 [UI_METRICS任务53](UI_METRICS.md#2026-11-04-主菜单与银黑机身外观任务53)。新照片、原始哈希与前后截图只在忽略目录`.local/ui-53/`。
+
+## classic分类浏览层级 — 2026-11-05 / 任务66
+
+[Stan Brown亲自操作记录](https://brownmath.com/general/itunes.htm#iPodBrowse)及其[风格列表照片](https://brownmath.com/general/pic/itunes_genre1.jpg)、[风格内艺人照片](https://brownmath.com/general/pic/itunes_genre2.jpg)、[作曲者内专辑照片](https://brownmath.com/general/pic/itunes_composer2.jpg)支持风格→艺人→专辑、作曲者→专辑的基础层级与双行风格统计。网页适用范围混列5.5G/6G；照片只拍LCD，容量、准确硬件和固件未知，不作为2007匹配固件的连续录像或像素测量。[Register于2007-09-13的亲自评测](https://www.theregister.com/2007/09/13/review_apple_ipod_classic/?page=3)独立说明风格行有艺人/专辑统计，艺人和作曲者列表不同于该双行呈现。
+
+本轮只据此补基础层级和信息类型，不取原图颜色、字体或行高；无LCD角点归一或新增尺寸测量，几何误差尚未量化。Brown文字另提单专辑跳级，本轮保留待核，不把未知固件的快捷规则推广到所有classic。中文措辞、缺失标签分类、聚合与队列排序、合辑身份沿用ReiPod适配。实现/剩余项查FIRMWARE_FEATURES的C-F05-A/C-F05，工程对照查UI_METRICS任务66。
+
+私有参考留`.local/classic-66/`，不再分发照片；三图SHA-256（genre / artists / composer-albums）：`ea4c5c8db40518e96270701ec3c97225c51fd98b4b650efe4cf323639f4467c6`、`e722f0e37f4343822cd305c1a083a1904c235359f3cc75567caed9f2b5ee71ec`、`fc51295a629601e2771b2d629a4d56bdc56f26ca6963f2bf0a4b0067145c51d9`。检索同时核对Apple官方[2008/120GB手册](https://cdsassets.apple.com/live/6GJYWVAV/user/ma630_ipod_classic_120gb_en.pdf)印刷pp26–27，其一般浏览/播放说明不足以证明本轮两条完整分类路径，故不将后者标为官方明示。
+
+## 专辑随机与On-The-Go — 2026-11-05 / 任务67
+
+Apple《iPod classic Features Guide》[72页镜像](https://www.manuallib.com/download/IPOD-CLASSIC-FEATURES-GUIDE.PDF)，出版修订未确认，印刷pp27–28：明示三档随机、专辑内部保持顺序、集合加入、标题闪烁、工作列表移除、清空确认，以及保存编号副本并清空工作列表。[Apple官方2008/120GB手册](https://cdsassets.apple.com/live/6GJYWVAV/user/ma630_ipod_classic_120gb_en.pdf)印刷pp28–30保留这些操作，并将单曲加入/移除放在长Center菜单。本轮保留用户指定歌词菜单，与2008菜单式入口兼容，不据后期手册宣称2007所有固件一致。
+
+手册只证明功能/操作，没有可信的闪烁时长或逐页几何。本轮没有新增照片量尺、LCD四角归一或实机测量误差；菜单继承现有24u网格，标题反馈以已有100ms音量反馈token的两倍实现一次透明度确认，200ms为ReiPod适配，非原机测量。减少动态效果保留文字确认，快速追加取消前次反馈。当前/已播前缀保留、合辑按已有albumArtist+album身份、无专辑逐曲处理、编号冲突与存储失败保留为ReiPod实现约定；固件精确算法/时序仍待连续操作证据。
+
+元数据来源另核对[MPMediaItem.discNumber](https://developer.apple.com/documentation/mediaplayer/mpmediaitem/discnumber)与[Apple Music资料库歌曲响应](https://developer.apple.com/documentation/applemusicapi/get-all-library-songs)，仅支持可用碟号含义，不证明真实账户/设备已验收。原生保持主线程与既有消息边界，系统已有队列不可确认时拒绝伪造重排；On-The-Go只写本地歌单存储，不扩展平台凭证能力。工程截图/计算样式与行为验收由UI_METRICS任务67维护。

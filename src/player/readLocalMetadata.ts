@@ -20,6 +20,7 @@ export async function readLocalMetadata(file: File): Promise<LocalMetadata> {
     artist: metadata.common.artist?.trim(), album: metadata.common.album?.trim(),
     albumArtist: metadata.common.albumartist?.trim(), genres: metadata.common.genre,
     composers: metadata.common.composer, trackNumber: metadata.common.track.no ?? undefined,
+    discNumber: metadata.common.disk.no ?? undefined,
     duration: metadata.format.duration, ...(artwork ? { artwork } : {}),
     ...(lyrics?.length ? { lyrics } : {}),
   };

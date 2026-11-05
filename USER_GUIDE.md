@@ -46,6 +46,18 @@ Music stays on your device: imports are stored in this browser's IndexedDB and r
 
 The recreation references and provisional implementation parameters are documented in [REPLICA.md](REPLICA.md). The battery icon follows device charge and charging events when the browser provides them, and refreshes when returning from the background. Unsupported or failed readings show a full battery icon by default, without claiming a numeric 100% reading or showing a charging bolt. Storage capacity uses browser data where available. Volume limits apply where the browser supports software volume control; iPhone audio still uses its hardware side buttons.
 
+## Browse by genre and composer
+
+For local music, choose **音乐 → 风格 → 分类 → 艺人 → 专辑**, or **音乐 → 作曲者 → 作曲者 → 专辑**. Center enters the next list; Play on a genre or composer starts that collection. Albums and their queues contain only songs matching the current category and artist. MENU returns one level with the previous selection; re-entering that scope also remembers the selected song. **全部艺人 / 全部专辑 / 全部歌曲** apply to the current level's scope. Missing tags remain under **未知风格 / 未知作曲者**. Provider menus retain their existing supported routes, and local browsing does not change an active remote playback session. Single-album shortcuts and exact firmware sorting remain listed in [feature gaps](FIRMWARE_FEATURES.md).
+
+## Album shuffle and On-The-Go
+
+Choose **设置 → 随机播放 → 关闭 / 歌曲 / 专辑**, or turn the wheel in the Now Playing shuffle panel. Album shuffle randomizes album blocks while keeping available disc/track order inside them. Changing modes preserves the current song and position; Off restores the original queue. iPhone system music can reorder only a queue already known to ReiPod; otherwise select a song or playlist in ReiPod first. Missing provider metadata limits album grouping and ordering.
+
+For local music, hold Center on a song and choose **添加到 On-The-Go**; the Lyrics shortcut stays in that menu. Hold Center on an album, artist, genre/composer or local playlist row to add that collection. Open **音乐 → 播放列表 → On-The-Go** to play it. Hold Center on a working-list song and choose **从 On-The-Go 移除** to remove it. Duplicate additions are ignored.
+
+**保存播放列表** creates **New Playlist 1**, then 2, and so on, and empties the working list. Saved copies play without offering content edits. **清空播放列表…** opens a confirmation defaulting to Cancel. Save/clear failures keep the original list for retry; these actions do not delete audio or change the queue already playing. On-The-Go uses ReiPod's browser-local library, separate from native/cloud account playlists, and has no iTunes synchronization. Reduced motion keeps the text acknowledgement without the brief title flash.
+
 ## Photos and podcasts
 
 Choose **照片 → 导入照片…** for JPEG/PNG/WebP/GIF/AVIF/BMP images, or **导入相册文件夹…** to group photos by their folders. The full-width album list shows thumbnails and counts. **所有照片** and individual albums open a five-column thumbnail grid with a yellow selection frame; its gray strip shows the count and the selected file's modification date. Turn the wheel to select, Center opens the full image without the menu header, and Play/Pause starts or stops a three-second slideshow. Side buttons navigate photos. Hold Center for slideshow or confirmed deletion of the browser copy. Photos persist in IndexedDB; original files stay on the device.

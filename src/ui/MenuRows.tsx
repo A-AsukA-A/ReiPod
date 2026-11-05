@@ -19,6 +19,9 @@ export type MenuItem = {
   leaf?: boolean;
   searchKind?: "search" | "song" | "artist" | "album" | "playlist" | "podcast";
   action: () => void;
+  /** Play/Pause can play a collection while Center continues browsing. */
+  play?: () => void;
+  hold?: () => void;
 };
 export function MenuRows({
   rows,
@@ -44,13 +47,14 @@ export function MenuRows({
   return rows.map((row) => (
     <div
       key={row.key}
+      data-row-key={row.key}
       ref={row.key === focusedKey ? selectedRow : undefined}
       aria-disabled={row.disabled || undefined}
       aria-current={row.key === focusedKey ? "true" : undefined}
       data-member={
         page === "playlist-add-tracks" ? playlistIds.has(row.key) : undefined
       }
-      className={`screen-row ${row.key === focusedKey ? "selected" : ""} ${row.disabled ? "is-disabled" : ""} ${row.key === "confirm" || row.destructive ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${trackIds.has(row.key) ? "track-row" : ""}`}
+      className={`screen-row ${row.key === focusedKey ? "selected" : ""} ${row.disabled ? "is-disabled" : ""} ${row.key === "confirm" || row.destructive ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${page === "genres" ? "category-row" : ""} ${trackIds.has(row.key) ? "track-row" : ""}`}
     >
       {row.searchKind && (
         <span className="search-result-icon" data-kind={row.searchKind}>
@@ -99,7 +103,7 @@ export function MenuRows({
             </span>
           )}
         </span>
-        {(page === "albums" || page === "search" || page === "photos") && (
+        {(page === "albums" || page === "genres" || page === "search" || page === "photos") && (
           <small>{row.detail}</small>
         )}
       </span>

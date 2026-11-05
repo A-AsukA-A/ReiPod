@@ -11,6 +11,8 @@ it("titles use the current browse scope and keep missing metadata fallbacks", ()
     ["music-account", "QQ 音乐"],
   ] as const) expect(classicScreenTitle({ ...base, page })).toBe(title);
   expect(classicScreenTitle({ ...base, page: "albums", browseArtist: "所选艺人" })).toBe("所选艺人");
+  expect(classicScreenTitle({ ...base, page: "artists", category: { kind: "genre", value: "Rock" } })).toBe("Rock");
+  expect(classicScreenTitle({ ...base, page: "albums", category: { kind: "composer", value: "Composer" } })).toBe("Composer");
   expect(classicScreenTitle({ ...base, page: "album-tracks", albumTitle: undefined })).toBe("专辑");
   expect(classicScreenTitle({ ...base, page: "playlist-name", groupKey: undefined })).toBe("新建歌单");
   expect(classicScreenTitle({ ...base, page: "playlist-name" })).toBe("重命名歌单");

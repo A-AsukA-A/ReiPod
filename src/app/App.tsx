@@ -2,6 +2,9 @@ import { useLocalPlayer } from "./useLocalPlayer";
 import { createSettingsMenus } from "../ui/settingsMenus";
 import { createTextMenus } from "../ui/textMenus";
 import { createClassicMenuModel } from "../ui/classicMenuModel";
+import { createClassicCategoryMenus } from "../ui/classicCategoryMenus";
+import { createOnTheGoMenus } from "../ui/onTheGoMenus";
+import { useMenuConfirmation } from "../ui/useMenuConfirmation";
 import { createTrackMenuOverrides } from "../ui/trackMenuOverrides";
 import { ClassicScreenContent } from "../ui/ClassicScreenContent";
 import { classicScreenTitle } from "../ui/classicScreenModel";
@@ -36,9 +39,11 @@ import {
   albumsFor,
   artistsFor,
   tracksForArtist,
+  tracksForCategory,
   songsByTitle,
   coverFlowOrder,
 } from "../player/library";
+import type { MusicCategory } from "../player/library";
 import {
   initialNavigation,
   navigationReducer,
@@ -56,7 +61,7 @@ import {
   usePlaylists,
   createPlaylist,
   renamePlaylist,
-  deletePlaylist, togglePlaylistTrack, removePlaylistTrack, addToOnTheGo,
+  deletePlaylist, togglePlaylistTrack, removePlaylistTrack, addToOnTheGo, saveOnTheGo, clearOnTheGo, withOnTheGo,
 } from "../player/playlists";
 
 import type { MenuItem } from "../ui/MenuRows";
@@ -131,7 +136,8 @@ export function App() {
   const state = services.playback !== "local" ? remoteState : localState;
   const prefs = usePreferences();
   const localPlaylists = usePlaylists();
-  const playlists = cloud ? services.playlists : localPlaylists;
+  const localPlaylistRows = useMemo(() => withOnTheGo(localPlaylists), [localPlaylists]);
+  const playlists = cloud ? services.playlists : localPlaylistRows;
   const ratings = useRatings();
   const photos = usePhotos();
   const texts = useTexts();
@@ -163,30 +169,31 @@ export function App() {
   const current = state.currentId ? trackById.get(state.currentId) : undefined;
   const albums = useMemo(() => albumsFor(musicTracks), [musicTracks]);
   const flowAlbums = useMemo(() => coverFlowOrder(albums), [albums]);
-  const artists = useMemo(() => artistsFor(musicTracks), [musicTracks]);
   const [navigation, dispatch] = useReducer(
     navigationReducer,
     initialNavigation,
   );
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
-  const { page, groupKey, artist: browseArtist } = navigation.screen;
+  const { page, groupKey, artist: browseArtist, category } = navigation.screen;
   const textDocument =
     texts.find((doc) => doc.id === groupKey) ??
     builtinDocuments[groupKey ?? ""];
   const isLocalText = texts.some((doc) => doc.id === groupKey);
   const reader = useRef<TextReaderHandle>(null);
   const [importingTexts, setImportingTexts] = useState(false);
+  const categoryTracks = useMemo(() => tracksForCategory(musicTracks, category), [musicTracks, category]);
+  const artists = useMemo(() => artistsFor(categoryTracks), [categoryTracks]);
   const browseTracks = useMemo(
     () =>
       browseArtist !== undefined
-        ? tracksForArtist(musicTracks, browseArtist)
-        : musicTracks,
-    [musicTracks, browseArtist],
+        ? tracksForArtist(categoryTracks, browseArtist)
+        : categoryTracks,
+    [categoryTracks, browseArtist],
   );
   const browseAlbums = useMemo(
-    () => (browseArtist !== undefined ? albumsFor(browseTracks) : albums),
-    [albums, browseTracks, browseArtist],
+    () => (browseArtist !== undefined || category ? albumsFor(browseTracks) : albums),
+    [albums, browseTracks, browseArtist, category],
   );
   const [notice, setNotice] = useState("");
   useEffect(() => {
@@ -233,9 +240,11 @@ export function App() {
   const textInput = useRef<HTMLInputElement>(null);
   const selectedRow = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
+  const confirmMenu = useMenuConfirmation(content);
   const capture = useLcdMotion(
     content,
-    `${page}:${groupKey ?? ""}:${browseArtist ?? ""}:${page === "playing" && playView === "lyrics" ? "lyrics" : page === "photo-full" ? navigation.screen.selectedKey : "page"}`,
+    JSON.stringify([page, groupKey, browseArtist, category?.kind, category?.value,
+      page === "playing" && playView === "lyrics" ? "lyrics" : page === "photo-full" ? navigation.screen.selectedKey : "page"]),
   );
   const active = state.status === "playing";
   const busy = state.status === "loading" || state.status === "buffering";
@@ -273,14 +282,7 @@ export function App() {
   const isTrackList = trackPages.includes(page);
   const visibleTracks = useMemo(() => {
     if (page === "genre-tracks" || page === "composer-tracks")
-      return musicTracks.filter((track) => {
-        const values = page === "genre-tracks" ? track.genres : track.composers;
-        return (
-          values?.length
-            ? values
-            : [page === "genre-tracks" ? "未知风格" : "未知作曲者"]
-        ).includes(groupKey ?? "");
-      });
+      return songsByTitle(browseTracks);
     if (page === "podcast-episodes")
       return (
         podcastShows
@@ -325,6 +327,7 @@ export function App() {
     selectedPlaylist,
     trackById,
     musicTracks,
+    browseTracks,
     podcastShows,
     localState.tracks,
     localMusicTracks,
@@ -342,6 +345,7 @@ export function App() {
     selectedKey?: string,
     group?: string,
     artist?: string,
+    category?: MusicCategory,
   ) => {
     const latest = player.getSnapshot();
     const defaultKey =
@@ -359,12 +363,15 @@ export function App() {
                   )?.id ?? flowAlbums[0]?.id)
                 : target === "albums"
                   ? "all-songs"
+                  : target === "album-tracks"
+                    ? browseAlbums.find(album => album.id === group)?.tracks[0]?.id
                   : target === "artists"
                     ? "all-albums"
                     : target === "playlists"
                       ? "all"
                       : (latest.currentId ?? latest.tracks[0]?.id ?? "import");
-    if (target !== page || group !== groupKey || artist !== browseArtist)
+    if (target !== page || group !== groupKey || artist !== browseArtist ||
+        category?.kind !== navigation.screen.category?.kind || category?.value !== navigation.screen.category?.value)
       capture(
         page === "coverflow" && target === "coverflow-album"
           ? "album-open"
@@ -380,6 +387,7 @@ export function App() {
       defaultKey,
       groupKey: group,
       artist,
+      category,
     });
     setNotice("");
   };
@@ -464,6 +472,12 @@ export function App() {
         album.tracks[0].id,
         album.tracks.map((track) => track.id),
       );
+  };
+  const appendOnTheGo = (ids: string[], key: string) => {
+    const localIds = new Set(localMusicTracks.map(track => track.id));
+    const result = addToOnTheGo(ids.filter(id => localIds.has(id)));
+    if (result.added) confirmMenu(key);
+    setNotice(!result.persisted ? "本次已添加，On-The-Go 未能保存" : result.added ? "已加入 On-The-Go" : "歌曲已在 On-The-Go 中");
   };
   const openDocument = (path: string) => {
     open("text-reader", undefined, path);
@@ -577,6 +591,7 @@ export function App() {
     trackById,
     open,
     shuffleAll,
+    addToOnTheGo: !cloud ? appendOnTheGo : undefined,
     openFiles,
     loadDemos,
     editName,
@@ -586,7 +601,11 @@ export function App() {
   const { settingsItems, confirmItems, managedRows: settingsRows } = createSettingsMenus({
     prefs, state, originalSettingsItems, localTools, cloud, serviceName, selectedService: services.selected,
     localMusicCount: localMusicTracks.length, open, back, setPreferences,
-    shuffle: value => player.setShuffle(value), repeat: value => player.setRepeat(value),
+    shuffle: value => {
+      player.setShuffle(value);
+      const error = player.getSnapshot().error;
+      if (error) setNotice(error);
+    }, repeat: value => player.setRepeat(value),
     clear: () => { capture("back"); clearLibrary(); dispatch({ type: "reset" }); setNotice("资料库已清空"); },
   });
   const serviceActions = createMusicServiceActions({
@@ -652,32 +671,8 @@ export function App() {
       })),
       { key: "import", label: "导入音乐", action: openFiles },
     ],
-    genres: [
-      ...new Set(
-        musicTracks.flatMap((track) =>
-          track.genres?.length ? track.genres : ["未知风格"],
-        ),
-      ),
-    ]
-      .sort()
-      .map((name) => ({
-        key: name,
-        label: name,
-        action: () => open("genre-tracks", undefined, name),
-      })),
-    composers: [
-      ...new Set(
-        musicTracks.flatMap((track) =>
-          track.composers?.length ? track.composers : ["未知作曲者"],
-        ),
-      ),
-    ]
-      .sort()
-      .map((name) => ({
-        key: name,
-        label: name,
-        action: () => open("composer-tracks", undefined, name),
-      })),
+    ...createClassicCategoryMenus({ tracks: musicTracks, open, playTrack,
+      addToOnTheGo: !cloud ? appendOnTheGo : undefined }),
     ...createMediaMenus({
       photos,
       activePhotos,
@@ -706,7 +701,7 @@ export function App() {
         playNext: id => localPlayer.playNext(id) },
       page,
       groupKey,
-      playlists: localPlaylists,
+      playlists: localPlaylistRows,
       state,
       musicTracks,
       visibleTracks,
@@ -719,6 +714,7 @@ export function App() {
       beginText: textEntry.begin,
       setDeleting,
       setNotice,
+      confirm: confirmMenu,
       open,
       back,
       navigationRef,
@@ -746,15 +742,20 @@ export function App() {
       openLyrics();
     },
   }));
+  if (!cloud) Object.assign(managedRows, createOnTheGoMenus({
+    page, groupKey, playlist: selectedPlaylist, tracks: visibleTracks,
+    open, back, notice: setNotice, save: saveOnTheGo, clear: clearOnTheGo, play: id => playTrack(id),
+  }));
   if (page === "search") managedRows.search = createSearchMenu({
     results: searchResults, query, begin: textEntry.begin, open, play: playTrack,
   });
   const { rows, selectedIndex, focusedRow } = createClassicMenuModel({
-    page, selectedKey: navigation.screen.selectedKey, browseArtist, managedRows,
+    page, selectedKey: navigation.screen.selectedKey, browseArtist, category, managedRows,
     primaryRows: { home: homeItems, music: musicItems, playlists: playlistItems,
       settings: settingsItems, "confirm-clear": confirmItems },
     browseAlbums, flowAlbums, browseTracks, artists, visibleTracks, isTrackList,
     current, accountSyncing: services.syncing, emptyItems, open, playTrack,
+    addToOnTheGo: !cloud ? appendOnTheGo : undefined,
   });
   const { rotate, command } = createClassicInputController({
     device: { held, sleeping, activate, setSleeping },
@@ -764,7 +765,7 @@ export function App() {
       accountAuthorized: services.auth === "authorized", feedback },
     playback: { player, state, current, playView, ratings, setRating, toggleFavorite,
       cyclePlayView, scrollLyrics, showVolume, showTransportHint, trackOptions },
-    library: { trackById, musicTracks, browseTracks, albums, playTrack, playAlbum,
+    library: { trackById, musicTracks, browseTracks, albums: browseAlbums, playTrack, playAlbum,
       playDefault: () => {
         const local = page === "local-songs" || !cloud;
         if (local && !localPlayer.getSnapshot().tracks.length) addDemos();
@@ -856,7 +857,7 @@ export function App() {
     const timer = setTimeout(() => setNotice(""), 2200);
     return () => clearTimeout(timer);
   }, [notice]);
-  const title = page === "search" && query.trim() ? `搜索结果：${searchResults.length}` : classicScreenTitle({ page, groupKey, browseArtist, playView,
+  const title = page === "search" && query.trim() ? `搜索结果：${searchResults.length}` : classicScreenTitle({ page, groupKey, browseArtist, category, playView,
     albumTitle: selectedAlbum?.title,
     podcastTitle: podcastShows.find(show => show.id === groupKey)?.title,
     documentTitle: textDocument?.title, playlistTitle: selectedPlaylist?.name, serviceName });

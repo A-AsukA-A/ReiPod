@@ -51,6 +51,47 @@ it("HOLD suppresses wheel and every command before activation or playback", () =
   expect(f.player.pause).not.toHaveBeenCalled();
   expect(f.context.navigation.dispatch).not.toHaveBeenCalled();
 });
+it("long Center adds a collection once while a song without that action keeps its options shortcut", () => {
+  const f = fixture("albums"), hold = vi.fn();
+  f.context.menu.focusedRow!.hold = hold;
+  f.input().command("options");
+  expect(hold).toHaveBeenCalledOnce();
+  expect(f.context.playback.trackOptions).not.toHaveBeenCalled();
+  f.context.device.held = true; f.input().command("options");
+  expect(hold).toHaveBeenCalledOnce();
+  f.context.device.held = false; f.context.navigation.page = "songs";
+  f.context.menu.focusedRow!.hold = undefined; f.context.menu.isTrackList = true;
+  f.input().command("options");
+  expect(f.context.playback.trackOptions).toHaveBeenCalledWith(song.id);
+});
+
+it("collection Play starts its scoped queue while Center drills in, and HOLD still blocks both", () => {
+  const f = fixture("genres");
+  const play = vi.fn();
+  f.context.menu.focusedRow!.play = play;
+  f.input().command("select");
+  expect(f.action).toHaveBeenCalledOnce();
+  expect(play).not.toHaveBeenCalled();
+  f.input().command("play");
+  expect(play).toHaveBeenCalledOnce();
+  expect(f.player.toggle).not.toHaveBeenCalled();
+  f.context.device.held = true;
+  f.input().command("play");
+  expect(play).toHaveBeenCalledOnce();
+});
+
+it("artist Play and All Albums consume the current category rather than the full library", () => {
+  const f = fixture("artists");
+  const outsider = { ...song, id: "outside", artist: "Alpha" };
+  const scoped = { ...song, artist: "Alpha" };
+  f.context.library.musicTracks = [scoped, outsider];
+  f.context.library.browseTracks = [scoped];
+  for (const key of ["all-albums", "Alpha"]) {
+    f.context.menu.focusedRow!.key = key;
+    f.input().command("play");
+    expect(f.context.library.playTrack).toHaveBeenLastCalledWith("song", ["song"]);
+  }
+});
 
 it("the first wheel or play event only wakes; the next play uses the live session", () => {
   for (const kind of ["rotate", "play"] as const) {

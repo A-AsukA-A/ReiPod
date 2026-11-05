@@ -8,6 +8,7 @@ export type Album = {
   artwork?: string;
   tracks: Track[];
 };
+export type MusicCategory = { kind: "genre" | "composer"; value: string };
 const collator = new Intl.Collator("zh-CN", {
   numeric: true,
   sensitivity: "base",
@@ -35,6 +36,7 @@ export function albumsFor(tracks: Track[]): Album[] {
       ...album,
       tracks: [...album.tracks].sort(
         (a, b) =>
+          (a.discNumber ?? 1) - (b.discNumber ?? 1) ||
           (a.trackNumber ?? 999) - (b.trackNumber ?? 999) ||
           collator.compare(a.title, b.title),
       ),
@@ -56,6 +58,27 @@ export function tracksForArtist(tracks: Track[], artist: string) {
   return tracks.filter(
     (track) => (track.artist?.trim() || "未知艺人") === artist,
   );
+}
+
+export function trackCategories(track: Track, kind: MusicCategory["kind"]) {
+  const values = (kind === "genre" ? track.genres : track.composers)
+    ?.map(value => value.trim()).filter(Boolean);
+  return values?.length ? [...new Set(values)] : [kind === "genre" ? "未知风格" : "未知作曲者"];
+}
+
+export function categoriesFor(tracks: Track[], kind: MusicCategory["kind"]) {
+  const groups = new Map<string, Track[]>();
+  for (const track of tracks) for (const name of trackCategories(track, kind)) {
+    const collection = groups.get(name) ?? [];
+    collection.push(track);
+    groups.set(name, collection);
+  }
+  // Keep the existing category menu ordering; firmware sort-as rules remain separate research.
+  return [...groups.keys()].sort().map(name => ({ name, tracks: groups.get(name)! }));
+}
+
+export function tracksForCategory(tracks: Track[], category?: MusicCategory) {
+  return category ? tracks.filter(track => trackCategories(track, category.kind).includes(category.value)) : tracks;
 }
 
 export function songsByTitle(tracks: Track[]) {

@@ -49,6 +49,14 @@ it("gates session writes until restoration and merges rapid volume changes for 2
   expect(f.sessionWrites()).toHaveLength(2);
   expect(JSON.parse(f.storage.get("reipod-session")!).volume).toBeCloseTo(0.299);
 });
+it("restores and persists album mode separately from legacy boolean shuffle", () => {
+  const f = fixture({ "reipod-playback": JSON.stringify({ shuffle: true, shuffleMode: "albums" }) });
+  f.persistence.restoreSettings();
+  expect(f.player.getSnapshot()).toMatchObject({ shuffle: true, shuffleMode: "albums" });
+  f.player.setRepeat("all");
+  expect(JSON.parse(f.storage.get("reipod-playback")!)).toMatchObject({ shuffleMode: "albums" });
+  f.persistence.dispose();
+});
 it("rounds only the saved position, skips unchanged whole seconds and flushes pagehide immediately", () => {
   const f = fixture();
   f.persistence.finishRestore();

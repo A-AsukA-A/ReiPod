@@ -11,6 +11,7 @@ export type NativeTrack = {
   duration: number;
   artwork?: string;
   trackNumber?: number;
+  discNumber?: number;
   podcast?: Track["podcast"];
 };
 export type NativePlayback = {

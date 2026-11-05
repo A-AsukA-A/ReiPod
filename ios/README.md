@@ -47,6 +47,8 @@ open ReiPod.xcodeproj
 - 搜索只检索已读取的系统资料库。当前没有接入原生全网目录搜索、账号订阅购买、歌单写入或歌词服务。
 - “本地音乐”单独存放通过 ReiPod 文件选择器导入的音频。系统“音乐”App 同步进来的音乐仍属于系统资料库。
 
+任务67：新原生容器返回系统曲目的`discNumber`（来源：[Apple MPMediaItem](https://developer.apple.com/documentation/mediaplayer/mpmediaitem/discnumber)），与已有`albumTrackNumber`供共享队列排序；旧容器缺碟号时按现有兼容回退处理，不能靠刷新旧容器获得新增原生字段。专辑随机在ReiPod可确认的队列内生成顺序，系统播放器继续设置为关闭系统二次随机；更新时传入当前曲/位置/暂停状态。外部系统队列不可确认时不改变模式，明确提示先在ReiPod选歌。新编译/替身通过不代表真实云端多碟专辑、后台或锁屏已通过。On-The-Go只管理ReiPod本地导入，不写系统歌单。
+
 公开 API 不能读取任意正在播放的完整系统队列。ReiPod 保存自己交给系统的队列；若不是它设置的队列，只显示可确认的当前歌曲，不能冒充完整的系统 Up Next。
 
 ## iPhone 系统播客（POD01）

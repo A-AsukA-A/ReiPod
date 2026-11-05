@@ -47,6 +47,19 @@ test("system status polling preserves a failed playback command's error", async 
   expect(player.getSnapshot().error).toBe("Failed to prepare to play");
 });
 
+test("album shuffle refuses an unknown system queue and rebuilds a known queue at the same position", async () => {
+  const { player, postMessage } = setup();
+  player.setShuffle("albums");
+  expect(player.getSnapshot().shuffleMode).toBe("off");
+  expect(player.getSnapshot().error).toContain("现有队列不可读取");
+  expect(postMessage).not.toHaveBeenCalled();
+  player.adopt({ ...snapshot(1), position: 42 });
+  postMessage.mockResolvedValue({ authorization: "authorized" });
+  player.setShuffle("albums");
+  expect(player.getSnapshot().shuffleMode).toBe("albums");
+  expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ action: "setQueue", selectedId: "1", seconds: 42, autoplay: false }));
+});
+
 test("confirmed system playback clears an earlier playback error", async () => {
   const { player, postMessage } = setup();
   postMessage.mockRejectedValue(new Error("Failed to prepare to play"));

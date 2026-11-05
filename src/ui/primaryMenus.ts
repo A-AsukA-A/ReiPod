@@ -1,4 +1,5 @@
 import type { PlayerState, Track } from "../player/Player";
+import { shuffleModeOf } from "../player/ordering";
 import type { Album } from "../player/library";
 import type { Playlist } from "../player/playlists";
 import type { Preferences } from "./preferences";
@@ -19,6 +20,7 @@ type PrimaryMenuContext = {
   trackById: Map<string, Track>;
   open: (page: Page, key?: string, group?: string) => void;
   shuffleAll: () => void;
+  addToOnTheGo?: (ids: string[], key: string) => void;
   openFiles: () => void;
   loadDemos: () => void;
   editName: (id?: string) => void;
@@ -38,6 +40,7 @@ export function createPrimaryMenus({
   trackById,
   open,
   shuffleAll,
+  addToOnTheGo,
   openFiles,
   loadDemos,
   editName,
@@ -161,6 +164,7 @@ export function createPrimaryMenus({
     ...playlists.map((item) => ({
       key: item.id,
       label: item.name,
+      hold: addToOnTheGo ? () => addToOnTheGo(item.trackIds, item.id) : undefined,
       value: `${item.trackIds.filter((id) => trackById.has(id)).length}`,
       action: () => open("playlist-tracks", undefined, item.id),
     })),
@@ -178,8 +182,8 @@ export function createPrimaryMenus({
     {
       key: "shuffle",
       label: "随机播放",
-      value: state.shuffle ? "开启" : "关闭",
-      action: () => open("shuffle-mode", String(state.shuffle)),
+      value: { off: "关闭", songs: "歌曲", albums: "专辑" }[shuffleModeOf(state)],
+      action: () => open("shuffle-mode", shuffleModeOf(state) === "albums" ? "albums" : String(state.shuffle)),
     },
     {
       key: "repeat",

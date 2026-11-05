@@ -27,6 +27,10 @@ Screenshots show the current web build with included demo music. The interface c
 
 Search now shows live local results for songs, artists, albums, playlists and audio podcasts. Next/Previous enter a space/delete a character while editing; MENU moves to the results. Firmware menus keep their supported original order; imports, services, lyrics options and appearance are grouped under **设置 → ReiPod 设置**. **还原设置** resets implemented firmware choices after confirmation. See [original feature coverage and remaining gaps](FIRMWARE_FEATURES.md).
 
+Local music also browses by **genre → artist → album → song** and **composer → album → song**. Category filters stay in effect through album queues, and MENU returns to the remembered selection. Genre rows show artist/album counts; Play starts the selected category while Center continues browsing. These paths remain subject to the firmware differences documented above.
+
+Shuffle offers **Off / Songs / Albums**; album shuffle keeps available disc/track order within each album. Local **On-The-Go** supports adding collections, removing songs, saving numbered read-only playlists and confirmed clearing. Failed save/clear operations keep the working list, and saving does not interrupt its active playback queue.
+
 <img src="assets/screenshots/search.png" alt="Live local search with typed results and a horizontal alphabet strip" width="260">
 <img src="assets/screenshots/lyrics.png" alt="Authorized test track with word timing and Lazer-style lyric motion" width="260">
 

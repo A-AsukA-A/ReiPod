@@ -180,10 +180,12 @@
   width: 31px;
   height: 31px;
 }
-.album-row .row-label {
+.album-row .row-label,
+.category-row .row-label {
   gap: 2px;
 }
-.album-row small {
+.album-row small,
+.category-row small {
   font-size: 10px;
 }
 .screen-preview {
@@ -1017,7 +1019,8 @@
     animation: none;
   }
 }
-.screen-row.album-row {
+.screen-row.album-row,
+.screen-row.category-row {
   height: calc(var(--lcd-unit) * 44);
 }
 .hold-icon {

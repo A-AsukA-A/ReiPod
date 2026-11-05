@@ -33,10 +33,11 @@ struct NativeBoundaryTests {
 
     @Test func podcastMetadataKeepsShowIdentityAndResumeTime() throws {
         let track = NativeTrack(id: "9007199254740993", title: "单集", artist: "嘉宾", album: nil,
-                                albumArtist: nil, duration: 1800, artwork: nil, trackNumber: 0,
+                                albumArtist: nil, duration: 1800, artwork: nil, trackNumber: 0, discNumber: 2,
                                 podcast: NativePodcast(showId: String(UInt64.max), showTitle: "节目", bookmark: 125.5))
         let object = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(track)) as? [String: Any])
         let podcast = try #require(object["podcast"] as? [String: Any])
+        #expect(object["discNumber"] as? Int == 2)
         #expect(podcast["showId"] as? String == "18446744073709551615")
         #expect(podcast["bookmark"] as? Double == 125.5)
         let request = try JSONDecoder().decode(NativeMusicRequest.self, from: Data(#"{"version":1,"action":"podcasts","offset":0,"limit":100,"refresh":true}"#.utf8))

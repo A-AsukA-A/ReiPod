@@ -27,6 +27,7 @@ struct NativeTrack: Encodable {
     let duration: Double
     let artwork: String?
     let trackNumber: Int
+    var discNumber: Int = 1
     var podcast: NativePodcast? = nil
 }
 

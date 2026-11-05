@@ -999,18 +999,21 @@ button:disabled {
   width: 34px;
   height: 34px;
 }
-.album-row .row-label {
+.album-row .row-label,
+.category-row .row-label {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-.album-row small {
+.album-row small,
+.category-row small {
   font: 9px Arial;
   color: #777e88;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.album-row.selected small {
+.album-row.selected small,
+.category-row.selected small {
   color: #e2edf8;
 }
 .screen-footer {

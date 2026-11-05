@@ -1,6 +1,7 @@
 import type { WheelCommand } from "../input/ClickWheel";
 import type { Player, PlayerState, Track } from "../player/Player";
 import { songsByTitle, tracksForArtist } from "../player/library";
+import { shuffleModeOf } from "../player/ordering";
 import type { MenuItem } from "./MenuRows";
 import type { Page, NavigationAction } from "./navigation";
 import { splitPages } from "./navigation";
@@ -91,7 +92,7 @@ export function createClassicInputController(context: Context) {
   const { rows, focusedRow, isTrackList, visibleIds, accountAuthorized, feedback } = context.menu;
   const { player, state, current, playView, ratings, setRating, toggleFavorite,
     cyclePlayView, scrollLyrics, showVolume, showTransportHint, trackOptions } = context.playback;
-  const { trackById, musicTracks, browseTracks, albums, playTrack, playAlbum, playDefault } = context.library;
+  const { trackById, browseTracks, albums, playTrack, playAlbum, playDefault } = context.library;
   const { activePhotos, photoIndex, slideshow, setSlideshow } = context.photos;
   const { textEntry, query, playlistName, setQuery, setPlaylistName, saveName, reader } = context.text;
   const { prefs, setPreferences } = context.settings;
@@ -135,7 +136,10 @@ export function createClassicInputController(context: Context) {
     if (page === "playing" && current) {
       if (playView === "seek")
         player.seek(player.getSnapshot().position + steps * 2);
-      else if (playView === "shuffle") player.setShuffle(steps > 0);
+      else if (playView === "shuffle") {
+        const index = ["off", "songs", "albums"].indexOf(shuffleModeOf(player.getSnapshot()));
+        player.setShuffle(([false, true, "albums"] as const)[Math.max(0, Math.min(2, index + steps))]);
+      }
       else if (playView === "rating") {
         if (!setRating(current.id, (ratings[current.id] ?? 0) + steps))
           setNotice("评分未能保存，本次仍生效");
@@ -263,6 +267,10 @@ export function createClassicInputController(context: Context) {
       return;
     }
     if (value === "options") {
+      if (page !== "playing" && focusedRow?.hold && !focusedRow.disabled) {
+        focusedRow.hold();
+        return;
+      }
       const id =
         page === "playing"
           ? current?.id
@@ -299,7 +307,9 @@ export function createClassicInputController(context: Context) {
       } else if (focusedRow) chooseRow(focusedRow);
     }
     if (value === "play") {
-      if (
+      if (focusedRow?.play && !focusedRow.disabled) {
+        focusedRow.play();
+      } else if (
         page === "playlist-add-tracks" &&
         focusedRow &&
         trackById.has(focusedRow.key)
@@ -321,8 +331,8 @@ export function createClassicInputController(context: Context) {
       } else if (page === "artists" && focusedRow) {
         const tracks = songsByTitle(
           focusedRow.key === "all-albums"
-            ? musicTracks
-            : tracksForArtist(musicTracks, focusedRow.key),
+            ? browseTracks
+            : tracksForArtist(browseTracks, focusedRow.key),
         );
         if (tracks[0])
           playTrack(

@@ -2,6 +2,24 @@ import { describe, expect, it } from "vitest";
 import { initialNavigation, navigationReducer as reduce } from "./navigation";
 
 describe("player navigation", () => {
+  it("separates identical artist/album selections by category kind and value, including Menu return", () => {
+    const rock = { kind: "genre" as const, value: "Same" };
+    const composer = { kind: "composer" as const, value: "Same" };
+    let nav = reduce(initialNavigation, { type: "open", page: "album-tracks", groupKey: "shared", artist: "Alpha", category: rock, defaultKey: "r1" });
+    nav = reduce(nav, { type: "select", key: "r2" });
+    nav = reduce(nav, { type: "open", page: "album-tracks", groupKey: "shared", artist: "Alpha", category: composer, defaultKey: "c1" });
+    expect(nav.screen.selectedKey).toBe("c1");
+    expect(nav.history.at(-1)?.category).toEqual(rock);
+    nav = reduce(nav, { type: "back" });
+    expect(nav.screen).toMatchObject({ category: rock, selectedKey: "r2" });
+    nav = reduce(nav, { type: "open", page: "album-tracks", groupKey: "shared", artist: "Alpha", defaultKey: "all1" });
+    expect(nav.screen.selectedKey).toBe("all1");
+    expect(nav.screen.category).toBeUndefined();
+    nav = reduce(nav, { type: "open", page: "album-tracks", groupKey: "shared", artist: "Alpha", category: rock });
+    expect(nav.screen.selectedKey).toBe("r2");
+    nav = reduce(nav, { type: "home" });
+    expect(nav.screen.category).toBeUndefined();
+  });
   it("keeps album selection and history separate for each artist browse scope", () => {
     let nav = reduce(initialNavigation, {
       type: "open",

@@ -540,6 +540,7 @@ type Resource = {
     durationInMillis?: number;
     genreNames?: string[];
     trackNumber?: number;
+    discNumber?: number;
     artwork?: { url?: string };
   };
 };
@@ -574,6 +575,7 @@ export function appleTrack(resource: Resource): Track {
     duration,
     genres: attributes.genreNames,
     trackNumber: attributes.trackNumber,
+    discNumber: attributes.discNumber,
     kind: "apple-music",
     filename: "",
     size: 0,

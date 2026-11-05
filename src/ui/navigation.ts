@@ -1,6 +1,9 @@
+import type { MusicCategory } from "../player/library";
+
 export type Page =
   | "reipod-settings"
   | "reset-settings"
+  | "confirm-clear-on-the-go"
   | "genres"
   | "composers"
   | "genre-tracks"
@@ -65,6 +68,7 @@ export type Screen = {
   selectedKey: string | null;
   groupKey?: string;
   artist?: string;
+  category?: MusicCategory;
 };
 export const splitPages = new Set<Page>([
   "home",
@@ -98,6 +102,7 @@ export type NavigationAction =
       defaultKey?: string;
       groupKey?: string;
       artist?: string;
+      category?: MusicCategory;
     }
   | { type: "select"; key: string }
   | { type: "move"; keys: string[]; steps: number }
@@ -105,8 +110,10 @@ export type NavigationAction =
   | { type: "home" }
   | { type: "reset" };
 
-function screenKey(screen: { page: Page; groupKey?: string; artist?: string }) {
-  return screen.artist !== undefined
+function screenKey(screen: { page: Page; groupKey?: string; artist?: string; category?: MusicCategory }) {
+  return screen.category
+    ? JSON.stringify([screen.page, screen.groupKey ?? null, screen.artist ?? null, screen.category.kind, screen.category.value])
+    : screen.artist !== undefined
     ? JSON.stringify([screen.page, screen.groupKey ?? null, screen.artist])
     : screen.groupKey
       ? `${screen.page}:${screen.groupKey}`
@@ -148,13 +155,16 @@ export function navigationReducer(
     const same =
       action.page === state.screen.page &&
       action.groupKey === state.screen.groupKey &&
-      action.artist === state.screen.artist;
+      action.artist === state.screen.artist &&
+      action.category?.kind === state.screen.category?.kind &&
+      action.category?.value === state.screen.category?.value;
     if (same && action.selectedKey === undefined) return state;
     return {
       screen: {
         page: action.page,
         ...(action.groupKey ? { groupKey: action.groupKey } : {}),
         ...(action.artist !== undefined ? { artist: action.artist } : {}),
+        ...(action.category ? { category: action.category } : {}),
         selectedKey:
           action.selectedKey ??
           remembered[screenKey(action)] ??

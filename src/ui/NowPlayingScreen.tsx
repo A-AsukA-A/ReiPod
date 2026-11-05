@@ -149,8 +149,8 @@ export function NowPlayingScreen({
           <div className="np-shuffle-options">
             <Choices
               label="随机播放"
-              choices={["关闭", "歌曲"]}
-              selected={Number(state.shuffle)}
+              choices={["关闭", "歌曲", "专辑"]}
+              selected={["off", "songs", "albums"].indexOf(shuffleModeOf(state))}
             />
           </div>
         )}
@@ -174,3 +174,4 @@ export function NowPlayingScreen({
     </div>
   );
 }
+import { shuffleModeOf } from "../player/ordering";

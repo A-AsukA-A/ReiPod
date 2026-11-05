@@ -23,7 +23,7 @@ it("scoped albums keep their own count, tracks and artist when opened", () => {
   rows[0].action();
   expect(f.context.open).toHaveBeenLastCalledWith("artist-tracks", undefined, "Alpha");
   rows[1].action();
-  expect(f.context.open).toHaveBeenLastCalledWith("album-tracks", track.id, "scoped", "Alpha");
+  expect(f.context.open).toHaveBeenLastCalledWith("album-tracks", undefined, "scoped", "Alpha", undefined);
   f.context.browseArtist = "";
   f.model().rows[0].action();
   expect(f.context.open).toHaveBeenLastCalledWith("artist-tracks", undefined, "");
@@ -38,7 +38,7 @@ it("Cover Flow consumes flow order and does not inherit the album browser's arti
   expect(model.rows.map(row => row.key)).toEqual(["other"]);
   expect(model.focusedRow?.key).toBe("other");
   model.rows[0].action();
-  expect(f.context.open).toHaveBeenCalledWith("coverflow-album", "other-song", "other", undefined);
+  expect(f.context.open).toHaveBeenCalledWith("coverflow-album", "other-song", "other", undefined, undefined);
 });
 
 it("artist navigation distinguishes all albums from one artist without playing anything", () => {
@@ -49,8 +49,28 @@ it("artist navigation distinguishes all albums from one artist without playing a
   rows[0].action();
   expect(f.context.open).toHaveBeenLastCalledWith("albums");
   rows[2].action();
-  expect(f.context.open).toHaveBeenLastCalledWith("albums", undefined, undefined, "Zulu");
+  expect(f.context.open).toHaveBeenLastCalledWith("albums", undefined, undefined, "Zulu", undefined);
   expect(f.context.playTrack).not.toHaveBeenCalled();
+});
+
+it("genre artist and album drill-in retain the filter; Cover Flow clears it", () => {
+  const f = fixture();
+  const category = { kind: "genre" as const, value: "Rock" };
+  f.context.category = category;
+  f.context.page = "artists";
+  f.model().rows[0].action();
+  expect(f.context.open).toHaveBeenLastCalledWith("albums", undefined, undefined, undefined, category);
+  f.model().rows[1].action();
+  expect(f.context.open).toHaveBeenLastCalledWith("albums", undefined, undefined, "Alpha", category);
+  f.context.page = "albums";
+  f.context.browseArtist = "Alpha";
+  f.model().rows[0].action();
+  expect(f.context.open).toHaveBeenLastCalledWith("genre-tracks", undefined, "Rock", "Alpha", category);
+  f.model().rows[1].action();
+  expect(f.context.open).toHaveBeenLastCalledWith("album-tracks", undefined, "scoped", "Alpha", category);
+  f.context.page = "coverflow";
+  f.model().rows[0].action();
+  expect(f.context.open).toHaveBeenLastCalledWith("coverflow-album", "other-song", "other", undefined, undefined);
 });
 
 it("an explicit empty managed menu wins over primary and browse fallbacks", () => {

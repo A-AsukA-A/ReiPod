@@ -12,7 +12,7 @@ type Context = {
   localTools?: MenuItem[];
   open: (page: Page, key?: string) => void; back: () => void; clear: () => void;
   setPreferences: (patch: Partial<Preferences>) => void;
-  shuffle: (value: boolean) => void; repeat: (value: PlayerState["repeat"]) => void;
+  shuffle: (value: boolean | "albums") => void; repeat: (value: PlayerState["repeat"]) => void;
 };
 export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud,
   serviceName, selectedService, localMusicCount, open, back, clear,

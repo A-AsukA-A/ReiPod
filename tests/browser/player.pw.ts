@@ -594,11 +594,14 @@ test("album folders retain their names and genre/composer entries are navigable"
   await choose(page, "音乐");
   await choose(page, "风格");
   await choose(page, "未知风格");
+  await choose(page, "周杰伦");
+  await choose(page, "全部歌曲");
   await expect(live(page).locator(".track-row")).toHaveCount(3);
   await home(page);
   await choose(page, "音乐");
   await choose(page, "作曲者");
   await choose(page, "周杰伦");
+  await choose(page, "全部歌曲");
   await expect(live(page).locator(".track-row")).toHaveCount(3);
 });
 
