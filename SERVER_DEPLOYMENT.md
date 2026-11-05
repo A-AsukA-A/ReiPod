@@ -231,3 +231,13 @@ Pages第二次尝试因同一run有2个同名github-pages artifact而失败（12
 VPS暂存/分发46文件hash一致；公网HTML及13项代码/三首音频/封面/歌词资源与本地一致。实际公网三首播放、时长、封面、长Center歌词入口、同步行及逐词数据分别通过，.local/music-56/live-results保存工程证据；不是声学逐字对轴或真实账号/iPhone声明。特别是七里香台湾源版297.247秒、QQ目录299秒，未伪造偏移/逐词时间。
 
 回滚包 `/opt/reipod/backups/dist-before-bf405e8-20261105T044738Z.tgz` 包含旧dist/release.json；个人首页/provider保持，服务active、会话保留。新分发清单只含三首新曲，VPS原有旧URL资源保留，供已打开的旧页面继续使用。Pages [41969822911](https://github.com/A-AsukA-A/ReiPod/actions/runs/41969822911)成功，公网Pages HTML与生产产物一致。iOS仅完成Web/运行时资源生成，不计安装或真实设备验收；后台/锁屏/真实第三方账号事项保持原记录。
+
+## 2026-11-05 classic分类/专辑随机/On-The-Go发布（任务68）
+
+源码[0aac8d8](https://github.com/A-AsukA-A/ReiPod/commit/0aac8d8)已推送origin/main并部署主站，涵盖任务66–67的C-F05-A/C-F06-A及此前已提交的播客前端。显式HTTPS后端构建，258单元、35服务端、121项生产配置完整浏览器、player-core/build/dist/size通过。VPS含8字节release.txt后总12695529 bytes、程序gzip282334、entrygzip143589、试听3817420；新清单47文件全部在暂存和目标验证SHA-256，保留旧哈希资源，index最后原子替换。
+
+前端由bf405e8更新为0aac8d8，后端仍abf75e2；服务器所有受检后端模块/package哈希及个人首页保持，music进程PID147732未重启，nginx/music均active。没有上传后端、覆盖会话/证书/个人站点。回滚包`/opt/reipod/backups/dist-before-0aac8d8-20261105T081624Z.tgz`包含替换前dist/release.json；既有备份未清理。
+
+公网主站/Pages HTML与本地产物字节一致，13个引用代码/音频/封面/歌词资源哈希匹配，release.txt为0aac8d8。agent-browser在独立临时会话以真实转轮输入确认三档随机、风格→艺人→专辑与作曲者→专辑、真实晴天音频进度前进、集合长Center加入，以及On-The-Go保存New Playlist 1并清空工作列表；证据在忽略目录`.local/release-68/`，检查浏览器已关闭。网易云/QQ匿名status及Pages来源200且未授权，非允许来源403；未创建二维码或重试真实账号。
+
+[Pages 41992862940](https://github.com/A-AsukA-A/ReiPod/actions/runs/41992862940)成功；[iPhone 41992862965](https://github.com/A-AsukA-A/ReiPod/actions/runs/41992862965)成功，含无签名iPhone构建及模拟器实际执行6项Swift Testing（日志明确6 tests passed）。这是托管模拟器验证，不是iPhone安装、系统媒体库/真实账户、后台/锁屏或原机精度验收；POD02/U04/U06和C-F05/C-F06精确固件边界继续开放。CI仍沿用用户选择的原macos-15配置。
