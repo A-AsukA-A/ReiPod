@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: true
+  # Finish a production deployment before the next push publishes its artifact.
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -56,7 +57,10 @@ jobs:
       - name: Upload website
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
+          name: reipod-pages-${{ github.run_id }}-${{ github.run_attempt }}
           path: dist
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+        with:
+          artifact_name: reipod-pages-${{ github.run_id }}-${{ github.run_attempt }}

@@ -203,3 +203,17 @@ HTTP provider 最终 abf75e2：单挑战隔离稳定匿名标识和生成/轮询
 225项单元、35项服务端、95项完整浏览器、player-core、显式HTTPS API生产构建/dist/size及文档目标/diff通过。最后补歌单名称Unicode字符后3项专项重跑通过。产物12532280 bytes，程序gzip266053 bytes，试听3816471 bytes。41文件哈希一致，公网HTML及JS/CSS与本地产物相同，实际主站通过转轮进入搜索、输入/空格/MENU观察结果；没有用LCD点击代替输入。
 
 回滚 `/opt/reipod/backups/dist-before-bdbb0f3-20261104T165025Z.tgz` 包含旧dist/release.json；个人首页/provider哈希保持，nginx/music active，未改后端凭证/会话。Pages工作流 [41871475383](https://github.com/A-AsukA-A/ReiPod/actions/runs/41871475383) 已成功；iPhone工作流41871475350仍queued，未作原生安装或真实账户验收。此项不包括用户后补的Lazer动效与三首授权曲目替换，后续按日志逐项做。
+
+
+## 2026-11-05 Lazer主要歌词动效（任务55）
+
+前端 `9768a52` 已推送并部署VPS，后端保持abf75e2：逐字符柔边高亮、持续词错时/尾词强调、独立行位置/缩放弹簧、动态距离模糊；具体对齐范围见 [LAZER_RESEARCH.md](LAZER_RESEARCH.md)。中英README/指南/交互及指标同步更新。
+
+229项单元、96项完整浏览器通过，最后运动中转轮接管/字体重测修正后16项歌词专项再次通过；显式HTTPS API构建/dist/size与文档目标/diff通过。本项仅UI，未重跑服务端或原生安装。产物12536791 bytes、程序gzip267704 bytes、试听3816471 bytes。41文件哈希及公网HTML/JS/CSS匹配；实际公网通过转轮导入原创WAV/YRC并进入歌词，观察2行8字素、柔边渐变mask与独立glyph transform，验证工件留在.local/lyrics-55，非真实账号歌词声明。
+
+回滚 `/opt/reipod/backups/dist-before-9768a52-20261104T171153Z.tgz` 包含旧dist/release.json；个人首页/provider不变，服务active、会话保留。Pages41875107822首轮测试/构建/产物全部成功，Deploy返回400，报告旧eddca57部署仍in progress；旧工作流此前超时，随后API查询该部署已deployment_cancelled。通过GitHub连接器仅重试失败job，未绕过检查。后续结果按本条补记。
+
+Pages并发改为cancel-in-progress:false，按[GitHub官方静态站点模板](https://github.com/actions/starter-workflows/blob/main/pages/static.yml)让现有发布完成，再发布最新排队提交；不再因连续更新说明而中断正在发布的流程。此改动减少中途取消冲突，不把平台超时自动归因为应用代码；iPhone仍未核验。
+
+
+Pages第二次尝试因同一run有2个同名github-pages artifact而失败（126734211890日志），不是应用检查失败。上传与部署显式使用 `reipod-pages-${{ github.run_id }}-${{ github.run_attempt }}`，依据[upload action输入](https://github.com/actions/upload-pages-artifact/blob/fc324d3547104276b827a68afc52ff2a11cc49c9/action.yml)与[deploy action输入](https://github.com/actions/deploy-pages/blob/368f82528645a54fb793d4d04e342629a3f51346/action.yml)；重新提交触发新发布，未删除历史artifact或站点。YAML解析与配置diff检查通过，站点应用代码仍9768a52。
