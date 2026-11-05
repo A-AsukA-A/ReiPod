@@ -217,3 +217,6 @@ Pages并发改为cancel-in-progress:false，按[GitHub官方静态站点模板](
 
 
 Pages第二次尝试因同一run有2个同名github-pages artifact而失败（126734211890日志），不是应用检查失败。上传与部署显式使用 `reipod-pages-${{ github.run_id }}-${{ github.run_attempt }}`，依据[upload action输入](https://github.com/actions/upload-pages-artifact/blob/fc324d3547104276b827a68afc52ff2a11cc49c9/action.yml)与[deploy action输入](https://github.com/actions/deploy-pages/blob/368f82528645a54fb793d4d04e342629a3f51346/action.yml)；重新提交触发新发布，未删除历史artifact或站点。YAML解析与配置diff检查通过，站点应用代码仍9768a52。
+
+
+恢复结果：修正配置4c83c69触发的[41939982156](https://github.com/A-AsukA-A/ReiPod/actions/runs/41939982156)成功发布；主站仍为同一9768a52应用。任务55原生job126732285152已cancelled且无步骤，不算native成功。
