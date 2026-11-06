@@ -241,3 +241,16 @@ VPS暂存/分发46文件hash一致；公网HTML及13项代码/三首音频/封�
 公网主站/Pages HTML与本地产物字节一致，13个引用代码/音频/封面/歌词资源哈希匹配，release.txt为0aac8d8。agent-browser在独立临时会话以真实转轮输入确认三档随机、风格→艺人→专辑与作曲者→专辑、真实晴天音频进度前进、集合长Center加入，以及On-The-Go保存New Playlist 1并清空工作列表；证据在忽略目录`.local/release-68/`，检查浏览器已关闭。网易云/QQ匿名status及Pages来源200且未授权，非允许来源403；未创建二维码或重试真实账号。
 
 [Pages 41992862940](https://github.com/A-AsukA-A/ReiPod/actions/runs/41992862940)成功；[iPhone 41992862965](https://github.com/A-AsukA-A/ReiPod/actions/runs/41992862965)成功，含无签名iPhone构建及模拟器实际执行6项Swift Testing（日志明确6 tests passed）。这是托管模拟器验证，不是iPhone安装、系统媒体库/真实账户、后台/锁屏或原机精度验收；POD02/U04/U06和C-F05/C-F06精确固件边界继续开放。CI仍沿用用户选择的原macos-15配置。
+
+
+## 2026-11-06 系统相册与iPhone体验发布（任务75）
+
+应用代码[fdb6c19](https://github.com/A-AsukA-A/ReiPod/commit/fdb6c19)已推送origin/main，含任务69–74的PhotoKit相册只读接入、照片最近优先/10秒渐进预览与无黑屏切图、播客封面/列表、菜单窗口性能、全面屏/触觉/常亮/启动背景以及真实电池充电同步。网页本地导入保留，原生能力不据此宣称网页具备。原机精确UI、APP02约59fps/120目标未达与APP03冷启动/常亮待验范围继续按TASK_LOG/UI_METRICS开放。
+
+显式HTTPS API生产构建，141项完整浏览器、35服务端本轮通过；同代码此前262单元和11项物理iPhone Swift通过，用户确认照片切换不黑屏、充电拔插同步。生产含8字节release.txt总12708182 bytes，程序gzip286065、entrygzip147210、试听3817420；47个清单文件暂存/目标SHA-256全部匹配，保留旧哈希资源，index最后原子替换。回滚包`/opt/reipod/backups/dist-before-fdb6c19-20261106T051551Z.tgz`含旧dist/release.json；不清理既有备份。
+
+VPS前端0aac8d8→fdb6c19，后端仍abf75e2；受检后端文件/package与个人首页哈希不变，音乐PID147732不变、nginx/music active。公网HTML/13项代码音频封面歌词哈希一致，release.txt=fdb6c19；两提供方匿名status/Pages来源200未授权、非允许来源403，未创建二维码或验证新账号。独立agent-browser的真实转轮/晴天进度/分类范围/On-The-Go保存清空与网页照片预览结果见TASK_LOG任务75。
+
+[GitHub Pages 42167276359](https://github.com/A-AsukA-A/ReiPod/actions/runs/42167276359)成功且公网HTML与本地字节一致；[iPhone CI 42167276347](https://github.com/A-AsukA-A/ReiPod/actions/runs/42167276347)成功，iPhone编译与模拟器测试均通过；日志明确Swift Testing执行11项通过，不能把此前XCTest“0 tests”汇总行误认为没有运行。生产配置Web资源/原生运行时亦已签名构建、严格校验、同Bundle更新安装并正常打开用户iPhone；随后用户取走手机，剩余验证仅线上和云端，不再依赖连接。原生更新不是App Store发布，未新增真实第三方账号/后台/锁屏验收。
+
+发布回执仅更新本部署记录与TASK_LOG，采用文档提交跳过重复流水线；已通过的应用流水线/站点版本均对应fdb6c19，应用代码和已验证产物未因此变化。
