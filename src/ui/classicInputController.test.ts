@@ -113,7 +113,7 @@ it("photo paging, endpoint seeking and slideshow never invoke music transport", 
   f.input().command("next");
   expect(f.context.navigation.dispatch).toHaveBeenLastCalledWith({ type: "select", key: "last" });
   f.input().command("seek-forward");
-  expect(f.context.navigation.capture).toHaveBeenCalledWith("replace");
+  expect(f.context.navigation.capture).not.toHaveBeenCalled();
   expect(f.context.navigation.dispatch).toHaveBeenLastCalledWith({ type: "select", key: "last" });
   f.input().command("play");
   expect(f.context.navigation.open).toHaveBeenCalledWith("photo-full", "first", "group");

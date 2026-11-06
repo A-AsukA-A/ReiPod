@@ -100,3 +100,18 @@ The original whole-word emphasis and browser smooth scrolling are replaced by in
 ### Authorized lyric test collection — 2026-11-05
 
 The three built-in tracks are replaced by 晴天 / 七里香 / 兰亭序 with real album artwork, embedded metadata and synchronized lyrics. Source lengths are retained; AAC-LC at34.5kbps/32kHz/stereo totals3,817,420 bytes,949 bytes above the previous collection. 晴天/兰亭序 use genuine word timing converted from pinned AMLL TTML sources; 七里香 uses the original QQ LRC, with no fabricated word times. The source master tagged 台湾正式版 is297.247s versus299s in the QQ catalog, so acoustic offset calibration remains unverified. Source/rights/hash details are in [third-party notices](THIRD_PARTY_NOTICES.md) and the catalog. Importing embedded millisecond LRC now retains syncText timing instead of flattening it into plain text.
+
+
+## Podcast home preview — 2026-11-05 / task 70
+
+Highlighting Podcasts now fills the right pane with artwork from the browsable podcast shows, using the existing cover crop, motion and crossfade. It rotates between different shows at random, holds a single show, handles missing art and empty libraries, and respects reduced motion/sleep/visibility. Native system shows and web imports retain their own scope; preview changes do not start playback or rebuild a session. This is the user's My Classic comparison adaptation; exact legacy-firmware geometry and timing remain unverified. The user selected independent in-app playback after confirming My Classic does not follow Apple Podcasts' current session.
+
+
+## System photos and media list pass — 2026-11-05 / task 71
+
+The updated iPhone shell opens authorized PhotoKit albums directly. Photo imports and permission tools live in ReiPod Photo Settings; photo/podcast content lists contain no duplicate import actions. The photo grid now uses the photographed 2007 classic's dark title/date area, five columns and three visible rows, with the selected photo outlined in yellow. System creation dates and album scope are retained; local imports keep modification dates. Podcast shows use full-width artwork/title/episode-count rows. Actual iPhone photo browsing and podcast list/playback were confirmed by the user. Structural evidence and computed styles are in UI_METRICS task 71; exact firmware geometry, fonts and full slideshow settings remain unverified.
+
+
+## 2026-11-06 / 任务72体验修正
+
+照片最近时间优先、按需元数据/图像缓存，长菜单窗口化，原生全面屏安全区与透明底层、独立触觉开关已实现；照片连续切换保留前图至新图解码以消除黑屏空隙。其工程/真机验收和证据查UI_METRICS任务72与TASK_LOG，不扩张为原机字体/像素或完整照片固件验收。公开ProMotion配置已启用，当前设备WebKit rAF约59fps，APP02高帧率仍未完成。

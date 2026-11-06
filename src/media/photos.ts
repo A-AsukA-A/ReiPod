@@ -1,11 +1,15 @@
 import { useSyncExternalStore } from "react";
-export type Photo = {
+export type PhotoItem = {
   id: string;
   name: string;
   album: string;
   url: string;
-  file: File;
+  file?: File;
+  thumbnail?: string;
+  takenAt?: number;
+  system?: boolean;
 };
+export type Photo = PhotoItem & { file: File };
 let photos: Photo[] = [];
 const listeners = new Set<() => void>();
 const publish = () => listeners.forEach((fn) => fn());
@@ -49,7 +53,7 @@ export async function importPhotos(files: File[]) {
       }
       return true;
     });
-  photos = [...photos, ...added];
+  photos = [...photos, ...added].sort((a, b) => b.file.lastModified - a.file.lastModified);
   publish();
   try {
     const db = await database();
@@ -90,7 +94,7 @@ export function restorePhotos() {
           URL.revokeObjectURL(photo.url);
         else photos.push(photo);
       }
-      photos = [...photos];
+      photos = [...photos].sort((a, b) => b.file.lastModified - a.file.lastModified);
       publish();
     })
     .catch(() => {}));

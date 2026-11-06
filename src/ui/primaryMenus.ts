@@ -58,7 +58,7 @@ export function createPrimaryMenus({
       key: "photos",
       label: "照片",
       detail: `${photoCount} 张照片`,
-      action: () => open("photos", photoCount ? "all-photos" : "photo-import"),
+      action: () => open("photos", photoCount ? "all-photos" : "photo-status"),
     },
     {
       key: "podcasts",

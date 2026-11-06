@@ -5,12 +5,16 @@ import { createClassicMenuModel } from "../ui/classicMenuModel";
 import { createClassicCategoryMenus } from "../ui/classicCategoryMenus";
 import { createOnTheGoMenus } from "../ui/onTheGoMenus";
 import { useMenuConfirmation } from "../ui/useMenuConfirmation";
+import { usePhotoPreview } from "./usePhotoPreview";
+import { nativePhotoKey, useNativePhotos } from "./useNativePhotos";
+import { nativePhotoAlbumRows, nativePhotoSettingsRows } from "../ui/nativePhotoMenus";
 import { createTrackMenuOverrides } from "../ui/trackMenuOverrides";
 import { ClassicScreenContent } from "../ui/ClassicScreenContent";
 import { classicScreenTitle } from "../ui/classicScreenModel";
 import { createClassicInputController } from "../ui/classicInputController";
 import { ClassicShell } from "../ui/ClassicShell";
 import { ClassicStatusBar } from "../ui/ClassicStatusBar";
+import { syncNativeAppearance } from "../services/nativeExperience";
 import { backgroundColors } from "../ui/appearance";
 import { useClassicPlaybackController } from "../ui/useClassicPlaybackController";
 import { createMusicServiceActions } from "./musicServiceActions";
@@ -18,7 +22,6 @@ import { createMusicServiceMenus } from "../ui/musicServiceMenus";
 import { usesExternalMusicLogin } from "../services/musicLogin";
 import {
   useEffect,
-  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -135,11 +138,13 @@ export function App() {
   const player = playerFor(services.playback);
   const state = services.playback !== "local" ? remoteState : localState;
   const prefs = usePreferences();
+  const [held, setHeld] = useState(false);
+  const [sleeping, setSleeping] = useState(false);
   const localPlaylists = usePlaylists();
   const localPlaylistRows = useMemo(() => withOnTheGo(localPlaylists), [localPlaylists]);
   const playlists = cloud ? services.playlists : localPlaylistRows;
   const ratings = useRatings();
-  const photos = usePhotos();
+  const localPhotos = usePhotos();
   const texts = useTexts();
   const podcastIds = usePodcastIds();
   const localMusicTracks = useMemo(
@@ -176,6 +181,15 @@ export function App() {
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
   const { page, groupKey, artist: browseArtist, category } = navigation.screen;
+  const systemPhotoScope = groupKey?.startsWith("ios-photo") ?? false;
+  const photoAlbumScope = [navigation.screen, ...navigation.history.slice().reverse()]
+    .find(screen => ["photo-grid", "photo-full"].includes(screen.page) && screen.groupKey?.startsWith("ios-photo-album:"))
+    ?.groupKey?.slice("ios-photo-album:".length);
+  const nativePhotos = useNativePhotos(page === "photos" || page === "photo-settings" || systemPhotoScope,
+    systemPhotoScope ? photoAlbumScope : undefined,
+    [navigation.screen, ...navigation.history.slice().reverse()].find(screen => ["photo-grid", "photo-full"].includes(screen.page))?.selectedKey ?? undefined);
+  const photoPreview = usePhotoPreview(page === "home" && navigation.screen.selectedKey === "photos" && !sleeping, localPhotos);
+  const photos = systemPhotoScope ? nativePhotos.photos : localPhotos;
   const textDocument =
     texts.find((doc) => doc.id === groupKey) ??
     builtinDocuments[groupKey ?? ""];
@@ -200,8 +214,6 @@ export function App() {
     if (page === "podcasts" && nativePodcastsAvailable)
       void prepareNativePodcasts().catch(error => setNotice(String(error)));
   }, [page, nativePodcastsAvailable]);
-  const [held, setHeld] = useState(false);
-  const [sleeping, setSleeping] = useState(false);
   const { dimmed, activate } = useBacklight(prefs.backlight, sleeping);
   const [query, setQuery] = useState("");
   const [finishedSearch, setFinishedSearch] = useState("");
@@ -252,10 +264,10 @@ export function App() {
   const selectedPlaylist = playlists.find((item) => item.id === groupKey);
   const activePhotos = useMemo(
     () =>
-      groupKey && !["photo-options", "photo-delete"].includes(page)
+      systemPhotoScope ? nativePhotos.photos : groupKey && !["photo-options", "photo-delete"].includes(page)
         ? photos.filter((photo) => photo.album === groupKey)
         : photos,
-    [photos, groupKey, page],
+    [photos, groupKey, page, systemPhotoScope, nativePhotos.photos],
   );
   const optionTrack = groupKey ? trackById.get(groupKey) : undefined;
   const playlistTrackIds = useMemo(
@@ -582,7 +594,7 @@ export function App() {
       : localState,
     prefs,
     albums,
-    photoCount: photos.length,
+    photoCount: nativePhotos.available ? (nativePhotos.albums.find(album => album.id === "all-photos")?.count ?? 0) : localPhotos.length,
     podcastShows: browsePodcastShows,
     podcastFirstKey: !browsePodcastShows.length ? "podcast-status" : undefined,
     musicCount: musicTracks.length,
@@ -641,7 +653,7 @@ export function App() {
     actions: serviceActions,
   });
   const splitMenu = splitPages.has(page) && page !== "home" && page !== "music";
-  const photoIndex = Math.max(
+  const photoIndex = systemPhotoScope ? nativePhotos.index : Math.max(
     0,
     activePhotos.findIndex(
       (photo) => photo.id === navigation.screen.selectedKey,
@@ -691,7 +703,18 @@ export function App() {
       setNotice,
       setSlideshow,
       getNavigation: () => navigationRef.current,
+      systemPhotos: systemPhotoScope,
+      photoSettingsRows: [
+        ...(nativePhotos.available ? nativePhotoSettingsRows(nativePhotos, { open, refresh: nativePhotos.refresh,
+          manage: action => { void nativePhotos.manage(action).catch(error => setNotice(String(error))); } }) : []),
+        ...(nativePhotos.available && localPhotos.length ? [{ key: "local-photos", label: "本地 · 已导入照片",
+          detail: `${localPhotos.length} 张照片`, action: () => open("photo-grid", localPhotos[0]?.id) }] : []),
+      ],
     }),
+    ...(nativePhotos.available ? {
+      photos: nativePhotoAlbumRows(nativePhotos, { open, refresh: nativePhotos.refresh,
+        manage: action => { void nativePhotos.manage(action).catch(error => setNotice(String(error))); } }),
+    } : {}),
     ...settingsRows,
     ...createTextMenus({ texts, groupKey, isLocalText, importingTexts, deleting, open, back,
       openImport: () => textInput.current?.click(), setDeleting, setNotice,
@@ -750,7 +773,8 @@ export function App() {
     results: searchResults, query, begin: textEntry.begin, open, play: playTrack,
   });
   const { rows, selectedIndex, focusedRow } = createClassicMenuModel({
-    page, selectedKey: navigation.screen.selectedKey, browseArtist, category, managedRows,
+    page, selectedKey: systemPhotoScope && photoAlbumScope && ["photo-grid", "photo-full"].includes(page)
+      ? nativePhotoKey(photoAlbumScope, photoIndex) : navigation.screen.selectedKey, browseArtist, category, managedRows,
     primaryRows: { home: homeItems, music: musicItems, playlists: playlistItems,
       settings: settingsItems, "confirm-clear": confirmItems },
     browseAlbums, flowAlbums, browseTracks, artists, visibleTracks, isTrackList,
@@ -781,7 +805,9 @@ export function App() {
         else if (!local) account();
       },
     },
-    photos: { activePhotos, photoIndex, slideshow, setSlideshow },
+    photos: { activePhotos, photoIndex, slideshow, setSlideshow,
+      ...(systemPhotoScope && photoAlbumScope ? { offset: nativePhotos.offset ?? 0, total: nativePhotos.total,
+        keyAt: (index: number) => nativePhotoKey(photoAlbumScope, index) } : {}) },
     text: { textEntry, query, playlistName, setQuery, setPlaylistName, saveName, reader },
     settings: { prefs, setPreferences },
   });
@@ -816,18 +842,20 @@ export function App() {
       page !== "photo-full" ||
       held ||
       sleeping ||
-      activePhotos.length < 2
+      (systemPhotoScope ? nativePhotos.total : activePhotos.length) < 2
     )
       return;
     const timer = setTimeout(() => {
       capture("replace");
       dispatch({
         type: "select",
-        key: activePhotos[(photoIndex + 1) % activePhotos.length].id,
+        key: systemPhotoScope && photoAlbumScope
+          ? nativePhotoKey(photoAlbumScope, (photoIndex + 1) % nativePhotos.total)
+          : activePhotos[(photoIndex + 1) % activePhotos.length].id,
       });
     }, 3000);
     return () => clearTimeout(timer);
-  }, [slideshow, page, photoIndex, activePhotos, held, sleeping]);
+  }, [slideshow, page, photoIndex, activePhotos, held, sleeping, systemPhotoScope, photoAlbumScope, nativePhotos.total]);
   useEffect(() => {
     document
       .querySelector('meta[name="theme-color"]')
@@ -835,23 +863,8 @@ export function App() {
         "content",
         backgroundColors[prefs.background],
       );
-  }, [prefs.background]);
-  useLayoutEffect(() => {
-    const row = selectedRow.current,
-      container = row?.parentElement;
-    if (!row || !container) return;
-    const top =
-      row.getBoundingClientRect().top -
-      container.getBoundingClientRect().top +
-      container.scrollTop -
-      container.clientTop;
-    if (top < container.scrollTop) container.scrollTop = top;
-    else if (
-      top + row.offsetHeight >
-      container.scrollTop + container.clientHeight
-    )
-      container.scrollTop = top + row.offsetHeight - container.clientHeight;
-  }, [navigation.screen, focusedRow?.key]);
+    syncNativeAppearance(prefs.background, prefs.backlight === 0 && !sleeping);
+  }, [prefs.background, prefs.backlight, sleeping]);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(""), 2200);
@@ -860,6 +873,7 @@ export function App() {
   const title = page === "search" && query.trim() ? `搜索结果：${searchResults.length}` : classicScreenTitle({ page, groupKey, browseArtist, category, playView,
     albumTitle: selectedAlbum?.title,
     podcastTitle: podcastShows.find(show => show.id === groupKey)?.title,
+    photoTitle: systemPhotoScope ? nativePhotos.albums.find(album => album.id === photoAlbumScope)?.title : groupKey,
     documentTitle: textDocument?.title, playlistTitle: selectedPlaylist?.name, serviceName });
   return (
     <ClassicShell
@@ -893,15 +907,7 @@ export function App() {
           void addTextFiles(files);
         }}
         onPhotos={(result) => {
-          const latest = navigationRef.current.screen;
-          if (
-            latest.page === "photos" &&
-            ["photo-import", "photo-folder"].includes(latest.selectedKey ?? "")
-          )
-            dispatch({
-              type: "select",
-              key: result.added ? "all-photos" : "photo-import",
-            });
+          if (result.added && !nativePhotos.available) open("photos", "all-photos");
           setNotice(
             result.persisted
               ? `已导入 ${result.added} 张照片`
@@ -927,8 +933,10 @@ export function App() {
           searchCount: searchResults.length,
           searchPending: cloud && services.auth === "authorized" && !!query.trim() && finishedSearch !== searchKey,
           searchError: cloud ? services.auth === "authorized" ? services.error : "请先登录音乐服务" : undefined }}
-        photos={{ activePhotos, photoIndex, slideshow }} prefs={prefs}
-        preview={{ page, focusedRow, albums, current, sleeping, tracks: state.tracks }}
+        photos={{ activePhotos, photoIndex, slideshow, offset: systemPhotoScope ? nativePhotos.offset : 0,
+          loading: systemPhotoScope && nativePhotos.loading,
+          total: systemPhotoScope ? nativePhotos.total : activePhotos.length }} prefs={prefs}
+        preview={{ page, focusedRow, albums, photos: photoPreview, podcastShows: browsePodcastShows, current, sleeping, tracks: state.tracks }}
         qrImage={services.qrImage} serviceName={serviceName}
         accountHeader={page === "music-account" ? (
           <MusicAccountHeader

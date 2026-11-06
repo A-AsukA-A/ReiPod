@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { nativeBatteryAvailable, readNativeBattery } from "../services/nativeBattery";
 import { batteryLabel, readDeviceBattery } from "./battery";
 import type { DeviceBattery } from "./battery";
 type BatterySource = EventTarget & DeviceBattery;
@@ -8,6 +9,34 @@ export function BatteryIndicator() {
   const [battery, setBattery] = useState<DeviceBattery | null>(null);
   useEffect(() => {
     let disposed = false;
+    if (nativeBatteryAvailable()) {
+      let revision = 0;
+      const changed = (event: Event) => {
+        revision++;
+        if (!disposed) setBattery(readDeviceBattery((event as CustomEvent<unknown>).detail));
+      };
+      const refresh = () => {
+        if (document.hidden) return;
+        const token = ++revision;
+        void readNativeBattery().then(value => {
+          if (!disposed && token === revision) setBattery(readDeviceBattery(value));
+        }).catch(() => {
+          if (!disposed && token === revision) setBattery(null);
+        });
+      };
+      window.addEventListener("reipod-native-battery", changed);
+      document.addEventListener("visibilitychange", refresh);
+      window.addEventListener("focus", refresh);
+      window.addEventListener("pageshow", refresh);
+      refresh();
+      return () => {
+        disposed = true; revision++;
+        window.removeEventListener("reipod-native-battery", changed);
+        document.removeEventListener("visibilitychange", refresh);
+        window.removeEventListener("focus", refresh);
+        window.removeEventListener("pageshow", refresh);
+      };
+    }
     let pending = false;
     let source: BatterySource | null = null;
     const update = () => {

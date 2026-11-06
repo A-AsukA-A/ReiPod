@@ -23,20 +23,24 @@ targets:
       properties:
         CFBundleDisplayName: ReiPod
         CFBundleShortVersionString: "0.2.0"
-        CFBundleVersion: "1"
+        CFBundleVersion: "2"
+        CADisableMinimumFrameDurationOnPhone: true
         NSAppleMusicUsageDescription: ReiPod 需要读取你的音乐资料库、歌单和系统可访问的已下载播客，并通过系统播放器播放所选内容。
-        NSPhotoLibraryUsageDescription: 选择照片供 ReiPod 在本机浏览，不会上传。
+        NSPhotoLibraryUsageDescription: ReiPod 需要读取你允许访问的系统相册和照片，供转轮浏览与幻灯片播放，不会上传或修改照片。
+        PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true
         NSCameraUsageDescription: 仅在你选择拍照导入照片时使用相机。
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
           UISceneConfigurations: {}
-        UILaunchScreen: {}
+        UILaunchScreen:
+          UIColorName: LaunchBackground
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UIApplicationSupportsIndirectInputEvents: true
     settings:
       base:
         # Apple's Xcode 16.4 / iOS 18.5 simulator WebKit overlay workaround.
         "IPHONEOS_DEPLOYMENT_TARGET[sdk=iphonesimulator*]": "18.4"
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
         PRODUCT_BUNDLE_IDENTIFIER: com.reipod.player
         TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic

@@ -45,3 +45,27 @@ it("preview respects setting values before detail and tolerates no focused row o
   expect(empty.bytes).toBe(0);
   expect(empty.initialAlbumId).toBeUndefined();
 });
+
+it("home podcast artwork follows the browsable shows without borrowing music or another provider's current cover", () => {
+  const track: Track = { id: "qq:1", title: "远程歌曲", filename: "a.mp3", url: "", size: 0 };
+  const music = [{ id: "music", title: "音乐", artist: "艺人", tracks: [track] }];
+  const shows = [{ id: "show", title: "播客节目", artist: "嘉宾", artwork: "podcast.jpg", tracks: [] }];
+  const context = { page: "home" as const, focusedRow: { key: "podcasts", label: "播客", action: () => {} },
+    albums: music, podcastShows: shows, current: track, sleeping: false, tracks: [track] };
+  const preview = classicPreviewModel(context);
+  expect(preview.spec).toMatchObject({ kind: "covers", source: "podcasts" });
+  expect(preview.albums).toBe(shows);
+  expect(preview.initialAlbumId).toBeUndefined();
+  expect(classicPreviewModel({ ...context, podcastShows: [] }).albums).toEqual([]);
+  expect(classicPreviewModel({ ...context, focusedRow: { ...context.focusedRow, key: "music" } }).albums).toBe(music);
+});
+
+
+it("photo preview uses only supplied photos and never a music or podcast cover", () => {
+  const preview = classicPreviewModel({ page: "home", focusedRow: { key: "photos", label: "照片", action() {} },
+    albums: [{ id: "music", title: "歌曲", artist: "", artwork: "music.jpg", tracks: [] }],
+    photos: [{ id: "photo", name: "照片", url: "full.jpg", thumbnail: "thumb.jpg", album: "all" }], sleeping: false, tracks: [] });
+  expect(preview.spec).toMatchObject({ kind: "covers", source: "photos" });
+  expect(preview.albums).toEqual([{ id: "photo", title: "照片", artist: "", artwork: "thumb.jpg", tracks: [] }]);
+  expect(preview.initialAlbumId).toBeUndefined();
+});

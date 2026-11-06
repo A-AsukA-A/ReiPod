@@ -770,7 +770,7 @@
   --lcd-unit: calc(var(--lcd-width) / var(--lcd-native-width, 320));
 }
 .classic-device {
-  height: calc(var(--device-width) * 1.6747573);
+  height: calc(var(--device-width) * var(--device-aspect));
   padding: calc(var(--device-width) * 0.064) 0 0;
 }
 .screen-glass {

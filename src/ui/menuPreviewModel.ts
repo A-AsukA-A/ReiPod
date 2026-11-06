@@ -4,6 +4,7 @@ export type MenuPreviewSpec = {
   icon: ClassicGlyphName;
   title: string;
   detail?: string;
+  source?: "podcasts" | "photos";
 };
 
 /** Highlighting changes only the preview; selecting is a separate operation. */
@@ -28,6 +29,10 @@ export function menuPreview(
       title: label,
       detail: detail === "✓" ? undefined : detail,
     };
+  if (page === "home" && key === "photos")
+    return { kind: "covers", icon: "albums", title: label, detail, source: "photos" };
+  if (page === "home" && key === "podcasts")
+    return { kind: "covers", icon: "music", title: label, detail, source: "podcasts" };
   if (
     ["coverflow", "music", "albums", "songs", "all", "demo"].includes(key) &&
     page !== "settings"

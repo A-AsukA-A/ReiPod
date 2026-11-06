@@ -25,7 +25,9 @@ export const backlightTimes = [0, 5, 10, 20, 30, 60] as const;
 export type BacklightTime = (typeof backlightTimes)[number];
 export type Preferences = Appearance & {
   menuVersion: 3;
+  backlightVersion: 1;
   clickSound: boolean;
+  haptics: boolean;
   lyricsEnabled: boolean;
   brightness: number;
   backlight: BacklightTime;
@@ -44,14 +46,17 @@ export function parsePreferences(value: unknown): Preferences {
       : fallback;
   return {
     menuVersion: 3,
+    backlightVersion: 1,
     ...parseAppearance(saved),
     clickSound: saved.clickSound !== false,
+    haptics: saved.haptics !== false,
     lyricsEnabled: saved.lyricsEnabled !== false,
     brightness: number(saved.brightness, 1, 0.25),
     volumeLimit: number(saved.volumeLimit, 1, 0.1),
-    backlight: backlightTimes.includes(saved.backlight as BacklightTime)
+    backlight: saved.backlight === 10 && saved.backlightVersion !== 1 ? 0
+      : backlightTimes.includes(saved.backlight as BacklightTime)
       ? (saved.backlight as BacklightTime)
-      : 10,
+      : 0,
     mainMenu: Array.isArray(saved.mainMenu)
       ? optionalMainItems
           .filter(

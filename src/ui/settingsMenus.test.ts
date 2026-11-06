@@ -53,7 +53,7 @@ it("stock settings order is stable and modern features have one labeled boundary
   f.context.localTools = [{ key: "import", label: "Import", action: vi.fn() }];
   const menus = f.menus();
   expect(menus.settingsItems.map(row => row.key)).toEqual(["about", "shuffle", "repeat", "main-menu", "music-menu", "volume-limit", "backlight", "brightness", "click", "reipod-settings", "reset-settings"]);
-  expect(menus.managedRows["reipod-settings"]!.map(row => row.key)).toEqual(["music-services", "import", "podcast-settings", "finish", "lyrics-display"]);
+  expect(menus.managedRows["reipod-settings"]!.map(row => row.key)).toEqual(["music-services", "import", "photo-settings", "podcast-settings", "finish", "lyrics-display"]);
   menus.settingsItems.at(-1)!.action();
   expect(f.context.open).toHaveBeenCalledWith("reset-settings", "cancel");
 });
@@ -70,7 +70,7 @@ it("Reset Settings restores implemented firmware preferences through their owner
   rows[0].action();
   expect(f.context.setPreferences).not.toHaveBeenCalled();
   rows[1].action();
-  expect(f.context.setPreferences).toHaveBeenCalledWith({ clickSound: true, brightness: 1, volumeLimit: 1, backlight: 10, mainMenu: parsePreferences(null).mainMenu, musicMenu: parsePreferences(null).musicMenu });
+  expect(f.context.setPreferences).toHaveBeenCalledWith({ clickSound: true, brightness: 1, volumeLimit: 1, backlight: 0, mainMenu: parsePreferences(null).mainMenu, musicMenu: parsePreferences(null).musicMenu });
   expect(f.context.shuffle).toHaveBeenCalledWith(false);
   expect(f.context.repeat).toHaveBeenCalledWith("off");
   expect(f.context.clear).not.toHaveBeenCalled();

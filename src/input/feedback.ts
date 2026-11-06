@@ -1,3 +1,4 @@
+import { nativeFeedback } from "../services/nativeExperience";
 import { getPreferences } from "../ui/preferences";
 export type FeedbackKind = "press" | "release" | "step";
 let context: AudioContext | null = null;
@@ -5,7 +6,9 @@ let lastStep = -Infinity;
 
 /** Original synthesized clicks; no reference-app audio is used. */
 export function feedback(kind: FeedbackKind) {
-  if (!getPreferences().clickSound) return;
+  const prefs = getPreferences();
+  if (prefs.haptics) nativeFeedback(kind);
+  if (!prefs.clickSound) return;
   if (kind === "step" && performance.now() - lastStep < 35) return;
   if (kind === "step") lastStep = performance.now();
   try {

@@ -16,6 +16,8 @@ type MediaMenuContext = {
   setNotice: (message: string) => void;
   setSlideshow: (value: boolean) => void;
   getNavigation: () => NavigationState;
+  systemPhotos?: boolean;
+  photoSettingsRows?: MenuItem[];
 };
 export function createMediaMenus({
   photos,
@@ -30,6 +32,8 @@ export function createMediaMenus({
   setNotice,
   setSlideshow,
   getNavigation,
+  systemPhotos = false,
+  photoSettingsRows = [],
 }: MediaMenuContext): Partial<Record<Page, MenuItem[]>> {
   return {
     photos: [
@@ -53,6 +57,11 @@ export function createMediaMenus({
             album,
           ),
       })),
+      ...(!photos.length ? [{ key: "photo-status", label: "暂无照片",
+        detail: "可在照片设置中导入", action: () => open("photo-settings") }] : []),
+    ],
+    "photo-settings": [
+      ...photoSettingsRows,
       {
         key: "photo-import",
         label: "导入照片…",
@@ -83,11 +92,11 @@ export function createMediaMenus({
           setSlideshow(true);
         },
       },
-      {
+      ...(!systemPhotos ? [{
         key: "delete",
         label: "删除照片…",
         action: () => open("photo-delete", "cancel", groupKey),
-      },
+      }] : []),
       { key: "cancel", label: "返回照片", action: () => back() },
     ],
     "photo-delete": [
@@ -122,8 +131,8 @@ export function podcastShowRows(shows: Album[], open: MediaMenuContext["open"], 
   return shows.map(show => ({
     key: show.id,
     label: `${local ? "本地 · " : ""}${show.title === "未知专辑" ? show.artist : show.title}`,
-    value: String(show.tracks.length),
-    detail: show.tracks[0]?.podcast ? "iPhone 系统播客" : "本地播客",
+    artwork: show.artwork,
+    detail: `${show.tracks.length} 集`,
     action: () => open("podcast-episodes", show.tracks[0]?.id, show.id),
   }));
 }

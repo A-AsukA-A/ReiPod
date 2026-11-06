@@ -67,7 +67,9 @@ export function MenuPreview({
       data-preview={spec.icon}
     >
       <AlbumPreview
+        key={spec.source ?? "music"}
         albums={albums}
+        source={spec.source ?? "music"}
         initialAlbumId={initialAlbumId}
         pinnedAlbum={playingAlbum}
         enabled={showArtwork}

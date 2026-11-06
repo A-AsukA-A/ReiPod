@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 
 export async function nativeMusicFixture(page: Page, denied = false, podcasts = false,
   options: { authorized?: boolean; holdMusic?: boolean; holdPodcasts?: boolean; holdPodcastTail?: boolean; failPodcasts?: boolean;
+    podcastArtwork?: boolean; songCount?: number;
     playback?: { currentId: string; status: string; position: number } } = {}) {
   await page.addInitScript(
     ({ denied, podcasts, options }) => {
@@ -21,12 +22,25 @@ export async function nativeMusicFixture(page: Page, denied = false, podcasts = 
           duration: 200,
         },
       ];
+      if (options.songCount) {
+        songs.splice(0, songs.length, ...Array.from({ length: options.songCount }, (_, index) => ({
+          id: String(index + 1), title: `Song ${String(index + 1).padStart(5, "0")}`,
+          artist: "Phone Artist", album: "Phone Album", duration: 180,
+        })));
+      }
       const episodes = [
         { id: "9007199254740995", title: "系统单集一", artist: "嘉宾甲", duration: 1800,
+          artwork: options.podcastArtwork ? "./artwork/qingtian.jpg" : undefined,
           podcast: { showId: "18446744073709551612", showTitle: "系统节目", bookmark: 125 } },
         { id: "9007199254740997", title: "系统单集二", artist: "嘉宾乙", duration: 2400,
+          artwork: options.podcastArtwork ? "./artwork/qingtian.jpg" : undefined,
           podcast: { showId: "18446744073709551612", showTitle: "系统节目", bookmark: 42 } },
       ];
+      if (options.podcastArtwork) {
+        episodes.push({ id: "9007199254740999", title: "另一节目单集", artist: "嘉宾丙", duration: 1200,
+          podcast: { showId: "18446744073709551610", showTitle: "另一系统节目", bookmark: 0 },
+          artwork: "./artwork/qilixiang.jpg" });
+      }
       const items = [...songs, ...episodes];
       let permission =
         localStorage.getItem("__fixture-ios-permission") || (options.authorized ? "authorized" : "notDetermined");
@@ -151,6 +165,11 @@ export async function nativeMusicFixture(page: Page, denied = false, podcasts = 
                         { id: "18446744073709551615", name: "系统歌单" },
                       ],
                     };
+                  if (options.songCount) {
+                    const offset = request.offset ?? 0, end = Math.min(offset + 100, songs.length);
+                    return { authorization: permission, tracks: songs.slice(offset, end),
+                      ...(end < songs.length ? { nextOffset: end } : {}) };
+                  }
                   return request.offset
                     ? { authorization: permission, tracks: [songs[1]] }
                     : {

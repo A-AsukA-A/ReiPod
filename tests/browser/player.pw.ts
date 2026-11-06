@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, utimes } from "node:fs/promises";
 import { join } from "node:path";
 import { live, key, home, choose, holdCenter, text } from "./dial";
 import { taggedAudio } from "./taggedAudio";
@@ -456,9 +456,11 @@ test("search and playlist naming can be entered entirely on the click wheel", as
 
 test("photos import, thumbnail selection, full view, slideshow and refresh use the wheel", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.goto("/");
-  await choose(page, "照片");
+  await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
+  await choose(page, "照片设置");
   const chooserPromise = page.waitForEvent("filechooser");
   await choose(page, "导入照片…");
   const chooser = await chooserPromise;
@@ -466,10 +468,12 @@ test("photos import, thumbnail selection, full view, slideshow and refresh use t
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j3ioAAAAASUVORK5CYII=",
     "base64",
   );
-  await chooser.setFiles([
-    { name: "one.png", mimeType: "image/png", buffer: png },
-    { name: "two.png", mimeType: "image/png", buffer: png },
-  ]);
+  const newer = testInfo.outputPath("one.png"), older = testInfo.outputPath("two.png");
+  await mkdir(testInfo.outputDir, { recursive: true });
+  await writeFile(newer, png); await writeFile(older, png);
+  await utimes(newer, new Date("2026-11-06T00:00:00Z"), new Date("2026-11-06T00:00:00Z"));
+  await utimes(older, new Date("2026-11-01T00:00:00Z"), new Date("2026-11-01T00:00:00Z"));
+  await chooser.setFiles([older, newer]);
   await choose(page, "所有照片");
   await expect(live(page).locator(".photo-contact-sheet img")).toHaveCount(2);
   await expect(live(page).locator(".photo-grid-header")).toContainText(
@@ -483,9 +487,10 @@ test("photos import, thumbnail selection, full view, slideshow and refresh use t
         .evaluate((image) => (image as HTMLImageElement).naturalWidth),
     )
     .toBeGreaterThan(0);
+  await expect(live(page).locator(".photo-contact-sheet img").first()).toHaveAttribute("alt", "one.png");
   await key(page, "ArrowDown");
   await key(page, "Enter");
-  await expect(live(page).locator(".photo-full img")).toHaveAttribute(
+  await expect(live(page).locator(".photo-full img[data-visible]")).toHaveAttribute(
     "alt",
     "two.png",
   );
@@ -494,13 +499,13 @@ test("photos import, thumbnail selection, full view, slideshow and refresh use t
   await key(page, "ArrowDown");
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
   await key(page, "ArrowUp");
-  await expect(live(page).locator(".photo-full img")).toHaveAttribute(
+  await expect(live(page).locator(".photo-full img[data-visible]")).toHaveAttribute(
     "alt",
     "one.png",
   );
   await key(page, "Space");
   await expect(live(page).locator(".photo-full span")).toContainText("▷");
-  await expect(live(page).locator(".photo-full img")).toHaveAttribute(
+  await expect(live(page).locator(".photo-full img[data-visible]")).toHaveAttribute(
     "alt",
     "two.png",
   );
@@ -583,7 +588,9 @@ test("album folders retain their names and genre/composer entries are navigable"
     ),
   );
   await page.goto("/");
-  await choose(page, "照片");
+  await choose(page, "设置");
+  await choose(page, "ReiPod 设置");
+  await choose(page, "照片设置");
   const pending = page.waitForEvent("filechooser");
   await choose(page, "导入相册文件夹…");
   const chooser = await pending;

@@ -72,6 +72,8 @@ ReiPod/
 | `src/ui/mediaMenus.ts` | 照片分组、照片操作与播客节目菜单 | 只消费只读照片摘要及注入的导入/删除/导航命令；不访问文件输入 DOM、React ref 或媒体存储单例 |
 | `src/ui/Lyrics.tsx`、`lyricEffects.ts`、`useLyricLayout.ts` | 媒体时间驱动字素高亮与近视口行弹簧，保留转轮浏览/减弱动态 | 不复制播放时钟、账号或歌词获取；数学运动、行位置与渲染分开 |
 | `src/ui/` | 当前 classic 的导航、屏幕、预览与运动 | 不创建第二份播放/账号状态；不是全机型通用固件 |
+| `src/services/nativePhotos.ts`、`src/app/useNativePhotos.ts`、`src/ui/nativePhotoMenus.ts` | 系统照片消息契约、会话内授权/分页协调与只读菜单 | 与音乐账户/播放独立；范围变化/撤销丢弃迟到数据，PhotoKit标识/图片不持久化到页面 |
+| `ios/ReiPod/NativePhotoService.swift`、`PhotoBridge.swift` | PhotoKit授权/相册/图片读取与限定主文档的原生桥 | 无照片写操作；固定尺寸/不透明句柄，取消与权限/库代际复核 |
 | `src/media/` | 附加本地媒体和阅读数据 | 保留导入、恢复与存储边界 |
 
 ## 机型与外观边界
@@ -126,3 +128,12 @@ ReiPod/
 任务66：`src/player/library.ts`提供纯标签归组/筛选；`src/ui/classicCategoryMenus.ts`生成classic风格/作曲者中间层入口和集合播放命令，`navigation.ts`保存分类范围与焦点。`App`装配当前来源资料库、筛选快照与既有播放器；不把分类菜单或第二份队列放入平台服务。`tests/browser/firmwareBrowse.pw.ts`用带真实RIFF/ID3标签的原创静音WAV覆盖合辑范围、曲序/播放、记忆与服务隔离。
 
 任务67：`src/player/ordering.ts`管理纯专辑块随机，`playlistModel.ts`只含歌单类型/稳定ID与只读展示派生；持久化仍归`playlists.ts`，UI不导入其运行时单例。`src/ui/onTheGoMenus.ts`经注入端口生成保存/清空流程，`useMenuConfirmation.ts`负责可取消的标题确认反馈；App装配本地范围与播放会话。`tests/browser/firmwarePlayback.pw.ts`覆盖三态随机/多碟曲序、集合长按、保存/重载、存储失败与歌词入口。Apple/原生碟号在各适配器规范化，Swift仅增加返回的元数据，不改变授权边界。
+
+
+任务72：`src/services/nativeExperience.ts`负责能力/节流的原生触觉传输，`ios/ReiPod/ExperienceBridge.swift`限定打包主文档并提供UIKit反馈；`input/feedback`装配声音与触觉，设置独立保存。宿主窗口安全区由PlayerViewController注入、ClassicShell/样式消费；机身宽高来源在models/classic。MenuRows负责附近行窗口、最终行高测量和焦点可见性，不把整库导航/播放模型移进组件。
+
+`src/app/usePhotoPreview.ts`仅在主页照片焦点读取小型已授权预览并处理事件/取消；NativePhotoService/PhotoBridge提供只读preview，classicScreenModel将照片摘要注入共享预览，模型不发起宿主请求。
+
+APP03：`Assets.xcassets/LaunchBackground.colorset`提供系统静态启动底色，`ExperienceBridge`只缓存允许的背景/常亮配置，`PrivacyInfo.xcprivacy`声明App内UserDefaults用途；PlayerViewController在首布局前应用并负责前后台idle释放。背光默认/兼容迁移在classicSettings，不写进主题或播放核心。
+
+`ios/ReiPod/DeviceBatteryBridge.swift`限定主文档、读取并监听UIDevice电量/供电，PlayerViewController管理前后台监测生命周期；`src/services/nativeBattery.ts`仅承接只读传输，BatteryIndicator消费原生事件或既有网页BatteryManager，不向播放核心引入宿主类型。

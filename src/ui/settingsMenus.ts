@@ -1,3 +1,4 @@
+import { nativeExperienceAvailable } from "../services/nativeExperience";
 import type { PlayerState } from "../player/Player";
 import type { Page } from "./navigation";
 import type { MenuItem } from "./MenuRows";
@@ -32,6 +33,9 @@ export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud
       action: () => open("music-services", selectedService),
     },
     ...localTools,
+    ...(nativeExperienceAvailable() ? [{ key: "haptics", label: "触觉反馈", value: prefs.haptics ? "开启" : "关闭",
+      leaf: true, action: () => setPreferences({ haptics: !prefs.haptics }) }] : []),
+    { key: "photo-settings", label: "照片设置", action: () => open("photo-settings") },
     { key: "podcast-settings", label: "播客设置", action: () => open("podcast-settings") },
     ...originalSettingsItems.filter(item => !stockKeys.includes(item.key)).map((item) =>
       item.key === "clear"

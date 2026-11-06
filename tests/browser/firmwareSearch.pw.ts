@@ -103,6 +103,8 @@ test("reset confirmation restores firmware choices, preserves the music session 
   await choose(page, "重复播放"); await choose(page, "单曲");
   const read = () => page.evaluate(() => ({ prefs: JSON.parse(localStorage.getItem("reipod-appearance")!), session: JSON.parse(localStorage.getItem("reipod-session")!), modes: JSON.parse(localStorage.getItem("reipod-playback")!), playlists: localStorage.getItem("reipod-playlists") }));
   await expect.poll(async () => (await read()).modes.repeat).toBe("one");
+  // Session persistence coalesces writes independently of preference updates.
+  await expect.poll(async () => (await read()).session.currentId).toBe("demo:jay-qingtian");
   const before = await read();
   await choose(page, "还原设置");
   await expect(live(page).locator('.screen-row[aria-current="true"] .row-title')).toHaveText("取消");
@@ -112,7 +114,7 @@ test("reset confirmation restores firmware choices, preserves the music session 
   await expect(page.locator(".lcd-screen")).toHaveAttribute("data-page", "settings");
   await expect.poll(async () => (await read()).prefs.brightness).toBe(1);
   const after = await read();
-  expect(after.prefs).toMatchObject({ finish: "black", background: "dark", lyricsEnabled: false, volumeLimit: 1, backlight: 10, clickSound: true });
+  expect(after.prefs).toMatchObject({ finish: "black", background: "dark", lyricsEnabled: false, volumeLimit: 1, backlight: 0, clickSound: true });
   expect(after.session.currentId).toBe(before.session.currentId);
   expect(after.modes).toMatchObject({ repeat: "off", shuffle: false });
   expect([...after.session.queue].sort()).toEqual([...before.session.queue].sort());

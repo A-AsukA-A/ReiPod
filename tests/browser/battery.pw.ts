@@ -242,3 +242,56 @@ test("a failed battery connection retries when the page regains focus", async ({
   });
   await expect(icon).toHaveAttribute("aria-label", "设备电量 62%，正在充电");
 });
+
+test("iPhone uses native battery changes and re-reads power state after resume", async ({ page }) => {
+  await page.addInitScript(() => {
+    let reading: unknown = { level: 0.73, charging: false };
+    let browserCalls = 0;
+    Object.defineProperty(navigator, "getBattery", { value: () => { browserCalls++; return Promise.resolve({ level: 1, charging: true }); } });
+    Object.defineProperty(window, "__REIPOD_NATIVE_BATTERY_VERSION__", { value: 1 });
+    Object.defineProperty(window, "webkit", { value: { messageHandlers: { reipodBattery: {
+      postMessage: async () => reading,
+    } } } });
+    (window as any).__nativeBattery = { set(value: unknown, notify: boolean) {
+      reading = value;
+      if (notify) window.dispatchEvent(new CustomEvent("reipod-native-battery", { detail: value }));
+    }, browserCalls: () => browserCalls };
+  });
+  await page.goto("/");
+  const icon = live(page).locator(".classic-battery");
+  await expect(icon).toHaveAttribute("aria-label", "设备电量 73%，电池供电");
+  await page.evaluate(() => (window as any).__nativeBattery.set({ level: 0.73, charging: true }, true));
+  await expect(icon).toHaveAttribute("aria-label", "设备电量 73%，正在充电");
+  await expect(icon.locator("svg")).toHaveCount(1);
+  await page.evaluate(() => {
+    (window as any).__nativeBattery.set({ level: 0.44, charging: false }, false);
+    window.dispatchEvent(new Event("pageshow"));
+  });
+  await expect(icon).toHaveAttribute("aria-label", "设备电量 44%，电池供电");
+  await expect(icon.locator("svg")).toHaveCount(0);
+  await page.evaluate(() => (window as any).__nativeBattery.set(null, true));
+  await expect(icon).toHaveAttribute("data-source", "fallback");
+  await expect(icon.locator("svg")).toHaveCount(0);
+  expect(await page.evaluate(() => (window as any).__nativeBattery.browserCalls())).toBe(0);
+});
+
+test("a stale native battery reply cannot override a newer charging event", async ({ page }) => {
+  await page.addInitScript(() => {
+    let release!: () => void;
+    const first = new Promise<void>(resolve => { release = resolve; });
+    Object.defineProperty(window, "__REIPOD_NATIVE_BATTERY_VERSION__", { value: 1 });
+    Object.defineProperty(window, "webkit", { value: { messageHandlers: { reipodBattery: {
+      postMessage: async () => { await first; return { level: 0.1, charging: false }; },
+    } } } });
+    (window as any).__releaseBattery = release;
+  });
+  await page.goto("/");
+  const icon = live(page).locator(".classic-battery");
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("reipod-native-battery", { detail: { level: 0.55, charging: true } })));
+  await expect(icon).toHaveAttribute("aria-label", "设备电量 55%，正在充电");
+  await page.evaluate(async () => { (window as any).__releaseBattery(); await new Promise(resolve => setTimeout(resolve, 0)); });
+  await expect(icon).toHaveAttribute("aria-label", "设备电量 55%，正在充电");
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("reipod-native-battery", { detail: { level: 2, charging: true } })));
+  await expect(icon).toHaveAttribute("data-source", "fallback");
+  await expect(icon.locator("svg")).toHaveCount(0);
+});

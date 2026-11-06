@@ -1,3 +1,4 @@
+import { useLayoutEffect, useState } from "react";
 import type { RefObject } from "react";
 import type { Page } from "./navigation";
 import type { Track } from "../player/Player";
@@ -44,7 +45,33 @@ export function MenuRows({
   playlistIds: Set<string>;
   selectedRow: RefObject<HTMLDivElement | null>;
 }) {
-  return rows.map((row) => (
+  const focusedIndex = Math.max(0, rows.findIndex(row => row.key === focusedKey));
+  const start = rows.length > 60 ? Math.max(0, Math.floor(focusedIndex / 10) * 10 - 10) : 0;
+  const end = rows.length > 60 ? Math.min(rows.length, start + 40) : rows.length;
+  const [rowHeight, setRowHeight] = useState(0);
+  useLayoutEffect(() => {
+    if (rows.length <= 60) return;
+    const row = selectedRow.current;
+    if (!row) return;
+    // Read the final cascade rather than duplicating the firmware's row geometry.
+    const measure = () => setRowHeight(row.getBoundingClientRect().height);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [page, start, rows.length, selectedRow]);
+  useLayoutEffect(() => {
+    const row = selectedRow.current, container = row?.parentElement;
+    if (!row || !container) return;
+    const top = row.getBoundingClientRect().top - container.getBoundingClientRect().top
+      + container.scrollTop - container.clientTop;
+    if (top < container.scrollTop) container.scrollTop = top;
+    else if (top + row.offsetHeight > container.scrollTop + container.clientHeight)
+      container.scrollTop = top + row.offsetHeight - container.clientHeight;
+  }, [page, focusedKey, rowHeight, start, rows.length, selectedRow]);
+  return <>
+    {start > 0 && <div aria-hidden="true" style={{ height: start * rowHeight, flexShrink: 0 }} />}
+    {rows.slice(start, end).map((row) => (
     <div
       key={row.key}
       data-row-key={row.key}
@@ -54,7 +81,7 @@ export function MenuRows({
       data-member={
         page === "playlist-add-tracks" ? playlistIds.has(row.key) : undefined
       }
-      className={`screen-row ${row.key === focusedKey ? "selected" : ""} ${row.disabled ? "is-disabled" : ""} ${row.key === "confirm" || row.destructive ? "destructive" : ""} ${page === "albums" ? "album-row" : ""} ${page === "genres" ? "category-row" : ""} ${trackIds.has(row.key) ? "track-row" : ""}`}
+      className={`screen-row ${row.key === focusedKey ? "selected" : ""} ${row.disabled ? "is-disabled" : ""} ${row.key === "confirm" || row.destructive ? "destructive" : ""} ${page === "albums" || page === "podcasts" ? "album-row" : ""} ${page === "genres" ? "category-row" : ""} ${trackIds.has(row.key) ? "track-row" : ""}`}
     >
       {row.searchKind && (
         <span className="search-result-icon" data-kind={row.searchKind}>
@@ -74,7 +101,7 @@ export function MenuRows({
           )}
         </span>
       )}
-      {page === "albums" &&
+      {(page === "albums" || page === "podcasts") &&
         (row.aggregate ? (
           <span className="album-all-art" aria-hidden="true">
             ♫
@@ -103,7 +130,7 @@ export function MenuRows({
             </span>
           )}
         </span>
-        {(page === "albums" || page === "genres" || page === "search" || page === "photos") && (
+        {(page === "albums" || page === "podcasts" || page === "genres" || page === "search" || page === "photos") && (
           <small>{row.detail}</small>
         )}
       </span>
@@ -124,5 +151,7 @@ export function MenuRows({
         </span>
       )}
     </div>
-  ));
+  ))}
+    {end < rows.length && <div aria-hidden="true" style={{ height: (rows.length - end) * rowHeight, flexShrink: 0 }} />}
+  </>;
 }

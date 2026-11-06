@@ -65,6 +65,7 @@ type Context = {
   photos: {
     activePhotos: readonly { id: string }[];
     photoIndex: number;
+    offset?: number; total?: number; keyAt?: (index: number) => string;
     slideshow: boolean;
     setSlideshow: (enabled: boolean) => void;
   };
@@ -93,7 +94,8 @@ export function createClassicInputController(context: Context) {
   const { player, state, current, playView, ratings, setRating, toggleFavorite,
     cyclePlayView, scrollLyrics, showVolume, showTransportHint, trackOptions } = context.playback;
   const { trackById, browseTracks, albums, playTrack, playAlbum, playDefault } = context.library;
-  const { activePhotos, photoIndex, slideshow, setSlideshow } = context.photos;
+  const { activePhotos, photoIndex, slideshow, setSlideshow, offset = 0, total = activePhotos.length,
+    keyAt = (index: number) => activePhotos[index]?.id } = context.photos;
   const { textEntry, query, playlistName, setQuery, setPlaylistName, saveName, reader } = context.text;
   const { prefs, setPreferences } = context.settings;
   const rotate = (
@@ -117,12 +119,12 @@ export function createClassicInputController(context: Context) {
     if (page === "photo-grid" || page === "photo-full") {
       const destination = Math.max(
         0,
-        Math.min(activePhotos.length - 1, photoIndex + steps),
+        Math.min(total - 1, photoIndex + steps),
       );
       setSlideshow(false);
-      if (destination === photoIndex || !activePhotos[destination]) return;
-      if (page === "photo-full") capture("replace");
-      dispatch({ type: "select", key: activePhotos[destination].id });
+      if (destination === photoIndex || !keyAt(destination)) return;
+      feedback("step");
+      dispatch({ type: "select", key: keyAt(destination) });
       return;
     }
     if (page === "brightness") {
@@ -212,26 +214,21 @@ export function createClassicInputController(context: Context) {
         return;
       }
       if (value === "seek-forward" || value === "seek-backward") {
-        const destination = activePhotos.at(
-          value === "seek-forward" ? -1 : 0,
-        )?.id;
+        const destination = keyAt(value === "seek-forward" ? total - 1 : 0);
         if (!destination || destination === selectedKey)
           return;
-        capture("replace");
-        dispatch({
-          type: "select",
-          key: activePhotos.at(value === "seek-forward" ? -1 : 0)?.id ?? "",
-        });
+        feedback("step");
+        dispatch({ type: "select", key: destination });
         return;
       }
-      if (value === "options" && activePhotos[photoIndex]) {
+      if (value === "options" && activePhotos[photoIndex - offset]) {
         setSlideshow(false);
-        open("photo-options", "slideshow", activePhotos[photoIndex].id);
+        open("photo-options", "slideshow", activePhotos[photoIndex - offset].id);
         return;
       }
       if (value === "play") {
         if (page === "photo-grid")
-          open("photo-full", activePhotos[photoIndex]?.id, groupKey);
+          open("photo-full", activePhotos[photoIndex - offset]?.id, groupKey);
         setSlideshow(!slideshow);
         return;
       }

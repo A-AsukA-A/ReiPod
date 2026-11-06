@@ -284,3 +284,24 @@ Apple《iPod classic Features Guide》[72页镜像](https://www.manuallib.com/do
 手册只证明功能/操作，没有可信的闪烁时长或逐页几何。本轮没有新增照片量尺、LCD四角归一或实机测量误差；菜单继承现有24u网格，标题反馈以已有100ms音量反馈token的两倍实现一次透明度确认，200ms为ReiPod适配，非原机测量。减少动态效果保留文字确认，快速追加取消前次反馈。当前/已播前缀保留、合辑按已有albumArtist+album身份、无专辑逐曲处理、编号冲突与存储失败保留为ReiPod实现约定；固件精确算法/时序仍待连续操作证据。
 
 元数据来源另核对[MPMediaItem.discNumber](https://developer.apple.com/documentation/mediaplayer/mpmediaitem/discnumber)与[Apple Music资料库歌曲响应](https://developer.apple.com/documentation/applemusicapi/get-all-library-songs)，仅支持可用碟号含义，不证明真实账户/设备已验收。原生保持主线程与既有消息边界，系统已有队列不可确认时拒绝伪造重排；On-The-Go只写本地歌单存储，不扩展平台凭证能力。工程截图/计算样式与行为验收由UI_METRICS任务67维护。
+
+
+## My Classic播客对照 — 2026-11-05 / 任务70
+
+手机上My Classic3.16（31）的比较样本由用户实际操作。首轮用户判断与Apple播客同步，随后按Apple播客当前单集定位约2:00→回My Classic的受控步骤确认没有跟随，并纠正判断。首轮抓图曾恰遇通话/多任务过渡，不能从未稳定帧推断当前会话一致。该观察只支持这台设备本次行为，不用于恢复My Classic源码或推定私有接口。
+
+用户最终指定ReiPod内独立播放/后台/锁屏体验，强调UI还原并指出主页播客焦点缺封面轮播；当前POD06据此修复数据源与静态卡片映射。没有取得My Classic主页此状态的可靠连续计时或匹配2007固件量尺；现有动画/几何仍为暂定适配，工程证据及限制在UI_METRICS任务70。私有手机截图保存在.local/device-69与.local/podcast-70，不公开分发；不引用含通知或通话过渡的截图为UI基准。
+
+
+## classic照片与播客列表核查 — 2026-11-05 / 任务71（11-06收尾）
+
+依据Jeremy Horwitz的[iLounge 80GB/160GB classic亲测](https://www.ilounge.com/index.php/reviews/entry/apple-ipod-classic-80gb-160gb)“Photo Playback”段及原站[双机照片199_19](https://www.ilounge.com/wp-content/uploads/2021/05/199_19.jpg.webp)、[classic近照19-2](https://www.ilounge.com/wp-content/uploads/2021/05/19-2.jpg.webp)。图像各400×300；来源页面迁移日期2021-05不作为拍摄时间，精确固件/容量未知。双机图只采用左侧classic，不把右侧5G样式合并。照片直接支持深色标题/数量日期区、5列3行缩略图和黄色选择边框；未进行新的四角单应测量，不取照片RGB为厂商值，不能据此确认字体/像素几何一致。
+
+[Ars2007原始亲测](https://arstechnica.com/gadgets/2007/09/the-ipod-gets-a-makeover-a-review-of-the-ipod-nano-and-ipod-classic/)明确说明播客列表的封面和单集上下文。当前据此补封面/数量并采用已有专辑列表的全宽行；未取得匹配固件的播客列表数值量尺。原机完整幻灯片设置/过渡、中文字体和精确尺寸仍待证，不以iPhone功能通过代替。
+
+公开来源记录/私有原图分开：两份WebP SHA256依次为5faec18232c88bcaed500531c581a8523bdef23d2bd61a51252c9e3fbd897136、df29501e9c684cba736a8fa28ce3fd9f4bf159660e486168c257c3396ddd3296，保留在.local/photos-71/reference-photo-grid.webp与reference-photo-grid-closeup.webp；无原图再分发。具体实现和三视口工程前后对照见UI_METRICS任务71。
+
+
+## 2026-11-06 / 任务72：现代iPhone宿主性能边界
+
+这是ReiPod适配研究，不是旧iPod硬件指标。照片倒序按Apple [PHFetchOptions sortDescriptors](https://developer.apple.com/documentation/photos/phfetchoptions/sortdescriptors)使用creationDate降序；原生触觉采用[UISelectionFeedbackGenerator](https://developer.apple.com/documentation/uikit/uiselectionfeedbackgenerator)。[Apple ProMotion配置说明](https://developer.apple.com/documentation/quartzcore/optimizing-iphone-and-ipad-apps-to-support-promotion-displays)确认CADisableMinimumFrameDurationOnPhone opt-in不保证指定刷新率。核查[WebKit294338](https://bugs.webkit.org/show_bug.cgi?id=294338)仍NEW，当前SDK WKPreferences公开头文件无相应偏好开关。iPhone17 Pro/iOS27.3真机rAF120次样本约59fps，不能以硬件120上限/配置开启宣称WebKit达到120，亦不把rAF采样当面板扫描测量；系统辅助功能“限制帧速率”及温控状态未独立核验。继续优化main-thread转场/图片读取，高帧率目标APP02保留开放。

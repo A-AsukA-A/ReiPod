@@ -1,3 +1,4 @@
+import type { PhotoItem } from "../media/photos";
 import type { Page } from "./navigation";
 import type { PlayView } from "./nowPlaying";
 import type { Album, MusicCategory } from "../player/library";
@@ -7,12 +8,12 @@ import { menuPreview } from "./menuPreviewModel";
 
 type TitleContext = {
   page: Page; groupKey?: string; browseArtist?: string; playView: PlayView;
-  albumTitle?: string; podcastTitle?: string; documentTitle?: string;
+  albumTitle?: string; podcastTitle?: string; photoTitle?: string; documentTitle?: string;
   playlistTitle?: string; serviceName: string;
   category?: MusicCategory;
 };
 export function classicScreenTitle({ page, groupKey, browseArtist, playView,
-  albumTitle, podcastTitle, documentTitle, playlistTitle, serviceName, category }: TitleContext) {
+  albumTitle, podcastTitle, photoTitle, documentTitle, playlistTitle, serviceName, category }: TitleContext) {
   return page === "album-tracks"
       ? (albumTitle ?? "专辑")
       : page === "podcast-episodes"
@@ -50,10 +51,11 @@ export function classicScreenTitle({ page, groupKey, browseArtist, playView,
               coverflow: "Cover Flow",
               "coverflow-album": "Cover Flow",
               photos: "照片",
-              "photo-grid": "所有照片",
+              "photo-grid": photoTitle ?? "所有照片",
               "photo-full": "照片",
               "photo-options": "照片选项",
               "photo-delete": "删除照片",
+              "photo-settings": "照片设置",
               podcasts: "播客",
               "podcast-settings": "播客设置",
               finish: "机身颜色",
@@ -83,15 +85,20 @@ export function classicScreenTitle({ page, groupKey, browseArtist, playView,
 
 }
 
-export function classicPreviewModel({ page, focusedRow, albums, current, sleeping, tracks }: {
+export function classicPreviewModel({ page, focusedRow, albums, podcastShows = [], photos = [], current, sleeping, tracks }: {
   page: Page; focusedRow?: MenuItem; albums: Album[]; current?: Track;
+  podcastShows?: Album[]; photos?: PhotoItem[];
   sleeping: boolean; tracks: Track[];
 }) {
+  const spec = menuPreview(page, focusedRow?.key ?? "music", focusedRow?.label ?? "音乐",
+    focusedRow?.value ?? focusedRow?.detail);
+  const previewAlbums = spec.source === "photos" ? photos.map(photo => ({ id: photo.id, title: photo.name,
+    artist: "", artwork: photo.thumbnail ?? photo.url, tracks: [] }))
+    : spec.source === "podcasts" ? podcastShows : albums;
   return {
-    spec: menuPreview(page, focusedRow?.key ?? "music", focusedRow?.label ?? "音乐",
-      focusedRow?.value ?? focusedRow?.detail),
-    albums, current,
-    initialAlbumId: albums.find(album => album.tracks.some(track => track.id === current?.id))?.id,
+    spec,
+    albums: previewAlbums, current,
+    initialAlbumId: previewAlbums.find(album => album.tracks.some(track => track.id === current?.id))?.id,
     suspended: sleeping,
     count: tracks.length,
     bytes: tracks.reduce((sum, track) => sum + track.size, 0),

@@ -8,7 +8,7 @@ it("migrates appearance settings without losing the classic defaults", () => {
     clickSound: false,
     brightness: 1,
     volumeLimit: 1,
-    backlight: 10,
+    backlight: 0,
   });
 });
 it("clamps controls and accepts only known menu entries and backlight durations", () => {
@@ -23,7 +23,7 @@ it("clamps controls and accepts only known menu entries and backlight durations"
   ).toMatchObject({
     brightness: 0.25,
     volumeLimit: 1,
-    backlight: 10,
+    backlight: 0,
     mainMenu: ["coverflow"],
   });
   expect(
@@ -78,4 +78,11 @@ it("restores lyrics for old preferences and preserves the explicit off switch", 
   expect(parsePreferences({}).lyricsEnabled).toBe(true);
   expect(parsePreferences({ lyricsEnabled: false }).lyricsEnabled).toBe(false);
   expect(parsePreferences({ lyricsEnabled: "false" }).lyricsEnabled).toBe(true);
+});
+
+it("defaults to an always-on display while preserving an explicit existing timeout", () => {
+  expect(parsePreferences(null).backlight).toBe(0);
+  expect(parsePreferences({ backlight: 10 }).backlight).toBe(0);
+  expect(parsePreferences({ backlight: 30 }).backlight).toBe(30);
+  expect(parsePreferences({ backlight: 10, backlightVersion: 1 }).backlight).toBe(10);
 });

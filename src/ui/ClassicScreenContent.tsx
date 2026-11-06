@@ -31,7 +31,7 @@ type Props = {
     query: string; playlistName: string; textDocument?: ComponentProps<typeof TextReader>["source"];
     reader: RefObject<TextReaderHandle | null>; searchCount: number; searchPending: boolean; searchError?: string };
   photos: { activePhotos: ComponentProps<typeof PhotoScreen>["photos"];
-    photoIndex: number; slideshow: boolean };
+    photoIndex: number; slideshow: boolean; loading?: boolean; total?: number; offset?: number };
   prefs: { brightness: number; volumeLimit: number };
   preview: Parameters<typeof classicPreviewModel>[0];
   accountHeader: ReactNode; qrImage?: string; serviceName: string;
@@ -167,6 +167,9 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
           index={photoIndex}
           full={page === "photo-full"}
           slideshow={slideshow}
+          loading={photos.loading}
+          total={photos.total}
+          offset={photos.offset}
         />
       )}
       {(page === "coverflow" || page === "coverflow-album") &&
@@ -307,7 +310,7 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
               <span>
                 {visibleIds.has(focusedRow?.key ?? "")
                   ? `${visibleTracks.findIndex((track) => track.id === focusedRow?.key) + 1} / ${visibleTracks.length}`
-                  : `共 ${visibleTracks.length} 首歌曲`}
+                  : `共 ${visibleTracks.length} ${page === "podcast-episodes" ? "集" : "首歌曲"}`}
               </span>
             </div>
           </div>

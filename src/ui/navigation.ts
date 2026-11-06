@@ -20,6 +20,7 @@ export type Page =
   | "photo-full"
   | "photo-options"
   | "photo-delete"
+  | "photo-settings"
   | "podcasts"
   | "podcast-episodes"
   | "podcast-settings"
@@ -75,7 +76,6 @@ export const splitPages = new Set<Page>([
   "music",
   "settings",
   "reipod-settings",
-  "podcasts",
   "podcast-settings",
   "finish",
   "background",

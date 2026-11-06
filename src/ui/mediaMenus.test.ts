@@ -20,8 +20,9 @@ it("imports are synchronous injected commands and menu construction has no media
   const menus = f.menus();
   expect(f.context.openPhotos).not.toHaveBeenCalled();
   expect(f.context.deletePhoto).not.toHaveBeenCalled();
-  menus.photos!.find(row => row.key === "photo-import")!.action();
-  menus.photos!.find(row => row.key === "photo-folder")!.action();
+  menus["photo-settings"]!.find(row => row.key === "photo-import")!.action();
+  menus["photo-settings"]!.find(row => row.key === "photo-folder")!.action();
+  expect(menus.photos!.some(row => row.key.startsWith("photo-import") || row.key === "photo-folder")).toBe(false);
   expect(vi.mocked(f.context.openPhotos).mock.calls).toEqual([[false], [true]]);
   expect(menus.podcasts!.some(row => row.key === "podcast-import")).toBe(false);
 });
@@ -39,14 +40,15 @@ it("album counts and thumbnails reflect their own group and opening retains its 
   grid[0].action();
   expect(f.context.open).toHaveBeenLastCalledWith("photo-full", "three", "Album B");
 });
-it("empty photos keep photo import routes while podcast import stays outside the show browser", () => {
+it("empty photos link to settings and imports stay outside media browsers", () => {
   const f = fixture();
   f.context.photos = [];
   f.context.activePhotos = [];
   f.context.podcastShows = [];
   const menus = f.menus();
   expect(menus.photos![0].disabled).toBe(true);
-  expect(menus.photos!.slice(1).map(row => row.key)).toEqual(["photo-import", "photo-folder"]);
+  expect(menus.photos!.slice(1).map(row => row.key)).toEqual(["photo-status"]);
+  expect(menus["photo-settings"]!.map(row => row.key)).toEqual(["photo-import", "photo-folder"]);
   expect(menus["photo-grid"]).toEqual([]);
   expect(menus.podcasts).toEqual([]);
 });
@@ -54,10 +56,15 @@ it("podcasts use show fallback labels and retain episode selection without invok
   const f = fixture();
   const row = f.menus().podcasts![0];
   expect(row.label).toBe("Speaker");
-  expect(row.value).toBe("1");
+  expect(row.detail).toBe("1 集");
   row.action();
   expect(f.context.open).toHaveBeenCalledWith("podcast-episodes", "episode", "show");
   expect(f.context.deletePhoto).not.toHaveBeenCalled();
+});
+it("system photo menus never expose the local-copy deletion command", () => {
+  const f = fixture();
+  f.context.systemPhotos = true;
+  expect(f.menus()["photo-options"]!.map(row => row.key)).toEqual(["slideshow", "cancel"]);
 });
 it("slideshow starts after returning and cancel only returns", () => {
   const f = fixture();

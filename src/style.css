@@ -551,16 +551,16 @@ button:disabled {
 /* Keep every interaction inside the device; dimensions follow its width. */
 .app-shell {
   --device-width: min(360px, calc(100vw - 32px));
-  min-height: 100svh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: max(24px, env(safe-area-inset-top))
-    max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
+  padding: max(24px, var(--host-safe-top, env(safe-area-inset-top)))
+    max(16px, var(--host-safe-right, env(safe-area-inset-right))) max(24px, var(--host-safe-bottom, env(safe-area-inset-bottom)))
+    max(16px, var(--host-safe-left, env(safe-area-inset-left)));
 }
 .classic-device {
   width: var(--device-width);
-  height: calc(var(--device-width) * 1.65);
+  height: calc(var(--device-width) * var(--device-aspect));
   padding: calc(var(--device-width) * 0.072) calc(var(--device-width) * 0.066);
   border-radius: calc(var(--device-width) * 0.109);
 }
@@ -796,14 +796,16 @@ button:disabled {
 }
 /* Classic: cool metal, restrained light, dense firmware typography. */
 .app-shell {
-  --device-width: min(390px, calc(100vw - 20px));
+  --device-width: min(390px,
+    calc(100vw - max(10px, var(--host-safe-left, env(safe-area-inset-left))) - max(10px, var(--host-safe-right, env(safe-area-inset-right)))),
+    calc((100dvh - max(16px, var(--host-safe-top, env(safe-area-inset-top))) - max(16px, var(--host-safe-bottom, env(safe-area-inset-bottom))) - 12px) / var(--device-aspect)));
   --wheel-ink: #90969c;
   --wheel-center-surface: linear-gradient(145deg, #bdc3c6, #d0d4d6 55%, #e1e4e5);
   --wheel-center-depth: inset 0 1px 2px #717b8360, inset 0 -1px 1px #fffa;
   background: transparent;
-  padding: max(16px, env(safe-area-inset-top))
-    max(10px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
-    max(10px, env(safe-area-inset-left));
+  padding: max(16px, var(--host-safe-top, env(safe-area-inset-top)))
+    max(10px, var(--host-safe-right, env(safe-area-inset-right))) max(16px, var(--host-safe-bottom, env(safe-area-inset-bottom)))
+    max(10px, var(--host-safe-left, env(safe-area-inset-left)));
 }
 .app-shell[data-background="warm"] {
   background: #e8e3dc;

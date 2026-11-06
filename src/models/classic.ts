@@ -7,6 +7,12 @@ export const classic2007 = {
   // The existing shell does not distinguish 80/160GB thickness; do not invent a variant.
   capacity: null,
   firmware: null,
+  body: {
+    height: 103.5,
+    width: 61.8,
+    evidence: "documented",
+    source: "https://support.apple.com/en-us/112478",
+  },
   lcd: {
     width: 320,
     height: 240,

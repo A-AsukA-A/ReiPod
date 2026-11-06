@@ -41,6 +41,7 @@ export function ClassicShell({
       data-model={classic2007.id}
       data-input-kind={classic2007.input.kind}
       style={{
+        "--device-aspect": classic2007.body.height / classic2007.body.width,
         "--lcd-native-width": classic2007.lcd.width,
         "--lcd-aspect": classic2007.lcd.height / classic2007.lcd.width,
       } as CSSProperties}

@@ -53,5 +53,66 @@ struct WebBundleTests {
         #expect(result["saved"] as? String == "saved")
         #expect(result["database"] as? Bool == true)
         #expect(result["authorization"] as? String != nil)
+        #expect(web.frame == controller.view.bounds, "The web backdrop must cover the full native view")
+        #expect(web.isOpaque == false)
+        #expect(web.backgroundColor == .clear)
+        #expect(web.underPageBackgroundColor.cgColor.alpha == 0)
+        #expect(Bundle.main.object(forInfoDictionaryKey: "UILaunchScreen") as? [String: String] == ["UIColorName": "LaunchBackground"])
+        #expect(UIColor(named: "LaunchBackground")?.cgColor.alpha == 1)
+        #expect(UserDefaults.standard.object(forKey: "reipod.keepAwake") != nil)
+        if UIApplication.shared.applicationState == .active {
+            #expect(UIApplication.shared.isIdleTimerDisabled == UserDefaults.standard.bool(forKey: "reipod.keepAwake"))
+        }
+        let battery = try await web.callAsyncJavaScript("""
+            return {version:window.__REIPOD_NATIVE_BATTERY_VERSION__,reading:await window.webkit.messageHandlers.reipodBattery.postMessage({version:1,action:'status'}),browserAvailable:typeof navigator.getBattery==='function'};
+            """, arguments: [:], in: nil, contentWorld: .page)
+        let batteryResult = try #require(battery as? [String: Any])
+        #expect(batteryResult["version"] as? Int == 1)
+        if let expected = NativeBatteryReading.read(level: UIDevice.current.batteryLevel, state: UIDevice.current.batteryState),
+           let reading = batteryResult["reading"] as? [String: Any] {
+            #expect(abs((reading["level"] as? Double ?? -1) - expected.level) < 0.02)
+            #expect(reading["charging"] as? Bool == expected.charging)
+            let label = try await web.evaluateJavaScript("document.querySelector('.screen-content .classic-battery').getAttribute('aria-label')")
+            #expect((label as? String)?.contains(expected.charging ? "正在充电" : "电池供电") == true)
+        }
+        print("REIPOD_BATTERY_SAMPLE \(String(describing: battery))")
+        let experience = try await web.evaluateJavaScript("window.__REIPOD_NATIVE_EXPERIENCE_VERSION__")
+        #expect(experience as? Int == 1)
+        #expect(Bundle.main.object(forInfoDictionaryKey: "CADisableMinimumFrameDurationOnPhone") as? Bool == true)
+        let frameTimings = try await web.callAsyncJavaScript("""
+            const intervals = [];
+            const surface = document.querySelector('.screen-content');
+            const animation = surface.animate([{transform:'translateX(0)'},{transform:'translateX(1px)'}], {duration:600,iterations:4,direction:'alternate'});
+            await new Promise(resolve => {
+              let previous;
+              const sample = time => {
+                if (previous !== undefined) intervals.push(time - previous);
+                previous = time;
+                if (intervals.length < 120) requestAnimationFrame(sample); else resolve();
+              };
+              requestAnimationFrame(sample);
+            });
+            animation.cancel();
+            intervals.sort((a,b) => a-b);
+            return {frames:intervals.length,medianMs:intervals[60],p95Ms:intervals[114],fps:1000/intervals[60]};
+            """, arguments: [:], in: nil, contentWorld: .page)
+        print("REIPOD_FRAME_SAMPLE \(String(describing: frameTimings)) hardwareMaxFPS=\(scene.screen.maximumFramesPerSecond) lowPower=\(ProcessInfo.processInfo.isLowPowerModeEnabled)")
+        let photos = try await web.callAsyncJavaScript("""
+            const status = await window.webkit.messageHandlers.reipodPhotos.postMessage({version:1,action:'status'});
+            return {version:window.__REIPOD_NATIVE_PHOTOS_VERSION__,authorization:status.authorization};
+            """, arguments: [:], in: nil, contentWorld: .page)
+        let photoStatus = try #require(photos as? [String: Any])
+        #expect(photoStatus["version"] as? Int == 1)
+        #expect(photoStatus["authorization"] as? String != nil)
+        if ["authorized", "limited"].contains(photoStatus["authorization"] as? String ?? "") {
+            let preview = try await web.callAsyncJavaScript("""
+                const reply = await window.webkit.messageHandlers.reipodPhotos.postMessage({version:1,action:'preview'});
+                return {count:reply.photos.length,valid:reply.photos.every(photo=>photo.thumbnail.startsWith('reipod-photo://library/'))};
+                """, arguments: [:], in: nil, contentWorld: .page)
+            let sample = try #require(preview as? [String: Any])
+            #expect((sample["count"] as? Int ?? 100) <= 8)
+            #expect(sample["valid"] as? Bool == true)
+            print("REIPOD_PHOTO_PREVIEW_COUNT \(sample["count"] ?? "missing")")
+        }
     }
 }
