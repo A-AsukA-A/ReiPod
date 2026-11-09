@@ -190,3 +190,11 @@ App优先使用只读`reipodBattery`桥与`__REIPOD_NATIVE_BATTERY_VERSION__=1`�
 本轮未改原生Swift能力。使用当前未提交工作区，`npm run ios:prepare`重生成全部Web/内置服务资源，再对generic iOS device做Release archive；沿用项目版本0.2.0/build 2。安装文件为私有`.local/extras-95/ReiPod-2026-11-10-development.ipa`，不纳入版本库。使用本机已有Apple Development身份和已安装的Xcode管理profile签名，无上传或自动续签；仅登记设备适用。当前profile到期2026-11-12 12:52:04 UTC（北京时间20:52:04），开发包不是长期分发版。
 
 验收边界：archive/codesign严格验证、IPA压缩完整性、App/Web与本轮dist逐文件哈希对应；包清单与SHA256保存在同目录install-manifest.json。此次未安装/连接手机、未运行新真机测试，也未验证真实账户/权限/锁屏/后台或系统照片边界；已有真机结论不升级。精确字体和新增附加功能原机几何仍P/U，见UI_METRICS任务95。
+
+## 2026-11-10 连接设备更新（REL98）
+
+用户明确要求更新已连接iPhone。检测到配对可用的物理iPhone17 Pro后，重新严格校验任务95的Release签名App，55份App/Web文件与当时dist逐文件SHA一致、profile包含当前设备且仍有效；功能代码对应3954076，此后提交只有任务日志。使用该已验证产物更新，不为仅提交标识变化重复编译。
+
+通过devicectl对com.reipod.player作覆盖安装，未先卸载、清理容器或改系统授权；正常启动成功，设备安装清单确认0.2.0/build2、新应用安装路径，进程列表确认ReiPod运行。证据在私有`.local/release-98/`的install/launch/installed-apps/processes与iphone-verification.json。没有读取/导出个人媒体或平台凭证。没有新增真实账户、后台/锁屏、冷启动/常亮、权限边界或新附加功能的实机验收，原开放项保留。
+
+沿用Apple Development/Personal Team签名，当前profile仍到2026-11-12 12:52:04 UTC（北京时间20:52:04）；需要到期前续签，非长期分发版。VPS及Pages同步3954076；Pages流程42658164246成功，但云端iPhone流程42658164245本轮结束前仍queued，不将实际安装成功混同该流程通过。

@@ -254,3 +254,15 @@ VPS前端0aac8d8→fdb6c19，后端仍abf75e2；受检后端文件/package与个
 [GitHub Pages 42167276359](https://github.com/A-AsukA-A/ReiPod/actions/runs/42167276359)成功且公网HTML与本地字节一致；[iPhone CI 42167276347](https://github.com/A-AsukA-A/ReiPod/actions/runs/42167276347)成功，iPhone编译与模拟器测试均通过；日志明确Swift Testing执行11项通过，不能把此前XCTest“0 tests”汇总行误认为没有运行。生产配置Web资源/原生运行时亦已签名构建、严格校验、同Bundle更新安装并正常打开用户iPhone；随后用户取走手机，剩余验证仅线上和云端，不再依赖连接。原生更新不是App Store发布，未新增真实第三方账号/后台/锁屏验收。
 
 发布回执仅更新本部署记录与TASK_LOG，采用文档提交跳过重复流水线；已通过的应用流水线/站点版本均对应fdb6c19，应用代码和已验证产物未因此变化。
+
+## 2026-11-10 classic整套UI与附加功能发布（REL98）
+
+用户授权更新VPS/已连接iPhone/Pages并清理旧备份。功能提交[3954076](https://github.com/A-AsukA-A/ReiPod/commit/3954076ebab0cab28380195c76e9a3ebf02aab4f)，发布时源码HEAD7b9a651与其仅任务日志不同。VPS前端fdb6c19→3954076，后端仍abf75e2；显式HTTPS API构建、check-dist、size通过，入口gzip149216B、程序gzip295955B（不含release.txt），55构建文件加release.txt共56文件。资源先复制、index最后原子替换，保留旧哈希资源供已打开页面；暂存/目标与公网56项SHA-256全部对应。
+
+最近静态回滚`/opt/reipod/backups/dist-before-3954076-20261109T165335Z.tgz`，归档旧dist/release共683文件均核对SHA后才发布；另存当前9份后端模块/package及release.json完整快照`/opt/reipod/backups/backend-snapshot-before-3954076-20261109T165335Z.tgz`。前后核对个人首页与全部受检后端哈希不变，nginx/music active、音乐PID147732不变，未重启后端、覆盖会话/证书/个人站点。两提供方匿名status及Pages允许来源200且未授权，非允许来源403；未创建二维码或进行真实账号验证。
+
+Pages功能提交流程[42658164246](https://github.com/A-AsukA-A/ReiPod/actions/runs/42658164246)成功；下载其正式artifact并核对ZIP摘要，55文件与本地构建相同，随后公网55文件逐一SHA匹配（含所有按需加载JS/CSS）。独立浏览器实际进入两站时钟；Pages另运行秒表Play→Center分段→Play停止，可见25.36秒总时长/25.35秒分段。不是全套浏览器重跑或原机字体/固件像素验收。
+
+清理在新版公网与回滚归档验证后执行：按明确路径/文件大小/mtime/SHA清单删除14份旧备份，按目录边界/文件计数和大小删除10个旧发布暂存目录，文件大小合计264302754B（约264MB/252MiB）。保留5份：新静态回滚、新后端完整快照、上一份dist-before-fdb6c19、backend-before-abf75e2与providers-before-05db8e9；发布暂存仅保留3954076/fdb6c19。未清服务器.local或当前dist旧哈希资源。详细计划/结果及最终状态在私有`.local/release-98/`。
+
+iPhone同Bundle ID覆盖安装0.2.0/build2并启动成功，见[iPhone回执](ios/README.md#2026-11-10-连接设备更新rel98)。云端iPhone流程42658164245在本轮结束前仍queued，不能称其已通过；不影响本地已签名App的实际安装/进程确认。本次回执文档采用[skip ci]上传，不另触发重复发布。

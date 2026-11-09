@@ -4,9 +4,11 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-10，任务97 PUSH97已将3954076上传origin/main；git ls-remote确认远端完整SHA与本地一致。本次仅上传代码并记录回执，未作VPS部署/手机安装；既有Pages/iPhone工作流的最终结果本轮未验收。任务95功能与开发IPA保留（签名11-12 20:52北京时间到期，仅登记设备），原机像素与实机边界仍开放。
+最后更新：2026-11-10，REL98已更新VPS、Pages和已连接iPhone，功能3954076。VPS56/Pages55公网文件SHA一致，两站实际时钟/Pages秒表入口通过；iPhone覆盖安装0.2.0/build2并启动/进程确认。已删除14旧备份+10旧发布暂存目录约264MB，保留5恢复副本及最近两版暂存；后端/PID/个人首页不变。开发签名到11-12 20:52北京时间，云端iPhoneCI仍queued，真实账户/后台与原机像素未扩大验收。
 
 ### 当前目标与进行中
+
+- REL98已完成：功能3954076已更新[VPS](https://julyblog.party/ReiPod/)与[Pages](https://a-asuka-a.github.io/ReiPod/)，公网56/55文件SHA一致、Pages流程42658164246成功。已连接iPhone同Bundle ID覆盖安装0.2.0/build2并启动，未先卸载。清14旧备份+10旧暂存目录264302754B，保留新/上一静态回滚、新/旧后端恢复与provider副本共5份，暂存保留3954076/fdb6c19；nginx/music active、PID147732与个人首页/后端哈希不变。当前回滚`/opt/reipod/backups/dist-before-3954076-20261109T165335Z.tgz`；[部署回执](SERVER_DEPLOYMENT.md#2026-11-10-classic整套ui与附加功能发布rel98)、[设备回执](ios/README.md#2026-11-10-连接设备更新rel98)。签名11-12 20:52北京时间到期，云端iPhoneCI42658164245仍queued，安装不等于账号/后台/像素验证；下一步直接使用三端新版，无需再次执行部署/清理。
 
 - PUSH97已完成：3954076已推送origin/main并以git ls-remote核实完整SHA；本次回执作为独立文档提交上传，使用[skip ci]避免日志重复触发构建。源码推送符合既有Pages/iPhone触发条件，但本轮未验证自动工作流终态/线上资源；没有VPS部署或手机安装。
 
@@ -33,7 +35,7 @@
 - 当前产品决定：按My Classic式App内独立播客播放/后台/锁屏，旧POD05完整Apple播客会话接管目标已被用户撤回；播客/照片浏览页不放导入，导入集中ReiPod设置。照片为PhotoKit只读、最近优先、最多8图批内随机、每10秒逐批更早、离焦重置；切图保留旧图至新图解码。默认常亮/前台idle管理、原生触觉、全面屏安全区/透明底层、启动背景与原生电池已接入；具体适配和静态启动屏限制见[ios/README](ios/README.md)。
 - 已有真机验收：用户确认系统相册/缩略图/单图、播客列表/封面/播放/返回、主页播客封面正常，切图不再黑屏，实际拔插电源同步正常；任务69的下载播客前台/后台/锁屏结果保留其原范围，不扩大到完整订阅/真实第三方账号。最近优先新轮播/默认常亮/冷启动缺少逐项最终用户反馈，见U07/APP03。
 - 原机目标仍是nano/mini/iPod/classic全代际；现有classic2007基线不等于全代际实现，UI优先且逐状态补证，C-F05/C-F06仅部分工程完成。APP02的120fps未实现（公开配置已启用，当前WebKit约59fps），PHOTO02/POD02、C-F07及O01–O06/U01–U07按下表继续，不因发布而关闭。
-- 线上当前：前端fdb6c19、后端abf75e2，nginx/music active，音乐PID147732和个人首页/受检后端哈希保持。回滚包`/opt/reipod/backups/dist-before-fdb6c19-20261106T051551Z.tgz`；未重启后端、改会话/凭证或重新验证真实第三方账号。[发布详情](SERVER_DEPLOYMENT.md#2026-11-06-系统相册与iphone体验发布任务75)。
+- REL75历史线上状态（已由REL98更新前端）：前端fdb6c19、后端abf75e2，nginx/music active，音乐PID147732和个人首页/受检后端哈希保持。回滚包`/opt/reipod/backups/dist-before-fdb6c19-20261106T051551Z.tgz`；未重启后端、改会话/凭证或重新验证真实第三方账号。[发布详情](SERVER_DEPLOYMENT.md#2026-11-06-系统相册与iphone体验发布任务75)。
 
 ### 已完成
 
@@ -1160,3 +1162,12 @@
 - git fetch origin main确认无远端新增提交，随后普通快进推送成功：cc67ab7→3954076。git ls-remote核实远端refs/heads/main为3954076ebab0cab28380195c76e9a3ebf02aab4f，与本地完整SHA一致。[功能提交](https://github.com/A-AsukA-A/ReiPod/commit/3954076ebab0cab28380195c76e9a3ebf02aab4f)。私有文件仍忽略，上传内容为已提交源码/测试/文档。
 - 检查既有workflow：main推送符合Pages自动发布与iPhone构建触发条件。GitHub连接器combined status未返回状态，当前环境无gh命令；本次只确认源码上传，不声称CI、Pages线上资源或iPhone构建完成。未重复本地测试，未操作VPS/手机。
 - 上传回执单独作Markdown日志提交，标记[skip ci]避免仅日志变更再次构建；不修改已上传的3954076。原固件像素/平台验证开放项保持，下一步若继续核验发布，查看3954076对应Actions及实际Pages资源，不从Git推送成功推导部署通过。
+
+## 2026-11-10 · 任务98：VPS／Pages／已连接iPhone更新与旧备份清理（REL98）
+
+- 用户授权更新VPS、已连接手机并删除较旧版本备份，追加Pages。读取总纲/日志/部署/原生说明并核对实际干净工作区7b9a651（功能3954076）；登记目标，未更改应用功能/后端。初次SSH现有密钥未解锁，用户提供passphrase后只通过无回显提示解锁到SSH agent一小时；凭据未写文件/日志/仓库。Python证书链不可用的GitHub读取改用系统curl验证TLS，未关闭证书校验。
+- iPhone：识别配对物理17 Pro；现成签名App55份Web文件与原dist一致、严格codesign/profile设备/有效期检查通过。devicectl覆盖com.reipod.player安装成功且正常启动，设备列表确认0.2.0/build2、新安装路径，进程24351存在。未先卸载/清数据或新增授权；签名11-12 20:52:04北京时间到期。未重跑Swift/全套测试，未读取个人媒体、验证新真实账户/后台/冷启动/原机布局。
+- Pages：功能提交3954076的自动流程[42658164246](https://github.com/A-AsukA-A/ReiPod/actions/runs/42658164246)已成功，无需再次dispatch。GitHub连接器下载artifact（13692353187），正式ZIP摘要核对、55文件与本地生产构建一致，公网55项完整SHA匹配（含动态资源）。独立agent-browser实际时钟和秒表开始/分段/停止，记录25.36秒/25.35秒；未把网页流程当iPhone验收。云端iPhone42658164245仍queued，沿既有macos-15排队决定不改runner、不冒称成功。
+- VPS：显式HTTPS API构建/产物/size通过；入口149216B/程序295955B gzip。前端fdb6c19→3954076，后端abf75e2不改；新资源先复制、index最后原子替换，当前dist旧哈希保留。56文件在暂存/目标/公网逐SHA对应；归档旧dist/release683份文件验证，9份后端完整快照验证。个人首页和全部受检后端哈希、PID147732不变，服务active；匿名两provider/Pages来源200未授权、非允许来源403，无扫码/真实账号扩验。VPS实际进入时钟成功。完整证据在`.local/release-98/`。
+- 清理：事先枚举17备份/11暂存目录；新增静态/后端回滚后，核对删除清单路径边界/文件大小/mtime/SHA与目录文件数/大小，确认新版公网和回滚可读后执行。删除14份旧备份、10旧暂存目录，共264302754B；剩5备份、2暂存。保留新静态`/opt/reipod/backups/dist-before-3954076-20261109T165335Z.tgz`、新后端`/opt/reipod/backups/backend-snapshot-before-3954076-20261109T165335Z.tgz`、dist-before-fdb6c19、backend-before-abf75e2、providers-before-05db8e9；发布暂存3954076/fdb6c19。没有清会话/凭据/个人首页/当前dist旧资源。
+- 完成：用户要求的三端更新和旧备份清理均已执行；发布回执与原生说明同步并以文档[skip ci]提交上传，避免重复构建。未完成/不确定：CI iPhone终态、真实账户/后台/锁屏及原固件像素仍开放，安装/静态哈希不能代验；下一步直接打开VPS/Pages或手机ReiPod使用新版，签名到期前需续签。
