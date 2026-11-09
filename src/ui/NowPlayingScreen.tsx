@@ -51,6 +51,7 @@ export function NowPlayingScreen({
 }) {
   const volume = volumeOverlay && view === "art";
   const progress = view === "art" || view === "seek" || view === "lyrics";
+  const shuffle = shuffleModeOf(state);
   return (
     <div className={`now-playing-screen view-${view}`} data-volume={volume}>
       {view === "lyrics" ? (
@@ -150,7 +151,7 @@ export function NowPlayingScreen({
             <Choices
               label="随机播放"
               choices={["关闭", "歌曲", "专辑"]}
-              selected={["off", "songs", "albums"].indexOf(shuffleModeOf(state))}
+              selected={["off", "songs", "albums"].indexOf(shuffle)}
             />
           </div>
         )}

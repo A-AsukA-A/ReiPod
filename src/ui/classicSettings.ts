@@ -2,6 +2,7 @@ import { classic2007 } from "../models/classic";
 import { parseAppearance } from "./appearance";
 import type { Appearance } from "./appearance";
 export const optionalMainItems = [
+  { key: "songs", label: "歌曲" },
   { key: "coverflow", label: "Cover Flow" },
   { key: "photos", label: "照片" },
   { key: "podcasts", label: "播客" },
@@ -69,7 +70,7 @@ export function parsePreferences(value: unknown): Preferences {
           )
           .map((item) => item.key)
       : optionalMainItems
-          .filter((item) => item.key !== "coverflow")
+          .filter((item) => !["coverflow", "songs"].includes(item.key))
           .map((item) => item.key),
     musicMenu: optionalMusicItems
       .filter(

@@ -67,6 +67,9 @@ test("photo preview starts recent, progressively advances to older batches, and 
   await key(page, "ArrowUp"); await key(page, "ArrowDown");
   await expect(preview.locator(".preview-cover-current img")).toHaveAttribute("alt", "系统照片 1");
   await page.emulateMedia({ reducedMotion: "reduce" });
+  // The media-query change reaches React asynchronously; wait for suspension
+  // before advancing the virtual clock through another batch deadline.
+  await expect(preview).toHaveAttribute("data-paused", "true");
   const count = await page.evaluate(() => (window as any).__photosTest.calls.filter((c: any) => c.action === "preview").length);
   await page.clock.runFor(50000);
   expect(await page.evaluate(() => (window as any).__photosTest.calls.filter((c: any) => c.action === "preview").length)).toBe(count);

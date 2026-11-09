@@ -137,3 +137,17 @@ ReiPod/
 APP03：`Assets.xcassets/LaunchBackground.colorset`提供系统静态启动底色，`ExperienceBridge`只缓存允许的背景/常亮配置，`PrivacyInfo.xcprivacy`声明App内UserDefaults用途；PlayerViewController在首布局前应用并负责前后台idle释放。背光默认/兼容迁移在classicSettings，不写进主题或播放核心。
 
 `ios/ReiPod/DeviceBatteryBridge.swift`限定主文档、读取并监听UIDevice电量/供电，PlayerViewController管理前后台监测生命周期；`src/services/nativeBattery.ts`仅承接只读传输，BatteryIndicator消费原生事件或既有网页BatteryManager，不向播放核心引入宿主类型。
+
+CAL79：`tests/browser/playbackFidelity.pw.ts`验证普通播放页50%工程状态、长元数据与减少动态，复用`taggedAudio`的UTF-8 ID3/内嵌封面fixture；不向生产应用增加测试入口或第二份播放会话。私有渲染/测量脚本及源图仍只在`.local/`。
+
+BROWSE85：`navigation.ts`导出同源`navigationScreenKey`，App为呈现层提供provider/账号/页面范围键；`ClassicScreenContent`持有会话内滚动位置，`MenuRows`测量最终行高并恢复可见窗口，不把滚动状态放进Player。`tests/browser/browseExperience.pw.ts`覆盖整条浏览/播放/返回及缩放/副标题阅读。
+
+QUICK88：`input/WheelGesture`提供已有速度档的原始角步，`ClickWheel`转发旋转/结束；`models/classic`标注长列表策略证据。`ui/classicQuickScroll.ts`为无会话副作用的分组/识别逻辑，`useClassicQuickScroll`管理临时状态/取消，App注入现有导航命令，ClassicShell显示只读字母。`tests/browser/quickScroll.pw.ts`走实际导入/指针/选择/播放返回；独立样本服务与录屏只在忽略目录，不增加生产测试入口。
+
+任务90：`src/ui/ClassicAboutScreen.tsx`只呈现About三张信息卡及页号；`classicInputController`将Center映射为导航选择、Menu使用原返回栈，App按当前选中资料库与本地媒体注入只读计数。`src/services/browserStorage.ts`验证StorageManager估算并区分不可用，`src/app/useAboutStorage.ts`仅About可见时读取/取消迟到结果；不把宿主容量或权限读取放进播放器。`tests/browser/settingsExperience.pw.ts`覆盖About/来源隔离/调整/快捷菜单/刷新/还原/背光/声音完整路径。
+
+任务92：`MenuRows`在coverflow-album内消费注入曲目的曲序/时长，其他菜单仍用既有行结构；搜索/照片副标题消费同一Marquee。`PhotoScreen`接收ClassicScreenContent持有的有界会话位置表，用相册范围+锚照片恢复网格，不创建媒体库或原生请求；存储/授权/播放服务边界未改变。私有4192样本服务/录屏脚本都在`.local/batch-92/`，不进入生产资源。
+
+任务94：`libraryMenus`成员候选与`classicInputController`选曲页Play队列读取注入的musicTracks，state仅供实际播放状态，不将当前播放会话当音乐库。`podcastShowRows`让范围导航保存单集，`ClassicScreenContent/MenuRows`只承担节目/歌单呈现；断点、歌单持久化和原生服务仍由原有owner处理。
+
+任务95：`src/models/classicExtras.ts`为纯城市目录/时区身份、秒表状态与有界解析/reducer；`src/services/extrasStorage.ts`独占localStorage访问，`src/app/useClassicExtras.ts`装配状态与失败反馈。`src/ui/extrasMenus.ts`只生成注入命令的轮盘菜单，`ClassicExtrasScreens.tsx`/`ClassicClock.tsx`呈现只读时钟/秒表，`classic-extras.css`明确P几何；输入经`classicInputController`可选extras端口，不进入Player。`ClassicScreenContent`按需加载Cover Flow、附加功能、搜索、文本阅读和照片显示组件，状态/输入/音频仍常驻；iOS prepare复制全部构建文件。新增纯逻辑测试在模型旁，整套轮盘路径在`tests/browser/extrasExperience.pw.ts`。私有4195样本、录屏、开发签名包及签名元数据均留`.local/extras-95/`，不进入public或版本库。

@@ -51,6 +51,28 @@ it("HOLD suppresses wheel and every command before activation or playback", () =
   expect(f.player.pause).not.toHaveBeenCalled();
   expect(f.context.navigation.dispatch).not.toHaveBeenCalled();
 });
+it("About Center cycles cards without leaving or issuing playback commands; wheel preserves the card", () => {
+  const f = fixture("about");
+  for (const [from, to] of [["about-0", "about-1"], ["about-1", "about-2"], ["about-2", "about-0"]]) {
+    f.context.navigation.selectedKey = from;
+    f.input().command("select");
+    expect(f.context.navigation.dispatch).toHaveBeenLastCalledWith({ type: "select", key: to });
+  }
+  vi.mocked(f.context.navigation.dispatch).mockClear();
+  f.input().rotate(10);
+  expect(f.context.navigation.dispatch).not.toHaveBeenCalled();
+  expect(f.action).not.toHaveBeenCalled();
+  expect(f.context.navigation.back).not.toHaveBeenCalled();
+  expect(f.player.toggle).not.toHaveBeenCalled();
+  f.input().command("menu");
+  expect(f.context.navigation.back).toHaveBeenCalledOnce();
+});
+it("Play in the music chooser uses its library queue and excludes an unrelated playback session", () => {
+  const f = fixture("playlist-add-tracks");
+  f.snapshot.tracks = [{ ...song, id: "podcast-or-remote" }];
+  f.input().command("play");
+  expect(f.context.library.playTrack).toHaveBeenCalledWith(song.id, [song.id]);
+});
 it("long Center adds a collection once while a song without that action keeps its options shortcut", () => {
   const f = fixture("albums"), hold = vi.fn();
   f.context.menu.focusedRow!.hold = hold;
@@ -209,6 +231,7 @@ it("long Center only opens options for a visible song, and play toggles the curr
 it("play from add-to-playlist uses the existing track order instead of changing membership", () => {
   const f = fixture("playlist-add-tracks");
   f.snapshot.tracks = [{ ...song, id: "second" }, song];
+  f.context.library.musicTracks = f.snapshot.tracks;
   f.input().command("play");
   expect(f.context.library.playTrack).toHaveBeenCalledWith(song.id, ["second", song.id]);
   expect(f.action).not.toHaveBeenCalled();

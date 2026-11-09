@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getCircularBoundingInfo } from "./geometry";
+import type { WheelRotation } from "./WheelGesture";
 import { WheelGesture } from "./WheelGesture";
 import { MouseWheel } from "./MouseWheel";
 
@@ -17,7 +18,8 @@ export type WheelCommand =
   | "sleep";
 type Props = {
   timing: { readonly seek: number; readonly options: number; readonly sleep: number; readonly repeat: number };
-  onRotate: (steps: number, source?: "pointer" | "wheel" | "keyboard") => void;
+  onRotate: (steps: number, source?: "pointer" | "wheel" | "keyboard", rotation?: WheelRotation) => void;
+  onRotateEnd?: () => void;
   onCommand: (command: WheelCommand) => void;
   playLabel?: string;
   disabled?: boolean;
@@ -28,6 +30,7 @@ type Props = {
 export function ClickWheel({
   timing,
   onRotate,
+  onRotateEnd,
   onCommand,
   playLabel = "播放或暂停",
   disabled = false,
@@ -41,8 +44,8 @@ export function ClickWheel({
   } | null>(null);
   const keyPress = useRef<{ key: string; command: WheelCommand } | null>(null);
   const [pressed, setPressed] = useState<WheelCommand | null>(null);
-  const callbacks = useRef({ onRotate, onCommand, onFeedback, disabled });
-  callbacks.current = { onRotate, onCommand, onFeedback, disabled };
+  const callbacks = useRef({ onRotate, onRotateEnd, onCommand, onFeedback, disabled });
+  callbacks.current = { onRotate, onRotateEnd, onCommand, onFeedback, disabled };
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seekTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const longPressFired = useRef(false);
@@ -53,6 +56,7 @@ export function ClickWheel({
     seekTimer.current = null;
   };
   const resetGesture = () => {
+    callbacks.current.onRotateEnd?.();
     cancelHold();
     gesture.current = null;
     keyPress.current = null;
@@ -242,6 +246,7 @@ export function ClickWheel({
           onRotate(
             event.pointerType === "mouse" ? Math.sign(steps) : steps,
             "pointer",
+            active.input.rotation,
           );
         }
         if (!active.input.canClick(point)) {

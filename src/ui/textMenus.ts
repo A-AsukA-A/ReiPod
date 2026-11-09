@@ -15,12 +15,13 @@ export function createTextMenus({ texts, groupKey, isLocalText, importingTexts, 
   saveReadingPosition, deleteText }: Context): Partial<Record<Page, MenuItem[]>> {
   return {
     extras: [
-      { key: "clock", label: "时钟", action: () => open("clock", "done") },
+      { key: "clock", label: "时钟", action: () => open("clock") },
       {
         key: "notes",
         label: "文本阅读",
         action: () => open("notes", texts[0]?.id ?? "reader-guide"),
       },
+      { key: "stopwatch", label: "秒表", action: () => open("stopwatch", "timer") },
     ],
     notes: [
       ...texts.map((doc) => ({
@@ -94,6 +95,5 @@ export function createTextMenus({ texts, groupKey, isLocalText, importingTexts, 
         },
       },
     ],
-    clock: [{ key: "done", label: "返回", action: () => back() }],
   };
 }

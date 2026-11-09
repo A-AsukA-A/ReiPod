@@ -1,9 +1,90 @@
 import { test, expect } from "@playwright/test";
 import { decode } from "fast-png";
 import { choose, home, key, live } from "./dial";
+import { taggedAudio } from "./taggedAudio";
 
 // Engineering guards for the bounded task-27 fit in UI_METRICS; these do not
 // establish full hardware fidelity, original font identity or firmware timing.
+test("main menu keeps the same LCD text spacing and grid at phone and desktop scales", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("reipod-appearance", JSON.stringify({ backlight: 0, clickSound: false })));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const samples: { spacing: number; height: number }[] = [];
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.evaluate(() => document.fonts.ready);
+    const rows = live(page).locator(".home-screen .screen-row");
+    samples.push(await rows.first().evaluate(row => {
+      const unit = document.querySelector(".lcd-screen")!.getBoundingClientRect().width / 320;
+      return { spacing: parseFloat(getComputedStyle(row).letterSpacing) / unit,
+        height: row.getBoundingClientRect().height / unit };
+    }));
+    // First/last selection must not change the grid or push it into the preview.
+    const before = await rows.evaluateAll(items => items.map(row => row.getBoundingClientRect().toJSON()));
+    for (let step = 0; step < await rows.count(); step++) await key(page, "ArrowDown");
+    await expect(rows.last()).toHaveAttribute("aria-current", "true");
+    expect(await rows.evaluateAll(items => items.map(row => row.getBoundingClientRect().toJSON()))).toEqual(before);
+    for (let step = 0; step < await rows.count(); step++) await key(page, "ArrowUp");
+    await expect(rows.first()).toHaveAttribute("aria-current", "true");
+  }
+  expect(Math.max(...samples.map(s => s.spacing)) - Math.min(...samples.map(s => s.spacing))).toBeLessThan(0.001);
+  expect(Math.max(...samples.map(s => s.height)) - Math.min(...samples.map(s => s.height))).toBeLessThan(0.05);
+});
+
+test("long menu titles truncate at rest and reveal their ends only while selected", async ({ page }, testInfo) => {
+  const titles = ["A long English menu title 0123456789 — END", "很长的中文菜单标题用于检查省略和滚动末尾0123456789结束"];
+  await page.addInitScript(() => {
+    localStorage.setItem("reipod-demos", "hidden");
+    localStorage.setItem("reipod-appearance", JSON.stringify({ backlight: 0, clickSound: false }));
+  });
+  await page.goto("/");
+  await choose(page, "音乐"); await choose(page, "歌曲");
+  const chooser = page.waitForEvent("filechooser");
+  await choose(page, "导入音乐");
+  await (await chooser).setFiles(titles.map(title => taggedAudio(title, "Fixture", "Calibration")));
+  await expect(live(page).locator(".track-row")).toHaveCount(2);
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const title of titles) {
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      const rows = live(page).locator(".screen-row");
+      const labels = await rows.locator(".row-title").allTextContents();
+      for (let step = 0; step < labels.length; step++) await key(page, "ArrowUp");
+      for (let step = 0; step < labels.indexOf(title); step++) await key(page, "ArrowDown");
+      const row = rows.filter({ has: page.locator(".row-title", { hasText: title }) });
+      await expect(row).toHaveAttribute("aria-current", "true");
+      const text = row.locator(".marquee-text"), viewport = row.locator(".marquee-window");
+      await expect(text).toHaveClass(/is-overflowing/);
+      // Inspect the real CSS animation's settled end, without changing its timing.
+      await text.evaluate(el => {
+        const animation = el.getAnimations()[0];
+        animation.pause();
+        const timing = animation.effect!.getTiming();
+        animation.currentTime = timing.delay + Number(timing.duration) * 0.9;
+      });
+      // ResizeObserver can still be publishing the new overflow distance after
+      // a viewport/focus change. Read both edges in one settled browser frame.
+      await expect.poll(() => text.evaluate(el => Math.abs(
+        el.getBoundingClientRect().right - el.parentElement!.getBoundingClientRect().right,
+      ))).toBeLessThan(2);
+      const window = await viewport.boundingBox();
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await expect.poll(() => text.evaluate(el => getComputedStyle(el).animationName)).toBe("none");
+      expect((await text.boundingBox())!.width).toBeLessThanOrEqual(window!.width + 1);
+      await expect(text).toHaveText(title);
+      // An unfocused long title has a bounded text box, so the ellipsis can paint.
+      await key(page, labels.indexOf(title) === 0 ? "ArrowDown" : "ArrowUp");
+      await expect(text).not.toHaveClass(/is-overflowing/);
+      expect((await text.boundingBox())!.width).toBeLessThanOrEqual(window!.width + 1);
+      expect(await text.evaluate(el => getComputedStyle(el).textOverflow)).toBe("ellipsis");
+      await expect(text).toHaveText(title);
+    }
+    await page.locator(".lcd-screen").screenshot({ path: testInfo.outputPath(`long-titles-${width}.png`) });
+  }
+});
+
 for (const width of [320, 390, 1280]) {
   test(`classic menu chevrons retain visible ink and pane shadows cover preview content at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });

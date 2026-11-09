@@ -41,16 +41,6 @@
   box-shadow: var(--wheel-center-depth);
 }
 
-.screen-glass {
-  height: auto;
-  aspect-ratio: 4 / 3;
-  border-width: 1px;
-  padding: 2px;
-  border-radius: 6px;
-}
-.lcd-screen {
-  border-radius: 2px;
-}
 .screen-back {
   height: 22px;
   width: 15px;
@@ -149,7 +139,8 @@
 }
 .screen-row,
 .screen-song-list .screen-row {
-  letter-spacing: -0.15px;
+  /* Keep the existing substitute-font fit in LCD coordinates at every shell size. */
+  letter-spacing: calc(var(--lcd-unit) * -0.15);
 }
 .row-title {
   display: flex;
@@ -173,28 +164,27 @@
   width: calc(var(--lcd-unit) * 9);
   height: calc(var(--lcd-unit) * 11);
 }
-.album-row {
-  height: 43px;
-}
 .album-row > .album-art {
-  width: 31px;
-  height: 31px;
+  width: calc(var(--lcd-unit) * 31);
+  height: calc(var(--lcd-unit) * 31);
 }
 .album-row .row-label,
 .category-row .row-label {
-  gap: 2px;
+  gap: calc(var(--lcd-unit) * 2);
 }
 .album-row small,
 .category-row small {
-  font-size: 10px;
+  font-family: var(--font-lcd);
+  font-size: calc(var(--lcd-unit) * 10);
+  line-height: 1.2;
 }
 .screen-preview {
   background: linear-gradient(105deg, #f9f9fa 0%, #fff 65%);
 }
 .screen-footer {
-  height: 17px;
-  padding: 2px 6px;
-  font-size: 10px;
+  height: calc(var(--lcd-unit) * 17);
+  padding: calc(var(--lcd-unit) * 2) calc(var(--lcd-unit) * 6);
+  font-size: calc(var(--lcd-unit) * 10);
   background: linear-gradient(#fbfbfc, #e5e7e9);
   border-color: #b6bac0;
 }
@@ -209,6 +199,13 @@
   display: inline-block;
   white-space: nowrap;
   vertical-align: top;
+}
+/* The outer viewport cannot ellipsize an overflowing inline-block as text.
+   Truncate the resting label itself; moving labels retain their full width. */
+:is(.row-title, .row-detail, .np-info, .cf-caption, .coverflow-album-heading) .marquee-text:not(.is-overflowing) {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .marquee-window.has-overflow {
   text-align: left;
@@ -268,11 +265,11 @@
   z-index: 110;
   height: 43px;
   gap: 2px;
-  padding-inline: 7px;
+  padding-inline: calc(var(--lcd-unit) * 7);
 }
 .cf-caption strong {
   font-size: 16px;
-  letter-spacing: -0.3px;
+  letter-spacing: calc(var(--lcd-unit) * -0.3);
 }
 .cf-caption > span {
   font-size: 13px;
@@ -568,6 +565,11 @@
   .marquee-text.is-overflowing {
     animation: none;
   }
+  :is(.row-title, .row-detail, .np-info, .cf-caption, .coverflow-album-heading) .marquee-text {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* Editing stays inside the LCD; menu rows keep the same wheel selection model. */
@@ -650,7 +652,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 23px;
+  height: calc(var(--lcd-unit) * 23);
 }
 .options-title {
   flex-shrink: 0;
@@ -774,13 +776,14 @@
   padding: calc(var(--device-width) * 0.064) 0 0;
 }
 .screen-glass {
-  width: calc(var(--lcd-width) + 6px);
-  height: calc(var(--lcd-width) * var(--lcd-aspect, 0.75) + 6px);
+  box-sizing: content-box;
+  width: var(--lcd-width);
+  height: calc(var(--lcd-width) * var(--lcd-aspect, 0.75));
   aspect-ratio: auto;
   margin-inline: auto;
   padding: 0;
-  border: 3px solid #090b0d;
-  border-radius: 5px;
+  border: calc(var(--shell-unit) * 3) solid #090b0d;
+  border-radius: calc(var(--shell-unit) * 5);
 }
 .lcd-screen {
   --lcd-header-height: calc(var(--lcd-unit) * 20);
@@ -1047,9 +1050,7 @@
   .play-modes {
   display: none;
 }
-.classic-about,
-.classic-adjustment,
-.clock-screen {
+.classic-adjustment {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -1060,28 +1061,7 @@
   padding: calc(var(--lcd-unit) * 10);
   overflow-y: auto;
 }
-.classic-about > strong {
-  font-size: calc(var(--lcd-unit) * 26);
-}
-.classic-about > span {
-  font-size: calc(var(--lcd-unit) * 13);
-  color: #75818b;
-}
-.classic-about dl {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: calc(var(--lcd-unit) * 5) calc(var(--lcd-unit) * 30);
-  margin: 0;
-  width: 80%;
-  font-size: calc(var(--lcd-unit) * 14);
-}
-.classic-about dd {
-  margin: 0;
-  text-align: right;
-}
-.classic-about nav,
-.classic-adjustment nav,
-.clock-screen nav {
+.classic-adjustment nav {
   width: 100%;
   margin-top: auto;
 }
@@ -1091,17 +1071,9 @@
   margin: 0;
   filter: drop-shadow(0 1px 1px #718694);
 }
-.classic-adjustment input {
-  width: 85%;
-  accent-color: #2199db;
-  flex-shrink: 0;
-}
 .classic-adjustment small {
   font-size: calc(var(--lcd-unit) * 11);
   color: #7b858d;
-}
-.classic-adjustment strong {
-  font-size: calc(var(--lcd-unit) * 16);
 }
 .lcd-backlight-dim {
   position: absolute;
@@ -1110,23 +1082,6 @@
   background: #000;
   opacity: 0.62;
   pointer-events: none;
-}
-.classic-clock {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(var(--lcd-unit) * 4);
-}
-.classic-clock svg {
-  width: calc(var(--lcd-unit) * 118);
-  height: calc(var(--lcd-unit) * 118);
-}
-.classic-clock strong {
-  font-size: calc(var(--lcd-unit) * 25);
-}
-.classic-clock span {
-  font-size: calc(var(--lcd-unit) * 12);
-  color: #75828e;
 }
 .np-firmware-control {
   margin-top: calc(var(--lcd-unit) * 2);

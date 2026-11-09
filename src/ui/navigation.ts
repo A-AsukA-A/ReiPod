@@ -32,6 +32,14 @@ export type Page =
   | "volume-limit"
   | "extras"
   | "clock"
+  | "clock-options"
+  | "clock-regions"
+  | "clock-cities"
+  | "stopwatch"
+  | "stopwatch-timer"
+  | "stopwatch-log"
+  | "stopwatch-log-options"
+  | "confirm-clear-stopwatch"
   | "notes"
   | "text-reader"
   | "text-options"
@@ -110,7 +118,7 @@ export type NavigationAction =
   | { type: "home" }
   | { type: "reset" };
 
-function screenKey(screen: { page: Page; groupKey?: string; artist?: string; category?: MusicCategory }) {
+export function navigationScreenKey(screen: { page: Page; groupKey?: string; artist?: string; category?: MusicCategory }) {
   return screen.category
     ? JSON.stringify([screen.page, screen.groupKey ?? null, screen.artist ?? null, screen.category.kind, screen.category.value])
     : screen.artist !== undefined
@@ -128,7 +136,7 @@ export function navigationReducer(
   if (action.type === "reset") return initialNavigation;
   const remembered = {
     ...state.remembered,
-    [screenKey(state.screen)]: state.screen.selectedKey,
+    [navigationScreenKey(state.screen)]: state.screen.selectedKey,
   };
   if (action.type === "home")
     return {
@@ -167,7 +175,7 @@ export function navigationReducer(
         ...(action.category ? { category: action.category } : {}),
         selectedKey:
           action.selectedKey ??
-          remembered[screenKey(action)] ??
+          remembered[navigationScreenKey(action)] ??
           action.defaultKey ??
           null,
       },

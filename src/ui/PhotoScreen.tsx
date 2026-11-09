@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, memo } from "react";
+import { useLayoutEffect, useRef, useState, memo } from "react";
 import type { PhotoItem } from "../media/photos";
 export const PhotoScreen = memo(function PhotoScreen({
   photos,
@@ -8,6 +8,8 @@ export const PhotoScreen = memo(function PhotoScreen({
   slideshow,
   loading = false,
   total = photos.length,
+  positions,
+  positionKey,
 }: {
   photos: PhotoItem[];
   index: number;
@@ -16,16 +18,29 @@ export const PhotoScreen = memo(function PhotoScreen({
   slideshow: boolean;
   loading?: boolean;
   total?: number;
+  positions: Map<string, { key: string; offset: number }>;
+  positionKey: string;
 }) {
   const selected = useRef<HTMLDivElement>(null);
+  const restored = useRef<string | null>(null);
   const localIndex = index - offset;
   const start = photos.length > 100 ? Math.max(0, Math.floor(localIndex / 5) - 3) * 5 : 0;
   const end = Math.min(photos.length, start + 100);
   const date = photos[localIndex]?.takenAt ?? photos[localIndex]?.file?.lastModified ?? 0;
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = selected.current,
       parent = element?.parentElement;
     if (element && parent) {
+      const key = photos[localIndex]?.id;
+      if (!key) return;
+      const stride = element.offsetHeight + (parseFloat(getComputedStyle(parent).rowGap) || 0);
+      const saved = positions.get(positionKey);
+      if (restored.current !== positionKey && saved) {
+        const anchor = [...parent.children].find(child =>
+          (child as HTMLElement).dataset.photoId === saved.key) as HTMLElement | undefined;
+        if (anchor) parent.scrollTop = anchor.offsetTop - saved.offset * stride;
+      }
+      restored.current = positionKey;
       if (element.offsetTop < parent.scrollTop)
         parent.scrollTop = element.offsetTop;
       else if (
@@ -34,8 +49,13 @@ export const PhotoScreen = memo(function PhotoScreen({
       )
         parent.scrollTop =
           element.offsetTop + element.offsetHeight - parent.clientHeight;
+      positions.delete(positionKey);
+      positions.set(positionKey, { key, offset: (element.offsetTop - parent.scrollTop) / stride });
+      if (positions.size > 128) positions.delete(positions.keys().next().value!);
+    } else {
+      restored.current = null;
     }
-  }, [index, offset, photos, full]);
+  }, [index, offset, photos, full, positions, positionKey, localIndex]);
   if (full && (photos.length || loading || total > 0))
     return <FullPhoto photo={photos[localIndex]} index={index} total={total} slideshow={slideshow} loading={loading} />;
   if (!photos.length)
@@ -65,6 +85,7 @@ export const PhotoScreen = memo(function PhotoScreen({
             ref={visibleIndex + start === localIndex ? selected : undefined}
             className={visibleIndex + start === localIndex ? "current-photo" : ""}
             key={photo.id}
+            data-photo-id={photo.id}
           >
             <img
               src={photo.thumbnail ?? photo.url}

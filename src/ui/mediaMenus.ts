@@ -133,6 +133,6 @@ export function podcastShowRows(shows: Album[], open: MediaMenuContext["open"], 
     label: `${local ? "本地 · " : ""}${show.title === "未知专辑" ? show.artist : show.title}`,
     artwork: show.artwork,
     detail: `${show.tracks.length} 集`,
-    action: () => open("podcast-episodes", show.tracks[0]?.id, show.id),
+    action: () => open("podcast-episodes", undefined, show.id),
   }));
 }

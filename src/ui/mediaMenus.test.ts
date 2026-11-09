@@ -58,7 +58,7 @@ it("podcasts use show fallback labels and retain episode selection without invok
   expect(row.label).toBe("Speaker");
   expect(row.detail).toBe("1 集");
   row.action();
-  expect(f.context.open).toHaveBeenCalledWith("podcast-episodes", "episode", "show");
+  expect(f.context.open).toHaveBeenCalledWith("podcast-episodes", undefined, "show");
   expect(f.context.deletePhoto).not.toHaveBeenCalled();
 });
 it("system photo menus never expose the local-copy deletion command", () => {

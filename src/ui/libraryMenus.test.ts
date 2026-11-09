@@ -21,6 +21,15 @@ function fixture() {
   return { context, operations, menus: () => createLibraryMenus(context) };
 }
 
+it("playlist selection uses music-library tracks rather than the active playback session or podcasts", () => {
+  const f = fixture();
+  f.context.state.tracks = [{ ...track, id: "podcast-or-remote", title: "Other session" }];
+  const rows = f.menus()["playlist-add-tracks"]!;
+  expect(rows.map(row => row.key)).toEqual([track.id, "done"]);
+  rows[0].action();
+  expect(f.operations.togglePlaylistTrack).toHaveBeenCalledWith("list", track.id);
+});
+
 it("building menus has no storage effects and membership edits use the supplied playlist port", () => {
   const f = fixture();
   const rows = f.menus();

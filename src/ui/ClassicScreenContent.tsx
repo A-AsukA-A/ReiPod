@@ -1,26 +1,41 @@
+import { lazy, Suspense, useRef } from "react";
 import type { ComponentProps, RefObject, ReactNode } from "react";
 import type { Page } from "./navigation";
 import type { PlayerState, Track } from "../player/Player";
 import type { Album } from "../player/library";
-import { CoverFlow } from "./CoverFlow";
+
 import { MenuPreview } from "./MenuPreview";
-import { ClassicClock } from "./ClassicClock";
+
+import type { ExtrasState } from "../models/classicExtras";
 import { ClassicGlyph } from "./ClassicGlyph";
+import { ClassicAboutScreen } from "./ClassicAboutScreen";
+import type { ClassicAboutInformation } from "./ClassicAboutScreen";
 import { MenuRows } from "./MenuRows";
-import type { MenuItem } from "./MenuRows";
+import type { MenuScrollPositions, MenuItem } from "./MenuRows";
 import { NowPlayingScreen } from "./NowPlayingScreen";
-import { PhotoScreen } from "./PhotoScreen";
 import { WheelTextEntry } from "./WheelTextEntry";
-import { ClassicSearchScreen } from "./ClassicSearchScreen";
-import { TextReader } from "./TextReader";
+
+
+
 import type { TextReaderHandle } from "./TextReader";
 import { classicPreviewModel } from "./classicScreenModel";
+
+// Secondary displays load only when opened; all files remain bundled for native/offline use.
+const CoverFlow = lazy(() => import("./CoverFlow").then(module => ({ default: module.CoverFlow })));
+const ClassicClocksScreen = lazy(() => import("./ClassicExtrasScreens").then(module => ({ default: module.ClassicClocksScreen })));
+const ClassicStopwatchScreen = lazy(() => import("./ClassicExtrasScreens").then(module => ({ default: module.ClassicStopwatchScreen })));
+
+const ClassicSearchScreen = lazy(() => import("./ClassicSearchScreen").then(module => ({ default: module.ClassicSearchScreen })));
+const TextReader = lazy(() => import("./TextReader").then(module => ({ default: module.TextReader })));
+
+const PhotoScreen = lazy(() => import("./PhotoScreen").then(module => ({ default: module.PhotoScreen })));
 
 type Props = {
   page: Page; groupKey?: string; title: string;
   menu: { rows: MenuItem[]; focusedRow?: MenuItem; selectedIndex: number;
     isTrackList: boolean; visibleIds: Set<string>; visibleTracks: Track[];
     trackById: ReadonlyMap<string, Track>; playlistTrackIds: Set<string>;
+    positionKey: string;
     selectedRow: RefObject<HTMLDivElement | null>; hasManagedRows: boolean; splitMenu: boolean };
   library: { albums: Album[]; flowAlbums: Album[]; artistCount: number;
     browseAlbumCount: number; playlistTitle?: string; optionTrack?: Track };
@@ -33,15 +48,18 @@ type Props = {
   photos: { activePhotos: ComponentProps<typeof PhotoScreen>["photos"];
     photoIndex: number; slideshow: boolean; loading?: boolean; total?: number; offset?: number };
   prefs: { brightness: number; volumeLimit: number };
+  about: { index: number; information: ClassicAboutInformation };
+  extras: ExtrasState;
   preview: Parameters<typeof classicPreviewModel>[0];
   accountHeader: ReactNode; qrImage?: string; serviceName: string;
 };
 
 /** Classic page presentation only; sessions, service capabilities and commands are injected. */
 export function ClassicScreenContent({ page, groupKey, title, menu, library, playback,
-  text, photos, prefs, preview, accountHeader, qrImage, serviceName }: Props) {
+  text, photos, prefs, about, extras, preview, accountHeader, qrImage, serviceName }: Props) {
   const { rows, focusedRow, selectedIndex, isTrackList, visibleIds, visibleTracks,
-    trackById, playlistTrackIds, selectedRow, hasManagedRows, splitMenu } = menu;
+    trackById, playlistTrackIds, selectedRow, hasManagedRows, splitMenu, positionKey } = menu;
+  const positions = useRef<MenuScrollPositions>(new Map());
   const { albums, flowAlbums, artistCount, browseAlbumCount, playlistTitle, optionTrack } = library;
   const { state, current, active, playView, lyricWheel, rating, volumeOverlay } = playback;
   const { textEntry, query, playlistName, textDocument, reader } = text;
@@ -58,9 +76,11 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
       tracks={trackById}
       playlistIds={playlistTrackIds}
       selectedRow={selectedRow}
+      positionKey={positionKey}
+      positions={positions.current}
     />
   );
-  return (<>
+  return (<Suspense fallback={null}>
       {page === "search" && (
         <ClassicSearchScreen query={query} editing={textEntry.editing}
           characters={textEntry.characters} index={textEntry.index}
@@ -81,29 +101,12 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
             {playlistName}
           </div>
         ))}
-      {(page === "playlist-tracks" ||
-        page === "playlist-add-tracks") && (
+      {page === "playlist-add-tracks" && (
         <div className="lcd-toolbar">
           <span>{playlistTitle ?? "歌单"}</span>
         </div>
       )}
-      {page === "about" && (
-        <div className="classic-about">
-          <strong>ReiPod</strong>
-          <span>Classic 音乐播放器</span>
-          <dl>
-            <dt>歌曲</dt>
-            <dd>{state.tracks.length}</dd>
-            <dt>专辑</dt>
-            <dd>{albums.length}</dd>
-            <dt>艺人</dt>
-            <dd>{artistCount}</dd>
-            <dt>版本</dt>
-            <dd>0.1.0</dd>
-          </dl>
-          <nav>{renderRows()}</nav>
-        </div>
-      )}
+      {page === "about" && <ClassicAboutScreen {...about} />}
       {(page === "brightness" || page === "volume-limit") && (
         <div className="classic-adjustment">
           <ClassicGlyph
@@ -121,28 +124,20 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
               page === "brightness" ? "屏幕亮度" : "最高音量"
             }
           />
-          <strong>
-            {Math.round(
-              (page === "brightness"
-                ? prefs.brightness
-                : prefs.volumeLimit) * 100,
-            )}
-            %
-          </strong>
-          <small>
-            {page === "volume-limit" && !state.volumeControl
-              ? "此设备使用侧键调节音量"
-              : "转动转轮调整，中心键完成"}
-          </small>
+          {page === "volume-limit" && !state.volumeControl &&
+            <small>此设备使用侧键调节音量</small>}
           <nav>{renderRows()}</nav>
         </div>
       )}
-      {page === "clock" && (
-        <div className="clock-screen">
-          <ClassicClock />
-          <nav>{renderRows()}</nav>
-        </div>
-      )}
+      {page === "clock" && (extras.clocks.length
+        ? <ClassicClocksScreen clocks={extras.clocks} selected={focusedRow?.key} />
+        : <nav className="settings-screen">{renderRows()}</nav>)}
+      {page === "stopwatch-timer" && <ClassicStopwatchScreen session={extras.current}>{renderRows()}</ClassicStopwatchScreen>}
+      {page === "stopwatch-log" && (() => {
+        const log = extras.logs.find(item => item.id === groupKey);
+        return log ? <ClassicStopwatchScreen session={log} log>{renderRows()}</ClassicStopwatchScreen>
+          : <div className="screen-empty"><strong>记录已不在列表中</strong></div>;
+      })()}
       {page === "text-reader" && textDocument && (
         <TextReader
           source={textDocument}
@@ -170,6 +165,8 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
           loading={photos.loading}
           total={photos.total}
           offset={photos.offset}
+          positions={positions.current}
+          positionKey={`photo:${groupKey ?? "local-all"}`}
         />
       )}
       {(page === "coverflow" || page === "coverflow-album") &&
@@ -224,12 +221,14 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
             "brightness",
             "volume-limit",
             "clock",
+            "stopwatch-timer",
+            "stopwatch-log",
             "photo-grid",
             "photo-full",
           ].includes(page) &&
           !(page === "playlist-name" && textEntry.editing))) && (
         <div
-          className={`settings-screen ${splitMenu ? "split-settings-screen" : ""} ${page === "photos" ? "photo-album-list" : ""} ${page === "music-account" ? "music-account-screen" : ""} ${page === "music-account" && qrImage ? "has-login-qr" : ""}`}
+          className={`settings-screen ${splitMenu ? "split-settings-screen" : ""} ${page === "photos" ? "photo-album-list" : ""} ${page === "playlists" ? "playlist-menu" : ""} ${page === "music-account" ? "music-account-screen" : ""} ${page === "music-account" && qrImage ? "has-login-qr" : ""}`}
         >
           {page === "music-account" && accountHeader}
           {page === "music-account" && qrImage && (
@@ -298,7 +297,7 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
         page !== "coverflow-album") ||
         (page === "playing" && !current)) &&
         (isTrackList && visibleTracks.length ? (
-          <div className="song-screen">
+          <div className={`song-screen ${page === "playlist-tracks" ? "playlist-song-screen" : ""}`}>
             <div
               className="screen-song-list"
               role="group"
@@ -306,13 +305,13 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
             >
               {renderRows()}
             </div>
-            <div className="screen-footer">
+            {page !== "playlist-tracks" && <div className="screen-footer">
               <span>
                 {visibleIds.has(focusedRow?.key ?? "")
                   ? `${visibleTracks.findIndex((track) => track.id === focusedRow?.key) + 1} / ${visibleTracks.length}`
                   : `共 ${visibleTracks.length} ${page === "podcast-episodes" ? "集" : "首歌曲"}`}
               </span>
-            </div>
+            </div>}
           </div>
         ) : (
           <div className="screen-empty">
@@ -322,6 +321,10 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
             <strong>
               {page === "favorites"
                 ? "还没有收藏的歌曲"
+                : page === "podcast-episodes"
+                  ? "此节目暂无单集"
+                : page === "playlist-tracks"
+                  ? "播放列表为空"
                 : "暂无歌曲"}
             </strong>
             {page === "playlist-tracks" ? (
@@ -347,5 +350,5 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
           volumeOverlay={volumeOverlay}
         />
       )}
-  </>);
+  </Suspense>);
 }

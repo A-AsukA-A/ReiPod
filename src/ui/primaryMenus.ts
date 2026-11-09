@@ -55,6 +55,12 @@ export function createPrimaryMenus({
       action: () => open("music"),
     },
     {
+      key: "songs",
+      label: "歌曲",
+      detail: `${musicCount} 首歌曲`,
+      action: () => open("songs"),
+    },
+    {
       key: "photos",
       label: "照片",
       detail: `${photoCount} 张照片`,
@@ -147,6 +153,13 @@ export function createPrimaryMenus({
     (item) => !["import", "demo"].includes(item.key) && prefs.musicMenu.includes(item.key),
   );
   const playlistItems: MenuItem[] = [
+    ...playlists.map((item) => ({
+      key: item.id,
+      label: item.name,
+      hold: addToOnTheGo ? () => addToOnTheGo(item.trackIds, item.id) : undefined,
+      detail: `${item.trackIds.filter((id) => trackById.has(id)).length} 首歌曲`,
+      action: () => open("playlist-tracks", undefined, item.id),
+    })),
     {
       key: "all",
       label: "全部歌曲",
@@ -161,17 +174,11 @@ export function createPrimaryMenus({
     },
     { key: "recent", label: "最近添加", action: () => open("recent") },
     { key: "demo", label: "试听精选", action: loadDemos },
-    ...playlists.map((item) => ({
-      key: item.id,
-      label: item.name,
-      hold: addToOnTheGo ? () => addToOnTheGo(item.trackIds, item.id) : undefined,
-      value: `${item.trackIds.filter((id) => trackById.has(id)).length}`,
-      action: () => open("playlist-tracks", undefined, item.id),
-    })),
+
     { key: "new-playlist", label: "新建歌单…", action: () => editName() },
   ];
   const settingsItems: MenuItem[] = [
-    { key: "about", label: "关于本机", action: () => open("about", "done") },
+    { key: "about", label: "关于本机", action: () => open("about", "about-0") },
     {
       key: "lyrics-display",
       label: "歌词显示",

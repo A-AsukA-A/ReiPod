@@ -305,3 +305,63 @@ Apple《iPod classic Features Guide》[72页镜像](https://www.manuallib.com/do
 ## 2026-11-06 / 任务72：现代iPhone宿主性能边界
 
 这是ReiPod适配研究，不是旧iPod硬件指标。照片倒序按Apple [PHFetchOptions sortDescriptors](https://developer.apple.com/documentation/photos/phfetchoptions/sortdescriptors)使用creationDate降序；原生触觉采用[UISelectionFeedbackGenerator](https://developer.apple.com/documentation/uikit/uiselectionfeedbackgenerator)。[Apple ProMotion配置说明](https://developer.apple.com/documentation/quartzcore/optimizing-iphone-and-ipad-apps-to-support-promotion-displays)确认CADisableMinimumFrameDurationOnPhone opt-in不保证指定刷新率。核查[WebKit294338](https://bugs.webkit.org/show_bug.cgi?id=294338)仍NEW，当前SDK WKPreferences公开头文件无相应偏好开关。iPhone17 Pro/iOS27.3真机rAF120次样本约59fps，不能以硬件120上限/配置开启宣称WebKit达到120，亦不把rAF采样当面板扫描测量；系统辅助功能“限制帧速率”及温控状态未独立核验。继续优化main-thread转场/图片读取，高帧率目标APP02保留开放。
+
+## 主菜单逐状态复核 — 2026-11-09 / CAL77
+
+复看Gadgeteer Julie Strietelmeier的[2007 classic160GB原评测](https://the-gadgeteer.com/2007/09/19/apple_ipod_classic/)及既有G-H源图，沿用原哈希/四角和单应归一。未取得新的匹配中文/固件直接证据。新增Videos/Photos/Podcasts/Extras/Settings/Shuffle Songs的限定文本窗暗色阈值敏感性，与相同文案的实际替代字体可见墨迹分开记录；宽度差异不足以证明可统一修改字号或缩放字体。具体测量、误差、最终级联和工程截图矩阵见[CAL77指标](UI_METRICS.md#2026-11-09-主菜单逐状态校准c-m01--cal77)。
+
+本轮只纠正固定CSS像素字距在不同LCD缩放下的比例变化及静止长标题硬裁切，均不冒充恢复原字体、固件跑马灯时序或中文几何；原机参考图、叠加与差分只留忽略目录`.local/calibration-77/`。
+
+## 普通播放页50%状态复核 — 2026-11-09 / CAL79
+
+重新核查前述Register2007与iLounge2007原评测和本地原图哈希，保留固件未知和原图放大/曝光限制。新增Register明确源像素标志点及单应取样敏感范围，核对当前封面投影、文字锚点、轨道与时间中轴；现有几何在粗测范围附近，未取得改变角度/字号的充分证据。两原机图片均非50%进度，不能将固定50%的渲染fixture/本地暂停帧当作匹配固件的完整原机对照。
+
+本轮只将静止长元数据省略修复接入播放页，源图可见专辑名省略仅支持呈现关系，不证明原始跑马灯时序。详细来源哈希/角点/标志点/误差、computed style与前后记录见[CAL79指标](UI_METRICS.md#2026-11-09-普通播放页50单状态c-n01--cal79)；参考资产仍只存`.local/calibration-79/`及既有研究目录。
+
+## 普通播放端点补证与长时长稳定性 — 2026-11-09 / CAL81
+
+沿用CAL79的R-NP/I-NP，未将其非端点画面外推为0/100%实机证据。补查[Gadgeteer2007原评测](https://the-gadgeteer.com/2007/09/19/apple_ipod_classic/)的Now Playing图片`https://the-gadgeteer.com/assets/apple-ipod-classic-8.jpg`，本轮返回404；未取得可测原图，失败不代表设备没有该状态。中文、匹配固件和精确端点直接证据继续开放。
+
+本轮发现并修复6000秒样本时间位数变化引起的约6.3u轨道跳长，按实际字体排布预留总时长文本宽度；这是ReiPod工程适配，不是Apple长录音布局规范。常规300秒三个进度及三视口像素保持。方法、数值、比较与边界见[CAL81指标](UI_METRICS.md#2026-11-09-普通播放条0100端点c-n01--cal81)。
+
+## 快速字母定位（QUICK88 / 2026-11-09）
+
+- Apple《iPod classic Features Guide》[第三方托管的原手册](https://www.manuallib.com/download/IPOD-CLASSIC-FEATURES-GUIDE.PDF)第7页记载列表超过100项、快速转轮显示字母、跳至该字母首项、抬手回普通选择，并注明不支持所有语言；末页版权与修订号为2008、`019-1148/01-2008`。这是2007硬件范围的后续手册，不能称2007首版固件实测；旧Apple下载URL现重定向文档首页，不能伪称本轮取得Apple服务器原PDF。数字/符号在A之前；[后期160GB手册](https://cdsassets.apple.com/live/6GJYWVAV/user/ma1195_ipod_classic_160gb_user_guide.pdf)第9页改写为Z之后，版本保持分开。
+- Tony Smith的[2007-09-13亲手评测](https://www.theregister.com/on-prem/2007/09/13/apple-ipod-classic/1016249?page=3)明确观察到专辑、艺人、歌曲快转时弹出当前首字母。它是C07功能存在的同期第一手依据，不含精确图形/速度量尺。
+- [mackebaysales，iPod Classic Demonstration](https://www.youtube.com/watch?v=K5Bx3J73JSQ)，上传2011-02-08，作者标明80GB，硬件范围对应2007classic；固件未知。取得640×480/30fps/104秒流，SHA256 `5c2e2b548c3a26f14128a2cd7986ea8867072c239cef7065f03e0291d05af1fb`。28–47秒有艺人/歌曲浏览，但严重拍屏曝光条纹会伪造白色横笔；本轮未能可靠分离字母边界、面板透明度和输入帧，**不登记四角/内部几何测量值，不用条纹充当字母测量**。前期目视确定程度过高，已在交接纠正。5G Videojug、nano/7G及其他控制教程均未补齐同代可测字母画面，不能混用。
+
+因此：功能规则有文档/第一手依据；识别阈值是输入适配，字母HUD大小/颜色/透明度为P暂定实现，原机精度仍U。中文/日文首字不生成拼音或错误归到数字组，继续普通浏览。私有资料、搜索/抽帧脚本和实际工程样本存`.local/quick-scroll-88/`，不随网站/仓库分发。
+
+
+## 2026-11-09 设置与关于本机（SETTINGS90）
+
+- 早期Apple《iPod classic Features Guide》[第三方镜像](https://www.manuallib.com/download/IPOD-CLASSIC-FEATURES-GUIDE.PDF)，019-1148/01-2008（任务88已核末页），印刷p8转轮声音，p9主菜单添加/勾选（明确举Songs快捷入口）/背光，p10亮度转轮滑条、Center循环About和Reset Settings。镜像为Apple著作的原文证据，不写成当前Apple官网下载；不把后期General>Clicker套回2007设置层级。
+- [Geekanoids 2007-09-12首发实机视频](https://www.youtube.com/watch?v=64_CxTW7_84)，160GB、固件未知、英文，336–346秒存储卡，348–356秒数量卡及三点分页，358秒左右返回。视频原始640×360/25fps，私有抽帧`.local/settings-90/reference-storage-336.png`与2秒接触表；LCD四角粗取(126,44)/(496,40)/(510,309)/(126,311)，各±3视频px，按四角至320×240对照，上方身份/已用/可用保持，下方卡片变化，底部三点。此粗取仅证明布局层级，透视/曝光/替代字体使几何约±4–6u，不据此晋升当前CSS为精确测量。
+- 原机首卡多色Audio/Video/Photos/Other，二卡有歌曲/视频/播客/照片/游戏/联系人，三卡身份字段由手册支持；ReiPod未模拟视频/游戏/联系人/序列号，不能填0或假固件冒充实现。现用ReiPod身份、单条网页存储估算、所选音乐库统计与本地照片/播客/文本，第三卡显示实际应用版本/当前模拟机型/音乐来源；这些是为真实平台数据做的A适配。网页quota不是iPod硬盘容量或宿主总剩余空间。
+- 亮度转轮滑条和音量上限调整有手册行为依据，但本轮未取得匹配2007固件的清晰调整页面量尺；仅撤回可追溯的自加百分比和常驻“转动转轮…”说明，现有图标/滑条/完成布局仍P，不声称已证实所有固件都没有这些字。菜单内原有参数预览、侧键能力反馈保留。步长/下限、始终开启默认与确认返回是既有A，不新增PIN锁定/EQ/音量平衡/语言支持声明。
+
+
+## 2026-11-09 Cover Flow、搜索、照片连续修整（BATCH92）
+
+- 2007 classic证据继续按型号/固件分开。Apple authored《Features Guide》019-1148/01-2008[镜像](https://www.manuallib.com/download/IPOD-CLASSIC-FEATURES-GUIDE.PDF)印刷pp7–8支持Cover Flow选专辑/选歌及搜索轮盘/空格/退格/结果类型；镜像非当前Apple托管，不能由手册推算像素。
+- FLOW92直接依据[Geekanoids 2007-09-12原机160GB视频](https://www.youtube.com/watch?v=64_CxTW7_84)248.8秒专辑墙、256.8秒翻面曲目，固件unknown。640×360原帧私有`.local/batch-92/ref-{flow,flipped}.png`：LCD约(129,44)/(499,44)/(512,311)/(125,313)，角点±3源px；仅以纵向约269px→240u做粗比例比较、保留透视误差，未做同文本逐像素配准。翻面顶缘约y74、标题底缘约y121、曲目行间距约26源px，支持紧贴标题栏的sheet、小标题区、约7条可见、左曲序/右时长而非箭头；纵向量值约±3–4u，不标厂商规范。当前top5u/标题约40u/行24u是据此拟合P，原字体/精确颜色/透视与过渡仍待测；既有fan与用户指定进出方式未盲调。
+- SEARCH92复看Register2007[原搜索照片](https://image.theregister.com/208122.webp?imageId=208122&width=960&format=jpg)及原评测（本地register-208122.jpg）：横向输入条、两行结果/类型图标和结果数原已实现。本轮不重做既有内容，不把当前数量文字当新增；长副标题完整阅读是沿既有选中滚动的工程修复/A，未宣称测得原机中文长文本滚动规则。
+- PHOTO92复看[iLounge classic亲测](https://www.ilounge.com/index.php/reviews/entry/apple-ipod-classic-80gb-160gb)及[近照19-2](https://www.ilounge.com/wp-content/uploads/2021/05/19-2.jpg.webp)，classic、容量/固件unknown：5×3网格/深色区域/黄色框已实现，未再猜图标/颜色。实际差异是同一选中照片从全图返回只保证可见，导致窗口跳一整行；按锚照片+行内相对偏移恢复，邻图仍在原窗口就不搬动窗口，锚点已不在加载窗口时回退选中可见。这是A工程恢复策略，不把网页窗口持久化规则冒称Apple固件。
+- 本轮为用户授权的连续三块，图像/样本/视频仅私有`.local/batch-92/`；不下载/分发额外版权资产。未作新原机/固件/账号/iPhone验证。
+
+
+## 2026-11-10 播客与播放列表（MEDIA94）
+
+任务94从11-09持续至11-10。2007 classic基线，容量/固件unknown，中文实现；不是新原生能力或全固件验收。
+
+- Apple《Features Guide》019-1148/01-2008[原文镜像](https://www.manuallib.com/download/IPOD-CLASSIC-FEATURES-GUIDE.PDF)印刷pp27–28支持On-The-Go加入、移除、清空确认、保存为New Playlist N后清空且副本不能继续移除；p31支持节目→单集、断点继续及未播放标记。原功能已实现，本轮只核验保留，不将其包装为新增；未读蓝点需可靠已听元数据，本地仅有断点且结束会清零，不能据此擅自标全部未读。
+- [bigern1990 2007-10-24原机录像](https://www.youtube.com/watch?v=ge56Li0PuQ0)约200–210秒，原文件320×240、固件/容量unknown；本轮私有抽帧`reference-playlist.png`和以输出端准确seek取的`reference-playlist-tracks-209.png`。LCD约(40,32)/(282,32)/(285,216)/(37,218)，角点约±2源px；仅按LCD边界归一比较布局层级，未测原字体。列表页可辨名称下方歌曲数；曲目页有歌名/艺人两行，没有第二份列表标题或曲目右箭头，底端该帧无自加计数条。颜色/精确字号/44u行高仍P，不能从曝光画面取厂商RGB或由单帧外推全部固件。
+- 播客节目重进时强制首集是代码差异：podcastShowRows显式传第一曲key覆盖navigation.remembered。改为不指定key，现有范围导航负责记住最近单集/窗口；这是A恢复策略，不把手册的断点播放概念混同为精确焦点固件证据。
+- 本地歌单选曲页使用播放state.tracks，会混入本地播客，也可能读取另一播放源的会话曲目；改消费注入音乐资料库musicTracks，Play键队列同源。普通歌单和On-The-Go仍只写本地歌单端口，未接触系统/云端歌单；实际歌单优先于ReiPod库快捷入口是A排列调整，快捷入口保留。
+
+## 2026-11-10 世界时钟、秒表与机身缩放（BATCH95）
+
+- 一手行为来源：[Apple iPod classic 120GB User Guide](https://cdsassets.apple.com/live/6GJYWVAV/user/ma630_ipod_classic_120gb_en.pdf)，2008 classic 120GB，76页，印刷p49（PDF索引48）世界时钟、p51（索引50）秒表；本轮实际核读官方托管PDF正文。时钟Center→Add→地区→城市、最后添加放末尾；秒表Play/Pause开始/停止，Center分段、最多显示最近三段，Resume/New Timer，日期/总用时/最快最慢平均及记录删除/清空有D依据。2008行为不能直接证明2007未知固件的中文像素。
+- [Geekanoids 2007-09-12 classic录像](https://www.youtube.com/watch?v=64_CxTW7_84)约371秒Extras菜单（私有reference-clock.png）可辨Clocks、Notes、Stopwatch相对次序；不是时钟/秒表内容页参考，不能据此测表盘或计数字号。本轮未取得匹配2007固件的这些内容页量尺，几何P、字体U。
+- 手册含夏令时设置和离开秒表且无音乐时的停止/自动睡眠限制。ReiPod用宿主Intl/IANA自动DST，保存操作时间戳、离页/刷新后墙钟恢复；显式睡眠暂停。这些A适配不冒称Apple行为或原生后台计时保障；19城市/50日志/1000分段为工程覆盖与有界存储，不是原机上限。
+- SHELL95只修工程缩放：原3px LCD外框、固定px边缘/阴影在小机身相对变厚；以现有390px最大机身为基准统一shell-unit，颜色/光向/屏幕内容尺寸保留。390不是物理量尺；三视口computed style和工程截图证明比例变化，不证明金属材质或壳体毫米值。未获得原字体证据，不换字体制造差异。

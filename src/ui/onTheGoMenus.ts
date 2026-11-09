@@ -14,7 +14,7 @@ export function createOnTheGoMenus({ page, groupKey, playlist, tracks, open, bac
   const rows: Partial<Record<Page, MenuItem[]>> = {};
   if (page === "playlist-tracks" && (groupKey === onTheGoId || playlist?.savedOnTheGo)) {
     rows["playlist-tracks"] = [
-      ...tracks.map(track => ({ key: track.id, label: track.title, action: () => play(track.id) })),
+      ...tracks.map(track => ({ key: track.id, label: track.title, detail: track.artist, action: () => play(track.id) })),
       ...(groupKey === onTheGoId ? [
         { key: "save-on-the-go", label: "保存播放列表", disabled: !tracks.length, action: () => {
           if (!tracks.length) return;

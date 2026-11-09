@@ -92,7 +92,7 @@ export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud
         })),
       ]),
     ),
-    about: [{ key: "done", label: "返回", action: () => back() }],
+    about: [],
     "main-menu": [
       {
         key: "music",

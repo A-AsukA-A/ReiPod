@@ -115,3 +115,52 @@ The updated iPhone shell opens authorized PhotoKit albums directly. Photo import
 ## 2026-11-06 / 任务72体验修正
 
 照片最近时间优先、按需元数据/图像缓存，长菜单窗口化，原生全面屏安全区与透明底层、独立触觉开关已实现；照片连续切换保留前图至新图解码以消除黑屏空隙。其工程/真机验收和证据查UI_METRICS任务72与TASK_LOG，不扩张为原机字体/像素或完整照片固件验收。公开ProMotion配置已启用，当前设备WebKit rAF约59fps，APP02高帧率仍未完成。
+
+## Main menu calibration — 2026-11-09 / CAL77
+
+Menu letter spacing now follows the LCD scale, preserving the existing substitute-font fit on phones and desktop. Resting long menu labels display an ellipsis; selected labels keep their existing full-width marquee, and reduced motion keeps a static ellipsis. Full text remains in the DOM. Row height, type size/weight, split geometry, artwork preview and playback/input behavior retain their existing contracts.
+
+The [state record](UI_METRICS.md#2026-11-09-主菜单逐状态校准c-m01--cal77) separates contemporary physical-photo measurements, English comparison fixtures and Chinese application captures. These bounded engineering corrections do not establish original font identity, Chinese firmware geometry or exact marquee timing.
+
+## Ordinary playback midpoint pass — 2026-11-09 / CAL79
+
+The ordinary art screen now shares the existing resting-text ellipsis rule for its title, artist and album. Reduced motion shows a static ellipsis instead of cutting a glyph; normal marquee behavior and timing remain. The bounded midpoint pass preserves cover/reflection projection, metadata geometry, progress/time alignment and playback ownership after comparing the existing 2007 photos and settled rendering.
+
+The [state record](UI_METRICS.md#2026-11-09-普通播放页50单状态c-n01--cal79) distinguishes physical-photo measurements, fixed playing snapshots and actual local-media paused captures. The reference photos are not at50% and have unknown firmware; exact fonts, matching Chinese firmware and full C-N01 hardware acceptance remain open.
+
+## Ordinary progress endpoints — 2026-11-09 / CAL81
+
+The ordinary progress rail now reserves time-label width from the formatted track duration. Long recordings keep a stable rail when remaining minutes lose a digit; the existing short-track minimum slots and appearance stay. Hidden sizing text is absent from the accessibility readout. Local-file wheel tests cover0/50/100% after returning to the ordinary art screen, separately from the seek diamond.
+
+The [endpoint record](UI_METRICS.md#2026-11-09-普通播放条0100端点c-n01--cal81) documents unchanged baseline pixels and the100-minute engineering sample. Matching firmware/Chinese endpoint photographs remain missing; these checks do not establish full hardware fidelity.
+
+## Playback controls as one experience — 2026-11-09 / PLAY83
+
+FIX86 correction: the extra mode/value captions introduced in PLAY83 have been removed. They had no original-device evidence and were not requested by the user. Shuffle uses a clear blue selection, rating has more legible inactive stars, and volume feedback stays visible while the wheel continues at0/100%. Artwork, metadata, the approved control style, Center/lyrics flow and playback ownership remain. These are labelled ReiPod usability adaptations; the complete local preview and continuous demo are the user deliverable, with source-fidelity limits retained in UI_METRICS.
+
+## 2026-11-09 Browsing experience
+
+Classic browse lists now retain the selected song's visible position when returning from playback or nested menus. Positions remain in the UI session and are scoped by provider/account and navigation range. Album thumbnails, secondary labels and counters scale with the LCD; focused album/genre secondary labels can scroll to reveal their full text and retain ellipsis with reduced motion. These are ReiPod engineering adaptations, not newly measured firmware constants. Evidence and boundaries: [BROWSE85](UI_METRICS.md#2026-11-09-主菜单与音乐浏览整块browse85).
+
+## 2026-11-09 Quick Scroll
+
+Songs, Artists and Albums now support sustained wheel rotation to jump between available initials in lists with more than100 items, followed by release for ordinary selection and playback through the original route. This implements documented Classic behavior; recognition thresholds are input adaptations and exact HUD geometry remains provisional. Unsupported initials retain ordinary navigation. [Evidence and bounds](UI_METRICS.md#2026-11-09-长曲库快速找歌c-f07-q--quick88).
+
+
+## 2026-11-09 Settings and About
+
+About now follows the contemporary three-card composition: shared identity/storage header, storage/count/version cards, page dots and Center-key cycling, with Menu returning and re-entry starting at the first card. It preserves ReiPod identity and reports origin storage, selected music library and explicitly local media counts; it does not invent a disk capacity, Apple firmware or serial number. Layout/colors remain provisional, and platform-specific fields are documented adaptations. The early Apple guide explicitly supports a Songs shortcut in the main menu; it is now optional, persisted and reset through existing owners. Unsupported adjustment percentages/instructions were removed without restyling the unmeasured slider geometry. Backlight/Clicker, customization/reload and reset/session preservation are checked as one experience; no new physical-device claim is made. See SETTINGS90 in UI_METRICS.
+
+
+## 2026-11-09 Cover Flow, search and photos
+
+The Cover Flow track sheet now uses the contemporary numbered-track/duration layout with a smaller top gap and denser rows, following the 2007 Geekanoids recording. Exact values remain provisional fits. Long captions retain marquee and gain proper static ellipsis with reduced motion. Selected search subtitles now reveal their full text through the existing marquee; the previously implemented result count and typed navigation remain. Photo grids remember their window by an anchor photo and relative row position, preserving the view across full-image browsing and nearby-photo changes; missing anchors fall back to keeping the selection visible. These are documented engineering adaptations. BATCH92 in UI_METRICS separates source evidence from browser comparisons; no new hardware/account verification is claimed.
+
+
+## 2026-11-10 Podcasts and playlists
+
+Re-entering a show now preserves its selected episode and list window through existing scoped navigation; resume still uses the established playback owner. Local playlist names/counts and track titles/artists follow the two-line hierarchy visible in the 2007 recording, removing duplicate playlist headings, the extra track footer and track chevrons. Actual playlists precede preserved ReiPod library shortcuts. Exact row/font values remain provisional; this is not complete firmware acceptance. Music membership selection and its Play queue now use the injected music library instead of the active playback session, excluding podcasts and unrelated playback tracks. On-The-Go save/clear/readonly-copy and playback preservation retain their existing contracts. MEDIA94 records evidence and engineering comparisons separately.
+
+## 2026-11-10 Clocks, stopwatch and shell scale
+
+World clocks now support region/city selection, ordered persistence and deletion. Stopwatch supports Play/Pause start/stop, Center laps, resume/new sessions, persisted logs and min/max/average statistics with deletion/clear confirmation. Apple’s 2008 classic 120GB guide documents these operations; exact 2007 firmware geometry remains unverified. Automatic IANA DST, the city catalog, bounded storage and wall-clock recovery across navigation/reload are explicit adaptations. The player and queues remain separate. Shell edges, shadows and bezel now scale from the existing maximum body width; measured browser LCD content dimensions stay unchanged at three viewport widths. Colors and substitute fonts were retained without inventing new hardware evidence. BATCH95 in UI_METRICS records provisional values and actual captures. An uninstalled development-signed iPhone package is prepared separately; this is not physical-device or account acceptance.

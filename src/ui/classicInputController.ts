@@ -78,6 +78,7 @@ type Context = {
     saveName: () => void;
     reader: { readonly current: TextReaderHandle | null };
   };
+  extras?: { toggleStopwatch: () => void; pauseStopwatch: () => void };
   settings: {
     prefs: Adjustment;
     setPreferences: (patch: Partial<Adjustment>) => void;
@@ -93,7 +94,7 @@ export function createClassicInputController(context: Context) {
   const { rows, focusedRow, isTrackList, visibleIds, accountAuthorized, feedback } = context.menu;
   const { player, state, current, playView, ratings, setRating, toggleFavorite,
     cyclePlayView, scrollLyrics, showVolume, showTransportHint, trackOptions } = context.playback;
-  const { trackById, browseTracks, albums, playTrack, playAlbum, playDefault } = context.library;
+  const { trackById, musicTracks, browseTracks, albums, playTrack, playAlbum, playDefault } = context.library;
   const { activePhotos, photoIndex, slideshow, setSlideshow, offset = 0, total = activePhotos.length,
     keyAt = (index: number) => activePhotos[index]?.id } = context.photos;
   const { textEntry, query, playlistName, setQuery, setPlaylistName, saveName, reader } = context.text;
@@ -127,6 +128,7 @@ export function createClassicInputController(context: Context) {
       dispatch({ type: "select", key: keyAt(destination) });
       return;
     }
+    if (page === "about") return;
     if (page === "brightness") {
       setPreferences({ brightness: prefs.brightness + steps * 0.05 });
       return;
@@ -237,7 +239,12 @@ export function createClassicInputController(context: Context) {
         return;
       }
     }
+    if (value === "play" && page === "stopwatch-timer") {
+      context.extras?.toggleStopwatch();
+      return;
+    }
     if (value === "sleep") {
+      context.extras?.pauseStopwatch();
       player.pause();
       setSleeping(true);
       return;
@@ -298,7 +305,11 @@ export function createClassicInputController(context: Context) {
             : undefined,
       );
     if (value === "select") {
-      if (page === "playing" && current) {
+      if (page === "about") {
+        const keys = ["about-0", "about-1", "about-2"];
+        const index = Math.max(0, keys.indexOf(selectedKey ?? ""));
+        dispatch({ type: "select", key: keys[(index + 1) % keys.length] });
+      } else if (page === "playing" && current) {
         if (state.error || state.status === "error") player.play();
         else cyclePlayView();
       } else if (focusedRow) chooseRow(focusedRow);
@@ -313,7 +324,7 @@ export function createClassicInputController(context: Context) {
       ) {
         playTrack(
           focusedRow.key,
-          state.tracks.map((track) => track.id),
+          musicTracks.map((track) => track.id),
         );
       } else if (page === "coverflow" || page === "albums") {
         if (page === "albums" && focusedRow?.key === "all-songs") {

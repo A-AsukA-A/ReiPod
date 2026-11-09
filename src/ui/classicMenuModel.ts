@@ -91,6 +91,7 @@ export function createClassicMenuModel({ page, selectedKey, browseArtist, catego
                         {
                           key: "all-albums",
                           label: "全部专辑",
+                          aggregate: true,
                           hold: addToOnTheGo ? () => addToOnTheGo(browseTracks.map(track => track.id), "all-albums") : undefined,
                           action: () => category ? open("albums", undefined, undefined, undefined, category) : open("albums"),
                         },
@@ -111,7 +112,7 @@ export function createClassicMenuModel({ page, selectedKey, browseArtist, catego
                         action: () => playTrack(track.id),
                       }))
                     : page === "favorites" || page === "search" ||
-                        page === "playlist-tracks" || page === "playlist-add-tracks"
+                        page === "playlist-tracks" || page === "playlist-add-tracks" || page === "podcast-episodes"
                       ? []
                       : !current || isTrackList
                         ? emptyItems

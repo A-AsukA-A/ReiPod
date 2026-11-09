@@ -90,6 +90,7 @@ export function createLibraryMenus({
             ...visibleTracks.map((track) => ({
               key: track.id,
               label: track.title,
+              detail: track.artist,
               action: () => playTrack(track.id),
             })),
             ...(!visibleTracks.length
@@ -112,7 +113,7 @@ export function createLibraryMenus({
     "playlist-add-tracks":
       page === "playlist-add-tracks"
         ? [
-            ...state.tracks.map((track) => ({
+            ...musicTracks.map((track) => ({
               key: track.id,
               label: track.title,
               value: playlistTrackIds.has(track.id) ? "✓" : "+",

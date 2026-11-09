@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 
 export async function nativeMusicFixture(page: Page, denied = false, podcasts = false,
   options: { authorized?: boolean; holdMusic?: boolean; holdPodcasts?: boolean; holdPodcastTail?: boolean; failPodcasts?: boolean;
-    podcastArtwork?: boolean; songCount?: number;
+    podcastArtwork?: boolean; songCount?: number; songDuration?: number;
     playback?: { currentId: string; status: string; position: number } } = {}) {
   await page.addInitScript(
     ({ denied, podcasts, options }) => {
@@ -12,7 +12,7 @@ export async function nativeMusicFixture(page: Page, denied = false, podcasts = 
           title: "Phone First",
           artist: "Phone Artist",
           album: "Phone Album",
-          duration: 180,
+          duration: options.songDuration ?? 180,
         },
         {
           id: "18446744073709551614",

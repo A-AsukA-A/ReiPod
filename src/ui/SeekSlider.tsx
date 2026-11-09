@@ -16,7 +16,9 @@ export function SeekSlider({
     : 0;
   return (
     <div className="screen-progress">
-      <span className="progress-elapsed">{time(state.position)}</span>
+      <span className="progress-elapsed" data-reserve={time(state.duration)}>
+        <span className="progress-time-value">{time(state.position)}</span>
+      </span>
       <div
         className="firmware-progress"
         data-seeking={seeking}
@@ -29,8 +31,8 @@ export function SeekSlider({
         <i style={{ width: `${fraction}%` }} />
         {seeking && <b style={{ left: `${fraction}%` }} />}
       </div>
-      <span className="progress-remaining">
-        −{time(Math.max(0, state.duration - state.position))}
+      <span className="progress-remaining" data-reserve={`−${time(state.duration)}`}>
+        <span className="progress-time-value">−{time(Math.max(0, state.duration - state.position))}</span>
       </span>
     </div>
   );

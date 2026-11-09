@@ -1,8 +1,11 @@
 import { angleDelta, getAngleBetweenPoints } from "./geometry";
 import type { Point } from "./geometry";
 
+export type WheelRotation = { degrees: number; detents: number; fast: boolean };
+
 /** One pointer owns a gesture. Moving through the center cancels click eligibility. */
 export class WheelGesture {
+  rotation: WheelRotation | undefined;
   private previous: number | null;
   private previousTime: number;
   private remainder = 0;
@@ -25,6 +28,7 @@ export class WheelGesture {
   }
 
   move(point: Point, now: number) {
+    this.rotation = undefined;
     if (Math.hypot(point.x - this.start.x, point.y - this.start.y) > 7)
       this.moved = true;
     const distance = Math.hypot(
@@ -54,6 +58,7 @@ export class WheelGesture {
     this.remainder -= steps * 15;
     // Fast strokes browse more items; slow strokes keep one detent precise.
     const gain = Math.abs(delta) / elapsed > 0.65 ? 3 : 1;
+    this.rotation = { degrees: steps * 15, detents: steps, fast: gain === 3 };
     return steps * gain;
   }
 

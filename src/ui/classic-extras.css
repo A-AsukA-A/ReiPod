@@ -1,0 +1,21 @@
+/* Functional classic extras, using the existing logical LCD grid. Geometry is provisional. */
+.classic-clocks { flex: 1; min-height: 0; position: relative; overflow: auto; scrollbar-width: none; }
+.world-clock { display: flex; align-items: center; gap: calc(var(--lcd-unit) * 14); min-height: calc(var(--lcd-unit) * 105); padding: calc(var(--lcd-unit) * 8) calc(var(--lcd-unit) * 12); }
+.world-clock[aria-current="true"] { background: linear-gradient(#41b6e8, #0584c3); color: #fff; }
+.classic-clock-face { flex-shrink: 0; width: calc(var(--lcd-unit) * 84); height: calc(var(--lcd-unit) * 84); }
+.world-clock > div { min-width: 0; display: flex; flex-direction: column; gap: calc(var(--lcd-unit) * 2); }
+.world-clock strong { font-size: calc(var(--lcd-unit) * 14); }
+.world-clock time { font-size: calc(var(--lcd-unit) * 27); line-height: 1.15; font-variant-numeric: tabular-nums; }
+.world-clock span { font-size: calc(var(--lcd-unit) * 11); }
+.classic-stopwatch { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: calc(var(--lcd-unit) * 9) calc(var(--lcd-unit) * 7) 0; }
+.stopwatch-time { display: block; flex-shrink: 0; text-align: center; line-height: 1.3; font-variant-numeric: tabular-nums; letter-spacing: calc(var(--lcd-unit) * -1); }
+.stopwatch-laps { margin: calc(var(--lcd-unit) * 8) 0; padding: 0 calc(var(--lcd-unit) * 30); list-style: none; font-size: calc(var(--lcd-unit) * 16); line-height: 1.6; font-variant-numeric: tabular-nums; }
+.stopwatch-laps li { display: flex; justify-content: space-between; }
+.stopwatch-laps li span { color: #777; }
+.stopwatch-actions { margin-top: auto; margin-inline: calc(var(--lcd-unit) * -7); padding: 0; }
+.stopwatch-actions .screen-row { height: calc(var(--lcd-unit) * 24); }
+.stopwatch-date { text-align: center; color: #777; font-size: calc(var(--lcd-unit) * 11); }
+.stopwatch-statistics { margin: calc(var(--lcd-unit) * 3) calc(var(--lcd-unit) * 22); font-size: calc(var(--lcd-unit) * 12); line-height: 1.4; }
+.stopwatch-statistics div { display: flex; justify-content: space-between; }
+.stopwatch-statistics dd { margin: 0; font-variant-numeric: tabular-nums; }
+.stopwatch-record .stopwatch-laps { margin-block: calc(var(--lcd-unit) * 2); font-size: calc(var(--lcd-unit) * 12); }

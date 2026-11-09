@@ -20,6 +20,7 @@ type Props = {
   dimmed: boolean;
   brightness: number;
   notice: string;
+  quickScrollLetter?: string;
   contentRef: RefObject<HTMLDivElement | null>;
   onActivity: () => void;
   onToggleHold: () => void;
@@ -32,7 +33,7 @@ type Props = {
 /** Current classic renderer: receives UI state/commands, never owns a playback session. */
 export function ClassicShell({
   appearance, selectedService, playbackSource, page, view, split,
-  held, sleeping, dimmed, brightness, notice, contentRef,
+  held, sleeping, dimmed, brightness, notice, quickScrollLetter, contentRef,
   onActivity, onToggleHold, wheel, imports, header, children,
 }: Props) {
   return (
@@ -76,6 +77,11 @@ export function ClassicShell({
                 {children}
               </div>
             </div>
+            {quickScrollLetter && (
+              <div className="classic-quick-scroll" role="status" aria-label={`快速定位 ${quickScrollLetter}`}>
+                {quickScrollLetter}
+              </div>
+            )}
             {dimmed && <div className="lcd-backlight-dim" aria-hidden="true" />}
             {notice && <div className="screen-notice" role="status">{notice}</div>}
           </div>

@@ -1,3 +1,8 @@
+import { useClassicExtras } from "./useClassicExtras";
+import { createExtrasMenus } from "../ui/extrasMenus";
+import { useAboutStorage } from "./useAboutStorage";
+import { aboutPage } from "../ui/ClassicAboutScreen";
+import { useClassicQuickScroll } from "../ui/useClassicQuickScroll";
 import { useLocalPlayer } from "./useLocalPlayer";
 import { createSettingsMenus } from "../ui/settingsMenus";
 import { createTextMenus } from "../ui/textMenus";
@@ -50,6 +55,7 @@ import type { MusicCategory } from "../player/library";
 import {
   initialNavigation,
   navigationReducer,
+  navigationScreenKey,
   splitPages,
 } from "../ui/navigation";
 import type { Page } from "../ui/navigation";
@@ -181,6 +187,7 @@ export function App() {
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
   const { page, groupKey, artist: browseArtist, category } = navigation.screen;
+  const aboutStorage = useAboutStorage(page === "about");
   const systemPhotoScope = groupKey?.startsWith("ios-photo") ?? false;
   const photoAlbumScope = [navigation.screen, ...navigation.history.slice().reverse()]
     .find(screen => ["photo-grid", "photo-full"].includes(screen.page) && screen.groupKey?.startsWith("ios-photo-album:"))
@@ -210,6 +217,7 @@ export function App() {
     [albums, browseTracks, browseArtist, category],
   );
   const [notice, setNotice] = useState("");
+  const extras = useClassicExtras(setNotice);
   useEffect(() => {
     if (page === "podcasts" && nativePodcastsAvailable)
       void prepareNativePodcasts().catch(error => setNotice(String(error)));
@@ -745,6 +753,9 @@ export function App() {
       toggleFavorite,
     }),
   };
+  Object.assign(managedRows, createExtrasMenus({ state: extras.state, groupKey,
+    history: navigation.history.map(screen => screen.page), dispatch: extras.dispatch, open, back,
+    select: key => dispatch({ type: "select", key }) }));
   Object.assign(managedRows, createTrackMenuOverrides({
     cloud, optionTrack, localTrack: trackService(optionTrack) === "local",
     localFavorites: localState.favorites, visibleTracks,
@@ -781,6 +792,10 @@ export function App() {
     current, accountSyncing: services.syncing, emptyItems, open, playTrack,
     addToOnTheGo: !cloud ? appendOnTheGo : undefined,
   });
+  const browsePositionKey = JSON.stringify([services.selected, services.profile?.id ?? services.auth,
+    navigationScreenKey(navigation.screen), page === "search" ? query : null]);
+  const quickScroll = useClassicQuickScroll({ page, scope: browsePositionKey, rows,
+    focusedKey: focusedRow?.key, held, sleeping, dispatch, feedback });
   const { rotate, command } = createClassicInputController({
     device: { held, sleeping, activate, setSleeping },
     navigation: { page, groupKey, selectedKey: navigation.screen.selectedKey,
@@ -810,6 +825,7 @@ export function App() {
         keyAt: (index: number) => nativePhotoKey(photoAlbumScope, index) } : {}) },
     text: { textEntry, query, playlistName, setQuery, setPlaylistName, saveName, reader },
     settings: { prefs, setPreferences },
+    extras: { toggleStopwatch: extras.toggle, pauseStopwatch: extras.pause },
   });
 
   useEffect(() => {
@@ -891,8 +907,13 @@ export function App() {
       contentRef={content}
       onActivity={activate}
       onToggleHold={() => { activate(); setHeld(!held); }}
-      wheel={{ onRotate: rotate, onCommand: command, onFeedback: feedback,
-        playLabel: busy ? "取消载入" : active ? "暂停" : "播放" }}
+      wheel={{ onRotate: (steps, source, rotation) => {
+        if (quickScroll.rotate(steps, source, rotation)) activate();
+        else rotate(steps, source);
+      }, onRotateEnd: quickScroll.end,
+      onCommand: value => { quickScroll.end(); command(value); }, onFeedback: feedback,
+        playLabel: page === "stopwatch-timer" ? extras.state.current.started !== null ? "停止计时" : "开始计时" : busy ? "取消载入" : active ? "暂停" : "播放" }}
+      quickScrollLetter={quickScroll.letter}
       header={<ClassicStatusBar title={title} shuffle={state.shuffle} repeat={state.repeat}
         held={held} hasCurrent={!!current} active={active} busy={busy} transportHint={transportHint} />}
       imports={
@@ -923,7 +944,14 @@ export function App() {
     >
       <ClassicScreenContent
         page={page} groupKey={groupKey} title={title}
+        extras={extras.state}
+        about={{ index: aboutPage(navigation.screen.selectedKey), information: {
+          storage: aboutStorage, songs: musicTracks.length, albums: albums.length, artists: artists.length,
+          photos: localPhotos.length, podcasts: podcastTracks.length, texts: texts.length,
+          source: cloud ? nativeMusic ? "iPhone 系统音乐" : serviceName : "本地音乐",
+        } }}
         menu={{ rows, focusedRow, selectedIndex, isTrackList, visibleIds, visibleTracks,
+          positionKey: browsePositionKey,
           trackById, playlistTrackIds, selectedRow, hasManagedRows: managedRows[page] !== undefined, splitMenu }}
         library={{ albums, flowAlbums, artistCount: artists.length,
           browseAlbumCount: browseAlbums.length, playlistTitle: selectedPlaylist?.name, optionTrack }}

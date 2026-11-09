@@ -25,10 +25,14 @@ export const classic2007 = {
     // Existing ReiPod input thresholds, not recovered hardware timing constants.
     timing: { seek: 350, options: 600, sleep: 800, repeat: 120 },
     timingEvidence: "adaptation",
+    quickScroll: { minimumItems: 100, enterDegrees: 360, streakGap: 350, idle: 1000 },
+    // >100 is documented in the early Features Guide; recognition timings are
+    // ReiPod input adaptation, not measured Apple firmware thresholds.
+    quickScrollEvidence: { minimumItems: "documented", recognition: "adaptation" },
   },
   menus: {
     // Unsupported Videos omitted; Cover Flow is an optional home shortcut.
-    homeOrder: ["music", "coverflow", "photos", "podcasts", "extras", "settings", "shuffle-all", "playing"],
+    homeOrder: ["music", "songs", "coverflow", "photos", "podcasts", "extras", "settings", "shuffle-all", "playing"],
     // G-S 2007 photograph; unavailable stock functions are omitted, not dummy rows.
     settingsOrder: ["about", "shuffle", "repeat", "main-menu", "music-menu", "volume-limit", "backlight", "brightness", "click"],
     settingsSource: "https://the-gadgeteer.com/assets/apple-ipod-classic-42.jpg",

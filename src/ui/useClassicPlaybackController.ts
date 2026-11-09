@@ -21,6 +21,7 @@ export function useClassicPlaybackController({
   const [playView, setPlayView] = useState<PlayView>("art");
   const [lyricWheel, setLyricWheel] = useState(0);
   const [volumeOverlay, setVolumeOverlay] = useState(false);
+  const [volumeActivity, setVolumeActivity] = useState(0);
   const [transportHint, setTransportHint] = useState<TransportHint | null>(null);
   const transportTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousPage = useRef({ page, trackId: current?.id });
@@ -57,7 +58,7 @@ export function useClassicPlaybackController({
     if (!volumeOverlay) return;
     const timer = setTimeout(() => setVolumeOverlay(false), 1300);
     return () => clearTimeout(timer);
-  }, [volumeOverlay, volume]);
+  }, [volumeOverlay, volume, volumeActivity]);
   useEffect(() => () => {
     if (transportTimer.current) clearTimeout(transportTimer.current);
   }, []);
@@ -68,7 +69,11 @@ export function useClassicPlaybackController({
     resetPlayView: () => setPlayView("art"),
     openLyrics: () => { setPlayView("lyrics"); setVolumeOverlay(false); },
     scrollLyrics: (steps: number) => setLyricWheel(value => value + steps),
-    showVolume: () => setVolumeOverlay(true),
+    showVolume: () => {
+      setVolumeOverlay(true);
+      // Wheel input still counts at 0/100%, even when the audio value is clamped.
+      setVolumeActivity(value => value + 1);
+    },
     showTransportHint: (hint: TransportHint) => {
       setTransportHint(hint);
       if (transportTimer.current) clearTimeout(transportTimer.current);

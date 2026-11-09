@@ -81,6 +81,59 @@
   height: calc(var(--lcd-unit) * 8);
   accent-color: #2199db;
 }
+/* About: 2007 three-card composition; detailed geometry/colors remain provisional.
+   Origin quota and ReiPod identity are explicit web adaptations, not an iPod disk. */
+.classic-about {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--lcd-unit) * 12) calc(var(--lcd-unit) * 18);
+  background: linear-gradient(#a6b4c0, #71818e);
+  color: #fff;
+  text-shadow: 0 calc(var(--lcd-unit) * 1) calc(var(--lcd-unit) * 1) #52616d;
+}
+.about-identity {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: calc(var(--lcd-unit) * 95);
+  flex-shrink: 0;
+  gap: calc(var(--lcd-unit) * 8);
+}
+.about-identity strong {
+  font-size: calc(var(--lcd-unit) * 25);
+}
+.about-identity span {
+  font-size: calc(var(--lcd-unit) * 10);
+  white-space: nowrap;
+}
+.about-identity span:last-child { text-align: right; }
+.about-card { flex: 1; min-height: 0; display: flex; align-items: center; }
+.about-storage { width: 100%; text-align: center; font-size: calc(var(--lcd-unit) * 12); }
+.about-storage-rail {
+  height: calc(var(--lcd-unit) * 16);
+  overflow: hidden;
+  border-radius: calc(var(--lcd-unit) * 8);
+  background: linear-gradient(#e4ebef, #b1c1cc 48%, #d5dfe5);
+  box-shadow: inset 0 calc(var(--lcd-unit) * 1) calc(var(--lcd-unit) * 2) #5c718c;
+  margin-bottom: calc(var(--lcd-unit) * 12);
+}
+.about-storage-rail i {
+  display: block; height: 100%;
+  background: linear-gradient(#b1e3f6, #69abd3 48%, #a3d3ed);
+}
+.about-counts, .about-version {
+  width: 100%; margin: 0;
+  font-size: calc(var(--lcd-unit) * 12);
+  line-height: 1.5;
+}
+.about-counts { display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(var(--lcd-unit) * 18); }
+.about-counts div, .about-version div { display: flex; justify-content: space-between; gap: calc(var(--lcd-unit) * 8); }
+.about-counts dd, .about-version dd { margin: 0; text-align: right; }
+.about-pages { display: flex; justify-content: center; gap: calc(var(--lcd-unit) * 7); padding-top: calc(var(--lcd-unit) * 12); }
+.about-pages i { width: calc(var(--lcd-unit) * 5); height: calc(var(--lcd-unit) * 5); border-radius: 50%; background: #536674; }
+.about-pages i[data-current="true"] { background: #eef5f9; }
 .settings-screen .screen-menu {
   scrollbar-width: none;
 }
@@ -122,7 +175,7 @@
 }
 .cf-album-panel {
   position: absolute;
-  top: calc(var(--lcd-unit) * 24);
+  top: calc(var(--lcd-unit) * 5);
   bottom: 0;
   left: 10%;
   right: 10%;
@@ -137,7 +190,7 @@
 }
 .coverflow-album-heading {
   flex-shrink: 0;
-  padding: calc(var(--lcd-unit) * 5);
+  padding: calc(var(--lcd-unit) * 3) calc(var(--lcd-unit) * 5);
   display: flex;
   flex-direction: column;
   gap: calc(var(--lcd-unit) * 2);
@@ -149,7 +202,7 @@
   min-width: 0;
   font-weight: 700;
   font-size: calc(var(--lcd-unit) * 15);
-  line-height: 1.3;
+  line-height: 1.15;
 }
 .coverflow-album-heading > span {
   font-size: calc(var(--lcd-unit) * 13);
@@ -162,18 +215,27 @@
   scrollbar-width: none;
 }
 .cf-album-panel .screen-row {
-  height: calc(var(--lcd-unit) * 26);
+  height: calc(var(--lcd-unit) * 24);
+  gap: calc(var(--lcd-unit) * 4);
 }
-.cf-album-panel .row-chevron {
-  display: block;
+.cf-track-number, .cf-track-duration {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.cf-track-number { min-width: 2ch; }
+.cf-track-duration {
+  min-width: 4ch;
+  text-align: right;
 }
 
 .now-playing-screen {
+  --np-control-height: calc(var(--lcd-unit) * 26);
+  --np-control-inset: calc(var(--lcd-unit) * 12);
   position: relative;
   display: flex;
   flex-direction: column;
   padding: calc(var(--lcd-unit) * 10) calc(var(--lcd-unit) * 10)
-    calc(var(--lcd-unit) * 12);
+    var(--np-control-inset);
 }
 /* Playback geometry: 2007 review images, ±3–4 LCD units.
    See HARDWARE_RESEARCH.md, Playback comparison (2026-10-29).
@@ -295,7 +357,7 @@
 .np-control-bay {
   position: relative;
   flex-shrink: 0;
-  height: calc(var(--lcd-unit) * 26);
+  height: var(--np-control-height);
   clip-path: inset(calc(var(--lcd-unit) * -6) 0 calc(var(--lcd-unit) * -12));
 }
 .np-control-surface,
@@ -321,6 +383,8 @@
   margin: 0;
 }
 .screen-progress > span {
+  display: grid;
+  position: relative;
   flex-shrink: 0;
   min-width: calc(var(--lcd-unit) * 40);
   font-variant-numeric: tabular-nums;
@@ -328,6 +392,17 @@
   font-weight: 700;
   line-height: 1;
   color: #151515;
+}
+/* The duration supplies the widest readout without guessing font metrics.
+   Keep the track fixed when long recordings cross a minute-digit boundary. */
+.screen-progress > span::before {
+  grid-area: 1 / 1;
+  content: attr(data-reserve);
+  visibility: hidden;
+}
+.progress-time-value {
+  position: absolute;
+  inset: 0;
 }
 .progress-elapsed {
   text-align: center;
@@ -399,7 +474,7 @@
 .np-mode-panel {
   height: 100%;
   display: flex;
-  padding: 1px;
+  padding: var(--lcd-unit);
   background: linear-gradient(#e2e2e2, #fafafa 72%, #e4e4e4);
   border-radius: calc(var(--lcd-unit) * 5);
   box-shadow: inset 0 1px 2px #0002;
@@ -409,15 +484,15 @@
   display: grid;
   place-items: center;
   min-width: 0;
-  font-size: calc(var(--lcd-unit) * 12);
+  font-size: calc(var(--lcd-unit) * 13);
   font-weight: 700;
   border-radius: calc(var(--lcd-unit) * 4);
   color: #151515;
 }
 .np-mode-panel > span.chosen {
-  background: linear-gradient(#f2f2f2, #ddd);
-  box-shadow: 0 0 2px #0004;
-  color: #258fc5;
+  background: var(--lcd-blue);
+  box-shadow: inset 0 var(--lcd-unit) #ffffff38;
+  color: #fff;
 }
 .np-control-bay .classic-rating {
   position: absolute;
@@ -429,7 +504,7 @@
   gap: calc(var(--lcd-unit) * 12);
 }
 .classic-rating > span {
-  color: #b5c0c9;
+  color: #858f99;
 }
 .classic-rating > span.chosen {
   color: #308fce;
@@ -466,6 +541,28 @@
   padding-inline: 5px;
 }
 
+.playlist-menu .screen-menu {
+  padding-top: 0;
+}
+.playlist-menu .screen-row,
+.playlist-song-screen .screen-row {
+  height: calc(var(--lcd-unit) * 44);
+}
+.playlist-menu .row-label,
+.playlist-song-screen .row-label {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--lcd-unit) * 2);
+}
+.playlist-menu .row-detail,
+.playlist-song-screen .row-detail {
+  font: 400 calc(var(--lcd-unit) * 11) / 1.2 var(--font-lcd);
+  color: #777;
+}
+.playlist-menu .selected .row-detail,
+.playlist-song-screen .selected .row-detail {
+  color: #fff;
+}
 .photo-album-list .screen-menu {
   padding-top: 0;
 }
@@ -496,7 +593,7 @@
 .photo-album-list .row-label {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: calc(var(--lcd-unit) * 2);
 }
 .photo-album-list .row-title {
   font-size: calc(var(--lcd-unit) * 14);
@@ -527,8 +624,8 @@
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-auto-rows: calc((100% - 2px) / 3);
-  gap: 1px;
+  grid-auto-rows: calc((100% - var(--lcd-unit) * 2) / 3);
+  gap: var(--lcd-unit);
   padding: 0;
   overflow: auto;
   scrollbar-width: none;
@@ -891,4 +988,28 @@
   margin: 0;
   font-size: 10px;
   line-height: 13px;
+}
+
+/* Quick Scroll is documented firmware behavior. This neutral HUD uses existing
+   LCD display sizing; exact 2007 glyph geometry/opacity remain provisional. */
+.classic-quick-scroll {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: #fff;
+  font-size: calc(var(--lcd-unit) * 80);
+  font-weight: 700;
+  line-height: 1;
+}
+.classic-quick-scroll::before {
+  content: "";
+  position: absolute;
+  width: calc(var(--lcd-unit) * 100);
+  height: calc(var(--lcd-unit) * 100);
+  background: #555b63b3;
+  border-radius: calc(var(--lcd-unit) * 8);
+  z-index: -1;
 }

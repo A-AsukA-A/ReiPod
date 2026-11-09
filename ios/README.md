@@ -184,3 +184,9 @@ App优先使用只读`reipodBattery`桥与`__REIPOD_NATIVE_BATTERY_VERSION__=1`�
 回到前台、页面恢复/焦点回归都会重新读取；退出可见状态/后台停止监测并恢复此前监测设置，没有定时轮询或额外授权。客户端丢弃晚于新事件返回的旧快照；原有普通网页BatteryManager事件/恢复/失败重试继续保留，网页不据此获得原生能力。此为宿主状态同步，不改变iPod图标几何、音乐来源、队列或播放。
 
 依据：[Apple电量/未知值](https://developer.apple.com/documentation/uikit/uidevice/batterylevel)、[监测开关](https://developer.apple.com/documentation/uikit/uidevice/isbatterymonitoringenabled)、[电池状态变化通知](https://developer.apple.com/documentation/uikit/uidevice/batterystatedidchangenotification)。2026-11-06实际iPhone17 Pro/iOS27.3测试返回电量1、接通电源true，而navigator.getBattery不可用；11项Swift真机测试通过，包含真实桥读取与状态栏标志对照。签名更新安装后用户实际拔插充电线确认「正常」，记录见TASK_LOG任务74。
+
+## 2026-11-10 开发包交付（PACK95）
+
+本轮未改原生Swift能力。使用当前未提交工作区，`npm run ios:prepare`重生成全部Web/内置服务资源，再对generic iOS device做Release archive；沿用项目版本0.2.0/build 2。安装文件为私有`.local/extras-95/ReiPod-2026-11-10-development.ipa`，不纳入版本库。使用本机已有Apple Development身份和已安装的Xcode管理profile签名，无上传或自动续签；仅登记设备适用。当前profile到期2026-11-12 12:52:04 UTC（北京时间20:52:04），开发包不是长期分发版。
+
+验收边界：archive/codesign严格验证、IPA压缩完整性、App/Web与本轮dist逐文件哈希对应；包清单与SHA256保存在同目录install-manifest.json。此次未安装/连接手机、未运行新真机测试，也未验证真实账户/权限/锁屏/后台或系统照片边界；已有真机结论不升级。精确字体和新增附加功能原机几何仍P/U，见UI_METRICS任务95。
