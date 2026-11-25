@@ -8,10 +8,6 @@ export type ClassicAboutInformation = {
   source: string;
 };
 
-export function aboutPage(key: string | null) {
-  return key === "about-1" ? 1 : key === "about-2" ? 2 : 0;
-}
-
 const size = (bytes: number) => bytes >= 1024 ** 3
   ? `${(bytes / 1024 ** 3).toFixed(1)} GB`
   : `${(bytes / 1024 ** 2).toFixed(1)} MB`;

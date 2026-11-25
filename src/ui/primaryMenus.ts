@@ -1,6 +1,6 @@
 import type { PlayerState, Track } from "../player/Player";
 import { shuffleModeOf } from "../player/ordering";
-import type { Album } from "../player/library";
+import type { Album, MusicCategory } from "../player/library";
 import type { Playlist } from "../player/playlists";
 import type { Preferences } from "./preferences";
 import type { Page } from "./navigation";
@@ -15,10 +15,11 @@ type PrimaryMenuContext = {
   podcastShows: Album[];
   podcastFirstKey?: string;
   musicCount: number;
+  compilationsAvailable?: boolean;
   current?: Track;
   playlists: Playlist[];
   trackById: Map<string, Track>;
-  open: (page: Page, key?: string, group?: string) => void;
+  open: (page: Page, key?: string, group?: string, artist?: string, category?: MusicCategory) => void;
   shuffleAll: () => void;
   addToOnTheGo?: (ids: string[], key: string) => void;
   openFiles: () => void;
@@ -35,6 +36,7 @@ export function createPrimaryMenus({
   podcastShows,
   podcastFirstKey,
   musicCount,
+  compilationsAvailable = true,
   current,
   playlists,
   trackById,
@@ -47,7 +49,9 @@ export function createPrimaryMenus({
   openDocument,
   beginText,
 }: PrimaryMenuContext) {
+  const openCompilations = () => open("albums", undefined, undefined, undefined, { kind: "compilation", value: "合辑" });
   const allHomeItems: MenuItem[] = [
+    { key: "compilations", label: "合辑", action: openCompilations },
     {
       key: "music",
       label: "音乐",
@@ -109,6 +113,7 @@ export function createPrimaryMenus({
       : []),
   ];
   const homeItems = allHomeItems
+    .filter(item => item.key !== "compilations" || compilationsAvailable)
     .filter(
       (item) =>
         item.key === "music" ||
@@ -138,6 +143,7 @@ export function createPrimaryMenus({
     },
     { key: "genres", label: "风格", action: () => open("genres") },
     { key: "composers", label: "作曲者", action: () => open("composers") },
+    { key: "compilations", label: "合辑", action: openCompilations },
     {
       key: "search",
       label: "搜索",

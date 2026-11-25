@@ -2,6 +2,8 @@
 
 这是一层很薄的 iOS 原生容器，复用项目的 React/CSS 界面。系统音乐通过 `MediaPlayer` 的 `MPMediaLibrary`、`MPMediaQuery` 和 `MPMusicPlayerController.systemMusicPlayer` 读取、控制；不需要网页 MusicKit 的开发者 JWT，也不会把歌曲音频解密或转交给网页。
 
+新版还以EventKit／Contacts只读浏览系统日历、提醒事项与授权联系人；当前工程与真机边界见[NATIVEORG104](#2026-11-10-系统日历提醒事项与通讯录nativeorg104)。
+
 ## 网易云音乐与 QQ 音乐
 
 App 已接入内置网络服务：Web UI 通过原生消息桥调用隔离脚本环境中的平台适配器，再由 URLSession 请求平台，用户无需启动本机 HTTP 后端。平台凭证保存在 Keychain，网页只持有不透明会话标识。此路线与下面的 Apple 系统音乐授权独立。
@@ -74,7 +76,7 @@ PhotoKit按`creationDate`倒序查询，相册封面也取最新照片；本地�
 - 显示系统音乐资料库、系统已有歌单，保留歌单的歌曲顺序。
 - 系统授权恢复，不在网页中保存 Apple ID 密码或 Music User Token。
 - 把选中的完整队列交给 iOS，支持播放、暂停、切歌、进度、随机/重复。系统接管后台播放；网页重新激活时读取当前真实状态，不重新开始旧歌。
-- 系统输出音量通过 iPhone 侧键调整。
+- 新容器支持在普通“正在播放”画面用转轮调整系统音乐／播客输出音量，侧键仍可调整并同步；Center切换定位等面板。旧容器或不支持音量控制的输出保留侧键提示。VOL100实现及待实机验证边界见文末。
 - 搜索只检索已读取的系统资料库。当前没有接入原生全网目录搜索、账号订阅购买、歌单写入或歌词服务。
 - “本地音乐”单独存放通过 ReiPod 文件选择器导入的音频。系统“音乐”App 同步进来的音乐仍属于系统资料库。
 
@@ -198,3 +200,50 @@ App优先使用只读`reipodBattery`桥与`__REIPOD_NATIVE_BATTERY_VERSION__=1`�
 通过devicectl对com.reipod.player作覆盖安装，未先卸载、清理容器或改系统授权；正常启动成功，设备安装清单确认0.2.0/build2、新应用安装路径，进程列表确认ReiPod运行。证据在私有`.local/release-98/`的install/launch/installed-apps/processes与iphone-verification.json。没有读取/导出个人媒体或平台凭证。没有新增真实账户、后台/锁屏、冷启动/常亮、权限边界或新附加功能的实机验收，原开放项保留。
 
 沿用Apple Development/Personal Team签名，当前profile仍到2026-11-12 12:52:04 UTC（北京时间20:52:04）；需要到期前续签，非长期分发版。VPS及Pages同步3954076；Pages流程42658164246成功，但云端iPhone流程42658164245本轮结束前仍queued，不将实际安装成功混同该流程通过。
+
+## 2026-11-10 系统音乐／播客转轮音量（VOL100）
+
+旧NativeSystemPlayer固定volumeControl=false，setVolume为空；这导致普通“正在播放”画面旋转只出现侧键提示。新增SystemVolumeControl，PlayerViewController持有屏外MPVolumeView并注入NativeMusicService。现有来源受限的主文档音乐桥增加volume操作（有限0…1），播放快照明确volumeControl；滑条不可用／未挂载／模拟器不声明能力。通过UISlider公开方法发送系统滑条动作，核对只读AVAudioSession.outputVolume实际值再确认；不创建播放器、不激活音频会话、不改权限／队列。原机普通画面转轮音量与Center定位的区分见[交互约定](../PLAYBACK_INTERACTIONS.md)。
+
+NativeSystemPlayer合并快速旋转的最新目标，一次一个写请求；写入期间保护最新UI目标，原生播放／定位状态照常更新，结束按最新真实输出同步。音量失败不把正在播放变成error状态；断开后的迟到响应丢弃。旧容器没有能力字段仍用侧键提示，不发送新操作。普通网页、本地和第三方音频沿原适配器，不能靠只刷新旧App的网页资源获得原生功能。
+
+本轮实际检查：276单元、35服务端、player-core、build/check-dist/size、ios:prepare通过；5条必要浏览器路径最终通过（新原生音量／Center与定位、旧容器、原生权限与队列恢复、拒绝后本地播放、iPhone UA真实WebAudio从零恢复）。原生Swift与新增边界测试代码通过generic iphoneos build-for-testing编译，Release签名archive和codesign严格验证通过；本机没有Simulator runtime，配对物理手机显示unavailable，**未执行Swift测试或实际音量／扬声器／耳机／蓝牙／AirPlay验收，未安装修复包**。
+
+已生成私有`.local/volume-100/ReiPod-volume-fix-development.ipa`，0.2.0/build2、当前未提交VOL100代码，55份生产Web文件与dist逐SHA一致（Finder的.DS_Store不是发布资源），IPA压缩完整性通过；清单在同目录install-manifest.json。沿用本地已有签名和profile，到期2026-11-12 20:52:04北京时间。下一步连接并解锁已配对iPhone，先复核签名有效期再覆盖安装，验证普通播放转轮可听音量、Center定位互斥、侧键后转轮同步和后台连续性；不能把本包或桥替身当成真机修复通过。
+
+## 2026-11-10 日历与通讯录资源（ORG103）
+
+已用ios:prepare准备包含GAME102／ORG103和VOL100的当前Web资源，生产文件与dist逐SHA对应；本轮没有新archive／IPA、设备安装或真实iPhone文件选择器操作。日历／通讯录目前为用户选文件的本地副本，不申请系统Contacts／EventKit权限、不代表原生同步／提醒能力。`.local/volume-100/`旧IPA不包含后续游戏和日历／通讯录；设备音量真实输出仍按VOL100待验清单处理。
+
+## 2026-11-10 系统日历、提醒事项与通讯录（NATIVEORG104）
+
+用户明确要求与系统同步。新版App直接读取iPhone系统的日历、提醒事项与联系人，默认不再要求先导出文件；普通网页／PWA／旧容器仍使用本地文件副本。它显示系统当前可读的数据，iCloud／其他账号到本机的同步由iOS处理，不创建第二套云端账户或双向编辑器。
+
+### 授权和显示
+
+分别配置NSCalendarsFullAccessUsageDescription、NSRemindersFullAccessUsageDescription、NSContactsUsageDescription；只在进入对应浏览功能或主动管理授权时请求。iOS17读取日历需`requestFullAccessToEvents`，提醒事项需`requestFullAccessToReminders`，不能把writeOnly当可读。CNContactStore支持full／limited授权；拒绝、受限制和仅写入如实反馈，可进系统设置调整。
+
+系统日历与空日历按来源显示，六周窗口读取（上限63天），系统负责展开重复／例外；定时值用UTC传给Web，全天保留设备日期。Contacts每页100项，详情照片按需读取JPEG／PNG；姓名由系统格式化，数据只限请求字段。系统联系人note需要Apple的额外entitlement，本轮不申请该字段，避免读取失败；导入文件备注仍可显示。提醒事项展示系统当前完成状态／截止与备注，不改变状态或设置额外通知。
+
+### 原生边界
+
+`OrganizerBridge`仅接受无userinfo／port的`reipod-app://bundle`主文档；动作限定status／authorize／events／reminders／contacts／contact／refresh／openSettings。没有save／remove／任意URL查询。系统标识只留原生actor，以会话不透明句柄给页面，联系人详情必须使用已经发出的句柄；每页1–100、日期范围验证、提醒事项10000项超限提示。原生在await后复核权限与代际，失效时单调清缓存；EKEventStoreChanged、CNContactStoreDidChange、回前台、时区及显著时间变化触发刷新。系统数据不写页面localStorage／IndexedDB、不进入导入副本、不上传后端。
+
+来源管理保留用户选择，默认新版iPhone“iPhone系统”；显式导入切到“已导入副本”，清空仅作用于副本。系统读取权限与音乐／Photos／第三方服务隔离，没有播放／队列修改。后台不执行新的同步任务，回来后重读；不宣传任意后台刷新或双向同步能力。
+
+### 实际验证和安装包
+
+- 292项单元／35服务端、player-core、build／check-dist／size、ios:prepare通过；两个新桥替身覆盖分别授权、系统空日历／日程／提醒事项／联系人分页／按需照片、来源隔离／不持久化、撤权与迟到回复；文件导入整条回退也通过。最终字段验证后两条桥场景与3项解析复核通过。替身不是EventKit／Contacts真实数据验收。
+- Xcode27.1／Swift6.4，generic iphoneos build-for-testing包含新增只读／来源／日期窗口边界测试的编译通过；无Simulator runtime，物理iPhone17 Pro显示unavailable，未运行Swift测试或请求该手机的真实权限／读取资料。
+- Release开发签名archive／严格codesign／IPA完整性和60份dist/Web逐SHA对应通过。包为[ReiPod-system-organizer-development.ipa](../.local/native-organizer-104/ReiPod-system-organizer-development.ipa)，**0.2.0/build3**，含此前小游戏／日历文件路线／VOL100；[安装清单](../.local/native-organizer-104/install-manifest.json)记录最终摘要。仍用当前登记设备profile，有效至2026-11-12 20:52:04北京时间，不是长期分发版本。
+- **未安装、未验证真实日历／重复事件／提醒事项／全量或有限联系人／撤权与系统库变化／系统输出音量**。连接并解锁配对手机后覆盖安装build3（不卸载），打开日历、待办和通讯录分别授权，修改系统样本后回App检查刷新；原音量验收也使用此包。未提交／推送／VPS或Pages发布。
+
+官方依据：[TN3152](https://developer.apple.com/documentation/technotes/tn3152-migrating-to-the-latest-calendar-access-levels)、[EventKit变更通知](https://developer.apple.com/documentation/eventkit/updating-with-notifications)、[Contacts有限授权](https://developer.apple.com/videos/play/wwdc2024/10121/)、[联系人note权限](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.contacts.notes)。编译与打包不替代这些真实权限／资料的设备验收。
+
+## 2026-11-10 闹钟与倒计时（FINISH106）
+
+build4新增`reipodAlarms`／版本标志1，仅允许`reipod-app://bundle`主文档。动作固定status／authorize／replace／stop／openSettings；最多9个UUID计划、有限时间／重复曜日／标签，Stop限定自己保存的计划，不提供读取／修改Apple时钟App或任意通知命令。原生UserDefaults只保存自身调度计划／停止回执；页面存自己创建的闹钟，不持久化系统日历内容。启动前建立通知delegate，回前台重读权限／停止回执，提交串行、只差量修改自己的计划，失败尝试恢复此前计划。
+
+iOS26+使用[AlarmKit公开接口](https://developer.apple.com/documentation/alarmkit/scheduling-an-alarm-with-alarmkit)，包含NSAlarmKitUsageDescription、显式授权、固定日期闹钟和按本地时间的周重复。倒计时调度固定结束时刻，不包含倒计时Live Activity或Widget。系统停止intent写回执并通知页面；没有私有Clock API。iOS17–25使用UserNotifications普通本地通知，受通知权限／静音／专注模式影响，不冒称AlarmKit。网页／旧容器仍为前台蜂鸣。睡眠定时只在App可运行时暂停当前Player；挂起时不保证精确后台停止。
+
+验证：generic iphoneos build-for-testing（含有界计划检查）编译通过，未执行Swift测试；Release签名archive、严格codesign、64份Web资源SHA及IPA完整性通过。[0.2.0/build4开发IPA](../.local/finish-106/ReiPod-alarms-development.ipa)／[清单](../.local/finish-106/install-manifest.json)含日历／游戏／音量等此前成果，既有development profile于2026-11-12 20:52:04北京时间到期。手机仍unavailable、无Simulator runtime；未安装或验证真实AlarmKit权限、后台／锁屏／重启／停止intent、旧系统通知、日历或实际音量。不得据编译／替身记录为真机已通过。下一步连接解锁配对手机，同Bundle ID覆盖安装build4，分别允许闹钟与日历等权限，设置近时刻一次闹钟／短倒计时进入后台并从系统停止后回App检查无重复；睡眠后台边界不因此消失。

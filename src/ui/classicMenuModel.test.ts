@@ -112,3 +112,10 @@ it("only syncing account menus retain disabled focus, without changing remembere
   f.context.managedRows.settings = [refresh];
   expect(f.model().focusedRow).toBeUndefined();
 });
+
+
+it("keeps All Albums reachable when grouping hides every compilation-only artist", () => {
+  const f = fixture(); f.context.page = "artists"; f.context.artists = [];
+  expect(f.model().rows.map(row => row.key)).toEqual(["all-albums"]);
+  f.model().rows[0].action(); expect(f.context.open).toHaveBeenLastCalledWith("albums");
+});

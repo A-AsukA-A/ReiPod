@@ -54,3 +54,9 @@ describe("classic quick scrolling", () => {
     expect(engine.move(index, 0, stroke, 270)).toBeNull();
   });
 });
+
+
+it("fast scroll groups by explicit sort labels while keeping the displayed item and key", () => {
+  const index = quickScrollIndex([{ key: "one", label: "泽", sortLabel: "Alpha" }, { key: "two", label: "安", sortLabel: "Zulu" }]);
+  expect(index.groups.map(group => [group.letter, group.key])).toEqual([["A", "one"], ["Z", "two"]]);
+});

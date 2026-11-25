@@ -1,6 +1,7 @@
 /** Original silent WAV fixtures with RIFF INFO/UTF-8 ID3 tags, parsed through the normal importer. */
 export function taggedAudio(title: string, artist: string, album: string,
   tags: { genre?: string; composer?: string; albumArtist?: string; trackNumber?: number; discNumber?: number;
+    compilation?: boolean; sortTitle?: string; sortArtist?: string; sortAlbum?: string; sortAlbumArtist?: string; sortComposer?: string;
     artwork?: { mimeType: string; data: Buffer } } = {}) {
   const chunk = (tag: string, bytes: Buffer) => {
     const out = Buffer.alloc(8 + bytes.length + (bytes.length % 2));
@@ -31,6 +32,8 @@ export function taggedAudio(title: string, artist: string, album: string,
   // Keep non-ASCII fixture names intact through the actual metadata importer.
   const frames = Object.entries({ TIT2: title, TPE1: artist, TALB: album,
     TCON: tags.genre, TCOM: tags.composer, TPE2: tags.albumArtist,
+    TCMP: tags.compilation === undefined ? undefined : tags.compilation ? "1" : "0",
+    TSOT: tags.sortTitle, TSOP: tags.sortArtist, TSOA: tags.sortAlbum, TSO2: tags.sortAlbumArtist, TSOC: tags.sortComposer,
     TRCK: tags.trackNumber === undefined ? undefined : String(tags.trackNumber),
     TPOS: tags.discNumber === undefined ? undefined : String(tags.discNumber) })
     .filter((entry): entry is [string, string] => entry[1] !== undefined)

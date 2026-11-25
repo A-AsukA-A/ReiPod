@@ -1,25 +1,35 @@
 import { parseYrc } from "./yrc";
 import type { Track } from "./Player";
+import { albumIdentity } from "./albumIdentity";
 
 export type Album = {
   id: string;
   title: string;
   artist: string;
+  sortTitle?: string;
+  sortArtist?: string;
   artwork?: string;
   tracks: Track[];
 };
-export type MusicCategory = { kind: "genre" | "composer"; value: string };
+export type MusicCategory = { kind: "genre" | "composer" | "compilation"; value: string };
 const collator = new Intl.Collator("zh-CN", {
   numeric: true,
   sensitivity: "base",
 });
+export const trackSortTitle = (track: Track) => track.sortTitle?.trim() || track.title;
+const firstSort = (values: (string | undefined)[]) => values.map(value => value?.trim()).filter((value): value is string => !!value).sort(collator.compare)[0];
+export function artistSortLabels(tracks: Track[]) {
+  const labels = new Map<string, string>();
+  for (const track of tracks) {
+    const artist = track.artist?.trim() || "未知艺人", sort = track.sortArtist?.trim();
+    if (sort && (!labels.has(artist) || collator.compare(sort, labels.get(artist)!) < 0)) labels.set(artist, sort);
+  }
+  return labels;
+}
 export function albumsFor(tracks: Track[]): Album[] {
   const albums = new Map<string, Album>();
   for (const track of tracks) {
-    const title = track.album?.trim() || "未知专辑";
-    const artist =
-      track.albumArtist?.trim() || track.artist?.trim() || "未知艺人";
-    const id = JSON.stringify([artist, title]);
+    const { id, title, artist } = albumIdentity(track);
     const album = albums.get(id) ?? {
       id,
       title,
@@ -34,23 +44,39 @@ export function albumsFor(tracks: Track[]): Album[] {
   return [...albums.values()]
     .map((album) => ({
       ...album,
+      sortTitle: firstSort(album.tracks.map(track => track.sortAlbum)) || album.title,
+      sortArtist: firstSort(album.tracks.map(track => track.sortAlbumArtist ||
+        (track.artist?.trim() === album.artist ? track.sortArtist : undefined))) || album.artist,
       tracks: [...album.tracks].sort(
         (a, b) =>
           (a.discNumber ?? 1) - (b.discNumber ?? 1) ||
           (a.trackNumber ?? 999) - (b.trackNumber ?? 999) ||
-          collator.compare(a.title, b.title),
+          collator.compare(trackSortTitle(a), trackSortTitle(b)) || collator.compare(a.title, b.title),
       ),
     }))
     .sort(
       (a, b) =>
-        collator.compare(a.title, b.title) ||
+        collator.compare(a.sortTitle ?? a.title, b.sortTitle ?? b.title) || collator.compare(a.title, b.title) ||
         collator.compare(a.artist, b.artist),
     );
 }
-export function artistsFor(tracks: Track[]) {
-  return [
+export function artistsFor(tracks: Track[], groupCompilations = false) {
+  const names = [
     ...new Set(tracks.map((track) => track.artist?.trim() || "未知艺人")),
-  ].sort(collator.compare);
+  ];
+  const keys = artistSortLabels(tracks);
+  const groups = new Map<string, { compilation: boolean; albums: Set<string> }>();
+  if (groupCompilations) for (const track of tracks) {
+    const name = track.artist?.trim() || "未知艺人";
+    const group = groups.get(name) ?? { compilation: true, albums: new Set<string>() };
+    group.compilation &&= track.compilation === true;
+    group.albums.add(albumIdentity(track).id); groups.set(name, group);
+  }
+  return names.filter(name => {
+    if (!groupCompilations) return true;
+    const group = groups.get(name)!;
+    return !group.compilation || group.albums.size !== 1;
+  }).sort((a, b) => collator.compare(keys.get(a) || a, keys.get(b) || b) || collator.compare(a, b));
 }
 
 /** The stock Artists browser uses track artist; Album Artists is a separate feature. */
@@ -60,31 +86,39 @@ export function tracksForArtist(tracks: Track[], artist: string) {
   );
 }
 
-export function trackCategories(track: Track, kind: MusicCategory["kind"]) {
+export function trackCategories(track: Track, kind: "genre" | "composer") {
   const values = (kind === "genre" ? track.genres : track.composers)
     ?.map(value => value.trim()).filter(Boolean);
   return values?.length ? [...new Set(values)] : [kind === "genre" ? "未知风格" : "未知作曲者"];
 }
 
-export function categoriesFor(tracks: Track[], kind: MusicCategory["kind"]) {
+export function categoriesFor(tracks: Track[], kind: "genre" | "composer") {
   const groups = new Map<string, Track[]>();
   for (const track of tracks) for (const name of trackCategories(track, kind)) {
     const collection = groups.get(name) ?? [];
     collection.push(track);
     groups.set(name, collection);
   }
-  // Keep the existing category menu ordering; firmware sort-as rules remain separate research.
-  return [...groups.keys()].sort().map(name => ({ name, tracks: groups.get(name)! }));
+  const keys = new Map([...groups].map(([name, collection]) => [name, kind === "composer"
+    ? firstSort(collection.filter(track => track.composers?.length === 1).map(track => track.sortComposer)) || name : name]));
+  return [...groups.keys()].sort((a, b) => {
+    const left = keys.get(a)!, right = keys.get(b)!;
+    return left < right ? -1 : left > right ? 1 : a < b ? -1 : a > b ? 1 : 0;
+  })
+    .map(name => ({ name, sortLabel: keys.get(name)!, tracks: groups.get(name)! }));
 }
 
 export function tracksForCategory(tracks: Track[], category?: MusicCategory) {
-  return category ? tracks.filter(track => trackCategories(track, category.kind).includes(category.value)) : tracks;
+  if (!category) return tracks;
+  const { kind, value } = category;
+  if (kind === "compilation") return tracks.filter(track => track.compilation === true);
+  return tracks.filter(track => trackCategories(track, kind).includes(value));
 }
 
 export function songsByTitle(tracks: Track[]) {
   return [...tracks].sort(
     (a, b) =>
-      collator.compare(a.title, b.title) ||
+      collator.compare(trackSortTitle(a), trackSortTitle(b)) || collator.compare(a.title, b.title) ||
       collator.compare(a.artist ?? "", b.artist ?? ""),
   );
 }
@@ -93,8 +127,8 @@ export function songsByTitle(tracks: Track[]) {
 export function coverFlowOrder(albums: Album[]) {
   return [...albums].sort(
     (a, b) =>
-      collator.compare(a.artist, b.artist) ||
-      collator.compare(a.title, b.title),
+      collator.compare(a.sortArtist ?? a.artist, b.sortArtist ?? b.artist) ||
+      collator.compare(a.sortTitle ?? a.title, b.sortTitle ?? b.title) || collator.compare(a.title, b.title),
   );
 }
 

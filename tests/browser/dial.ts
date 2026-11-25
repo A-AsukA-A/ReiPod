@@ -62,11 +62,14 @@ export async function holdCenter(page: Page) {
   await page.keyboard.up("Enter");
 }
 export async function text(page: Page, value: string, finish = true) {
+  // Search is loaded on demand. Detect its real mounted editor rather than
+  // treating an unloaded search screen as the playlist naming grid.
+  await expect(live(page).locator('.classic-search-letters [aria-current="true"], .wheel-character-grid [aria-current="true"]')).toHaveCount(1);
   const search = await live(page).locator('.classic-search-screen[data-editing="true"]').count() > 0;
   const alphabet = search ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789我的歌单";
   for (const character of value) {
-    const selected = page.locator(search ? '.classic-search-letters [aria-current="true"]' : '.wheel-character-grid [aria-current="true"]');
+    const selected = live(page).locator(search ? '.classic-search-letters [aria-current="true"]' : '.wheel-character-grid [aria-current="true"]');
     const current = await selected.textContent();
     const from = alphabet.indexOf(current!),
       to = alphabet.indexOf(search ? character.toUpperCase() : character);

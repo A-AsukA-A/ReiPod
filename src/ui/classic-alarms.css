@@ -1,0 +1,28 @@
+/* Classic existing menu vocabulary. New editor/alert/countdown geometry is P/A. */
+.classic-alarms { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #fff; color: #15191d; }
+.alarm-rows { flex: 1; min-height: 0; overflow: auto; position: relative; scrollbar-width: none; }
+.alarm-rows::-webkit-scrollbar { display: none; }
+.alarm-row { display: flex; align-items: center; gap: calc(var(--lcd-unit) * 9); min-height: calc(var(--lcd-unit) * 25); padding-inline: calc(var(--lcd-unit) * 7); border-bottom: var(--lcd-unit) solid #e1e5e9; }
+.alarm-row strong { display: flex; flex: 1; min-width: 0; font-size: calc(var(--lcd-unit) * 15); font-weight: 600; line-height: calc(var(--lcd-unit) * 24); }
+.alarm-row > span { font-size: calc(var(--lcd-unit) * 12); line-height: 1.3; color: #53636f; font-variant-numeric: tabular-nums; }
+.alarm-row > i { font-style: normal; color: #7c848b; font-size: calc(var(--lcd-unit) * 20); line-height: 1; }
+.alarm-row.selected { color: white; background: linear-gradient(#4bb5e9,#178ccc); border-bottom-color: #278dc6; }
+.alarm-row.selected :is(span,i) { color: inherit; }
+.alarm-row[aria-disabled="true"] { opacity: .45; }
+.alarm-value-editor { flex: 1; min-height: 0; display: grid; place-items: center; padding: calc(var(--lcd-unit) * 13); background: linear-gradient(#fff,#edf1f5); }
+.alarm-value-fields { display: flex; justify-content: center; align-items: center; gap: calc(var(--lcd-unit) * 8); width: 100%; }
+.alarm-value-fields > div { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: calc(var(--lcd-unit) * 8); padding: calc(var(--lcd-unit) * 11) calc(var(--lcd-unit) * 3); border: var(--lcd-unit) solid #acb8c4; border-radius: calc(var(--lcd-unit) * 4); background: #fff; }
+.alarm-value-fields strong { font-size: calc(var(--lcd-unit) * 30); line-height: 1.3; font-variant-numeric: tabular-nums; }
+.alarm-value-fields span { font-size: calc(var(--lcd-unit) * 12); color: #6b7d8c; }
+.alarm-value-fields .selected { color: white; background: linear-gradient(#4bb5e9,#178ccc); border-color: #2987bd; box-shadow: inset 0 var(--lcd-unit) #a0def7; }
+.alarm-value-fields .selected span { color: #eef8fe; }
+.countdown-display { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--lcd-unit) * 7); height: calc(var(--lcd-unit) * 120); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.countdown-display strong { font-size: calc(var(--lcd-unit) * 39); line-height: 1.25; font-weight: 600; }
+.countdown-display > span { color: #78818b; font-size: calc(var(--lcd-unit) * 12); }
+.alarm-context { flex-shrink: 0; padding: calc(var(--lcd-unit) * 8); background: #edf2f5; color: #38556d; font-size: calc(var(--lcd-unit) * 13); line-height: 1.4; }
+.alarm-error { font-size: calc(var(--lcd-unit) * 10); line-height: 1.4; padding: calc(var(--lcd-unit) * 5); color: #943e38; background: #fff2ed; max-height: 25%; overflow: hidden; }
+.classic-alarm-alert { position: absolute; z-index: 100; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--lcd-unit) * 8); background: linear-gradient(#f9fbfd,#e2e9ef); color: #214b6e; }
+.classic-alarm-alert svg { width: calc(var(--lcd-unit) * 55); height: calc(var(--lcd-unit) * 55); }
+.classic-alarm-alert strong { max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: calc(var(--lcd-unit) * 24); line-height: 1.3; }
+.classic-alarm-alert time { font-size: calc(var(--lcd-unit) * 19); line-height: 1.3; font-variant-numeric: tabular-nums; }
+.classic-alarm-alert > span { width: 78%; text-align: center; font-size: calc(var(--lcd-unit) * 15); line-height: calc(var(--lcd-unit) * 27); color: white; border: var(--lcd-unit) solid #287fb0; border-radius: calc(var(--lcd-unit) * 3); background: linear-gradient(#4bb5e9,#178ccc); }

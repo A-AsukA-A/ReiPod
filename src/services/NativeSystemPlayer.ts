@@ -14,6 +14,10 @@ export class NativeSystemPlayer extends Player {
   private nativeIntent = 0;
   private issuedQueue = false;
   private queueKnown = false;
+  private volumeRequest = false;
+  private volumeTarget: number | null = null;
+  private observedVolume = 0.8;
+  private volumeEpoch = 0;
   constructor() {
     super(() => { throw new Error("System music does not use web audio"); }, URL.revokeObjectURL);
     this.syncExternalPlayback({ volumeControl: false });
@@ -36,6 +40,8 @@ export class NativeSystemPlayer extends Player {
     if (snapshot.queueKnown && !this.issuedQueue)
       super.setQueue(queue, currentId ?? undefined);
     this.queueKnown = snapshot.queueKnown;
+    if (Number.isFinite(snapshot.volume))
+      this.observedVolume = Math.max(0, Math.min(1, snapshot.volume));
     this.syncExternalPlayback({
       currentId: currentId && ids.has(currentId) ? currentId : null,
       queue,
@@ -46,10 +52,10 @@ export class NativeSystemPlayer extends Player {
       duration: Number.isFinite(snapshot.duration)
         ? Math.max(0, snapshot.duration)
         : 0,
-      volume: Number.isFinite(snapshot.volume)
-        ? Math.max(0, Math.min(1, snapshot.volume))
-        : 1,
-      volumeControl: false,
+      // Output notifications can lag wheel input. Keep the latest wheel target
+      // visible until its native acknowledgement, while still adopting transport.
+      volume: this.volumeRequest ? this.getSnapshot().volume : this.observedVolume,
+      volumeControl: snapshot.volumeControl === true,
       repeat: snapshot.repeat,
       error: snapshot.status === "playing" ? null : this.getSnapshot().error,
     });
@@ -147,8 +153,39 @@ export class NativeSystemPlayer extends Player {
         seconds: Math.max(0, Math.min(position, this.getSnapshot().duration)),
       });
   }
-  override setVolume(_volume: number) {
-    /* System output volume belongs to the iPhone side buttons. */
+  override setVolume(volume: number) {
+    if (!Number.isFinite(volume) || !this.getSnapshot().volumeControl) return;
+    super.setVolume(volume); // Retain the existing volume-limit policy.
+    this.volumeTarget = this.getSnapshot().volume;
+    void this.flushVolume();
+  }
+  private async flushVolume() {
+    if (this.volumeRequest) return;
+    const epoch = this.volumeEpoch;
+    this.volumeRequest = true;
+    try {
+      // At most one native write in flight; combine fast input into its latest
+      // target. Volume must never cancel a pending play/seek/queue command.
+      while (this.volumeTarget !== null && epoch === this.volumeEpoch) {
+        const volume = this.volumeTarget;
+        this.volumeTarget = null;
+        try {
+          const reply = await nativeMusicRequest("volume", { volume });
+          if (epoch !== this.volumeEpoch) return;
+          if (reply.playback) this.adopt(reply.playback);
+        } catch (error) {
+          if (epoch !== this.volumeEpoch) return;
+          if (this.volumeTarget === null) this.syncExternalPlayback({
+            error: error instanceof Error ? error.message : "音量调节失败，请重试",
+          });
+        }
+      }
+    } finally {
+      if (epoch === this.volumeEpoch) {
+        this.volumeRequest = false;
+        this.syncExternalPlayback({ volume: this.observedVolume });
+      }
+    }
   }
   override setShuffle(shuffle: boolean | "albums") {
     if (shuffleModeOf(this.getSnapshot()) === (shuffle === "albums" ? "albums" : shuffle ? "songs" : "off")) return;
@@ -179,6 +216,9 @@ export class NativeSystemPlayer extends Player {
       this.select(state.currentId, state.status === "playing", state.position);
   }
   override clear() {
+    this.volumeEpoch++;
+    this.volumeTarget = null;
+    this.volumeRequest = false;
     this.nativeIntent++;
     this.issuedQueue = false;
     this.queueKnown = false;

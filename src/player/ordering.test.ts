@@ -37,3 +37,15 @@ it("same album titles by different album artists and untagged songs remain indep
   ];
   expect(shuffleAlbums(input.map(track => track.id), input, null, false, () => 0)).toEqual(["two", "three", "four", "one"]);
 });
+
+
+it("album shuffle keeps a compilation together without drawing from outside the supplied queue", () => {
+  const library = [
+    { ...tracks[0], id: "first", artist: "One", album: "Shared", compilation: true, trackNumber: 1 },
+    { ...tracks[0], id: "second", artist: "Two", album: "Shared", compilation: true, trackNumber: 2 },
+    { ...tracks[0], id: "other", artist: "Other", album: "Other" },
+    { ...tracks[0], id: "outside", artist: "Guest", album: "Shared", compilation: true, trackNumber: 3 }];
+  const order = shuffleAlbums(["other", "second", "first"], library, null, false, () => 0);
+  expect(order.slice(order.indexOf("first"), order.indexOf("first") + 2)).toEqual(["first", "second"]);
+  expect(order).not.toContain("outside");
+});

@@ -32,7 +32,7 @@ export const classic2007 = {
   },
   menus: {
     // Unsupported Videos omitted; Cover Flow is an optional home shortcut.
-    homeOrder: ["music", "songs", "coverflow", "photos", "podcasts", "extras", "settings", "shuffle-all", "playing"],
+    homeOrder: ["music", "songs", "coverflow", "compilations", "photos", "podcasts", "extras", "settings", "shuffle-all", "playing"],
     // G-S 2007 photograph; unavailable stock functions are omitted, not dummy rows.
     settingsOrder: ["about", "shuffle", "repeat", "main-menu", "music-menu", "volume-limit", "backlight", "brightness", "click"],
     settingsSource: "https://the-gadgeteer.com/assets/apple-ipod-classic-42.jpg",

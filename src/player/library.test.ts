@@ -6,6 +6,8 @@ import {
   tracksForArtist,
   coverFlowOrder,
   songsByTitle,
+  tracksForCategory,
+  categoriesFor,
 } from "./library";
 import type { Track } from "./Player";
 const song = (id: string, patch: Partial<Track> = {}): Track => ({
@@ -110,4 +112,31 @@ describe("real library metadata", () => {
       parseLyrics("没有时间标签\n保持纯文本").every((line) => line.time === -1),
     ).toBe(true);
   });
+});
+
+
+it("groups tagged multi-artist compilations and only hides an artist confined to one compilation", () => {
+  const tracks = [song("guest-a", { artist: "Guest A", album: "Summer", compilation: true, trackNumber: 2 }),
+    song("guest-b", { artist: "Guest B", album: "Summer", compilation: true, trackNumber: 1 }),
+    song("resident", { artist: "Resident", album: "Summer", compilation: true, trackNumber: 3 }),
+    song("solo", { artist: "Resident", album: "Solo" }),
+    song("returning-a", { artist: "Returning", album: "Summer", compilation: true }),
+    song("returning-b", { artist: "Returning", album: "Winter", compilation: true })];
+  expect(albumsFor(tracks).find(album => album.title === "Summer")?.tracks.map(track => track.id)).toEqual(["guest-b", "guest-a", "resident", "returning-a"]);
+  expect(artistsFor(tracks, true)).toEqual(["Resident", "Returning"]);
+  expect(artistsFor(tracks)).toHaveLength(4);
+  expect(tracksForArtist(tracks, "Resident")).toHaveLength(2);
+  expect(tracksForCategory(tracks, { kind: "compilation", value: "合辑" })).toHaveLength(5);
+  expect(albumsFor([song("one", { artist: "One", album: "Same" }), song("two", { artist: "Two", album: "Same" })])).toHaveLength(2);
+});
+
+it("explicit sort tags change order without merging identities, changing display names or disc order", () => {
+  const tracks = [song("z", { title: "最后", artist: "Visible Z", album: "Visible Z", albumArtist: "Visible Z", sortTitle: "A", sortArtist: "A", sortAlbum: "A", sortAlbumArtist: "Z", trackNumber: 2, composers: ["Visible Z"], sortComposer: "A" }),
+    song("a", { title: "开头", artist: "Visible A", album: "Visible A", albumArtist: "Visible A", sortTitle: "Z", sortArtist: "Z", sortAlbum: "Z", sortAlbumArtist: "A", trackNumber: 1, composers: ["Visible A"], sortComposer: "Z" })];
+  expect(songsByTitle(tracks).map(track => track.title)).toEqual(["最后", "开头"]);
+  expect(artistsFor(tracks)).toEqual(["Visible Z", "Visible A"]);
+  expect(albumsFor(tracks).map(album => album.title)).toEqual(["Visible Z", "Visible A"]);
+  expect(coverFlowOrder(albumsFor(tracks)).map(album => album.title)).toEqual(["Visible A", "Visible Z"]);
+  expect(categoriesFor(tracks, "composer").map(group => group.name)).toEqual(["Visible Z", "Visible A"]);
+  expect(albumsFor([{ ...tracks[0], album: "Same", albumArtist: "Same" }, { ...tracks[1], album: "Same", albumArtist: "Same" }])[0].tracks.map(track => track.id)).toEqual(["a", "z"]);
 });

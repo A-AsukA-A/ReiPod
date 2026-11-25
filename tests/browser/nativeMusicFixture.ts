@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 
 export async function nativeMusicFixture(page: Page, denied = false, podcasts = false,
   options: { authorized?: boolean; holdMusic?: boolean; holdPodcasts?: boolean; holdPodcastTail?: boolean; failPodcasts?: boolean;
-    podcastArtwork?: boolean; songCount?: number; songDuration?: number;
+    podcastArtwork?: boolean; songCount?: number; songDuration?: number; volumeControl?: boolean;
     playback?: { currentId: string; status: string; position: number } } = {}) {
   await page.addInitScript(
     ({ denied, podcasts, options }) => {
@@ -49,6 +49,7 @@ export async function nativeMusicFixture(page: Page, denied = false, podcasts = 
       ) || options.playback || { currentId: null, status: "idle", position: 0 };
       if (options.playback) localStorage.setItem("__fixture-ios-playback", JSON.stringify(playback));
       let sequence = 0;
+      let volume = 0.6;
       let podcastCache: typeof episodes | undefined;
       let podcastWait = Promise.resolve();
       let releasePodcasts = () => {};
@@ -56,6 +57,8 @@ export async function nativeMusicFixture(page: Page, denied = false, podcasts = 
       const musicWait = options.holdMusic ? new Promise<void>(resolve => { releaseMusic = resolve; }) : Promise.resolve();
       const log = {
         calls: [] as string[],
+        volumes: [] as number[],
+        setOutputVolume(value: number) { volume = value; log.update({}); },
         queue: [] as string[],
         settings: 0,
         opens: 0,
@@ -106,7 +109,8 @@ export async function nativeMusicFixture(page: Page, denied = false, podcasts = 
                 duration:
                   items.find((song) => song.id === playback.currentId)
                     ?.duration || 0,
-                volume: 0.6,
+                volume,
+                volumeControl: options.volumeControl === true,
                 repeat: "off",
               },
             }
@@ -126,6 +130,7 @@ export async function nativeMusicFixture(page: Page, denied = false, podcasts = 
                 ids?: string[];
                 selectedId?: string;
                 seconds?: number;
+                volume?: number;
                 autoplay?: boolean;
                 offset?: number;
                 refresh?: boolean;
@@ -190,6 +195,11 @@ export async function nativeMusicFixture(page: Page, denied = false, podcasts = 
                 if (request.action === "play") playback.status = "playing";
                 if (request.action === "seek")
                   playback.position = request.seconds;
+                if (request.action === "volume") {
+                  if (!options.volumeControl || !Number.isFinite(request.volume)) throw Error("Volume unavailable");
+                  volume = Math.max(0, Math.min(1, request.volume!));
+                  log.volumes.push(volume);
+                }
                 if (["next", "previous"].includes(request.action)) {
                   const index = log.queue.indexOf(playback.currentId);
                   playback.currentId =

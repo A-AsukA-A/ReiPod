@@ -53,7 +53,7 @@ it("stock settings order is stable and modern features have one labeled boundary
   f.context.localTools = [{ key: "import", label: "Import", action: vi.fn() }];
   const menus = f.menus();
   expect(menus.settingsItems.map(row => row.key)).toEqual(["about", "shuffle", "repeat", "main-menu", "music-menu", "volume-limit", "backlight", "brightness", "click", "reipod-settings", "reset-settings"]);
-  expect(menus.managedRows["reipod-settings"]!.map(row => row.key)).toEqual(["music-services", "import", "photo-settings", "podcast-settings", "finish", "lyrics-display"]);
+  expect(menus.managedRows["reipod-settings"]!.map(row => row.key)).toEqual(["music-services", "import", "alarm-settings", "organizer", "photo-settings", "podcast-settings", "finish", "lyrics-display"]);
   menus.settingsItems.at(-1)!.action();
   expect(f.context.open).toHaveBeenCalledWith("reset-settings", "cancel");
 });

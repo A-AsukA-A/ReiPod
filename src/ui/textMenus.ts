@@ -16,12 +16,16 @@ export function createTextMenus({ texts, groupKey, isLocalText, importingTexts, 
   return {
     extras: [
       { key: "clock", label: "时钟", action: () => open("clock") },
+      { key: "alarms", label: "闹钟", action: () => open("alarms") },
+      { key: "calendar", label: "日历", action: () => open("calendar") },
+      { key: "contacts", label: "通讯录", action: () => open("contacts") },
       {
         key: "notes",
         label: "文本阅读",
         action: () => open("notes", texts[0]?.id ?? "reader-guide"),
       },
       { key: "stopwatch", label: "秒表", action: () => open("stopwatch", "timer") },
+      { key: "games", label: "游戏", action: () => open("games") },
     ],
     notes: [
       ...texts.map((doc) => ({

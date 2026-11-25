@@ -55,6 +55,7 @@ ReiPod/
 | `src/services/thirdPartyMusic.ts` | 网易云/QQ 的账户、请求与播放器连接 | 切换取消旧请求，保持 provider/account/library/queue 隔离 |
 | `src/services/musicTransport.ts` | iOS 内置网络服务传输 | 不扩展成任意 URL 代理 |
 | `src/services/nativeMusic.ts`、`NativeSystemPlayer.ts` | 原生系统音乐能力及播放桥 | 授权、后台与锁屏分别实测 |
+| `ios/ReiPod/SystemVolumeControl.swift` | MPVolumeView宿主与有限范围输出音量操作，由PlayerViewController注入NativeMusicService | 不激活音频会话或改队列；NativeSystemPlayer合并转轮目标，真实输出/路由另验 |
 | `server/` | HTTP 操作、provider 归一化、登录与加密会话 | 凭证留在边界内；部署验证查 SERVER_DEPLOYMENT |
 | `bridge/` | 内置运行时复用 provider 操作 | 与 HTTP 宿主独立；共享前先核对存储、并发和取消契约 |
 | `src/input/` | 将轮盘/鼠标/键盘相关输入转换为操作 | 输入能力按机型区分，触屏不能假装轮盘 |
@@ -151,3 +152,23 @@ QUICK88：`input/WheelGesture`提供已有速度档的原始角步，`ClickWheel
 任务94：`libraryMenus`成员候选与`classicInputController`选曲页Play队列读取注入的musicTracks，state仅供实际播放状态，不将当前播放会话当音乐库。`podcastShowRows`让范围导航保存单集，`ClassicScreenContent/MenuRows`只承担节目/歌单呈现；断点、歌单持久化和原生服务仍由原有owner处理。
 
 任务95：`src/models/classicExtras.ts`为纯城市目录/时区身份、秒表状态与有界解析/reducer；`src/services/extrasStorage.ts`独占localStorage访问，`src/app/useClassicExtras.ts`装配状态与失败反馈。`src/ui/extrasMenus.ts`只生成注入命令的轮盘菜单，`ClassicExtrasScreens.tsx`/`ClassicClock.tsx`呈现只读时钟/秒表，`classic-extras.css`明确P几何；输入经`classicInputController`可选extras端口，不进入Player。`ClassicScreenContent`按需加载Cover Flow、附加功能、搜索、文本阅读和照片显示组件，状态/输入/音频仍常驻；iOS prepare复制全部构建文件。新增纯逻辑测试在模型旁，整套轮盘路径在`tests/browser/extrasExperience.pw.ts`。私有4195样本、录屏、开发签名包及签名元数据均留`.local/extras-95/`，不进入public或版本库。
+
+## 2026-11-10 小游戏职责（GAME101）
+
+`src/models/classicGames.ts`保存2007游戏身份／来源与确定性随机；`klondike.ts`、`iQuiz.ts`、`vortex.ts`提供无DOM规则和存档验证。`src/services/gameStorage.ts`独占游戏localStorage访问（版本信封、每游戏100k字符上限），不与音乐／账号存储混合。`src/ui/ClassicGamesScreen.tsx`与`games/`、`classic-games.css`按需加载，管理只读LCD绘图、帮助／暂停／续玩；`gameInput.ts`由输入控制器注入转轮命令。App仅装配游戏端口、当前音乐元数据和来源范围，不复制播放器。iQuiz在范围变化时重建视图并拒绝跨账户续题。`useLcdMotion`捕获过渡时复制canvas位图，避免Vortex退出空帧。模型关键测试在模型旁，实际操作／音频隔离／三视口检查在`tests/browser/gamesExperience.pw.ts`。
+
+GAME102：规则继续归原游戏模型，未添加服务／播放器。iQuiz增加bonusKind及wager阶段，空分类页用合法null题局保存；Who/What/When只使用注入的元数据（可选year缺失则不出年份题），出题先有界抽样。Vortex的caught偏移／可选道具到期字段／brick.kind纳入模型与存档验证，兼容GAME101省略这些字段的存档；旋转、碰撞、激光共用规则，不在canvas重写一套物理。原模型和浏览器游戏文件追加必要规则／真实轮盘路径测试；中途存档fixture与真实走完回合的证据分别标注。
+
+## ORG103 日历与通讯录
+
+`src/models/organizerText.ts`负责纯内容行／转义／稳定标识，`organizerCalendar.ts`负责日期／受限iCalendar解析／重复实例及验证，`organizerContacts.ts`负责vCard／照片白名单与验证；没有播放器或网络。`src/services/organizerStorage.ts`独占有界localStorage，`organizerFilePicker.ts`创建屏幕DOM与React事件树之外的原生文件输入并清理，避免ReadOnlyScreen拦截文件选择。`src/app/useOrganizer.ts`装配导入合并／保存／失败反馈，随按需显示块加载。
+
+`ClassicOrganizerScreen.tsx`／`classic-organizer.css`呈现月历／资料／设置与只读内部导航，`organizerInput.ts`连接现有classic控制器；App只注入ref、活动标记和返回／提示，不放第二份队列。新功能按需加载，全部资源随iOS准备复制。为保持入口预算，About显示也按需加载，原`aboutPage`纯派生移至既有`classicScreenModel.ts`（同一目录，没有声称架构全部拆完）；About既有操作回归通过。关键解析检查在`src/models/organizer.test.ts`，一条完整用户路径在`tests/browser/organizerExperience.pw.ts`。
+
+## NATIVEORG104 系统资料端口
+
+`ios/ReiPod/NativeOrganizerModels.swift`定义Sendable值记录／有限日期窗口；`NativeOrganizerStore.swift`用独立actor持有EventKit／Contacts实例和不透明句柄，数据库对象不跨actor，联系人按页／头像按需、提醒事项在会话代际内缓存。`OrganizerBridge.swift`限定打包主文档、白名单只读命令、权限与代际复核，监听系统变动并清缓存；PlayerViewController注册能力与前台失效，project.yml提供三项用途说明。没有给Web提供系统数据库标识或写操作。
+
+`src/services/nativeOrganizer.ts`定义并验证消息／权限，`src/app/useNativeOrganizer.ts`管理按月／资源读取、分页、撤权／后台／迟到结果与内存快照；`useOrganizer.ts`仍只保存导入副本，source偏好与系统内容分开。`ClassicOrganizerScreen`组合两条来源，原用户显式选择保留，默认新版iPhone系统；文件／网页路线不变。权限和刷新入口属于现代管理页，播放核心没有新增主机依赖。新增原生边界检查在NativeBoundaryTests，两个浏览器场景在nativeOrganizer.pw.ts；浏览器使用明确替身，不作为真实系统数据证明。
+
+FINISH106：`src/models/classicAlarms.ts`独占纯日期／重复／截止时间／有界设置解析，`src/services/alarmsStore.ts`管理独立持久化与排队提交，`alarmHost.ts`承接固定原生协议及网页蜂鸣资源。`src/ui/ClassicAlarms.tsx`／`classic-alarms.css`呈现编辑、倒计时及全局LCD提醒，`alarmInput.ts`为注入端口；App只装配现有Player.pause、休眠／唤醒和导航。`classicInputController`先拦截响铃与闹钟页，不增播放器。播放显示与账户Header按需加载，原播放会话常驻。`ios/ReiPod/AlarmsBridge.swift`在原生拥有AlarmKit／UserNotifications调度、权限、自己的计划与停止回执；AppDelegate在启动结束前设置通知delegate，PlayerViewController连接固定主文档桥。生成IPA／预览／证据均在忽略的`.local/finish-106/`。

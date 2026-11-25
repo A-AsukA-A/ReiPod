@@ -13,6 +13,7 @@ export type MenuScrollPositions = Map<string, { key: string; offset: number }>;
 export type MenuItem = {
   key: string;
   label: string;
+  sortLabel?: string;
   detail?: string;
   value?: string;
   artwork?: string;

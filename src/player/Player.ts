@@ -30,6 +30,12 @@ export type Track = {
   artist?: string;
   album?: string;
   albumArtist?: string;
+  compilation?: boolean;
+  sortTitle?: string;
+  sortArtist?: string;
+  sortAlbum?: string;
+  sortAlbumArtist?: string;
+  sortComposer?: string;
   genres?: string[];
   composers?: string[];
   artwork?: string;

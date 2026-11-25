@@ -3,7 +3,7 @@ import Foundation
 struct NativeMusicRequest: Decodable {
     enum Action: String, Decodable {
         case status, authorize, library, podcasts, playlists, playlistTracks, openPodcasts
-        case setQueue, play, pause, next, previous, seek, `repeat`, openSettings
+        case setQueue, play, pause, next, previous, seek, volume, `repeat`, openSettings
     }
     let version: Int
     let action: Action
@@ -16,6 +16,7 @@ struct NativeMusicRequest: Decodable {
     let autoplay: Bool?
     let mode: String?
     let refresh: Bool?
+    let volume: Float?
 }
 
 struct NativeTrack: Encodable {
@@ -28,6 +29,7 @@ struct NativeTrack: Encodable {
     let artwork: String?
     let trackNumber: Int
     var discNumber: Int = 1
+    var compilation: Bool? = nil
     var podcast: NativePodcast? = nil
 }
 
@@ -53,6 +55,7 @@ struct NativePlayback: Encodable {
     let duration: Double
     let volume: Float
     let `repeat`: String
+    var volumeControl: Bool = false
 }
 
 struct NativeMusicReply: Encodable {
@@ -66,7 +69,7 @@ struct NativeMusicReply: Encodable {
 }
 
 enum NativeMusicError: LocalizedError {
-    case permission, invalidRequest, unavailableSong, unavailablePlaylist, canceled, podcastsUnavailable
+    case permission, invalidRequest, unavailableSong, unavailablePlaylist, canceled, podcastsUnavailable, volumeUnavailable
     var errorDescription: String? {
         switch self {
         case .permission: "请在系统设置中允许访问音乐资料库"
@@ -75,6 +78,7 @@ enum NativeMusicError: LocalizedError {
         case .unavailablePlaylist: "歌单已不在系统资料库中，请刷新"
         case .canceled: "操作已被较新的播放指令替代"
         case .podcastsUnavailable: "无法打开 Apple 播客，请确认已安装该 App"
+        case .volumeUnavailable: "当前音频输出无法调节音量，请使用设备音量键"
         }
     }
 }

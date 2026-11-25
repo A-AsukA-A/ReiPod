@@ -30,6 +30,9 @@ export function classicScreenTitle({ page, groupKey, browseArtist, playView,
               brightness: "亮度",
               "volume-limit": "音量上限",
               extras: "附加功能",
+              alarms: "闹钟", countdown: "倒计时", "sleep-timer": "睡眠定时", "alarm-settings": "闹钟与计时",
+              games: "游戏",
+              game: "游戏",
               clock: "时钟",
               "clock-options": "时钟选项",
               "clock-regions": "选择地区",
@@ -39,6 +42,7 @@ export function classicScreenTitle({ page, groupKey, browseArtist, playView,
               "stopwatch-log": "计时记录",
               "stopwatch-log-options": "记录选项",
               "confirm-clear-stopwatch": "清空记录",
+              calendar: "日历", contacts: "通讯录", "organizer-settings": "日历与通讯录",
               notes: "文本阅读",
               "text-reader": documentTitle ?? "文本阅读",
               "text-options": "阅读选项",
@@ -75,6 +79,7 @@ export function classicScreenTitle({ page, groupKey, browseArtist, playView,
               artists: category?.value ?? "艺人",
               genres: "风格",
               composers: "作曲者",
+              "compilation-tracks": "合辑",
               albums: browseArtist ?? category?.value ?? "专辑",
               favorites: "我的收藏",
               recent: "最近添加",
@@ -111,4 +116,8 @@ export function classicPreviewModel({ page, focusedRow, albums, podcastShows = [
     count: tracks.length,
     bytes: tracks.reduce((sum, track) => sum + track.size, 0),
   };
+}
+
+export function aboutPage(key: string | null) {
+  return key === "about-1" ? 1 : key === "about-2" ? 2 : 0;
 }

@@ -67,7 +67,7 @@
   height: 12px;
 }
 .play-modes {
-  gap: 6px;
+  gap: calc(var(--lcd-unit) * 6);
   color: var(--lcd-blue);
 }
 .play-modes .player-icon {
@@ -809,7 +809,9 @@
   min-width: 0;
   font-size: calc(var(--lcd-unit) * 14);
   font-weight: 700;
-  line-height: 1;
+  /* Preserve the text's center/baseline while allowing accents and CJK ink.
+     A 1em clipping box cuts the substitute font's ascenders/descenders. */
+  line-height: var(--lcd-header-height);
   text-align: left;
   letter-spacing: calc(var(--lcd-unit) * -0.25);
   white-space: nowrap;

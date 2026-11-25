@@ -20,6 +20,7 @@ type Props = {
   timing: { readonly seek: number; readonly options: number; readonly sleep: number; readonly repeat: number };
   onRotate: (steps: number, source?: "pointer" | "wheel" | "keyboard", rotation?: WheelRotation) => void;
   onRotateEnd?: () => void;
+  onPosition?: (radians: number) => boolean;
   onCommand: (command: WheelCommand) => void;
   playLabel?: string;
   disabled?: boolean;
@@ -31,6 +32,7 @@ export function ClickWheel({
   timing,
   onRotate,
   onRotateEnd,
+  onPosition,
   onCommand,
   playLabel = "播放或暂停",
   disabled = false,
@@ -41,11 +43,12 @@ export function ClickWheel({
     id: number;
     input: WheelGesture;
     command: WheelCommand;
+    positioned: boolean;
   } | null>(null);
   const keyPress = useRef<{ key: string; command: WheelCommand } | null>(null);
   const [pressed, setPressed] = useState<WheelCommand | null>(null);
-  const callbacks = useRef({ onRotate, onRotateEnd, onCommand, onFeedback, disabled });
-  callbacks.current = { onRotate, onRotateEnd, onCommand, onFeedback, disabled };
+  const callbacks = useRef({ onRotate, onRotateEnd, onPosition, onCommand, onFeedback, disabled });
+  callbacks.current = { onRotate, onRotateEnd, onPosition, onCommand, onFeedback, disabled };
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seekTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const longPressFired = useRef(false);
@@ -215,9 +218,12 @@ export function ClickWheel({
         )
           return;
         const command = commandAt(event.clientX, event.clientY);
+        const dx = event.clientX - centerPoint.x, dy = event.clientY - centerPoint.y;
+        const positioned = Math.hypot(dx, dy) > radius * 0.42 && (onPosition?.(Math.atan2(dy, dx)) ?? false);
         gesture.current = {
           id: event.pointerId,
           command,
+          positioned,
           input: new WheelGesture(
             { x: event.clientX, y: event.clientY },
             centerPoint,
@@ -226,6 +232,7 @@ export function ClickWheel({
           ),
         };
         node.setPointerCapture(event.pointerId);
+        if (positioned) return;
         onFeedback?.("press");
         setPressed(command);
         startHold(command);
@@ -240,6 +247,12 @@ export function ClickWheel({
         )
           return;
         const point = { x: event.clientX, y: event.clientY };
+        if (active.positioned) {
+          const { centerPoint, radius } = getCircularBoundingInfo(root.current!.getBoundingClientRect());
+          const dx = point.x - centerPoint.x, dy = point.y - centerPoint.y, distance = Math.hypot(dx, dy);
+          if (distance > radius * 0.42 && distance <= radius * 1.25) callbacks.current.onPosition?.(Math.atan2(dy, dx));
+          return;
+        }
         const steps = active.input.move(point, event.timeStamp);
         if (steps) {
           setPressed(null);
@@ -259,7 +272,7 @@ export function ClickWheel({
         if (!active || active.id !== event.pointerId) return;
         release(
           active.command,
-          active.input.canClick({ x: event.clientX, y: event.clientY }) &&
+          !active.positioned && active.input.canClick({ x: event.clientX, y: event.clientY }) &&
             commandAt(event.clientX, event.clientY) === active.command,
         );
       }}

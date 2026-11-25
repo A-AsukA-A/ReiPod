@@ -1,16 +1,18 @@
 import type { MusicService, MusicServiceState } from "../services/musicServices";
 import type { MenuItem } from "./MenuRows";
+import type { MusicCategory } from "../player/library";
 import type { Page } from "./navigation";
 
 type Context = {
   services: MusicServiceState;
   serviceName: string;
   externalLogin: boolean;
+  compilationsEnabled?: boolean;
   localFirstId?: string;
   page: Page;
   localMusicItems: MenuItem[];
   localPlaylistItems: MenuItem[];
-  open: (page: Page, key?: string, group?: string) => void;
+  open: (page: Page, key?: string, group?: string, artist?: string, category?: MusicCategory) => void;
   beginText: () => void;
   clearQuery: () => void;
   openFiles: () => void;
@@ -28,7 +30,7 @@ type Context = {
 export function createMusicServiceMenus({
   services, serviceName, externalLogin, localFirstId, page,
   localMusicItems, localPlaylistItems, open, beginText, clearQuery,
-  openFiles, loadDemos, actions,
+  openFiles, loadDemos, actions, compilationsEnabled = false,
 }: Context) {
   const cloud = services.selected !== "local";
   const externalMusic = services.selected === "netease" || services.selected === "qq";
@@ -64,6 +66,8 @@ export function createMusicServiceMenus({
               { key: "artists", label: "艺人", action: () => open("artists") },
               { key: "albums", label: "专辑", action: () => open("albums") },
               { key: "songs", label: "歌曲", action: () => open("songs") },
+              ...(nativeMusic && !externalMusic && compilationsEnabled ? [{ key: "compilations", label: "合辑",
+                action: () => open("albums", undefined, undefined, undefined, { kind: "compilation", value: "合辑" }) }] : []),
               {
                 key: "search",
                 label: nativeMusic ? "搜索资料库" : `搜索 ${serviceName}`,

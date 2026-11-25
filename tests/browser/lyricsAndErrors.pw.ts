@@ -367,7 +367,7 @@ for (const source of ["netease", "qq"] as const) {
       badge = await row.locator(".track-access-badge").boundingBox();
     expect(title!.width).toBeGreaterThan(40);
     expect(title!.x + title!.width).toBeLessThanOrEqual(badge!.x);
-    await expect(row.locator(".marquee-window")).toHaveClass(/has-overflow/);
+    await expect(row.locator(".row-title .marquee-window")).toHaveClass(/has-overflow/);
     await page
       .locator(".classic-device")
       .screenshot({ path: testInfo.outputPath("long-title-badge.png") });

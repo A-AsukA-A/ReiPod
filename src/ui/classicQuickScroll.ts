@@ -4,16 +4,16 @@ import type { MenuItem } from "./MenuRows";
 export type LetterGroup = { letter: string; key: string; row: number };
 export type LetterIndex = { groups: LetterGroup[]; count: number; letters: (string | null)[] };
 
-/** Preserve the actual browse order; never guess pinyin or original sort-as tags. */
+/** Preserve the actual browse order; use explicit sort tags without guessing pinyin. */
 export function quickScrollLetter(label: string): string | null {
   const first = [...label.trim().normalize("NFD").replace(/\p{M}/gu, "")][0];
   if (!first) return null;
   if (/^[a-z]$/i.test(first)) return first.toUpperCase();
   return /\p{L}/u.test(first) ? null : "#";
 }
-export function quickScrollIndex(rows: readonly Pick<MenuItem, "key" | "label" | "aggregate" | "disabled">[]): LetterIndex {
+export function quickScrollIndex(rows: readonly Pick<MenuItem, "key" | "label" | "sortLabel" | "aggregate" | "disabled">[]): LetterIndex {
   const groups: LetterGroup[] = [], seen = new Set<string>();
-  const letters = rows.map(row => row.disabled || row.aggregate ? null : quickScrollLetter(row.label));
+  const letters = rows.map(row => row.disabled || row.aggregate ? null : quickScrollLetter(row.sortLabel || row.label));
   let count = 0;
   rows.forEach((row, index) => {
     if (row.disabled || row.aggregate) return;

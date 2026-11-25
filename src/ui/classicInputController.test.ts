@@ -51,6 +51,23 @@ it("HOLD suppresses wheel and every command before activation or playback", () =
   expect(f.player.pause).not.toHaveBeenCalled();
   expect(f.context.navigation.dispatch).not.toHaveBeenCalled();
 });
+it("games consume all game buttons before media commands while Home and explicit sleep remain global", () => {
+  const f = fixture("game"), game = { rotate: vi.fn(), command: vi.fn() };
+  f.context.games = { current: game };
+  const input = f.input();
+  input.rotate(2);
+  for (const value of ["select", "menu", "play", "next", "previous", "seek-forward", "seek-backward", "options", "favorite"] as const)
+    input.command(value);
+  expect(game.rotate).toHaveBeenCalledWith(2);
+  expect(game.command).toHaveBeenCalledTimes(9);
+  expect(f.player.getSnapshot).not.toHaveBeenCalled();
+  expect(f.player.toggle).not.toHaveBeenCalled(); expect(f.player.pause).not.toHaveBeenCalled();
+  input.command("home"); expect(f.context.navigation.dispatch).toHaveBeenCalledWith({ type: "home" });
+  input.command("sleep"); expect(f.player.pause).toHaveBeenCalledOnce();
+  expect(f.context.device.setSleeping).toHaveBeenCalledWith(true);
+  f.context.device.held = true; f.input().rotate(3); f.input().command("select");
+  expect(game.rotate).toHaveBeenCalledOnce(); expect(game.command).toHaveBeenCalledTimes(9);
+});
 it("About Center cycles cards without leaving or issuing playback commands; wheel preserves the card", () => {
   const f = fixture("about");
   for (const [from, to] of [["about-0", "about-1"], ["about-1", "about-2"], ["about-2", "about-0"]]) {

@@ -33,6 +33,8 @@ export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud
       action: () => open("music-services", selectedService),
     },
     ...localTools,
+    { key: "alarm-settings", label: "闹钟与计时", action: () => open("alarm-settings") },
+    { key: "organizer", label: "日历与通讯录", action: () => open("organizer-settings") },
     ...(nativeExperienceAvailable() ? [{ key: "haptics", label: "触觉反馈", value: prefs.haptics ? "开启" : "关闭",
       leaf: true, action: () => setPreferences({ haptics: !prefs.haptics }) }] : []),
     { key: "photo-settings", label: "照片设置", action: () => open("photo-settings") },

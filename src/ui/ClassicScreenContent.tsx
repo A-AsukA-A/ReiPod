@@ -8,12 +8,16 @@ import { MenuPreview } from "./MenuPreview";
 
 import type { ExtrasState } from "../models/classicExtras";
 import { ClassicGlyph } from "./ClassicGlyph";
-import { ClassicAboutScreen } from "./ClassicAboutScreen";
+
 import type { ClassicAboutInformation } from "./ClassicAboutScreen";
 import { MenuRows } from "./MenuRows";
 import type { MenuScrollPositions, MenuItem } from "./MenuRows";
-import { NowPlayingScreen } from "./NowPlayingScreen";
+const NowPlayingScreen = lazy(() => import("./NowPlayingScreen").then(module => ({ default: module.NowPlayingScreen })));
 import { WheelTextEntry } from "./WheelTextEntry";
+import type { AlarmPageInput } from "./alarmInput";
+import type { OrganizerInput } from "./organizerInput";
+import type { GameInput } from "./gameInput";
+import type { QuizTrack } from "../models/iQuiz";
 
 
 
@@ -21,6 +25,9 @@ import type { TextReaderHandle } from "./TextReader";
 import { classicPreviewModel } from "./classicScreenModel";
 
 // Secondary displays load only when opened; all files remain bundled for native/offline use.
+const ClassicAlarmsScreen = lazy(() => import("./ClassicAlarms").then(module => ({ default: module.ClassicAlarmsScreen })));
+const ClassicAboutScreen = lazy(() => import("./ClassicAboutScreen").then(module => ({ default: module.ClassicAboutScreen })));
+const ClassicOrganizerScreen = lazy(() => import("./ClassicOrganizerScreen").then(module => ({ default: module.ClassicOrganizerScreen })));
 const CoverFlow = lazy(() => import("./CoverFlow").then(module => ({ default: module.CoverFlow })));
 const ClassicClocksScreen = lazy(() => import("./ClassicExtrasScreens").then(module => ({ default: module.ClassicClocksScreen })));
 const ClassicStopwatchScreen = lazy(() => import("./ClassicExtrasScreens").then(module => ({ default: module.ClassicStopwatchScreen })));
@@ -29,6 +36,7 @@ const ClassicSearchScreen = lazy(() => import("./ClassicSearchScreen").then(modu
 const TextReader = lazy(() => import("./TextReader").then(module => ({ default: module.TextReader })));
 
 const PhotoScreen = lazy(() => import("./PhotoScreen").then(module => ({ default: module.PhotoScreen })));
+const ClassicGamesScreen = lazy(() => import("./ClassicGamesScreen").then(module => ({ default: module.ClassicGamesScreen })));
 
 type Props = {
   page: Page; groupKey?: string; title: string;
@@ -50,13 +58,17 @@ type Props = {
   prefs: { brightness: number; volumeLimit: number };
   about: { index: number; information: ClassicAboutInformation };
   extras: ExtrasState;
+  alarms: { input: RefObject<AlarmPageInput | null>; exit: () => void; open: (page: Page) => void; notice: (message: string) => void };
+  organizer: { input: RefObject<OrganizerInput | null>; active: boolean; exit: () => void; notice: (message: string) => void };
+  games: { input: RefObject<GameInput | null>; active: boolean; tracks: readonly QuizTrack[]; scope: string;
+    open: (id: string) => void; exit: () => void; notice: (message: string) => void };
   preview: Parameters<typeof classicPreviewModel>[0];
   accountHeader: ReactNode; qrImage?: string; serviceName: string;
 };
 
 /** Classic page presentation only; sessions, service capabilities and commands are injected. */
 export function ClassicScreenContent({ page, groupKey, title, menu, library, playback,
-  text, photos, prefs, about, extras, preview, accountHeader, qrImage, serviceName }: Props) {
+  text, photos, prefs, about, extras, alarms, organizer, games, preview, accountHeader, qrImage, serviceName }: Props) {
   const { rows, focusedRow, selectedIndex, isTrackList, visibleIds, visibleTracks,
     trackById, playlistTrackIds, selectedRow, hasManagedRows, splitMenu, positionKey } = menu;
   const positions = useRef<MenuScrollPositions>(new Map());
@@ -81,6 +93,11 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
     />
   );
   return (<Suspense fallback={null}>
+      {(["alarms", "countdown", "sleep-timer", "alarm-settings"] as string[]).includes(page) && <ClassicAlarmsScreen page={page as "alarms" | "countdown" | "sleep-timer" | "alarm-settings"} {...alarms} />}
+      {(page === "calendar" || page === "contacts" || page === "organizer-settings") && <ClassicOrganizerScreen page={page} {...organizer} />}
+      {(page === "games" || page === "game") && <ClassicGamesScreen id={page === "game" ? groupKey : undefined}
+        input={games.input} active={games.active} tracks={games.tracks} scope={games.scope}
+        openGame={games.open} exit={games.exit} notice={games.notice} />}
       {page === "search" && (
         <ClassicSearchScreen query={query} editing={textEntry.editing}
           characters={textEntry.characters} index={textEntry.index}
@@ -218,6 +235,9 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
           !isTrackList &&
           ![
             "about",
+            "calendar", "contacts", "organizer-settings", "alarms", "countdown", "sleep-timer", "alarm-settings",
+            "games",
+            "game",
             "brightness",
             "volume-limit",
             "clock",

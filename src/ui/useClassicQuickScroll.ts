@@ -13,7 +13,7 @@ export function useClassicQuickScroll({ page, scope, rows, focusedKey, held, sle
   const policy = classic2007.input.quickScroll;
   const eligible = ["songs", "local-songs", "artists", "albums"].includes(page) && !held && !sleeping;
   const index = useMemo(() => quickScrollIndex(rows), [rows]);
-  const identity = JSON.stringify([scope, eligible, rows.map(row => [row.key, row.label, !!row.disabled])]);
+  const identity = JSON.stringify([scope, eligible, rows.map(row => [row.key, row.label, row.sortLabel, !!row.disabled])]);
   const engine = useRef(new ClassicQuickScroll(policy));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [display, setDisplay] = useState<{ identity: string; letter: string } | null>(null);

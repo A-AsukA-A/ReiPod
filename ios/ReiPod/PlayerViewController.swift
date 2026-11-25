@@ -3,7 +3,10 @@ import WebKit
 
 @MainActor
 final class PlayerViewController: UIViewController, WKNavigationDelegate {
-    private let music = NativeMusicService()
+    private let volume = SystemVolumeControl()
+    private lazy var music = NativeMusicService(volume: volume)
+    private let organizer = OrganizerBridge()
+    private let alarms = AlarmsBridge.shared
     private let photos = NativePhotoService()
     private var photoBridge: PhotoBridge?
     private var bridge: MusicBridge?
@@ -17,6 +20,7 @@ final class PlayerViewController: UIViewController, WKNavigationDelegate {
         super.viewDidLoad()
         view.backgroundColor = ExperienceBridge.background
         view.isOpaque = false
+        view.addSubview(volume.view)
         guard let root = Bundle.main.url(forResource: "Web", withExtension: nil) else {
             let label = UILabel()
             label.text = "缺少网页资源，请先运行 npm run ios:prepare"
@@ -42,6 +46,14 @@ final class PlayerViewController: UIViewController, WKNavigationDelegate {
         let assets = AppResources(root: root, music: music)
         configuration.setURLSchemeHandler(assets, forURLScheme: "reipod-app")
         configuration.setURLSchemeHandler(assets, forURLScheme: "reipod-artwork")
+        configuration.userContentController.addScriptMessageHandler(organizer, contentWorld: .page, name: "reipodOrganizer")
+        configuration.userContentController.addUserScript(WKUserScript(
+            source: "Object.defineProperty(window, '__REIPOD_NATIVE_ORGANIZER_VERSION__', {value: 1, writable: false});",
+            injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        configuration.userContentController.addScriptMessageHandler(alarms, contentWorld: .page, name: "reipodAlarms")
+        configuration.userContentController.addUserScript(WKUserScript(
+            source: "Object.defineProperty(window, '__REIPOD_NATIVE_ALARMS_VERSION__', {value: 1, writable: false});",
+            injectionTime: .atDocumentStart, forMainFrameOnly: true))
         let photoBridge = PhotoBridge(photos: photos)
         configuration.setURLSchemeHandler(photoBridge, forURLScheme: "reipod-photo")
         configuration.userContentController.addScriptMessageHandler(photoBridge, contentWorld: .page, name: "reipodPhotos")
@@ -79,6 +91,8 @@ final class PlayerViewController: UIViewController, WKNavigationDelegate {
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
+        organizer.webView = webView
+        alarms.webView = webView
         battery.webView = webView
         bridge.webView = webView
         photoBridge.webView = webView
@@ -128,7 +142,7 @@ final class PlayerViewController: UIViewController, WKNavigationDelegate {
         view.window?.backgroundColor = ExperienceBridge.background
         if let root = view.window?.rootViewController, root !== self { root.view.backgroundColor = .clear }
     }
-    @objc private func becameActive() { experience.refreshActivity(); battery.start(); music.startObservation(); music.libraryDidChange(); photos.invalidate(); photoBridge?.changed() }
+    @objc private func becameActive() { experience.refreshActivity(); battery.start(); music.startObservation(); music.libraryDidChange(); photos.invalidate(); photoBridge?.changed(); organizer.invalidate(); alarms.changed() }
     @objc private func enteredBackground() { experience.suspend(); battery.stop(); music.stopObservation() }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {

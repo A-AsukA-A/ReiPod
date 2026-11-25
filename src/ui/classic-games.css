@@ -1,0 +1,96 @@
+/* 2007 bundled-game visual families; independently drawn artwork and P/A layout. */
+.lcd-screen[data-page="game"] .screen-status { display: none; }
+.classic-game-library { flex: 1; min-height: 0; background: linear-gradient(#f3f4f5,#e3e5e7); }
+.game-library-row { height: calc(var(--lcd-unit) * 54); display: flex; align-items: center; gap: calc(var(--lcd-unit) * 10); padding: calc(var(--lcd-unit) * 4) calc(var(--lcd-unit) * 7); border-bottom: var(--lcd-unit) solid #c0c4c8; }
+.game-library-row.selected { color: white; background: linear-gradient(#4bb5e9,#178ccc); }
+.game-icon { width: calc(var(--lcd-unit) * 44); height: calc(var(--lcd-unit) * 44); flex-shrink: 0; }
+.game-library-row > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--lcd-unit); }
+.game-library-row strong { font-size: calc(var(--lcd-unit) * 16); line-height: 1.3; }
+.game-library-row span { font-size: calc(var(--lcd-unit) * 11); line-height: 1.3; color: #777e83; }
+.game-library-row.selected span { color: #e6f0f8; }
+.game-library-row > i { font-style: normal; font-size: calc(var(--lcd-unit) * 25); visibility: hidden; }
+.game-library-row.selected > i { visibility: visible; }
+.classic-game-host { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #111c20; font-family: var(--font-lcd); }
+.game-board, .game-menu-panel { position: absolute; inset: 0; }
+.game-board[aria-hidden="true"] { visibility: hidden; }
+.game-menu-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: calc(var(--lcd-unit) * 10) calc(var(--lcd-unit) * 32); color: #fff6d9; background: radial-gradient(ellipse at 50% 20%,#62563c,#241e17 80%); }
+.game-vortex .game-menu-panel { background: radial-gradient(ellipse at center,#5f7336,#1c271d 70%,#111510); }
+.game-klondike .game-menu-panel { background: radial-gradient(ellipse at 50% 15%,#526b35,#203f23 80%); }
+.game-iquiz .game-menu-panel { background: radial-gradient(ellipse at 50% 15%,#27599a,#101a43 80%); }
+.game-menu-heading { display: flex; align-items: center; justify-content: center; gap: calc(var(--lcd-unit) * 10); margin-bottom: calc(var(--lcd-unit) * 12); }
+.game-menu-heading strong { font-size: calc(var(--lcd-unit) * 27); line-height: 1.2; font-weight: 700; text-shadow: 0 var(--lcd-unit) calc(var(--lcd-unit) * 3) #000; }
+.game-menu-rows { width: 100%; max-height: 70%; overflow: hidden; }
+.game-menu-rows > div { font-size: calc(var(--lcd-unit) * 14); line-height: calc(var(--lcd-unit) * 26); text-align: center; padding-inline: calc(var(--lcd-unit) * 8); border: var(--lcd-unit) solid transparent; }
+.game-menu-rows > .selected { color: #2d291c; background: linear-gradient(#fff5c7,#cfb568); border-color: #f7e9ac; border-radius: calc(var(--lcd-unit) * 3); box-shadow: 0 var(--lcd-unit) calc(var(--lcd-unit) * 3) #0007; }
+.game-help { width: 100%; flex: 1; min-height: 0; overflow: auto; scrollbar-width: none; color: #fff9e7; }
+.game-help p { font-size: calc(var(--lcd-unit) * 11); line-height: 1.5; margin: 0 0 calc(var(--lcd-unit) * 6); overflow-wrap: anywhere; }
+.game-menu-panel:has(.game-help) { justify-content: flex-start; padding: calc(var(--lcd-unit) * 10) calc(var(--lcd-unit) * 16); }
+.game-menu-panel:has(.game-help) .game-menu-heading { margin-bottom: calc(var(--lcd-unit) * 6); }
+.game-menu-panel:has(.game-help) .game-menu-heading .game-icon { width: calc(var(--lcd-unit) * 27); height: calc(var(--lcd-unit) * 27); }
+.game-menu-panel:has(.game-help) .game-menu-heading strong { font-size: calc(var(--lcd-unit) * 20); }
+.game-menu-panel:has(.game-help) .game-menu-rows { margin-top: auto; flex-shrink: 0; }
+.game-confirm { font-size: calc(var(--lcd-unit) * 14); margin: 0 0 calc(var(--lcd-unit) * 12); }
+.klondike-game, .vortex-game, .iquiz-game { position: absolute; inset: 0; }
+.klondike-table, .vortex-game canvas { display: block; width: 100%; height: 100%; }
+.klondike-table { font-family: var(--font-lcd); }
+.vortex-result { position: absolute; inset: 30% 7% 35%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--lcd-unit) * 5); color: #d5ec8d; background: #061414de; border-block: var(--lcd-unit) solid #9cbb65; text-shadow: 0 var(--lcd-unit) #000; }
+.vortex-result strong { font-size: calc(var(--lcd-unit) * 20); line-height: 1.3; }
+.vortex-result span { font-size: calc(var(--lcd-unit) * 16); font-variant-numeric: tabular-nums; }
+.iquiz-game { display: flex; flex-direction: column; padding: calc(var(--lcd-unit) * 8) calc(var(--lcd-unit) * 13); color: white; background: radial-gradient(ellipse at 50% -20%,#215b98,#132647 45%,#050c1e); }
+.quiz-stage-lights { position: absolute; inset: 0 0 auto; display: flex; justify-content: space-around; height: calc(var(--lcd-unit) * 4); }
+.quiz-stage-lights i { width: calc(var(--lcd-unit) * 22); background: linear-gradient(90deg,#c2eafb,#fff,#6bbee9); box-shadow: 0 0 calc(var(--lcd-unit) * 8) #67b9ff; }
+.quiz-game-header { height: calc(var(--lcd-unit) * 26); display: flex; align-items: center; justify-content: space-between; border-bottom: var(--lcd-unit) solid #9bc8e966; }
+.quiz-game-header strong { font-size: calc(var(--lcd-unit) * 21); font-style: italic; text-shadow: 0 var(--lcd-unit) calc(var(--lcd-unit) * 4) #01040d; }
+.quiz-game-header span { font-size: calc(var(--lcd-unit) * 15); color: #fff1a9; }
+.quiz-emblem { position: absolute; top: calc(var(--lcd-unit) * 62); left: calc(var(--lcd-unit) * 20); width: calc(var(--lcd-unit) * 99); height: calc(var(--lcd-unit) * 99); display: grid; place-items: center; border: calc(var(--lcd-unit) * 3) solid #b9cbf3; border-radius: 50%; background: radial-gradient(circle at 35% 25%,#718bfa,#2c3e9a 55%,#121e68); box-shadow: 0 calc(var(--lcd-unit) * 4) calc(var(--lcd-unit) * 8) #0009,inset 0 0 calc(var(--lcd-unit) * 10) #a0b3fd; font-size: calc(var(--lcd-unit) * 72); font-weight: 700; line-height: 1; color: #e5cdd9; text-shadow: 0 var(--lcd-unit) #141b53; }
+.quiz-category-list { width: 56%; margin: auto 0 auto auto; }
+.quiz-category-list > div { font-size: calc(var(--lcd-unit) * 14); line-height: calc(var(--lcd-unit) * 35); text-align: center; border: var(--lcd-unit) solid #4f729a; margin-bottom: calc(var(--lcd-unit) * 3); border-radius: calc(var(--lcd-unit) * 3); background: linear-gradient(#314b75,#192e51); }
+.quiz-category-list > .selected, .quiz-wagers .selected { color: #2c241a; background: linear-gradient(#fff5bc,#d1b86b); border-color: #fff1bd; }
+.quiz-round { display: flex; align-items: center; gap: calc(var(--lcd-unit) * 10); height: calc(var(--lcd-unit) * 19); font-size: calc(var(--lcd-unit) * 9); color: #c1def5; }
+.quiz-round > span:last-child { margin-left: auto; color: #f39d91; }
+.quiz-timer { height: calc(var(--lcd-unit) * 3); background: #0c172c; }
+.quiz-timer i { height: 100%; display: block; background: linear-gradient(90deg,#2c9fd9,#9fe7fd); }
+.quiz-question { flex: 1; min-height: 0; display: flex; align-items: center; gap: calc(var(--lcd-unit) * 8); }
+.quiz-question p { margin: 0; font-size: calc(var(--lcd-unit) * 13); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.quiz-question img { width: calc(var(--lcd-unit) * 42); height: calc(var(--lcd-unit) * 42); object-fit: cover; flex-shrink: 0; border: var(--lcd-unit) solid #a4bfe3; }
+.quiz-answers { display: grid; gap: calc(var(--lcd-unit) * 3); }
+.quiz-answers > div { display: flex; align-items: center; gap: calc(var(--lcd-unit) * 7); height: calc(var(--lcd-unit) * 26); padding-inline: calc(var(--lcd-unit) * 7); background: linear-gradient(#3d5474,#273b5c); border: var(--lcd-unit) solid #738ba8; border-radius: calc(var(--lcd-unit) * 2); font-size: calc(var(--lcd-unit) * 12); }
+.quiz-answers b { color: #accee8; font-size: calc(var(--lcd-unit) * 10); }
+.quiz-answers .selected { color: #252022; background: linear-gradient(#fff1b0,#c7ad62); border-color: #ffecab; }
+.quiz-answers .selected b { color: #685a2e; }
+.quiz-answers .correct { background: linear-gradient(#63986e,#2c5b41); border-color: #b3edaf; }
+.quiz-answers .incorrect { background: linear-gradient(#9b5356,#602b3b); border-color: #f2abb0; }
+.quiz-feedback { position: absolute; inset: calc(var(--lcd-unit) * 78) calc(var(--lcd-unit) * 34) auto; padding: calc(var(--lcd-unit) * 7); text-align: center; background: #102440f5; border: var(--lcd-unit) solid #9dc9e7; font-size: calc(var(--lcd-unit) * 16); font-weight: 700; color: #b0ecad; }
+.quiz-feedback.incorrect { color: #f4b9ad; }
+.quiz-result, .quiz-bonus { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: calc(var(--lcd-unit) * 10); }
+.quiz-result > span { font-size: calc(var(--lcd-unit) * 14); }
+.quiz-result > strong { font-size: calc(var(--lcd-unit) * 38); line-height: 1.2; color: #ffe49e; }
+.quiz-result p { max-width: 95%; font-size: calc(var(--lcd-unit) * 12); line-height: 1.5; margin: 0; }
+.quiz-result:has(p:first-of-type) > strong:first-child { font-size: calc(var(--lcd-unit) * 24); }
+.quiz-bonus > strong { font-size: calc(var(--lcd-unit) * 20); color: #fff2bf; }
+.quiz-bonus > span { font-size: calc(var(--lcd-unit) * 12); }
+.quiz-wagers { display: flex; gap: calc(var(--lcd-unit) * 8); }
+.quiz-wagers > span { border: var(--lcd-unit) solid #83a4c8; padding: calc(var(--lcd-unit) * 10) calc(var(--lcd-unit) * 12); font-size: calc(var(--lcd-unit) * 16); border-radius: calc(var(--lcd-unit) * 3); }
+
+/* Bonus choices extend the existing gold selected-row vocabulary; geometry remains P/A. */
+.quiz-bonus-modes { width: 100%; display: grid; gap: calc(var(--lcd-unit) * 9); }
+.quiz-bonus-modes > div { padding: calc(var(--lcd-unit) * 12) calc(var(--lcd-unit) * 4); border: var(--lcd-unit) solid #83a4c8; border-radius: calc(var(--lcd-unit) * 3); font-size: calc(var(--lcd-unit) * 15); background: linear-gradient(#314b75,#192e51); }
+.quiz-bonus-modes > .selected { color: #2c241a; background: linear-gradient(#fff5bc,#d1b86b); border-color: #fff1bd; }
+.quiz-answers .quiz-lightning-action { justify-content: center; height: calc(var(--lcd-unit) * 36); font-size: calc(var(--lcd-unit) * 13); }
+
+.quiz-feedback.skipped { color: #c1def5; }
+
+/* Early iQuiz firsthand photos distinguish amber Lightning and cyan two-choice matching.
+   Independent P/A drawing, not recovered assets or measured firmware dimensions. */
+.iquiz-lightning .quiz-question, .iquiz-match .quiz-question {
+  margin-block: calc(var(--lcd-unit) * 10); padding: calc(var(--lcd-unit) * 12);
+  border: calc(var(--lcd-unit) * 2) solid #a7aca4; border-radius: calc(var(--lcd-unit) * 15);
+  box-shadow: inset 0 var(--lcd-unit) calc(var(--lcd-unit) * 5) #14263888;
+  justify-content: center; text-align: center;
+}
+.iquiz-lightning .quiz-question { background: linear-gradient(#ffe49e,#df7533); color: #2c241a; }
+.iquiz-match .quiz-question { background: linear-gradient(#9fe7fd,#2c9fd9); color: #102440; }
+.iquiz-match .quiz-answers { grid-template-columns: 1fr 1fr; }
+.iquiz-match .quiz-answers > div { min-width: 0; height: calc(var(--lcd-unit) * 48); }
+.iquiz-match .quiz-answers .marquee-window { min-width: 0; }
+.iquiz-lightning .quiz-lightning-action { background: linear-gradient(#c1def5,#738ba8); border-color: #a7aca4; }

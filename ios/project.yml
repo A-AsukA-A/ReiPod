@@ -23,10 +23,14 @@ targets:
       properties:
         CFBundleDisplayName: ReiPod
         CFBundleShortVersionString: "0.2.0"
-        CFBundleVersion: "2"
+        CFBundleVersion: "5"
         CADisableMinimumFrameDurationOnPhone: true
         NSAppleMusicUsageDescription: ReiPod 需要读取你的音乐资料库、歌单和系统可访问的已下载播客，并通过系统播放器播放所选内容。
         NSPhotoLibraryUsageDescription: ReiPod 需要读取你允许访问的系统相册和照片，供转轮浏览与幻灯片播放，不会上传或修改照片。
+        NSCalendarsFullAccessUsageDescription: ReiPod 需要读取系统日历以显示月历和日程，只读浏览，不会新增、修改或删除你的日程。
+        NSRemindersFullAccessUsageDescription: ReiPod 需要读取系统提醒事项以显示待办列表，只读浏览，不会修改完成状态或删除提醒。
+        NSAlarmKitUsageDescription: ReiPod 需要为你主动设置的闹钟和倒计时安排系统提醒，不会读取或修改时钟App的闹钟。
+        NSContactsUsageDescription: ReiPod 需要读取你允许访问的系统联系人以显示通讯录和照片，不会上传或修改联系人。
         PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true
         NSCameraUsageDescription: 仅在你选择拍照导入照片时使用相机。
         UIApplicationSceneManifest:

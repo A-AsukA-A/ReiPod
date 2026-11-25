@@ -1,7 +1,7 @@
 import { useClassicExtras } from "./useClassicExtras";
 import { createExtrasMenus } from "../ui/extrasMenus";
 import { useAboutStorage } from "./useAboutStorage";
-import { aboutPage } from "../ui/ClassicAboutScreen";
+import { aboutPage } from "../ui/classicScreenModel";
 import { useClassicQuickScroll } from "../ui/useClassicQuickScroll";
 import { useLocalPlayer } from "./useLocalPlayer";
 import { createSettingsMenus } from "../ui/settingsMenus";
@@ -26,6 +26,8 @@ import { createMusicServiceActions } from "./musicServiceActions";
 import { createMusicServiceMenus } from "../ui/musicServiceMenus";
 import { usesExternalMusicLogin } from "../services/musicLogin";
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useReducer,
@@ -76,7 +78,9 @@ import {
 import type { MenuItem } from "../ui/MenuRows";
 import { createPrimaryMenus } from "../ui/primaryMenus";
 
-import { MusicAccountHeader } from "../ui/MusicAccountHeader";
+const MusicAccountHeader = lazy(() => import("../ui/MusicAccountHeader").then(module => ({ default: module.MusicAccountHeader })));
+const AlarmRuntime = lazy(() => import("../ui/ClassicAlarms").then(module => ({ default: module.AlarmRuntime })));
+import type { AlarmInput, AlarmPageInput } from "../ui/alarmInput";
 import { canShowLyrics } from "../ui/nowPlaying";
 import { createMediaMenus, podcastShowRows } from "../ui/mediaMenus";
 import { createLibraryMenus } from "../ui/libraryMenus";
@@ -95,6 +99,8 @@ import {
   useTexts,
 } from "../media/textDocuments";
 import type { TextReaderHandle } from "../ui/TextReader";
+import type { OrganizerInput } from "../ui/organizerInput";
+import type { GameInput } from "../ui/gameInput";
 import { applePlayer } from "../services/applePlayer";
 import {
   authorizeSelectedMusicService,
@@ -146,6 +152,7 @@ export function App() {
   const prefs = usePreferences();
   const [held, setHeld] = useState(false);
   const [sleeping, setSleeping] = useState(false);
+  const [alarmRinging, setAlarmRinging] = useState(false);
   const localPlaylists = usePlaylists();
   const localPlaylistRows = useMemo(() => withOnTheGo(localPlaylists), [localPlaylists]);
   const playlists = cloud ? services.playlists : localPlaylistRows;
@@ -202,9 +209,14 @@ export function App() {
     builtinDocuments[groupKey ?? ""];
   const isLocalText = texts.some((doc) => doc.id === groupKey);
   const reader = useRef<TextReaderHandle>(null);
+  const alarmInput = useRef<AlarmInput>(null);
+  const alarmPageInput = useRef<AlarmPageInput>(null);
+  const gameInput = useRef<GameInput>(null);
+  const organizerInput = useRef<OrganizerInput>(null);
   const [importingTexts, setImportingTexts] = useState(false);
   const categoryTracks = useMemo(() => tracksForCategory(musicTracks, category), [musicTracks, category]);
-  const artists = useMemo(() => artistsFor(categoryTracks), [categoryTracks]);
+  const allArtists = useMemo(() => artistsFor(musicTracks), [musicTracks]);
+  const artists = useMemo(() => artistsFor(categoryTracks, prefs.musicMenu.includes("compilations")), [categoryTracks, prefs.musicMenu]);
   const browseTracks = useMemo(
     () =>
       browseArtist !== undefined
@@ -298,10 +310,11 @@ export function App() {
     "podcast-episodes",
     "genre-tracks",
     "composer-tracks",
+    "compilation-tracks",
   ];
   const isTrackList = trackPages.includes(page);
   const visibleTracks = useMemo(() => {
-    if (page === "genre-tracks" || page === "composer-tracks")
+    if (page === "genre-tracks" || page === "composer-tracks" || page === "compilation-tracks")
       return songsByTitle(browseTracks);
     if (page === "podcast-episodes")
       return (
@@ -601,6 +614,7 @@ export function App() {
       ? { ...remoteState, tracks: services.libraryTracks }
       : localState,
     prefs,
+    compilationsAvailable: !cloud || (nativeMusic && !externalMusic),
     albums,
     photoCount: nativePhotos.available ? (nativePhotos.albums.find(album => album.id === "all-photos")?.count ?? 0) : localPhotos.length,
     podcastShows: browsePodcastShows,
@@ -649,6 +663,7 @@ export function App() {
     services,
     serviceName,
     externalLogin: usesExternalMusicLogin(),
+    compilationsEnabled: prefs.musicMenu.includes("compilations"),
     localFirstId: localMusicTracks[0]?.id,
     page,
     localMusicItems,
@@ -668,6 +683,8 @@ export function App() {
     ),
   );
   const managedRows: Partial<Record<Page, MenuItem[]>> = {
+    games: [], game: [], calendar: [], contacts: [], "organizer-settings": [],
+    alarms: [], countdown: [], "sleep-timer": [], "alarm-settings": [],
     ...serviceRows,
     "podcast-settings": [...createNativePodcastRows(services.nativePodcasts, {
       retry: () => { void prepareNativePodcasts().catch(error => setNotice(String(error))); },
@@ -826,6 +843,9 @@ export function App() {
     text: { textEntry, query, playlistName, setQuery, setPlaylistName, saveName, reader },
     settings: { prefs, setPreferences },
     extras: { toggleStopwatch: extras.toggle, pauseStopwatch: extras.pause },
+    games: gameInput,
+    organizer: organizerInput,
+    alarms: alarmInput,
   });
 
   useEffect(() => {
@@ -911,12 +931,17 @@ export function App() {
         if (quickScroll.rotate(steps, source, rotation)) activate();
         else rotate(steps, source);
       }, onRotateEnd: quickScroll.end,
+      onPosition: radians => !held && !sleeping && !alarmInput.current?.ringing && page === "game"
+        ? gameInput.current?.position?.(radians) ?? false : false,
       onCommand: value => { quickScroll.end(); command(value); }, onFeedback: feedback,
         playLabel: page === "stopwatch-timer" ? extras.state.current.started !== null ? "停止计时" : "开始计时" : busy ? "取消载入" : active ? "暂停" : "播放" }}
       quickScrollLetter={quickScroll.letter}
       header={<ClassicStatusBar title={title} shuffle={state.shuffle} repeat={state.repeat}
         held={held} hasCurrent={!!current} active={active} busy={busy} transportHint={transportHint} />}
-      imports={
+      imports={<>
+      <Suspense fallback={null}><AlarmRuntime input={alarmInput} screenInput={alarmPageInput}
+        onWake={() => { quickScroll.end(); setNotice(""); setSleeping(false); activate(); }}
+        onSleep={() => { extras.pause(); player.pause(); setSleeping(true); }} onRinging={setAlarmRinging} notice={setNotice} /></Suspense>
       <FileImports
         audio={input}
         photos={photoInput}
@@ -940,13 +965,18 @@ export function App() {
           if (!persisted) setNotice("播客分类未能保存，本次仍可播放");
         }}
       />
-      }
+      </>}
     >
       <ClassicScreenContent
         page={page} groupKey={groupKey} title={title}
         extras={extras.state}
+        alarms={{ input: alarmPageInput, exit: back, open, notice: setNotice }}
+        organizer={{ input: organizerInput, active: !held && !sleeping, exit: back, notice: setNotice }}
+        games={{ input: gameInput, active: !held && !sleeping && !alarmRinging, tracks: musicTracks,
+          scope: JSON.stringify([services.selected, services.profile?.id ?? services.auth]),
+          open: id => open("game", undefined, id), exit: back, notice: setNotice }}
         about={{ index: aboutPage(navigation.screen.selectedKey), information: {
-          storage: aboutStorage, songs: musicTracks.length, albums: albums.length, artists: artists.length,
+          storage: aboutStorage, songs: musicTracks.length, albums: albums.length, artists: allArtists.length,
           photos: localPhotos.length, podcasts: podcastTracks.length, texts: texts.length,
           source: cloud ? nativeMusic ? "iPhone 系统音乐" : serviceName : "本地音乐",
         } }}

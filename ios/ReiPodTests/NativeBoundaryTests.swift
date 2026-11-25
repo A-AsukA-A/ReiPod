@@ -5,6 +5,38 @@ import Testing
 
 @MainActor
 struct NativeBoundaryTests {
+    @Test func alarmSchedulesRejectDuplicateWeekdaysAndInvalidTimes() throws {
+        let id = UUID(), now = Date().timeIntervalSince1970 * 1000
+        #expect(NativeAlarmRecord(id: id, label: "提醒", at: now + 60000, minute: 420, weekdays: [1, 2, 3, 4, 5]).valid(now: now))
+        for record in [NativeAlarmRecord(id: id, label: "提醒", at: now - 1, minute: 420, weekdays: []), NativeAlarmRecord(id: id, label: "提醒", at: now + 60000, minute: 1440, weekdays: []), NativeAlarmRecord(id: id, label: "提醒", at: now + 60000, minute: 420, weekdays: [1, 1])] { #expect(!record.valid(now: now)) }
+        #expect(throws: (any Error).self) { try JSONDecoder().decode(AlarmsBridge.Request.self, from: Data(#"{"version":1,"action":"readSystemClock"}"#.utf8)) }
+    }
+
+    @Test func organizerIsReadOnlyMainDocumentOnlyAndHasBoundedDateWindows() throws {
+        #expect(OrganizerBridge.permits(mainFrame: true, url: URL(string: "reipod-app://bundle/index.html")))
+        #expect(!OrganizerBridge.permits(mainFrame: false, url: URL(string: "reipod-app://bundle/index.html")))
+        for raw in ["https://bundle/index.html", "reipod-app://bundle.evil/index.html", "reipod-app://user@bundle/index.html"] {
+            #expect(!OrganizerBridge.permits(mainFrame: true, url: URL(string: raw)))
+        }
+        #expect(try OrganizerRange(start: "2026-11-01", end: "2026-12-13").end > OrganizerRange(start: "2026-11-01", end: "2026-12-13").start)
+        #expect(throws: (any Error).self) { try OrganizerRange(start: "2026-02-30", end: "2026-03-10") }
+        #expect(throws: (any Error).self) { try OrganizerRange(start: "2026-01-01", end: "2027-01-01") }
+        #expect(throws: (any Error).self) {
+            try JSONDecoder().decode(OrganizerBridge.Request.self, from: Data(#"{"version":1,"action":"save"}"#.utf8))
+        }
+    }
+
+    @Test func nativeVolumeRequiresAValidValueAndMountedOutputControl() async throws {
+        let request = try JSONDecoder().decode(NativeMusicRequest.self, from: Data(#"{"version":1,"action":"volume","volume":0.4}"#.utf8))
+        #expect(request.action == .volume)
+        #expect(request.volume == 0.4)
+        let volume = SystemVolumeControl()
+        #expect(!volume.available)
+        for value in [Float(-1), 2, .nan, .infinity, 0.5] {
+            await #expect(throws: (any Error).self) { try await volume.setVolume(value) }
+        }
+    }
+
     @Test func nativeBatteryHandlesExternalPowerAndUnknownReadings() throws {
         #expect(try #require(NativeBatteryReading.read(level: 0.5, state: .charging)).charging)
         #expect(try #require(NativeBatteryReading.read(level: 1, state: .full)).charging)

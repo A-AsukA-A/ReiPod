@@ -56,6 +56,12 @@ function snapshot(element: HTMLElement) {
     });
   // CSS animations must freeze as well (marquees and independently moving covers).
   originals.forEach((original, index) => {
+    // cloneNode copies a canvas element, but never its bitmap. Preserve the
+    // current game frame through Home/exit and interrupted menu transitions.
+    if (original instanceof HTMLCanvasElement && copies[index] instanceof HTMLCanvasElement) {
+      try { copies[index].getContext("2d")?.drawImage(original, 0, 0); }
+      catch { /* A lost rendering context must not block navigation. */ }
+    }
     if (original.getAnimations().length) {
       const style = getComputedStyle(original);
       copies[index].style.transform = style.transform;

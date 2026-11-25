@@ -4,6 +4,7 @@ import type { Appearance } from "./appearance";
 export const optionalMainItems = [
   { key: "songs", label: "歌曲" },
   { key: "coverflow", label: "Cover Flow" },
+  { key: "compilations", label: "合辑" },
   { key: "photos", label: "照片" },
   { key: "podcasts", label: "播客" },
   { key: "extras", label: "附加功能" },
@@ -20,6 +21,7 @@ export const optionalMusicItems = [
   { key: "songs", label: "歌曲" },
   { key: "genres", label: "风格" },
   { key: "composers", label: "作曲者" },
+  { key: "compilations", label: "合辑" },
   { key: "search", label: "搜索" },
 ];
 export const backlightTimes = [0, 5, 10, 20, 30, 60] as const;
@@ -70,12 +72,12 @@ export function parsePreferences(value: unknown): Preferences {
           )
           .map((item) => item.key)
       : optionalMainItems
-          .filter((item) => !["coverflow", "songs"].includes(item.key))
+          .filter((item) => !["coverflow", "songs", "compilations"].includes(item.key))
           .map((item) => item.key),
     musicMenu: optionalMusicItems
       .filter(
         (item) =>
-          !Array.isArray(saved.musicMenu) || saved.musicMenu.includes(item.key),
+          (!Array.isArray(saved.musicMenu) && item.key !== "compilations") || Array.isArray(saved.musicMenu) && saved.musicMenu.includes(item.key),
       )
       .map((item) => item.key),
   };

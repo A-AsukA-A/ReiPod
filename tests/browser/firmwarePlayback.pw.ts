@@ -27,6 +27,9 @@ async function imported(page: Page, reduced = true) {
   await page.goto("/"); await choose(page, "音乐"); await choose(page, "歌曲");
   const chooser = page.waitForEvent("filechooser"); await choose(page, "导入音乐");
   await (await chooser).setFiles(files);
+  // Metadata arrives asynchronously; finish the fixture before deciding whether Artist should skip a single album.
+  await home(page); await choose(page, "音乐"); await choose(page, "专辑");
+  await expect(titles(page)).toHaveText(["全部歌曲", "Alpha", "Beta"]);
   await key(page, "Escape"); await choose(page, "艺人"); await choose(page, "Artist");
   await expect(live(page).locator(".row-label small")).toHaveText(["5 首歌曲", "3 首歌曲", "2 首歌曲"]);
 }

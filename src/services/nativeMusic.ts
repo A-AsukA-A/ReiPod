@@ -8,6 +8,7 @@ export type NativeTrack = {
   artist?: string;
   album?: string;
   albumArtist?: string;
+  compilation?: boolean;
   duration: number;
   artwork?: string;
   trackNumber?: number;
@@ -24,6 +25,7 @@ export type NativePlayback = {
   position: number;
   duration: number;
   volume: number;
+  volumeControl?: boolean;
   repeat: "off" | "one" | "all";
 };
 export type NativeReply = {
@@ -48,6 +50,7 @@ type NativeAction =
   | "next"
   | "previous"
   | "seek"
+  | "volume"
   | "repeat"
   | "openSettings";
 type NativePayload = {
@@ -57,6 +60,7 @@ type NativePayload = {
   offset?: number;
   limit?: number;
   seconds?: number;
+  volume?: number;
   autoplay?: boolean;
   mode?: "off" | "one" | "all";
   refresh?: boolean;

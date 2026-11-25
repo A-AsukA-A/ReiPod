@@ -7,6 +7,9 @@ import type { Page, NavigationAction } from "./navigation";
 import { splitPages } from "./navigation";
 import type { PlayView } from "./nowPlaying";
 import type { TextReaderHandle } from "./TextReader";
+import type { AlarmInput } from "./alarmInput";
+import type { OrganizerInput } from "./organizerInput";
+import type { GameInput } from "./gameInput";
 import type { useWheelTextEntry } from "./WheelTextEntry";
 import type { useLcdMotion } from "./useLcdMotion";
 
@@ -79,6 +82,9 @@ type Context = {
     reader: { readonly current: TextReaderHandle | null };
   };
   extras?: { toggleStopwatch: () => void; pauseStopwatch: () => void };
+  alarms?: { readonly current: AlarmInput | null };
+  organizer?: { readonly current: OrganizerInput | null };
+  games?: { readonly current: GameInput | null };
   settings: {
     prefs: Adjustment;
     setPreferences: (patch: Partial<Adjustment>) => void;
@@ -107,6 +113,19 @@ export function createClassicInputController(context: Context) {
     activate();
     if (sleeping) {
       setSleeping(false);
+      return;
+    }
+    if (context.alarms?.current?.ringing || ["alarms", "countdown", "sleep-timer", "alarm-settings"].includes(page)) {
+      context.alarms?.current?.rotate(steps); feedback("step"); return;
+    }
+    if (["calendar", "contacts", "organizer-settings"].includes(page)) {
+      context.organizer?.current?.rotate(steps); feedback("step"); return;
+    }
+    if (page === "games" || page === "game") {
+      if (context.games?.current) {
+        context.games.current.rotate(steps);
+        feedback("step");
+      }
       return;
     }
     if (textEntry.editing && (page === "search" || page === "playlist-name")) {
@@ -180,6 +199,16 @@ export function createClassicInputController(context: Context) {
     activate();
     if (sleeping) {
       setSleeping(false);
+      return;
+    }
+    if ((context.alarms?.current?.ringing || ["alarms", "countdown", "sleep-timer", "alarm-settings"].includes(page)) && value !== "home" && value !== "sleep" && (context.alarms?.current?.ringing || value !== "play" || page === "countdown")) {
+      context.alarms?.current?.command(value); return;
+    }
+    if (["calendar", "contacts", "organizer-settings"].includes(page) && ["select", "menu", "previous", "next", "options", "seek-forward", "seek-backward"].includes(value)) {
+      context.organizer?.current?.command(value); return;
+    }
+    if ((page === "games" || page === "game") && value !== "home" && value !== "sleep") {
+      context.games?.current?.command(value);
       return;
     }
     if (textEntry.editing && (page === "search" || page === "playlist-name")) {

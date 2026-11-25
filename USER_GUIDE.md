@@ -125,3 +125,37 @@ Click wheel geometry is adapted from [tvillarete/ipod-classic-js](https://github
 
 
 iPhone版右上角电池会跟随系统电量和供电状态；插上电源显示闪电，拔掉后移除，满电接电也保留标志。返回App会刷新读数，无需音乐或照片授权。普通网页若无法读取设备电量，仍显示带“未提供电量”说明的占位。
+
+## Games
+
+Open **附加功能 → 游戏** for **iQuiz**, **Klondike** or **Vortex**. Turn the wheel to choose a game and press Center. Each game has Help, New Game and saved progress; starting over asks for confirmation. MENU or short Play/Pause pauses the game while music continues. HOLD, sleep and leaving the app pause gameplay; choose Continue to resume.
+
+iQuiz uses the wheel to select answers and Center to confirm. Music Quiz 2 asks about metadata from your current music library. In Klondike, select a pile with the wheel, then Center to draw, pick up or place cards; Previous/Next selects deeper face-up cards, and holding Center undoes a move. Options selects one- or three-card draws for a new deal. In Vortex, rotate the paddle with the wheel and press Center to launch, fire an acquired laser or start the next level.
+
+These are independent recreations of the core games, with original drawings, questions and levels; they do not contain Apple's original game files or all original content. Progress is stored in this browser/app and can be lost if its data is cleared. Music Quiz 2 progress stays within the selected service/account scope.
+
+GAME102 update: Music, Movie and TV Trivia deal ten questions. Music Quiz 2 offers Lightning or Who/What/When after a survived round, then asks for a per-question wager. In Lightning, press Center only when the statement is true; let false statements time out. Skipping false earns nothing; missing true or pressing on false loses the wager. In Who/What/When, choose between two artist, album or available year labels. These use metadata rather than playing song samples.
+
+Vortex now includes sticky catches (Center releases), faster/slower balls, shrink, three paddles and a powerful ball, in addition to stretch, multiball and laser. Explosive bricks destroy neighboring breakable bricks; metal bricks survive and do not block level completion. Help explains the pickup symbols. Rules, durations and levels remain independent adaptations, not the complete original game.
+
+## Calendar and Contacts
+
+Choose **设置 → ReiPod 设置 → 日历与通讯录** to import **.ics/.vcs** calendars or **.vcf** contacts. Files remain local to this app/browser; the import message reports unsupported records and save failures. UTF-8 files are recommended. Common daily/weekly/monthly/yearly repeats are supported; complex rules, custom timezones and older encodings may be skipped. File imports do not sync the system address book, send invitations or deliver reminders. Updated iPhone containers have the separate system source described below.
+
+In **附加功能 → 日历**, select All Calendars or an imported calendar. Turn the wheel to choose a day; Previous/Next changes month, holding Center returns to today. Center opens that day's agenda and event details. **待办事项** shows imported to-dos and their status. MENU returns one level. Details scroll with the wheel.
+
+In **附加功能 → 通讯录**, select a person and press Center. Read company, phones, email, addresses and other provided fields with the wheel; embedded JPEG/PNG photos are supported. MENU preserves the list selection. Phone numbers and addresses are display-only. Set First/Last sort order or clear imported data in the management page; clear defaults to Cancel. Music continues independently. Keep original files, since clearing app/browser data removes these local copies.
+
+### iPhone system Calendar, Reminders and Contacts
+
+An updated iPhone app (NATIVEORG104/build3) reads the system data directly. **附加功能 → 日历**, **待办事项** inside Calendar, and **通讯录** request their own system permission when opened. Allow access through the iOS prompt; limited Contacts access shows only the people you select. Settings and refresh controls are in **ReiPod 设置 → 日历与通讯录**. The app refetches on system changes and on returning to the foreground. Cloud-to-device sync remains controlled by iOS.
+
+System records are read-only and stay in memory; they are not uploaded or saved as imported copies. Contact photos load when opening a detail; phone numbers and email remain display-only. System contact notes are unavailable in this build. Imported files remain accessible by changing **资料来源 → 已导入副本**; importing explicitly selects that source, and clearing imported copies never deletes system records. Safari/PWA and older containers keep the file route. Real-device permission/sync acceptance for this new build is still pending.
+
+## Alarms, countdown and sleep timer
+
+Open **附加功能 → 闹钟 → 创建闹钟**. Use the wheel and Center for On/Off, time, date, repeat and label, then choose **保存闹钟**. Center advances through time/date fields; Previous/Next moves between fields. MENU offers to discard unsaved changes. Delete asks for confirmation and defaults to Cancel. Ordinary Play still controls music.
+
+**倒计时** sets hours/minutes/seconds, starts, pauses, resumes and resets; Play also starts/pauses it. Paused time and running deadlines survive reopening. When a reminder fills the LCD, press Center, MENU or Play to stop it. **睡眠定时** stops current playback after the chosen duration while the app can run; if iOS suspends the app, it catches up on return and cannot guarantee an exact background stop.
+
+Updated iPhone build4 schedules its own alarms/countdown with iOS26+ AlarmKit, or ordinary notifications on older supported iOS. Allow the system prompt. Status/settings are under **ReiPod 设置 → 闹钟与计时**. These do not sync Apple Clock alarms. Real-device background acceptance is pending. Web/older containers offer foreground reminders only; do not rely on a closed or suspended page, and browser sound needs a user gesture. Playlist wake-up is not implemented; the sound is a generated beep or the system default.

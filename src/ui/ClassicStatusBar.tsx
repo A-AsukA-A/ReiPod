@@ -18,7 +18,7 @@ export function ClassicStatusBar({
 }: Props) {
   return (
     <div className="screen-status">
-      <strong>{title}</strong>
+      <strong title={title}>{title}</strong>
       <span className="play-modes">
         {shuffle && (
           <span title="随机播放" aria-label="随机播放">

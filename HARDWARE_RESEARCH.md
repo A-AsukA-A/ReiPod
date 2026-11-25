@@ -365,3 +365,34 @@ Apple《iPod classic Features Guide》[72页镜像](https://www.manuallib.com/do
 - [Geekanoids 2007-09-12 classic录像](https://www.youtube.com/watch?v=64_CxTW7_84)约371秒Extras菜单（私有reference-clock.png）可辨Clocks、Notes、Stopwatch相对次序；不是时钟/秒表内容页参考，不能据此测表盘或计数字号。本轮未取得匹配2007固件的这些内容页量尺，几何P、字体U。
 - 手册含夏令时设置和离开秒表且无音乐时的停止/自动睡眠限制。ReiPod用宿主Intl/IANA自动DST，保存操作时间戳、离页/刷新后墙钟恢复；显式睡眠暂停。这些A适配不冒称Apple行为或原生后台计时保障；19城市/50日志/1000分段为工程覆盖与有界存储，不是原机上限。
 - SHELL95只修工程缩放：原3px LCD外框、固定px边缘/阴影在小机身相对变厚；以现有390px最大机身为基准统一shell-unit，颜色/光向/屏幕内容尺寸保留。390不是物理量尺；三视口computed style和工程截图证明比例变化，不证明金属材质或壳体毫米值。未获得原字体证据，不换字体制造差异。
+
+## 2026-11-10 classic原装小游戏与文字边界（GAME101/VIS101）
+
+- 官方身份依据：[Apple Introduces New iPod classic，2007-09-05](https://www.apple.com/newsroom/2007/09/05Apple-Introduces-New-iPod-classic/)明确列出iQuiz、Klondike和Vortex，分别问答／纸牌／砖块游戏。这支持classic2007原装种类，不证明全部nano／mini或固件一致。
+- 当年第一手评测：[iLounge classic 80GB/160GB](https://www.ilounge.com/index.php/reviews/entry/apple-ipod-classic-80gb-160gb)，2007 classic、固件未知。实际私有查看[游戏列表](https://www.ilounge.com/wp-content/uploads/2021/05/132_23.jpg)、[iQuiz](https://www.ilounge.com/wp-content/uploads/2021/05/116_24.jpg)、[Klondike](https://www.ilounge.com/wp-content/uploads/2021/05/104_25.jpg)、[Vortex](https://www.ilounge.com/wp-content/uploads/2021/05/84_26.jpg)原图（服务可能返回webp）。可辨三项图标／已玩状态、舞台问答、绿毡牌桌／钟／金额和圆井砖块。没有进行游戏LCD四角标定或测得像素尺寸，所有新增绘图几何为P／独立适配A；照片不作为字形许可或精确RGB来源。
+- 第一手[iQuiz评测](https://www.ilounge.com/index.php/reviews/entry/apple-computer-iquiz)描述五轮、八题、三次错误、押分与Lightning及Who/What/When；为早期视频iPod版本证据，不能直接证明2007classic中文像素／数值。当前原创36题与元数据问答不等同于原版题库／听歌片段，缺少Who/What/When和主持音画。
+- 第一手[Vortex评测](https://www.ilounge.com/index.php/reviews/entry/apple-computer-vortex)及[Macworld控制说明](https://www.macworld.com/article/181901/vortex-2.html)支持圆井挡板、砖块／道具及转轮概念；早期版本不证明当前十个自创关卡、二维物理或相对轮盘是Apple原实现。黏球／变速／炸弹等原版完整内容仍未实现。
+- 字体：没有新取得可使用的原机字体或匹配中文固件字形量尺，保留有许可替代字体。computed style和canvas字形墨迹检查发现1em标题裁字；在不改14u字号／20u标题栏的前提下放开行盒至标题栏高度，是工程修复A。状态间距6px→6u是缩放修复A，不把数值当成新测得的原机常量。
+
+原图、浏览器样本和视频仅存忽略的`.local/classic-101/`；不分发版权游戏或参考照片。Gadgeteer图片直连未能读取，不引用其未见画面建立布局结论。
+
+## 2026-11-10 游戏完整回合与道具补证（GAME102）
+
+本轮重新核读第一手[iLounge iQuiz](https://www.ilounge.com/index.php/reviews/entry/apple-computer-iquiz)：Music Quiz 2五轮×八题，每轮三错结束、存活进入奖励；Lightning遇真按Center、假无得分；Who/What/When在两个人／专辑／年份间匹配；先押分且高押分题数更少。单独Trivia为十题而非上一轮通用八题，已据此修正。均为5G前驱版本实测，网页显示2021迁移更新时间，不作2007classic精确固件依据；20/10秒及押分具体数值不是新证实常量。
+
+实际私有查看[405_14](https://www.ilounge.com/wp-content/uploads/2021/05/405_14.jpg.webp)（圆形图标盘）、[350_15](https://www.ilounge.com/wp-content/uploads/2021/05/350_15.jpg.webp)（蓝青题框与双匹配选项）、[315_16](https://www.ilounge.com/wp-content/uploads/2021/05/315_16.jpg.webp)（橙黄色Lightning题区）。原图400×300、型号5G／固件unknown，未量LCD四角和投影；当前蓝青／橙黄独立绘图仅采用视觉家族P，不声称复原圆盘布局、材质或像素。参考原图留忽略目录，不拷入public。
+
+重新核读[iLounge Vortex](https://www.ilounge.com/index.php/reviews/entry/apple-computer-vortex)，支持黏球、大小／多挡板、快慢／激光、多球／强力球、多击／爆炸及不可破坏砖概念；[Macworld第一手](https://www.macworld.com/article/181901/vortex-2.html)明确变快针对球，Center激活黏球／激光。当前相对轮盘、14秒限时、三初始命、自创10关及金属砖完全免疫为适配A；没有matching classic固件实验验证金属砖是否应被特殊攻击破坏，不能据百科的不同说法直接关闭该项。两种轮盘控制、伸缩砖／额外生命／原三维关卡和音画仍未恢复。
+
+## 2026-11-10 日历与通讯录（ORG103）
+
+- 本轮实际核读[Apple iPod classic120GB User Guide](https://cdsassets.apple.com/live/6GJYWVAV/user/ma630_ipod_classic_120gb_en.pdf)印刷pp53–55（PDF索引52–54）。p55明示手动导入.ics/.vcs、Extras→Calendars／Contacts、Calendars→To Do’s，以及First／Last排序。它证明功能和文件路径，不证明2007型号所有行为／中文几何；现有网页导入与本地副本为A。
+- [Gadgeteer 2007-09-19 classic160GB第一手评测](https://the-gadgeteer.com/2007/09/19/apple_ipod_classic/)文字描述日历保留、选带标记日期看预约资料、联系人和照片；作者后续评论称已更新1.0.1，但不能断言每张照片均为该固件。本轮图片20/21/37/38/29及39直链重新读取404，工具初次缓存返回占位不能当成实际看图；未据这些图测坐标／RGB／字体。
+- 格式依据：[RFC5545](https://www.rfc-editor.org/rfc/rfc5545)内容行／DATE／DATE-TIME／DTEND／RRULE／EXDATE，和[RFC6350](https://www.rfc-editor.org/rfc/rfc6350)UTF-8 vCard内容行／结构化姓名／电话／地址／照片。本轮仅受限子集，完整边界查FIRMWARE_FEATURES；这些现代格式标准不提供legacy UI量尺。
+- 新增界面沿用当前Noto与classic蓝选中行／白底资料页，月格／详情字号和尺寸均P/A。未取得有效匹配原机图片及透视归一；工程截图只证明当前应用稳定显示／实际操作，不是新硬件测量。样本均原创虚构联系人／排练日程，参考、视频及生成头像留忽略的`.local/organizer-103/`。
+
+## 2026-11-10 闹钟原机行为与现代调度（FINISH106）
+
+- [Apple 2008 classic 120GB指南](https://cdsassets.apple.com/live/6GJYWVAV/user/ma630_ipod_classic_120gb_en.pdf)，印刷p50／PDF第50页，2026-11-10核读：Alarms→Create Alarm；Time／Date转轮调整Center下一字段；Repeat例如weekdays；Label例如Wake up；Beep内部扬声器或播放列表；删除；Alarms内Sleep Timer。手册是后期修订，未注明2007固件数值；没有倒计时项目。未从插图测坐标，无LCD角点归一或像素误差值；新界面几何P，适配A。
+- [Apple AlarmKit WWDC25](https://developer.apple.com/videos/play/wwdc2025/230/)及[调度文档](https://developer.apple.com/documentation/alarmkit/scheduling-an-alarm-with-alarmkit)：iOS26+，使用说明与用户授权、fixed／relative调度。实现对照本机Xcode27.1公开SDK的AlarmKit.swiftinterface；倒计时以固定结束日期的闹钟调度，不声称有原生实时倒计时／Live Activity小组件。旧iOS使用[UNCalendarNotificationTrigger](https://developer.apple.com/documentation/usernotifications/uncalendarnotificationtrigger)，其普通通知效果受权限／静音／专注模式影响，不等同AlarmKit保障。编译通过不是系统运行证据。
+- [Brown原机操作记录](https://brownmath.com/general/itunes.htm#iPodBrowse)，页面更新2021-12-06、2026-11-10复核：Artists段明确一张专辑直接歌曲；Genres段明确在该genre中只有一张专辑也直接歌曲。替代任务66“暂不实现跳级”的工程决定，保留机型／固件未知的不确定性，不推广到composer，也不据此改字体／行高。

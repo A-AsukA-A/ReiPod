@@ -1,0 +1,40 @@
+/* Original firmware feature families; new geometry and file-management UI are P/A, not calibrated. */
+.classic-organizer { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; overflow: hidden; background: #fff; color: #15191d; font-family: var(--font-lcd); }
+.calendar-month { display: flex; align-items: center; justify-content: space-between; height: calc(var(--lcd-unit) * 28); flex-shrink: 0; padding-inline: calc(var(--lcd-unit) * 13); background: linear-gradient(#f9fafb,#e7e9ed); border-bottom: var(--lcd-unit) solid #adb5bf; }
+.calendar-month strong { font-size: calc(var(--lcd-unit) * 17); line-height: 1.3; }
+.calendar-month > span { color: #56728f; font-size: calc(var(--lcd-unit) * 24); }
+.calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); }
+.calendar-weekdays { height: calc(var(--lcd-unit) * 20); flex-shrink: 0; color: #666d77; background: #f0f2f4; }
+.calendar-weekdays span { display: grid; place-items: center; font-size: calc(var(--lcd-unit) * 11); }
+.calendar-grid { flex: 1; min-height: 0; grid-template-rows: repeat(6,minmax(0,1fr)); margin: calc(var(--lcd-unit) * 3) calc(var(--lcd-unit) * 5); }
+.calendar-grid > div { display: flex; align-items: center; justify-content: center; position: relative; margin: var(--lcd-unit); border: var(--lcd-unit) solid transparent; font-size: calc(var(--lcd-unit) * 15); font-variant-numeric: tabular-nums; line-height: 1; color: #1765a5; }
+.calendar-grid > .outside { color: #b5bac2; }
+.calendar-grid > .today { border-color: #3b7eb3; border-radius: calc(var(--lcd-unit) * 3); }
+.calendar-grid > .selected { color: #fff; background: linear-gradient(#4bb5e9,#178ccc); border-color: #2588c2; border-radius: calc(var(--lcd-unit) * 3); box-shadow: inset 0 var(--lcd-unit) #8bd4f3; }
+.calendar-grid i { position: absolute; width: calc(var(--lcd-unit) * 3); height: calc(var(--lcd-unit) * 3); border-radius: 50%; background: currentColor; right: calc(var(--lcd-unit) * 3); bottom: calc(var(--lcd-unit) * 3); }
+.calendar-caption { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; height: calc(var(--lcd-unit) * 22); padding-inline: calc(var(--lcd-unit) * 7); border-top: var(--lcd-unit) solid #b7c0c9; background: #eef1f4; font-size: calc(var(--lcd-unit) * 10); }
+.calendar-caption strong { font-weight: 600; color: #3b6c96; }
+.organizer-list { flex: 1; min-height: 0; overflow: auto; position: relative; scrollbar-width: none; }
+.organizer-list::-webkit-scrollbar, .organizer-detail::-webkit-scrollbar { display: none; }
+.organizer-row { display: flex; align-items: center; gap: calc(var(--lcd-unit) * 7); min-height: calc(var(--lcd-unit) * 24); padding: 0 calc(var(--lcd-unit) * 7); border-bottom: var(--lcd-unit) solid #e1e5e9; }
+.organizer-row > div { flex: 1; min-width: 0; }
+.organizer-row strong { display: flex; min-width: 0; font-size: calc(var(--lcd-unit) * 15); font-weight: 600; line-height: calc(var(--lcd-unit) * 23); }
+.organizer-row.has-detail { min-height: calc(var(--lcd-unit) * 37); }
+.organizer-row small { display: block; font-size: calc(var(--lcd-unit) * 10); line-height: calc(var(--lcd-unit) * 13); color: #737c86; padding-bottom: var(--lcd-unit); }
+.organizer-row > i { font-size: calc(var(--lcd-unit) * 20); font-style: normal; line-height: 1; color: #777e87; }
+.organizer-row > span { font-size: calc(var(--lcd-unit) * 12); }
+.organizer-row.selected { background: linear-gradient(#4bb5e9,#178ccc); color: white; border-bottom-color: #278dc6; }
+.organizer-row.selected :is(small,i) { color: #f1f8fc; }
+.organizer-row[aria-disabled="true"] { opacity: .45; }
+.organizer-date { flex-shrink: 0; font-size: calc(var(--lcd-unit) * 12); line-height: calc(var(--lcd-unit) * 28); padding-inline: calc(var(--lcd-unit) * 8); color: #38556d; border-bottom: var(--lcd-unit) solid #b5c0cb; background: #edf2f5; }
+.organizer-empty { color: #737c86; text-align: center; padding: calc(var(--lcd-unit) * 35) calc(var(--lcd-unit) * 16); font-size: calc(var(--lcd-unit) * 14); line-height: 1.5; }
+.organizer-empty p { font-size: calc(var(--lcd-unit) * 11); margin-top: calc(var(--lcd-unit) * 10); }
+.organizer-detail { flex: 1; min-height: 0; overflow: auto; padding: calc(var(--lcd-unit) * 9) calc(var(--lcd-unit) * 11); scrollbar-width: none; }
+.organizer-detail-heading { display: flex; align-items: flex-start; gap: calc(var(--lcd-unit) * 10); padding-bottom: calc(var(--lcd-unit) * 8); border-bottom: var(--lcd-unit) solid #c5cbd2; }
+.organizer-detail-heading img { width: calc(var(--lcd-unit) * 58); height: calc(var(--lcd-unit) * 58); object-fit: cover; flex-shrink: 0; border: var(--lcd-unit) solid #b7bdc4; }
+.organizer-detail h2 { margin: 0; font-size: calc(var(--lcd-unit) * 19); font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.organizer-detail dl { margin: 0; }
+.organizer-detail dl > div { padding-block: calc(var(--lcd-unit) * 6); border-bottom: var(--lcd-unit) solid #e1e5e9; }
+.organizer-detail dt { color: #4c6781; font-size: calc(var(--lcd-unit) * 10); line-height: 1.5; }
+.organizer-detail dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: calc(var(--lcd-unit) * 14); line-height: 1.45; }
+.organizer-detail p { font-size: calc(var(--lcd-unit) * 13); line-height: 1.55; margin-block: calc(var(--lcd-unit) * 10); }

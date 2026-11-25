@@ -31,9 +31,9 @@ export function createClassicCategoryMenus({ tracks, open, playTrack, addToOnThe
     composers: tracks.length ? [
       { key: "all-albums", label: "全部专辑", action: () => open("albums"), play: play(tracks),
         hold: addToOnTheGo ? () => addToOnTheGo(tracks.map(track => track.id), "all-albums") : undefined },
-      ...categoriesFor(tracks, "composer").map(({ name: value, tracks: collection }) => {
+      ...categoriesFor(tracks, "composer").map(({ name: value, sortLabel, tracks: collection }) => {
         const category: MusicCategory = { kind: "composer", value };
-        return { key: JSON.stringify(["composer", value]), label: value,
+        return { key: JSON.stringify(["composer", value]), label: value, sortLabel,
           hold: addToOnTheGo ? () => addToOnTheGo(collection.map(track => track.id), JSON.stringify(["composer", value])) : undefined,
           action: () => open("albums", undefined, undefined, undefined, category),
           play: play(collection) };

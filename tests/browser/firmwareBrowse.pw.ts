@@ -68,8 +68,12 @@ test("genre drills through artists and scoped albums, preserving album order, qu
   await expect(selected(page)).toHaveText("Rock");
   await choose(page, "Jazz");
   await choose(page, "Alpha");
-  await choose(page, "Shared");
+  await expect(page.locator(".lcd-screen")).toHaveAttribute("data-page", "album-tracks");
   await expect(titles(page)).toHaveText(["Jazz Outside"]);
+  await choose(page, "Jazz Outside");
+  await expect(live(page).locator(".now-playing-top")).toHaveAttribute("aria-label", "播放队列第 1 首，共 1 首");
+  await key(page, "Escape"); await key(page, "Escape");
+  await expect(selected(page)).toHaveText("Alpha");
 });
 
 test("provider menus keep local category data isolated without interrupting remote playback", async ({ page }) => {
@@ -81,7 +85,7 @@ test("provider menus keep local category data isolated without interrupting remo
   await expect(titles(page)).not.toContainText(["风格", "作曲者"]);
   await choose(page, "艺人");
   await expect(titles(page)).toHaveText(["全部专辑", "Cloud Artist"]);
-  await choose(page, "Cloud Artist"); await choose(page, "Cloud Album");
+  await choose(page, "Cloud Artist");
   await expect(titles(page)).toHaveText(["Cloud First", "Cloud Second"]);
   await choose(page, "Cloud Second");
   await expect(live(page).locator(".now-playing-top")).toHaveAttribute("aria-label", "播放队列第 2 首，共 2 首");
@@ -138,7 +142,7 @@ test("Play on a genre or its artist starts only that collection, including All A
 
 test("category aggregate rows leave the filter and untagged music remains reachable", async ({ page }) => {
   await library(page);
-  await choose(page, "未知风格"); await choose(page, "未知艺人"); await choose(page, "未知专辑");
+  await choose(page, "未知风格"); await choose(page, "未知艺人");
   await expect(titles(page)).toHaveText(["Untagged"]);
   await home(page); await choose(page, "音乐"); await choose(page, "风格"); await choose(page, "全部艺人");
   await expect(titles(page)).toHaveText(["全部专辑", "未知艺人", "Alpha", "Zulu"]);

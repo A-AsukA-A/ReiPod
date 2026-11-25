@@ -19,6 +19,7 @@ export function shuffleAfterCurrent(
   ];
 }
 import type { Track } from "./Player";
+import { albumIdentity } from "./albumIdentity";
 
 export type ShuffleMode = "off" | "songs" | "albums";
 export const shuffleModeOf = (state: { shuffle: boolean; shuffleMode?: ShuffleMode }): ShuffleMode =>
@@ -32,7 +33,7 @@ export function shuffleAlbums(ids: string[], tracks: Track[], currentId: string 
   const albumKey = (id: string) => {
     const track = byId.get(id);
     return track?.album?.trim()
-      ? JSON.stringify([track.albumArtist?.trim() || track.artist?.trim() || "未知艺人", track.album.trim()])
+      ? albumIdentity(track).id
       : JSON.stringify(["untagged", id]);
   };
   const index = currentId ? ids.indexOf(currentId) : -1;

@@ -88,7 +88,7 @@ test("typed search results drill into the matching artist, album or playlist and
   await expect(live(page).locator(".row-title")).toHaveText(["七里香"]);
   await key(page, "Escape");
   await chooseKind(page, "playlist");
-  await expect(live(page).locator(".lcd-toolbar")).toContainText("七里漫步 A");
+  await expect(live(page).locator(".screen-status > strong")).toHaveText("七里漫步 A");
   await expect(live(page).locator(".track-row .row-title")).toHaveText(["七里香"]);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("reipod-session") ?? "{}").currentId)).toBeNull();
 });

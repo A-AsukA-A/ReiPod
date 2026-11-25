@@ -55,3 +55,13 @@ open ReiPod.xcodeproj
 ## 2026-11-05 / PHOTO01独立照片桥（任务71）
 
 PhotoKit照片桥独立于音乐服务与账号，主文档限定、只读动作、不透明句柄和固定图片规格；不会开放任意URL/文件路径或新增提供方凭证能力。iPhone用户已确认实际系统相册/缩略图/单图正常，并确认播客列表/播放正常；真实边界及8项Swift测试见[ios/README.md](ios/README.md#iphone-系统相册photo01)。没有后端迁移/新真实音乐账号验收。
+
+## 2026-11-10 NATIVEORG104 系统日历／提醒事项／通讯录
+
+新增独立`reipodOrganizer`主文档桥，版本标志`__REIPOD_NATIVE_ORGANIZER_VERSION__ = 1`。EventKit／Contacts授权与音乐、照片及第三方账号独立；系统内容只在原生／Web会话内显示，不上传音乐后端或写入页面持久化，也不开放系统资料写操作。有限联系人按系统授权子集，联系人备注未申请受限entitlement。原生来源／动作／窗口限制与验证矩阵见[iPhone说明](ios/README.md#2026-11-10-系统日历提醒事项与通讯录nativeorg104)。
+
+本轮实际：Swift测试目标编译／Release签名archive／严格codesign／60份Web资源SHA／IPA压缩完整性通过；292单元／35服务端、两个桥替身场景及一条文件回退通过。0.2.0/build3开发包已准备，手机仍不可用、无模拟器运行时，未执行Swift测试或验证真实系统数据／权限变更；未安装／发布／新音乐账号测试。不能把浏览器替身或编译通过登记为系统同步真机已验。
+
+## 2026-11-10 FINISH106 独立闹钟桥
+
+新增独立`reipodAlarms`，只管理ReiPod创建的有限UUID计划和系统提醒权限／停止回执；不读取Apple时钟或音乐凭证，不改变provider／队列／原生日历只读协议。睡眠定时通过既有Player.pause端口执行，没有第二个播放引擎。AlarmKit与旧系统通知的能力及未验收范围查[iPhone说明](ios/README.md#2026-11-10-闹钟与倒计时finish106)。本轮没有后端迁移／真实音乐账号／设备安装验收；原生调度只有编译／签名包证据。

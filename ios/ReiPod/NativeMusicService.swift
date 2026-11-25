@@ -17,6 +17,9 @@ final class NativeMusicService {
     private var artworkVersion = 0
     private let artworkCache = NSCache<NSString, NSData>()
     private var ownedQueue: [String] = []
+    private let volume: SystemVolumeControl?
+
+    init(volume: SystemVolumeControl? = nil) { self.volume = volume }
 
     private var authorizationStatus: MPMediaLibraryAuthorizationStatus {
         #if targetEnvironment(simulator)
@@ -121,6 +124,7 @@ final class NativeMusicService {
                     duration: item.playbackDuration.isFinite ? item.playbackDuration : 0,
                     artwork: item.artwork == nil ? nil : "reipod-artwork://library/\(item.persistentID)?v=\(artworkVersion)",
                     trackNumber: item.albumTrackNumber, discNumber: max(1, item.discNumber),
+                    compilation: !podcast && item.isCompilation,
                     podcast: podcast ? NativePodcast(
                         showId: item.podcastPersistentID > 0 ? String(item.podcastPersistentID) : showTitle,
                         showTitle: showTitle,
@@ -146,7 +150,8 @@ final class NativeMusicService {
                               queueKnown: known, status: state,
                               position: player.currentPlaybackTime.isFinite ? max(0, player.currentPlaybackTime) : 0,
                               duration: item.map { $0.playbackDuration.isFinite ? max(0, $0.playbackDuration) : 0 } ?? 0,
-                              volume: AVAudioSession.sharedInstance().outputVolume, repeat: repeatMode)
+                              volume: AVAudioSession.sharedInstance().outputVolume, repeat: repeatMode,
+                              volumeControl: volume?.available ?? false)
     }
 
     private func item(_ id: String) -> MPMediaItem? {
@@ -283,6 +288,10 @@ final class NativeMusicService {
         case .repeat:
             guard let mode = request.mode, ["off", "one", "all"].contains(mode) else { throw NativeMusicError.invalidRequest }
             player.repeatMode = switch mode { case "one": .one; case "all": .all; default: .none }
+        case .volume:
+            guard let value = request.volume else { throw NativeMusicError.invalidRequest }
+            guard let volume else { throw NativeMusicError.volumeUnavailable }
+            try await volume.setVolume(value)
         default: throw NativeMusicError.invalidRequest
         }
         publish()

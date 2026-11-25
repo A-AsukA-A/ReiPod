@@ -1,5 +1,5 @@
 import type { Album, MusicCategory } from "../player/library";
-import { tracksForArtist } from "../player/library";
+import { albumsFor, artistSortLabels, trackSortTitle, tracksForArtist } from "../player/library";
 import type { Track } from "../player/Player";
 import type { MenuItem } from "./MenuRows";
 import type { Page } from "./navigation";
@@ -31,11 +31,13 @@ export function createClassicMenuModel({ page, selectedKey, browseArtist, catego
   isTrackList, current, accountSyncing, emptyItems, open, playTrack, addToOnTheGo }: Context) {
   const { home: homeItems, music: musicItems, playlists: playlistItems,
     settings: settingsItems, "confirm-clear": confirmItems } = primaryRows;
+  const artistLabels = page === "artists" ? artistSortLabels(browseTracks) : new Map<string, string>();
   const albumRows: MenuItem[] = (
     page === "coverflow" ? flowAlbums : page === "albums" ? browseAlbums : []
   ).map((album) => ({
     key: album.id,
     label: album.title,
+    sortLabel: album.sortTitle,
     detail:
       browseArtist !== undefined
         ? `${album.tracks.length} 首歌曲`
@@ -75,7 +77,7 @@ export function createClassicMenuModel({ page, selectedKey, browseArtist, catego
                           hold: addToOnTheGo ? () => addToOnTheGo(browseTracks.map(track => track.id), "all-songs") : undefined,
                           action: () =>
                             category
-                              ? open(category.kind === "genre" ? "genre-tracks" : "composer-tracks", undefined,
+                              ? open(category.kind === "genre" ? "genre-tracks" : category.kind === "compilation" ? "compilation-tracks" : "composer-tracks", undefined,
                                   category.value, browseArtist, category)
                               : browseArtist !== undefined
                               ? open("artist-tracks", undefined, browseArtist)
@@ -86,7 +88,7 @@ export function createClassicMenuModel({ page, selectedKey, browseArtist, catego
                     : albumRows
                   : emptyItems
                 : page === "artists"
-                  ? artists.length
+                  ? browseTracks.length
                     ? [
                         {
                           key: "all-albums",
@@ -98,9 +100,13 @@ export function createClassicMenuModel({ page, selectedKey, browseArtist, catego
                         ...artists.map((artist) => ({
                           key: artist,
                           label: artist,
+                          sortLabel: artistLabels.get(artist),
                           hold: addToOnTheGo ? () => addToOnTheGo(tracksForArtist(browseTracks, artist).map(track => track.id), artist) : undefined,
-                          action: () =>
-                            open("albums", undefined, undefined, artist, category),
+                          action: () => {
+                            const ownAlbums = albumsFor(tracksForArtist(browseTracks, artist));
+                            if (ownAlbums.length === 1) open("album-tracks", undefined, ownAlbums[0].id, artist, category);
+                            else open("albums", undefined, undefined, artist, category);
+                          },
                         })),
                       ]
                     : emptyItems
@@ -108,6 +114,7 @@ export function createClassicMenuModel({ page, selectedKey, browseArtist, catego
                     ? visibleTracks.map((track) => ({
                         key: track.id,
                         label: track.title,
+                        sortLabel: trackSortTitle(track),
                         detail: track.artist || track.album || track.filename,
                         action: () => playTrack(track.id),
                       }))

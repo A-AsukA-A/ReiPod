@@ -49,7 +49,8 @@ for (const width of [320, 390, 1280]) {
     await expect(live(page).locator(".selected .track-playing-marker .icon-pause")).toBeVisible();
     // A separate artist/album path has its own list window and scoped queue.
     await home(page); await choose(page, "音乐"); await choose(page, "艺人");
-    await choose(page, artist); await choose(page, album);
+    await choose(page, artist);
+    await expect(page.locator(".lcd-screen")).toHaveAttribute("data-page", "album-tracks");
     await expect(live(page).locator(".screen-row.selected .row-title")).toHaveText("01 · 夜行 / Night Walk");
     for (let i = 0; i < 15; i++) await key(page, "ArrowDown");
     for (let i = 0; i < 3; i++) await key(page, "ArrowUp");
