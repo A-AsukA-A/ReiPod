@@ -3,6 +3,10 @@ name: Deploy ReiPod to GitHub Pages
 on:
   push:
     branches: [main]
+    # Documentation-only handoffs do not change the static artifact, so avoid
+    # rebuilding and deploying the site for those commits.
+    paths-ignore:
+      - '**.md'
   workflow_dispatch:
 
 permissions:

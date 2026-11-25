@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-25，REL109发布收口进行中。BATCH108已补完经典机合辑归类／sort-as排序和 Vortex 难度与转轮绝对位置操作；累计树已完成全套工程回归（299 单元、35 服务端、179 浏览器、player-core、build／dist／size、原生测试目标编译与签名归档），并已审阅提交。当前 build5 IPA 是 2026-11-11 建造的开发签名产物，profile 已于 11-12 20:52（北京时间）到期，不能作为可安装交付；手机仍 unavailable。下一步：推送 GitHub 后跟踪 Pages 和 iOS Actions；VPS 只在本机 SSH 身份可用时发布，不能以聊天口令或旧凭据代替。整体项目、精确原机视觉、全代际和真实账号／系统同步验证仍开放。
+最后更新：2026-11-25，REL109发布收口进行中。BATCH108已补完经典机合辑归类／sort-as排序和 Vortex 难度与转轮绝对位置操作；累计树已完成全套工程回归（299 单元、35 服务端、179 浏览器、player-core、build／dist／size、原生测试目标编译与签名归档），并已审阅提交。Pages 第二次尝试成功，公网已实际打开；iPhone CI 仍排队。当前 build5 IPA 是 2026-11-11 建造的开发签名产物，profile 已于 11-12 20:52（北京时间）到期，不能作为可安装交付；手机仍 unavailable。VPS 只在本机 SSH 身份可用时发布，不能以聊天口令或旧凭据代替。整体项目、精确原机视觉、全代际和真实账号／系统同步验证仍开放。
 
 ### 当前目标与进行中
 
@@ -1289,3 +1289,9 @@
 - 本批可见收口：经典机加入合辑入口、ID3 compilation／sort-as元数据、合辑队列与单合辑艺人归类；Vortex 提供五档难度、选项持久化、真实转轮绝对位置控制和可返回帮助。此前已完成的闹钟／倒计时、小游戏、日历／通讯录与 iPhone 原生只读桥同批进入提交；原生系统音乐／播客转轮音量继续保持普通播放画面直接转轮的原机交互。
 - 实际核验：299 单元、35 服务端、179 条 Playwright、`check:player-core`、build、`check-dist`、size（entry gzip 146120B／program gzip 337056B）均通过；`ios:prepare`、iPhone 测试目标编译、Release archive／codesign／64 Web 文件 SHA 和 IPA 完整性通过。生产预览实走 Vortex→选项→难度，五档显示和选择正常。暂存 107 个源码／测试／文档文件经 `git diff --cached --check`、忽略边界及高可信私钥／token模式扫描通过。
 - 提交：本批单一发布提交（Complete classic organizer, alarms, and game integrations）。后续：推送并等待 Pages／iOS Actions；本机未发现可用 iPhone，build5 开发 profile 已过期，不能安装。VPS 无可用 publickey 身份，只保留待身份恢复后的发布动作；不从任何聊天内容取得凭据。原机精确几何／字体、全代际、真实系统同步／音量及第三方账号仍开放。
+
+### REL109 发布检查点（2026-11-25）
+
+- GitHub：源码已推送；Pages 第一次因 Actions artifact API 短暂查不到已上传产物而失败，重跑同一 workflow 后成功。已从 `https://a-asuka-a.github.io/ReiPod/` 实际打开主菜单与转轮。
+- iPhone：GitHub 原生构建仍为 pending；本机既无可用手机、也没有有效可安装的 build5 开发签名，不能把 archive 当作安装成功。
+- VPS：`ssh-add -l` 无身份，服务器只接受 publickey。待本机用户通过系统密钥链解锁既有私钥后再发布；不会采集或使用聊天中的口令。必要的行为回归未删除，未执行为数量而生的重复测试。
