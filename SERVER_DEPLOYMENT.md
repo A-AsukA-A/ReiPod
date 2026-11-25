@@ -271,6 +271,6 @@ iPhone同Bundle ID覆盖安装0.2.0/build2并启动成功，见[iPhone回执](io
 
 前端由3954076更新为`cd5ab55`（功能代码为570d897，后续提交只使Pages跳过Markdown-only重建）。发布包含65文件；服务器暂存和目标逐SHA-256匹配，资源先复制、`index.html`与`release.txt`最后原子替换。静态回滚包为`/opt/reipod/backups/dist-before-cd5ab55-20261125T070022Z.tgz`，并保存`backend-snapshot-before-cd5ab55-20261125T070022Z.tgz`；旧文件不清理。
 
-后端继续为abf75e2，9个受检模块／package文件、音乐会话、个人首页、音乐PID147732均保持不变；nginx与reipod-music均active，未重启服务或读取账号数据。公网`/ReiPod/`返回200；网易云、QQ匿名status及Pages允许来源返回200且未授权，非允许来源403。页面和字体样本的公网哈希匹配；完整并发读取时单条歌词请求出现临时TLS错误，因此不将其表述为“所有65个公网文件哈希已完成”。
+后端继续为abf75e2，9个受检模块／package文件、音乐会话、个人首页、音乐PID147732均保持不变；nginx与reipod-music均active，未重启服务或读取账号数据。公网`/ReiPod/`返回200；网易云、QQ匿名status及Pages允许来源返回200且未授权，非允许来源403。页面和字体样本的公网哈希匹配；完整并发读取时单条歌词请求出现临时TLS错误，带重试的定点读取随后SHA匹配，因此不将此有限复查表述为“单次所有65个公网文件哈希已完成”。
 
 GitHub Pages [45563007395](https://github.com/A-AsukA-A/ReiPod/actions/runs/45563007395)第二次尝试成功；iPhone CI [45563007276](https://github.com/A-AsukA-A/ReiPod/actions/runs/45563007276)成功。它们不建立真实设备安装、系统媒体／日历、后台播放或真实第三方账号验收。
