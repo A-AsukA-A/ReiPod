@@ -266,3 +266,11 @@ Pages功能提交流程[42658164246](https://github.com/A-AsukA-A/ReiPod/actions
 清理在新版公网与回滚归档验证后执行：按明确路径/文件大小/mtime/SHA清单删除14份旧备份，按目录边界/文件计数和大小删除10个旧发布暂存目录，文件大小合计264302754B（约264MB/252MiB）。保留5份：新静态回滚、新后端完整快照、上一份dist-before-fdb6c19、backend-before-abf75e2与providers-before-05db8e9；发布暂存仅保留3954076/fdb6c19。未清服务器.local或当前dist旧哈希资源。详细计划/结果及最终状态在私有`.local/release-98/`。
 
 iPhone同Bundle ID覆盖安装0.2.0/build2并启动成功，见[iPhone回执](ios/README.md#2026-11-10-连接设备更新rel98)。云端iPhone流程42658164245在本轮结束前仍queued，不能称其已通过；不影响本地已签名App的实际安装/进程确认。本次回执文档采用[skip ci]上传，不另触发重复发布。
+
+## 2026-11-25 REL109 classic整理／原生集成发布
+
+前端由3954076更新为`cd5ab55`（功能代码为570d897，后续提交只使Pages跳过Markdown-only重建）。发布包含65文件；服务器暂存和目标逐SHA-256匹配，资源先复制、`index.html`与`release.txt`最后原子替换。静态回滚包为`/opt/reipod/backups/dist-before-cd5ab55-20261125T070022Z.tgz`，并保存`backend-snapshot-before-cd5ab55-20261125T070022Z.tgz`；旧文件不清理。
+
+后端继续为abf75e2，9个受检模块／package文件、音乐会话、个人首页、音乐PID147732均保持不变；nginx与reipod-music均active，未重启服务或读取账号数据。公网`/ReiPod/`返回200；网易云、QQ匿名status及Pages允许来源返回200且未授权，非允许来源403。页面和字体样本的公网哈希匹配；完整并发读取时单条歌词请求出现临时TLS错误，因此不将其表述为“所有65个公网文件哈希已完成”。
+
+GitHub Pages [45563007395](https://github.com/A-AsukA-A/ReiPod/actions/runs/45563007395)第二次尝试成功；iPhone CI [45563007276](https://github.com/A-AsukA-A/ReiPod/actions/runs/45563007276)成功。它们不建立真实设备安装、系统媒体／日历、后台播放或真实第三方账号验收。

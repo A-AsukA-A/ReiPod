@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-25，REL109发布收口进行中。BATCH108已补完经典机合辑归类／sort-as排序和 Vortex 难度与转轮绝对位置操作；累计树已完成全套工程回归（299 单元、35 服务端、179 浏览器、player-core、build／dist／size、原生测试目标编译与签名归档），并已审阅提交。Pages 第二次尝试成功，公网已实际打开；iPhone CI 仍排队。当前 build5 IPA 是 2026-11-11 建造的开发签名产物，profile 已于 11-12 20:52（北京时间）到期，不能作为可安装交付；手机仍 unavailable。VPS 只在本机 SSH 身份可用时发布，不能以聊天口令或旧凭据代替。整体项目、精确原机视觉、全代际和真实账号／系统同步验证仍开放。
+最后更新：2026-11-25，REL109发布收口完成：功能提交 `570d897`、仅CI精简提交 `cd5ab55` 已推送。Pages 成功后从公网实际打开；iPhone 云端构建／模拟器测试成功。VPS 前端已由3954076发布为cd5ab55，65文件在服务器目标逐SHA匹配，后端abf75e2、会话、个人首页与服务均未改；公网全量读取有一条歌词TLS临时失败，已确认页面、字体样本和接口边界。build5 IPA 的开发profile已过期，物理手机仍unavailable，不能作为安装交付；真实账号／系统同步／原机精确UI与全代际仍开放。
 
 ### 当前目标与进行中
 
@@ -1295,3 +1295,9 @@
 - GitHub：源码已推送；Pages 第一次因 Actions artifact API 短暂查不到已上传产物而失败，重跑同一 workflow 后成功。已从 `https://a-asuka-a.github.io/ReiPod/` 实际打开主菜单与转轮。
 - iPhone：GitHub 原生构建仍为 pending；本机既无可用手机、也没有有效可安装的 build5 开发签名，不能把 archive 当作安装成功。
 - VPS：`ssh-add -l` 无身份，服务器只接受 publickey。待本机用户通过系统密钥链解锁既有私钥后再发布；不会采集或使用聊天中的口令。必要的行为回归未删除，未执行为数量而生的重复测试。
+
+### REL109 最终发布（2026-11-25）
+
+- 服务器：本机 publickey 解锁后，VPS静态前端由3954076更新到cd5ab55；新回滚包`/opt/reipod/backups/dist-before-cd5ab55-20261125T070022Z.tgz`及后端快照均已建立。65个文件在服务器目标逐SHA匹配；后端abf75e2、9个受检后端文件、个人首页、music PID与nginx／音乐服务保持不变且active。
+- 公网：`https://julyblog.party/ReiPod/`为200；网易云／QQ匿名status与Pages来源为200且未授权，非允许来源403。页面和字体样本哈希匹配；完整资源并发读取遇到单条歌词TLS临时失败，故不标“全量公网SHA已通过”。
+- 云端：Pages重跑后成功，公网已实际打开；iPhone workflow [45563007276](https://github.com/A-AsukA-A/ReiPod/actions/runs/45563007276)成功。它们不替代物理iPhone安装、真实系统资料／音量或第三方账号验证。
