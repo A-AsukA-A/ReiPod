@@ -290,3 +290,11 @@ VPS 发布包含 66 个文件（65 个构建产物及 `release.txt = c86680f`）
 VPS 在 `675239c` 先将旧发布与 `release.json` 备份至 `/opt/reipod/backups/dist-before-675239c-20261126T060041Z.tgz`，全量更新 66 个文件后清理历史未引用的 3 个 Kevin MacLeod 文件（`carefree.m4a`、`monkeys-spinning-monkeys.m4a`、`sneaky-snitch.m4a`），随后增量同步 `38312be` 的 `assets/`、`index.html` 与 `release.txt`；`nginx` 与 `reipod-music` 均保持 `active`，`.local/music-sessions` 与个人首页未受影响。
 
 公网复核：`https://julyblog.party/ReiPod/` 与 `https://a-asuka-a.github.io/ReiPod/` 均返回 `HTTP/2 200`，HTML SHA-256 均为 `6a2660f2e470b23ac4f0983ecdb5fd0d16526b9a74da10ae116c7888f8ef64a5`（与本地构建一致）；`https://julyblog.party/ReiPod/release.txt` = `38312be`、`https://julyblog.party/` = `200`；`https://julyblog.party/ReiPod/music/qingtian.m4a` 返回 `HTTP/2 200`（`content-length: 5584959`），`carefree.m4a` 返回 `404`；匿名 `POST /api/music/netease/status`（Pages 来源）与 `POST /api/music/qq/status`（主站来源）返回 `200`，非允许来源返回 `403`。GitHub Pages 工作流 [45765480577](https://github.com/A-AsukA-A/ReiPod/actions/runs/45765480577) 成功。
+
+## 2026-11-26 REL123 Classic 6G UI 重做与 README 刷新发布
+
+前端由 `38312be` 更新为 [efec052](https://github.com/A-AsukA-A/ReiPod/commit/efec052)（涵盖 `UI122` Classic 6G 视觉重做、4 张新版主页展示截图、`assets/screenshots/README.md` 与重写后的中英文 `README.md` / `README.zh-CN.md`）；`server/` 源码未变更，后端继续保持 `abf75e2`。显式以 `VITE_MUSIC_API_URL=https://julyblog.party/api/music/` 构建通过 `check-dist` 与体积检查（`programGzip = 339,422 B`、`entryGzip = 149,379 B`、`demoAudio = 17,002,461 B`）。
+
+VPS 在备份旧发布与 `release.json` 至 `/opt/reipod/backups/dist-before-efec052-20261126T063229Z.tgz` 后，增量同步 `assets/`、`index.html` 与 `release.txt = efec052`；`nginx` 与 `reipod-music` 均保持 `active`，`.local/music-sessions` 与个人首页未受影响。
+
+公网复核：`https://julyblog.party/ReiPod/` 与 `https://a-asuka-a.github.io/ReiPod/` 均返回 `HTTP/2 200`，HTML SHA-256 均为 `10a451b1a7b23a44f5dce06a0a2c2ba191517bff5b85a7a23d3640a2a19efd38`（与本地 `dist/index.html` 一致）；`https://julyblog.party/ReiPod/release.txt` = `efec052`、`https://julyblog.party/` = `200`；匿名 `POST /api/music/netease/status`（Pages 来源）与 `POST /api/music/qq/status`（主站来源）返回 `200`，非允许来源返回 `403`。GitHub Pages 工作流 [45768654963](https://github.com/A-AsukA-A/ReiPod/actions/runs/45768654963) 成功。

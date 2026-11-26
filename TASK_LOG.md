@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-26，`UI122`（2007 iPod classic 6G 视觉系统重做与 8 屏实时截图检视）已在本地工作树完成验证。工作区位于 `/Users/july/Developer/ReiPod`，分支 `main` 已有已推送基线 `b2e398a`（`REL121`），当前 `UI122` 改动未提交或推送。
+最后更新：2026-11-26，`REL123` 已将 `UI122`（2007 Classic 6G UI 重做）、新版主页截图及重写后的 `README.md` / `README.zh-CN.md`（`efec052`）推送至 `origin/main`，并同步完成 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`）部署。工作区位于 `/Users/july/Developer/ReiPod`，`ANTIGRAVITY_HANDOFF.md` 仍保留本地未跟踪。
 - **VISUAL115（O03 / C-M01 / C-F07 分屏预览图标与实时视觉检视）**：新增浮雕三段滑杆图标 `"eq"`（`src/ui/ClassicGlyph.tsx`），把 `eq` 纳入 `splitPages`（`src/ui/navigation.ts`），并在 `menuPreviewModel.ts` 补齐 `eq`、`date-time`、`compilations` 与 `ReiPod 设置` 各项的右侧预览映射；抓取实时生产预览在 Chromium 390×844 下的 7 张稳定截图（`.local/visual-audit-115/`），逐帧确认主菜单、设置/EQ、分屏 EQ 勾选、日期与时间图标、标题栏实时 `HH:MM` 时钟、幻灯片设置页与正在播放页均清晰对齐、无遮挡裁切。
 - **CLASSIC114（C-F07 / C-F08 均衡器、日期与时间、幻灯片背景音乐）**：新增 22 组 Apple classic EQ 预设 + 关闭（`src/models/classicEq.ts`）并接入本地 Web Audio 3 段 `BiquadFilterNode` 实时滤波（`src/player/localAudio.ts`）；新增「日期与时间 → 标题栏显示时间」实时 `HH:MM` 状态栏时钟与世界时钟入口；在「幻灯片设置」补齐「背景音乐（保持当前 / 关闭 / 非空本地歌单）」，三项新配置全部纳入偏好持久化与「还原设置」重置。
 - **SLIDESHOW113（C-F08 照片幻灯片设置）**：按 Apple iPod classic 用户指南补齐「幻灯片设置」纯模型（`src/models/slideshowSettings.ts`）、偏好持久化与「还原设置」重置、照片设置与看图选项中的轮盘菜单入口，以及按设置驱动的幻灯片播放（每张停留时间 `2/3/5/10/20 秒/手动`、重复播放、无放回随机照片、过渡效果 `关闭/淡入淡出/划像`），兼容本地照片与 iPhone 系统相册窗口。
@@ -13,7 +13,7 @@
 
 ### 当前目标与进行中
 
-- 无进行中任务。`UI122`（2007 iPod classic 6G 视觉系统重做与全页面统一）已在本地完成单元、无 DOM 核心编译、生产构建与产物校验、包体积检查、Playwright 回归及 8 屏实时截图视觉检视，等待用户审阅并决定是否提交/推送。
+- 无进行中任务。`UI122` 与中英文 GitHub README / 展示截图刷新已完成并随 `REL123`（`efec052`）推送至 `origin/main`、GitHub Pages 与 VPS；`ANTIGRAVITY_HANDOFF.md` 保留本地未跟踪。
 - 近期里程碑（详细过程见下方任务记录）：
   - **2026-11-26 VISUAL115**：补齐 `eq`/`date-time`/`compilations` 与 ReiPod 设置分屏预览图标并完成实时渲染 7 帧视觉核对。
   - **2026-11-26 CLASSIC114**：经典机均衡器（22 组预设 + 实时 Web Audio 3 段滤波）、日期与时间（标题栏时钟）、幻灯片背景音乐。
@@ -1417,3 +1417,14 @@
   - Playwright 回归（`BypassSandbox: true`）：6 套件 52/52 全部通过；随后微调 `.menu-preview-card > .classic-glyph` 倒影间距与淡出后，复跑 `menuFidelity.pw.ts` 7/7 通过。
   - 实时视觉审计（`.local/visual-audit-122/{home-silver,home-black,settings-eq,eq-choice,about,coverflow,now-playing,now-playing-seek}.png`）：8 张高清截图逐张检视通过，确认无文字重影、裁切、对比度回退或组件错位。
 - **诚实边界**：当前仓库不包含已解密的 Apple 原版 OSOS 系统源码（参见 [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md)）；`UI122` 颜色、光泽与倒影参数仍标注为 `P`（暂定工程视觉校准），未宣称提取自实机固件常量；`UI122` 尚未提交或部署。
+
+## 2026-11-26 · REL123（UI122 提交推送、GitHub README 与截图重构及 Pages/VPS 同步）
+
+- **目标**：提交并推送 `UI122`、刷新 `assets/screenshots/` 展示截图，并重写 GitHub 仓库的 [README.md](README.md)、[README.zh-CN.md](README.zh-CN.md) 与 [assets/screenshots/README.md](assets/screenshots/README.md)，同步更新 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`）。
+- **执行与验证**：
+  - 截图与文档：从 `.local/visual-audit-122/` 更新 `assets/screenshots/{home,cover-flow,now-playing,settings}.png`，重写中英文 README（精简展示 4 图预览、2007 Classic 6G UI/Audio/YRC/Extras 能力总览、按键与音源表格、本地运行命令、文档索引及 160 kbps 试听归属说明）。
+  - 提交与推送：`efec052` 已推送至 `origin/main`；VPS 构建校验（`programGzip = 339,422 B`、`entryGzip = 149,379 B`、`demoAudio = 17,002,461 B`）通过。
+  - GitHub Pages：工作流 [45768654963](https://github.com/A-AsukA-A/ReiPod/actions/runs/45768654963) 成功；`https://a-asuka-a.github.io/ReiPod/` 返回 `HTTP/2 200`，HTML SHA-256 为 `10a451b1a7b23a44f5dce06a0a2c2ba191517bff5b85a7a23d3640a2a19efd38`（与本地构建一致）。
+  - VPS：先备份至 `/opt/reipod/backups/dist-before-efec052-20261126T063229Z.tgz`，同步 `efec052` 的 `assets/`、`index.html` 与 `release.txt`，`nginx` 与 `reipod-music` 保持 `active`。
+  - 公网复核：`https://julyblog.party/ReiPod/` 返回 `HTTP/2 200`（HTML SHA-256 与 Pages/本地一致）、`release.txt = efec052`、`https://julyblog.party/` 返回 `200`；匿名 `POST /api/music/netease/status`（Pages 来源）与 `POST /api/music/qq/status`（主站来源）返回 `200`，非允许来源返回 `403`。详细部署记录见 [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md)。
+- **未完成 / 不确定**：同前，真机 iPhone 安装与真实平台账号播放仍待物理设备与实际登录验证。
