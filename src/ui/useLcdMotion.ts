@@ -86,6 +86,7 @@ export function useLcdMotion(
   const running = useRef<Animation[]>([]);
   const ghost = useRef<HTMLElement | null>(null);
   const staticPane = useRef<HTMLElement | null>(null);
+  const incomingPane = useRef<HTMLElement | null>(null);
   const stop = () => {
     running.current.forEach((animation) => animation.cancel());
     running.current = [];
@@ -93,6 +94,8 @@ export function useLcdMotion(
     ghost.current = null;
     staticPane.current?.remove();
     staticPane.current = null;
+    incomingPane.current?.remove();
+    incomingPane.current = null;
   };
   const capture = (direction: Direction, paneOnly = false) => {
     pending.current?.node.remove();
@@ -122,6 +125,7 @@ export function useLcdMotion(
             ...ghost.current.querySelectorAll<HTMLElement>(".screen-content"),
           ].reverse()
         : []),
+      ...(incomingPane.current ? [incomingPane.current] : []),
       ...(staticPane.current ? [staticPane.current] : []),
     ];
     const bounds = viewport.getBoundingClientRect();
@@ -156,7 +160,8 @@ export function useLcdMotion(
       if (right <= left || bottom <= top || opacity < 0.001) continue;
       const captured = snapshot(original);
       const { copy } = captured;
-      if (original === staticPane.current) copy.classList.add("screen-content");
+      if (original === staticPane.current || original === incomingPane.current)
+        copy.classList.add("screen-content");
       const clip = [
         top - rect.top,
         rect.right - right,
@@ -414,16 +419,42 @@ export function useLcdMotion(
         latest &&
         (latest.dataset.preview !== staticPane.current.dataset.preview ||
           latest.textContent !== staticPane.current.textContent)
-      )
+      ) {
+        const viewport = element.parentElement;
+        if (viewport) {
+          const nextPane = snapshot(latest);
+          Object.assign(nextPane.copy.style, {
+            position: "absolute",
+            inset: "0 0 0 50%",
+            width: "50%",
+            height: "100%",
+            transform: "none",
+            opacity: "1",
+            zIndex: "19",
+          });
+          for (const card of nextPane.copy.querySelectorAll<HTMLElement>(
+            ".menu-preview-card",
+          )) {
+            card.style.animation = "none";
+            card.style.opacity = "1";
+          }
+          nextPane.copy.classList.add("screen-pane-incoming");
+          nextPane.copy.inert = true;
+          nextPane.copy.setAttribute("aria-hidden", "true");
+          viewport.append(nextPane.copy);
+          nextPane.restore();
+          incomingPane.current = nextPane.copy;
+        }
         running.current.push(
           staticPane.current.animate(
             [
               { opacity: 1, offset: 0 },
               { opacity: 0, offset: 1 },
             ],
-            options,
+            { ...options, easing: "ease-in-out" },
           ),
         );
+      }
     }
     running.current.at(-1)!.onfinish = stop;
   }, [scene]);

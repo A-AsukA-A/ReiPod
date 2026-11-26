@@ -2,11 +2,11 @@
 .lcd-screen {
   --lcd-blue: #0876cb;
   --lcd-header-height: 24px;
-  --lcd-status-bg: linear-gradient(180deg, #ffffff 0%, #eaedf1 48%, #d1d6dd 50%, #e1e5ea 100%);
-  --lcd-select-bg: linear-gradient(180deg, #74cdf6 0%, #44afe8 47%, #1a90d8 50%, #147ec5 100%);
-  --lcd-select-shadow: inset 0 var(--lcd-unit) 0 #a8e5fe, inset 0 calc(var(--lcd-unit) * -1) 0 #0c65a1;
-  --lcd-select-text-shadow: 0 calc(var(--lcd-unit) * -0.8) 0 #0a4f8080;
-  --lcd-studio-bg: linear-gradient(180deg, #a5b8c6 0%, #7a90a0 48%, #617686 53.5%, #445461 54.5%, #34424e 100%);
+  --lcd-status-bg: linear-gradient(180deg, #fafbfc 0%, #e9edf1 48%, #d4dae0 51%, #dfe4e9 100%);
+  --lcd-select-bg: linear-gradient(180deg, #5ec1f7 0%, #2f9de3 47%, #127dd3 51%, #0d6fc4 88%, #1e88dd 100%);
+  --lcd-select-shadow: inset 0 var(--lcd-unit) 0 rgba(255, 255, 255, 0.36), inset 0 calc(var(--lcd-unit) * -0.8) 0 rgba(7, 63, 114, 0.65);
+  --lcd-select-text-shadow: 0 calc(var(--lcd-unit) * -0.8) 0 rgba(5, 42, 78, 0.62);
+  --lcd-studio-bg: linear-gradient(180deg, #a7b8c6 0%, #8397a8 52%, #677d8f 100%);
   font-family: var(--font-lcd);
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums;
@@ -44,6 +44,11 @@
 .classic-device .click-wheel .wheel-select:is(:hover, :active, .is-pressed) {
   background: var(--wheel-center-surface);
   box-shadow: var(--wheel-center-depth);
+}
+.classic-device .click-wheel .wheel-select:is(:active, .is-pressed) {
+  box-shadow:
+    inset 0 calc(var(--shell-unit) * 3) calc(var(--shell-unit) * 5.5) #3b424980,
+    inset 0 calc(var(--shell-unit) * -1) calc(var(--shell-unit) * 2) #ffffffb0;
 }
 
 .player-icon {
@@ -176,8 +181,9 @@
   height: calc(var(--lcd-unit) * 17);
   padding: calc(var(--lcd-unit) * 2) calc(var(--lcd-unit) * 6);
   font-size: calc(var(--lcd-unit) * 10);
-  background: linear-gradient(#fbfbfc, #e5e7e9);
-  border-color: #b6bac0;
+  background: linear-gradient(180deg, #fcfdfe 0%, #e7ebef 48%, #d7dce2 100%);
+  border-color: #adb4bc;
+  box-shadow: inset 0 var(--lcd-unit) 0 #fff;
 }
 .marquee-window {
   display: block;
@@ -609,49 +615,49 @@
   height: calc(var(--lcd-width) * var(--lcd-aspect, 0.75));
   aspect-ratio: auto;
   margin-inline: auto;
-  padding: 0;
-  border: calc(var(--shell-unit) * 3) solid #090b0d;
-  border-radius: calc(var(--shell-unit) * 5);
+  padding: calc(var(--shell-unit) * 2.5);
+  border: 0;
+  border-radius: calc(var(--shell-unit) * 5.5);
+  background: #0c0e11;
   box-shadow:
-    0 var(--shell-unit) var(--shell-unit) #ffffffea,
-    0 calc(var(--shell-unit) * -1) calc(var(--shell-unit) * 1.5) #00000042,
-    inset 0 0 calc(var(--shell-unit) * 2.5) #000;
+    0 var(--shell-unit) calc(var(--shell-unit) * 1.6) rgba(255, 255, 255, 0.85),
+    0 calc(var(--shell-unit) * -0.8) calc(var(--shell-unit) * 1.4) rgba(95, 102, 112, 0.28),
+    inset 0 var(--shell-unit) calc(var(--shell-unit) * 2.2) rgba(0, 0, 0, 0.92);
 }
 .lcd-screen {
   --lcd-header-height: calc(var(--lcd-unit) * 20);
-  border-radius: 1px;
+  border-radius: 1.5px;
   font-family: var(--font-lcd);
   -webkit-font-smoothing: auto;
 }
-/* CHROME.header: 2007 photo fit; colors and vector paths remain provisional. */
 .screen-status {
   display: flex;
   align-items: center;
   flex-shrink: 0;
   height: var(--lcd-header-height);
-  padding: 0 calc(var(--lcd-unit) * 4);
+  padding: 0 calc(var(--lcd-unit) * 5);
   gap: calc(var(--lcd-unit) * 4);
-  color: #161616;
+  color: #1b1f24;
   background: var(--lcd-status-bg);
-  border-bottom: var(--lcd-unit) solid #8a9099;
+  border-bottom: var(--lcd-unit) solid #8b949e;
   box-shadow:
-    inset 0 var(--lcd-unit) 0 #fff,
-    0 var(--lcd-unit) calc(var(--lcd-unit) * 2) #00000018;
+    inset 0 var(--lcd-unit) 0 rgba(255, 255, 255, 0.88),
+    0 var(--lcd-unit) calc(var(--lcd-unit) * 2) rgba(0, 0, 0, 0.08);
 }
 .screen-status > strong {
   flex: 1;
   min-width: 0;
-  font-size: calc(var(--lcd-unit) * 14);
-  font-weight: 700;
+  font-size: calc(var(--lcd-unit) * 12.5);
+  font-weight: 600;
   /* Preserve the text's center/baseline while allowing accents and CJK ink.
      A 1em clipping box cuts the substitute font's ascenders/descenders. */
   line-height: var(--lcd-header-height);
   text-align: left;
-  letter-spacing: calc(var(--lcd-unit) * -0.25);
+  letter-spacing: calc(var(--lcd-unit) * -0.15);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 var(--lcd-unit) 0 #ffffffc8;
+  text-shadow: 0 var(--lcd-unit) 0 rgba(255, 255, 255, 0.85);
 }
 .screen-playing-link {
   display: grid;
@@ -661,8 +667,8 @@
   height: calc(var(--lcd-unit) * 14);
 }
 .screen-playing-link .status-transport {
-  width: calc(var(--lcd-unit) * 10);
-  height: calc(var(--lcd-unit) * 12);
+  width: calc(var(--lcd-unit) * 9.5);
+  height: calc(var(--lcd-unit) * 11);
   stroke: none;
 }
 .screen-header-spacer {
@@ -670,13 +676,16 @@
 }
 .screen-row,
 .screen-song-list .screen-row {
-  height: calc(var(--lcd-unit) * 24);
-  font-size: calc(var(--lcd-unit) * 16);
-  font-weight: 700;
-  padding-inline: calc(var(--lcd-unit) * 5);
+  height: calc(var(--lcd-unit) * 24.444);
+  font-size: calc(var(--lcd-unit) * 14.5);
+  font-weight: 500;
+  color: #16181c;
+  padding-inline: calc(var(--lcd-unit) * 6);
   gap: calc(var(--lcd-unit) * 4);
 }
 .screen-row.selected {
+  font-weight: 600;
+  color: #fff;
   background: var(--lcd-select-bg);
   box-shadow: var(--lcd-select-shadow);
   text-shadow: var(--lcd-select-text-shadow);
@@ -686,9 +695,9 @@
   visibility: hidden;
 }
 .screen-row .row-chevron .player-icon {
-  width: calc(var(--lcd-unit) * 9);
-  height: calc(var(--lcd-unit) * 15);
-  stroke-width: 3;
+  width: calc(var(--lcd-unit) * 8);
+  height: calc(var(--lcd-unit) * 13);
+  stroke-width: 2.7;
 }
 .home-screen > .menu-preview {
   grid-column: 2;
@@ -700,19 +709,20 @@
   min-width: 0;
   padding: 0;
   overflow: hidden;
-  background: linear-gradient(#91a5b2, #46535d);
+  background: var(--lcd-studio-bg);
 }
 /* 2007 menu photographs show a shadow recovering over roughly 16–20u.
-   Width/opacity are provisional visual fits; see UI_METRICS task 27.
+   Width/opacity are provisional visual fits; see UI_METRICS task 27 and CAL-135.
    Overlay content so artwork/cards cannot cover the menu's cast shadow. */
 .menu-preview::after {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
-  width: calc(var(--lcd-unit) * 18);
+  width: calc(var(--lcd-unit) * 16);
   z-index: 2;
   pointer-events: none;
-  background: linear-gradient(90deg, #00000070 0%, #00000024 45%, #0000 100%);
+  background: linear-gradient(90deg, #00000066 0%, #00000020 45%, #0000 100%);
+  box-shadow: inset var(--lcd-unit) 0 0 #00000028;
 }
 .menu-preview > .album-preview {
   position: absolute;
@@ -733,7 +743,7 @@
   padding: calc(var(--lcd-unit) * 18) calc(var(--lcd-unit) * 10);
   color: white;
   text-align: center;
-  background: var(--lcd-studio-bg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 45%), var(--lcd-studio-bg);
 }
 .menu-preview-card {
   animation: preview-card-in var(--lcd-preview-card-duration) ease-out both;
@@ -743,7 +753,7 @@
   width: calc(var(--lcd-unit) * 100);
   height: calc(var(--lcd-unit) * 100);
   margin-bottom: calc(var(--lcd-unit) * 8);
-  filter: drop-shadow(0 1px 0 #eff6ffa6) drop-shadow(0 3px 2px #24374769);
+  filter: drop-shadow(0 1px 0 rgba(239, 246, 255, 0.45)) drop-shadow(0 3px 2px rgba(24, 38, 52, 0.34));
 }
 .preview-glyph-stage {
   position: relative;
@@ -757,9 +767,7 @@
   margin: 0;
   position: relative;
   z-index: 1;
-  filter:
-    drop-shadow(0 var(--lcd-unit) 0 #ffffffb8)
-    drop-shadow(0 calc(var(--lcd-unit) * 3) calc(var(--lcd-unit) * 4) #16253280);
+  filter: drop-shadow(0 calc(var(--lcd-unit) * 2.5) calc(var(--lcd-unit) * 4) rgba(18, 30, 42, 0.36));
 }
 .preview-caption {
   position: relative;
@@ -773,19 +781,21 @@
   text-align: center;
 }
 .preview-caption > strong {
-  font-size: calc(var(--lcd-unit) * 14);
-  font-weight: 700;
+  font-size: calc(var(--lcd-unit) * 13.5);
+  font-weight: 600;
   line-height: 1.2;
   color: #fff;
   white-space: normal;
-  text-shadow: 0 1px 2px #162532b8;
+  text-shadow: 0 1px 2px #1a2c3aa6;
   overflow-wrap: anywhere;
 }
 .preview-caption > span,
 .preview-caption > small {
-  font-size: calc(var(--lcd-unit) * 10);
+  font-size: calc(var(--lcd-unit) * 10.5);
+  font-weight: 500;
   line-height: 1.35;
-  color: #dbe5ec;
+  color: #eef5fa;
+  text-shadow: 0 1px 1px #20313f7a;
 }
 .preview-storage {
   height: calc(var(--lcd-unit) * 9);
@@ -825,55 +835,58 @@
   position: relative;
   display: block;
   flex-shrink: 0;
-  width: calc(var(--lcd-unit) * 24);
-  height: calc(var(--lcd-unit) * 13);
-  border: var(--lcd-unit) solid #71787d;
-  border-radius: var(--lcd-unit);
+  width: calc(var(--lcd-unit) * 23);
+  height: calc(var(--lcd-unit) * 12.5);
+  border: var(--lcd-unit) solid #5c656e;
+  border-radius: calc(var(--lcd-unit) * 1.2);
   padding: 0;
   margin-right: calc(var(--lcd-unit) * 2);
-  background: linear-gradient(#9da4a6, #c3c8c8 45%, #9da4a4 55%, #bbc1bf);
-  box-shadow: 0 var(--lcd-unit) #fff9;
+  background: linear-gradient(180deg, #eff2f5 0%, #c8cfd6 48%, #a6aeb6 52%, #cfd5dc 100%);
+  box-shadow:
+    inset 0 var(--lcd-unit) 0 rgba(255, 255, 255, 0.85),
+    0 var(--lcd-unit) 0 rgba(255, 255, 255, 0.65);
 }
 .classic-battery::after {
   content: "";
   position: absolute;
   right: calc(var(--lcd-unit) * -3);
-  top: calc(var(--lcd-unit) * 3);
+  top: calc(var(--lcd-unit) * 2.75);
   width: calc(var(--lcd-unit) * 2);
   height: calc(var(--lcd-unit) * 5);
   border-radius: 0 var(--lcd-unit) var(--lcd-unit) 0;
-  background: linear-gradient(#a7afb1, #707a7e);
+  background: linear-gradient(180deg, #b5bdc2 0%, #6b747a 100%);
+  box-shadow: 0 var(--lcd-unit) 0 rgba(255, 255, 255, 0.56);
 }
 .classic-battery > i {
   display: block;
   height: 100%;
-  background: linear-gradient(180deg, #d6f0bf 0%, #9ad172 46%, #529932 50%, #79b856 100%);
-  box-shadow: inset 0 calc(var(--lcd-unit) * 0.6) #e6f8d2;
+  background: linear-gradient(180deg, #dcf6c4 0%, #99d464 46%, #459624 51%, #68b841 100%);
+  box-shadow:
+    inset 0 calc(var(--lcd-unit) * 0.6) 0 rgba(255, 255, 255, 0.52),
+    inset 0 calc(var(--lcd-unit) * -0.5) 0 rgba(45, 110, 20, 0.35);
 }
 .classic-battery.is-low > i {
-  background: linear-gradient(#f6d5ce, #df9685 44%, #bf4939 52%, #d16c57);
+  background: linear-gradient(180deg, #fadcd6 0%, #e48e7b 44%, #bf3c2c 50%, #d86754 100%);
+  box-shadow: inset 0 calc(var(--lcd-unit) * 0.7) 0 #fff0ed;
 }
 .classic-battery > svg {
   position: absolute;
   top: var(--lcd-unit);
-  left: calc(var(--lcd-unit) * 8);
+  left: calc(var(--lcd-unit) * 7.5);
   width: calc(var(--lcd-unit) * 8);
-  height: calc(var(--lcd-unit) * 11);
-  fill: #354638;
+  height: calc(var(--lcd-unit) * 10.5);
+  fill: #27372a;
 }
 .click-wheel {
   margin-top: calc(var(--device-width) * 0.16);
   width: calc(var(--device-width) * 0.68);
   height: calc(var(--device-width) * 0.68);
-  background: radial-gradient(circle at 50% 42%, #ffffff 0%, #f7f8f9 65%, #ecedf0 100%);
-  border-color: #c5c9cd;
-  box-shadow:
-    0 var(--shell-unit) calc(var(--shell-unit) * 1.5) #ffffffd9,
-    inset 0 var(--shell-unit) calc(var(--shell-unit) * 3) #0000001a;
 }
 .wheel-menu {
-  font-size: calc(var(--device-width) * 0.037);
-  letter-spacing: 0;
+  font-family: "Myriad Pro", "ReiPod Latin", -apple-system, sans-serif;
+  font-size: calc(var(--device-width) * 0.035);
+  font-weight: 600;
+  letter-spacing: 0.05em;
 }
 .wheel-button svg {
   width: calc(var(--device-width) * 0.073);

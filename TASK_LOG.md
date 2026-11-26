@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-26，`REL133` 已将 `UI124`–`COMPLETE-132` 全部改动提交并推送至 `origin/main`（保留 `COMPLETE-132` 全套验证记录与物理设备/真账号待验边界）。工作区位于 `/Users/july/Developer/ReiPod`，`ANTIGRAVITY_HANDOFF.md` 仍保留本地未跟踪。
+最后更新：2026-11-26，`CAL-135` + `DEV137–DEV142` 已全部收尾并提交推送 `origin/main`（CNC 阳极氧化弧面机身与无缝玻璃槽、Click Wheel 细缝凹陷、`PingFang SC` + `Source Sans 3` 混排对齐、2007 Apple 硬件阻尼动效、分屏返回右侧防闪烁与收敛版 Aqua/拟物图标）；经 390×844 DPR 2 全视角实屏核验、`check:player-core`、单元（65 文件 / 317 用例）、构建、`check-dist`、`npm run size`（`program 9.102 MB / gzip 0.349 MB / entryGzip 0.154 MB`）、40 项 Playwright 回归全部通过；本地 `ANTIGRAVITY_HANDOFF.md` 保留未跟踪。工作区位于 `/Users/july/Developer/ReiPod`。
 - **VISUAL115（O03 / C-M01 / C-F07 分屏预览图标与实时视觉检视）**：新增浮雕三段滑杆图标 `"eq"`（`src/ui/ClassicGlyph.tsx`），把 `eq` 纳入 `splitPages`（`src/ui/navigation.ts`），并在 `menuPreviewModel.ts` 补齐 `eq`、`date-time`、`compilations` 与 `ReiPod 设置` 各项的右侧预览映射；抓取实时生产预览在 Chromium 390×844 下的 7 张稳定截图（`.local/visual-audit-115/`），逐帧确认主菜单、设置/EQ、分屏 EQ 勾选、日期与时间图标、标题栏实时 `HH:MM` 时钟、幻灯片设置页与正在播放页均清晰对齐、无遮挡裁切。
 - **CLASSIC114（C-F07 / C-F08 均衡器、日期与时间、幻灯片背景音乐）**：新增 22 组 Apple classic EQ 预设 + 关闭（`src/models/classicEq.ts`）并接入本地 Web Audio 3 段 `BiquadFilterNode` 实时滤波（`src/player/localAudio.ts`）；新增「日期与时间 → 标题栏显示时间」实时 `HH:MM` 状态栏时钟与世界时钟入口；在「幻灯片设置」补齐「背景音乐（保持当前 / 关闭 / 非空本地歌单）」，三项新配置全部纳入偏好持久化与「还原设置」重置。
 - **SLIDESHOW113（C-F08 照片幻灯片设置）**：按 Apple iPod classic 用户指南补齐「幻灯片设置」纯模型（`src/models/slideshowSettings.ts`）、偏好持久化与「还原设置」重置、照片设置与看图选项中的轮盘菜单入口，以及按设置驱动的幻灯片播放（每张停留时间 `2/3/5/10/20 秒/手动`、重复播放、无放回随机照片、过渡效果 `关闭/淡入淡出/划像`），兼容本地照片与 iPhone 系统相册窗口。
@@ -1548,3 +1548,105 @@
 
 - 目标：按用户要求提交工作区中已验证的 `UI124`、`UI126`、`CLOCKSAVER127`、`CF08-129`、`SMARTPL-130`、`BATCH-131` 与 `COMPLETE-132` 改动并推送至远端 `origin/main`（保留 `ANTIGRAVITY_HANDOFF.md` 与 `.local/` 在本地不纳入提交）。
 - 校验复用：代码零改动，`COMPLETE-132` 的 65 文件/317 单元测试、35 项服务端测试、`check:player-core`、零警告构建、`check-dist`、`size`、`ios:prepare` 与 44 项（含重跑 `menuFidelity.pw.ts` 7/7）Playwright 回归保持有效。
+
+## 2026-11-26 · REVIEW134（项目整体完成度评估）
+
+- 目标：回应用户“这项目是不是做的差不多了”，总结当前可交付完成度与剩余长期边界。
+- 结果：说明以 2007 iPod classic 6G 为基线的网页与 iPhone 工程主干（含播放、浏览、设置、扩展与本地回归体系）已基本完成并推送至 `18d1807`；剩余项集中于真机/真账号线上实测、物理原机逐像素校准（`O03`/`U01`）、其他 iPod 代际扩展（`O05`）及可选 VPS 同步。未改源码，当前工作区仅新增此条日志记录。
+
+## 2026-11-26 · CAL-135（2007 classic 6G 实拍对照精校：`C-M01`/`C-N01`/`C-F01`）
+
+- 目标：对照仓库内可溯源的 2007 classic 6G 实机照片与录像帧（Gadgeteer 归一图 `.local/ui-27/reference-lcd.png`、Register 播放页 `.local/calibration-79/reference-inspection.png`、`ref-flow.png` / `ref-flipped.png`），逐项精校菜单网格与外框、正在播放层级与进度槽，以及 Cover Flow 扇列与翻面曲目单。
+- 已完成改动：
+  - `src/ui/classic-lcd.css`：将菜单行高从 `24u` 精校为 `24.444u`（`220u / 9`，匹配实拍约 `24.3u ± 1u` 步进并彻底消除滚动顶部露头），收紧机身黑框至 `2.5px / 3.5px`，微调状态栏与 Aqua 选中渐变，并将分屏投射阴影定为 `16u` + `1u` 分界线内阴影。
+  - `src/ui/firmware-display.css`：消除正在播放封面底缘黑影断层并将倒影延伸至 `40u` 渐隐；按 2007 Register 实拍亮度差将曲名/艺人/星级/曲序整理为 `#0c0c0c`（`16u`）→ `#5c636a`（`13.5u`）→ `#525961`（`12u` 星标）→ `#191c20`（`12u` 曲序）；升级进度槽内凹底槽与双段高光反射；重调 Cover Flow 冷银地平背景、居中 `122u` 封面、`44u` 倒影、粗体黑色标题及 `#68737e` 细边 / 双段蓝灰表头 / `23u` 分隔线翻面曲目卡。
+  - `src/ui/coverMotion.ts`：微调 `coverPose` 侧方偏移至 `86u / 34u`、`z=-48u`、`66°` 以扩大居中专辑呼吸间距。
+  - `UI_METRICS.md`：新增 `2026-11-26 2007 classic 6G 实拍对照精校（CAL-135）` 测量表与诚实状态标签（结构比例 `M`/`D`，渐变/字体/角度保留 `P`）。
+- 实测与视觉核对（最终代码编辑后）：
+  - 实拍对照截图（`.local/visual-audit-135/` 390×844 DPR2）：逐张检查 `home-silver.png`、`settings-scrolled.png`、`coverflow-fan.png`、`coverflow-flipped.png`、`now-playing-seek.png`、`now-playing-seek-bar.png`，确认滚动零半行截断、正在播放层级与倒影无断层、Cover Flow 扇列呼吸感与翻面曲目表对齐 2007 实拍参考。
+  - `npm test`：65 个文件、317 项测试通过；`npm run check:player-core`、`npm run build`（零告警）、`node scripts/check-dist.mjs`、`npm run size`（`entryGzip = 152,146 B`、`programGzip = 346,936 B`、`demoAudio = 17,002,461 B`）与 `git diff --check` 通过。
+  - Playwright 回归通过（非沙箱本地服务器端口执行）：`menuFidelity`、`playbackFidelity`、`player`、`browseExperience`、`settingsExperience` 共 **47/47 一次通过**（`45.4s`）。
+- 下一步：等待用户审阅效果，按需提交并推送至 `origin/main` / 部署 VPS；同固件原机字库度量与物理设备实机核对继续按 `O03`/`U01` 保留为硬件证据缺口。
+
+## 2026-11-26 · DEV136（CAL-135 实机精校预览与本地服务启动）
+
+- **目标与范围**：响应用户「给我看一下」请求，展示 `CAL-135` 已验证的 6 组校准截图并启动本地预览服务（未修改源码）。
+- **完成内容**：
+  - 将 `.local/visual-audit-135/` 下的 6 张截图复制到会话 artifact 目录 `cal135/`，并生成可视化预览文档（`cal135_preview.md`，包含 6 页 carousel：`主菜单银色`、`设置页滚动对齐`、`正在播放层级与倒影`、`正在播放定位条`、`Cover Flow 扇列`、`Cover Flow 翻面曲目单`）。
+  - 在 `127.0.0.1:5173` 启动本地 Vite 开发服务器守护进程（`npm run dev -- --host 127.0.0.1 --port 5173`，输出 `VITE v8.3.5 ready in 201 ms`，`Local: http://127.0.0.1:5173/`）。
+- **验证与状态**：无新增源码变更；Vite 后台服务已在 `http://127.0.0.1:5173/` 就绪，可由用户直接在浏览器交互查看，或继续审核本地待提交的 `CAL-135` 校准改动。
+
+## 2026-11-26 · DEV137（移除右侧分屏预览下半部分阴影带）
+
+- **目标与范围**：按用户附图反馈，去掉 2007 iPod classic 6G 分屏菜单右侧预览面板（`.menu-preview` / `--lcd-studio-bg`）下半部分深色地平线阴影带，仅调整分屏预览材质与副标题对比度（`P` 工程视觉校准）。
+- **完成内容**：
+  - [classic-lcd.css](src/ui/classic-lcd.css)：将 `--lcd-studio-bg` 从双段地平线暗底替换为连续钢蓝渐变 `linear-gradient(180deg, #a5b8c6 0%, #869aa9 52%, #6b7f8f 100%)`，将 `.menu-preview` 背景统一为 `var(--lcd-studio-bg)`，并将 `.preview-caption > span, .preview-caption > small` 提亮至 `#eef4f8` 辅以 `text-shadow: 0 1px 1px #20313f7a`；保留左边缘分栏阴影 `.menu-preview::after` 与图标投影。
+  - [UI_METRICS.md](UI_METRICS.md)：在 `CAL-135` 段落记录本次 `DEV137` 右侧渐变调整（标注为 `P`）。
+- **验证**：
+  - 重新抓取 `http://127.0.0.1:5173/`（390×844 DPR 2）设置页滚动到「播放速度 1×」实屏截图并目视确认右栏无横向断层与下半部分暗影、文本清晰。
+  - `npm run build` 通过；`git diff --check` 无格式问题；`npx playwright test tests/browser/menuFidelity.pw.ts tests/browser/settingsExperience.pw.ts` 14 项全数通过（7.3s）。
+- **未完成与下一步**：待用户确认当前效果后决定是否继续微调或统一提交/推送本地工作区校准改动。
+
+## 2026-11-26 · DEV138（解除教条约束，全面重塑 2007 classic 6G 质感与一/二级界面）
+
+- **目标与范围**：响应用户「把奇怪约束也改掉、全面还原真实 iPod 味、多改一级与二级界面」要求，精简教条式前置文书门槛并统筹重塑机身硬件质感、LCD 字重/Aqua 材质、2.5D 拟物图标、模拟时钟表盘及二级界面视觉样式（核心指标仍正直标示为 `P`）。
+- **完成内容**：
+  - **规则整理**：更新 [AGENTS.md](AGENTS.md) 与 [UI_STANDARDS.md](UI_STANDARDS.md)，移除“缺乏原机实测或纸面台账不得推进视觉还原”的阻塞条文，保留仅显示 LCD、转轮导航、播放/服务隔离、用户扩展及视觉实屏+回归验证要求。
+  - **机身与转轮**：在 [style.css](src/style.css)、[classic-lcd.css](src/ui/classic-lcd.css)、[hold-switch.css](src/ui/hold-switch.css) 重建银/黑两版阳极氧化 CNC 弧面金属光影与 `feTurbulence` 喷砂肌理、玻璃视窗金属倒角凹边、哑光 Click Wheel、匹配色凹面金属中心键与细腻 `MENU` 丝印。
+  - **LCD 字体与 Aqua 材质**：将列表行收敛为 `14.5u / 500`（选中 `600`），重制 2007 果冻蓝 `--lcd-select-bg`、银灰金属状态栏 `--lcd-status-bg`、3D 翡翠绿胶囊电池 `.classic-battery` 以及无暗带连续钢蓝右栏 `--lcd-studio-bg`（`#b8c8d5 → #8fa5b6 → #6d8496`）。
+  - **2.5D 拟物图标与世界时钟**：重写 [ClassicGlyph.tsx](src/ui/ClassicGlyph.tsx) 全部 20 枚镀铬/玻璃层次图标，并将 [ClassicClock.tsx](src/ui/ClassicClock.tsx) 升级为拉丝表圈 + 昼（象牙白）/夜（深炭黑）自动切换模拟表盘与红秒针。
+  - **一/二级界面统一打磨**：统筹修改 [firmware-display.css](src/ui/firmware-display.css)、[classic-alarms.css](src/ui/classic-alarms.css)、[classic-extras.css](src/ui/classic-extras.css)、[classic-organizer.css](src/ui/classic-organizer.css)、[classic-screen-lock.css](src/ui/classic-screen-lock.css)、[classic-search.css](src/ui/classic-search.css)、[text-reader.css](src/ui/text-reader.css)，同步升级正在播放进度槽/菱形游标、Cover Flow 翻面曲目单、闹钟滚轮、世界时钟、日历月视图、密码锁转盘与烟熏黑玻璃搜索键盘；调整 [menuFidelity.pw.ts](tests/browser/menuFidelity.pw.ts) 英文长标题夹具长度以适配 `14.5u / 500` 字号下的跑马灯溢出检验，并在 [UI_METRICS.md](UI_METRICS.md) 登记 `DEV138`。
+- **验证与实屏**：
+  - 全套视觉实屏对比（`home-silver`、`home-black`、`settings-scrolled`、`now-playing`、`coverflow-fan`、`coverflow-flipped`、`world-clock`、`calendar`、`alarms`、`search-keyboard`、`about`，整理至预览文档 `ipod_overhaul_preview.md`）。
+  - `npm run check:player-core`、`npm test`（65 文件 / 317 用例）、`npm run build`、`node scripts/check-dist.mjs`、`npm run size` 与 `git diff --check` 于最终改动后全部通过；Playwright `menuFidelity.pw.ts`（7 项）于最终改动后通过（`playbackFidelity`、`settingsExperience`、`browseExperience`、`player` 共 40 项于末次两行二级界面 CSS 微调前全数通过）。
+- **状态与下一步**：所有改动仅在本地工作区且已通过 Vite HMR 实时生效于 http://127.0.0.1:5173/ ，待用户审阅确认是否需要进一步调整或提交推送。
+
+## 2026-11-26 · DEV139（修复分屏菜单返回时右侧闪烁上一级菜单及 Cover Flow 首次切换竞态）
+
+- **问题根因**：
+  1. 在 [useLcdMotion.ts](src/ui/useLcdMotion.ts) 的 `paneOnly` 分屏切换中（例如 `设置 → 返回主菜单` 或前进切换右栏变化时），原逻辑仅用 `staticPane.current`（`z-index: 20`）对旧右栏做 `opacity: 1 → 0` 淡出，下方实时入场/离场的整页容器（`.screen-content` / `.screen-outgoing`）随 `translateX(±50%)` 移动，导致淡出过程中左菜单直接透过右栏区域闪烁显现。
+  2. 此外，[ClassicScreenContent.tsx](src/ui/ClassicScreenContent.tsx) 将仅 1.16 kB gzip 的 `CoverFlow` 设为 `React.lazy` 懒加载，在 200ms 预加载定时器完成前连续进入并确认会触发 `front === null` / 空白帧竞态。
+- **修复内容**：
+  - [useLcdMotion.ts](src/ui/useLcdMotion.ts)：新增 `incomingPane` 引用（类名 `screen-pane-incoming`，`z-index: 19`，`opacity: 1`，固定于右侧 `inset: 0 0 0 50%` 并关闭 `.menu-preview-card` 入场淡入动画），承接目标右栏内容；`staticPane.current`（`z-index: 20`）在其上方淡出，彻底遮蔽滑动中的两侧菜单文字；同时补齐 `stop()` 清理与 `capture()` 中断打平堆叠。
+  - [ClassicScreenContent.tsx](src/ui/ClassicScreenContent.tsx)：改为静态导入 `CoverFlow`，消除快速导航时的 `Suspense` 空白帧与 `album-open` 竞态。
+  - [player.pw.ts](tests/browser/player.pw.ts)：新增 `split menu back navigation shields the right preview from sliding menus` 回归用例，验证 `Home → 设置 → 返回` 动画中双右栏屏蔽层定位、`zIndex`/`opacity`/`inert`，以及快速中断后的 DOM 与 ID 清理。
+- **验证**：`npm run check:player-core`、`npm test`（65 文件 / 317 用例）、`npm run build`、`node scripts/check-dist.mjs`、`git diff --check` 与 Playwright `tests/browser/player.pw.ts` + `tests/browser/menuFidelity.pw.ts`（33 项）于最终修改后全部通过；本地预览 http://127.0.0.1:5173/ 已实时热更新。
+
+## 2026-11-26 · DEV140（动画节奏重构与硬件/工作室光影整体精修）
+
+- **目标与范围**：解决动画切换过快问题并一次性将硬件外壳、Click Wheel 按压手感、LCD Aqua 光泽与右侧工作室光影精修到位（真实指标边界同步登记于 [UI_METRICS.md](UI_METRICS.md)）。
+- **完成内容**：
+  - **2007 硬件阻尼与流畅动画节奏**：在 [motion.ts](src/ui/motion.ts) 与 [useLcdMotion.ts](src/ui/useLcdMotion.ts) 将 `classicMotion` 调整为更有物理重量感与滑动观赏性的节奏（`page: 360ms`、`view: 320ms`、`control: 360ms`、`volume: 150ms`、`album: 460ms`、`flowEnter: 440ms`、`flowExit: 480ms`，`coverFrequency: 12`，`previewInterval: 7000ms` / `previewFade: 950ms` / `previewCard: 280ms`），改用柔和起势、中段滑行、轻缓落地的 Apple S-curve `cubic-bezier(0.32, 0.08, 0.24, 1)`（封面翻面 `albumEasing: cubic-bezier(0.42, 0.04, 0.24, 1)`），分屏右栏交叉淡出使用 `ease-in-out`。
+  - **舞台背景、外壳与中心键全内凹触感**：在 [style.css](src/style.css) 与 [classic-lcd.css](src/ui/classic-lcd.css) 为 `.app-shell`（默认/暖色/深色）建立径向博物馆级工作室舞台背景，细化银/黑阳极氧化机身边缘金属嵌线与 `.screen-glass` 铣削倒角高光；将 `.wheel-select` 保持纯 `inset` 凹陷并新增按下深度反馈。
+  - **LCD Aqua 与 2.5D 工作室聚光**：在 [ClassicLcdIcon.tsx](src/ui/ClassicLcdIcon.tsx)、[classic-lcd.css](src/ui/classic-lcd.css)、[firmware-display.css](src/ui/firmware-display.css)、[classic-alarms.css](src/ui/classic-alarms.css)、[classic-organizer.css](src/ui/classic-organizer.css) 与 [classic-screen-lock.css](src/ui/classic-screen-lock.css) 提升传输图标、底栏与调节/存储条的 Aqua 光泽，在 `.menu-preview-card` / `.album-preview-empty` 增加柔和中央聚光与 `.preview-glyph-stage::after` 落地投影，为 Cover Flow 居中封面加细微高光描边及二级网格温和过渡。
+  - **测试对齐**：更新 [player.pw.ts](tests/browser/player.pw.ts) 引用 `classicMotion` 常量与 S-curve 中程进度断言。
+- **验证与实屏**：
+  - 重新采集 5 组 390×844 DPR 2 实屏截图（`home-silver`、`home-black`、`settings-scrolled`、`now-playing`、`coverflow-fan`）并同步刷新预览文档 `ipod_overhaul_preview.md`。
+  - 全量通过 `npm run check:player-core`、`npm test`（65 文件 / 317 用例）、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`、`git diff --check`（生产程序包 9.072 MB / gzip 0.349 MB）及全部 6 套 Playwright 套件（`appearance`、`menuFidelity`、`playbackFidelity`、`settingsExperience`、`browseExperience`、`player`，更新后 `player.pw.ts` 26/26 全数通过，累计 51/51 通过）。
+- **状态与下一步**：所有改动仅在本地工作区，Vite HMR 已即时生效于 http://127.0.0.1:5173/ ；待用户验收后决定是否提交并推送。
+
+## 2026-11-26 · DEV141（替换为 2007 苹果经典字体：Source Sans 3 + Heiti SC）
+
+- **目标与范围**：解决此前 Noto Sans SC 全量英中混排不够有 iPod 味的问题，改用人文无衬线体（Myriad Pro / Source Sans 3 负责英文与数字）配合苹果经典黑体（Heiti SC / STHeiti 负责中文，非苹果端保留内置 `ReiPod Sans` 回退）。
+- **完成内容**：
+  - [public/fonts/lcd-latin.woff2](public/fonts/lcd-latin.woff2) 与 [public/fonts/OFL-SourceSans3.txt](public/fonts/OFL-SourceSans3.txt)、[public/third-party-licenses.txt](public/third-party-licenses.txt)：打包 SIL OFL 1.1 开源 `Source Sans 3`（latin 可变 WOFF2，28.8 KB）并补充许可声明。
+  - [src/fonts.css](src/fonts.css) 与 [src/ui/classic-lcd.css](src/ui/classic-lcd.css)：注册 `@font-face` `ReiPod Latin`（`weight: 400 700`、`size-adjust: 107%`），将 `--font-lcd` 更新为 `"Myriad Pro", "ReiPod Latin", "Heiti SC", "STHeiti", "PingFang SC", "Hiragino Sans GB", "ReiPod Sans", sans-serif`，并为 Click Wheel `.wheel-menu` 启用同一人文无衬线字栈。
+  - [tests/browser/player.pw.ts](tests/browser/player.pw.ts)：更新字体核验用例以检验状态栏自定义拉丁字体生效（`isCustomFont === true`）与列表字体解析正常，不再强制禁掉系统 `Heiti SC`。
+  - 同步更新 [UI_METRICS.md](UI_METRICS.md) 与预览文档 `ipod_overhaul_preview.md`。
+- **验证与实屏**：
+  - CDP 字体检查确认状态栏英文与转轮 `MENU` 使用 `Source Sans 3`（`custom=true`），列表中文在 macOS 下解析为 `Heiti SC`，并重新截取核对 `home-silver`、`settings-scrolled`、`now-playing`、`coverflow-fan`、`coverflow-flipped`、`world-clock`、`calendar` 7 组截图。
+  - `npm run check:player-core`、`npm test`（65 文件 / 317 用例）、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（生产程序包 9.102 MB / gzip 0.350 MB）、`git diff --check` 与 Playwright `menuFidelity` / `playbackFidelity` / `player` / `appearance`（40 项）全部通过；Vite HMR 已在 http://127.0.0.1:5173/ 即时生效。
+
+
+## 2026-11-26 · DEV142（CNC 硬件工艺、字体字重对齐与 Aqua 收敛精修）
+
+- **目标与范围**：响应用户“渲染一股廉价感”的视觉反馈，系统性消除此前留存的视觉落差：中英文混排字重失衡、机身/屏幕三层硬框线、转轮偏深模糊内阴影、高饱和浅青蓝 Aqua 亮条、右侧浮空椭圆灰影及 SVG 图标粗白描边。
+- **完成内容**：
+  - **字体与层级对齐**：[src/fonts.css](src/fonts.css) 将 `--font-lcd` 中文首顺位调至 `"PingFang SC", "Hiragino Sans GB"` 并保持 `Source Sans 3` `size-adjust: 105%`，避免 `Heiti SC` 在 `weight: 500` 下回退细体导致的英中字重落差；[src/ui/classic-lcd.css](src/ui/classic-lcd.css) 与 [src/ui/firmware-display.css](src/ui/firmware-display.css) 细化列表字阶、状态栏文本对比与正在播放进度条时间标签（`11.5u / 500`）。
+  - **CNC 阳极氧化弧面与无框玻璃槽**：[src/style.css](src/style.css) 与 [src/ui/classic-lcd.css](src/ui/classic-lcd.css) 去除 `.classic-device` 外描边及 `:before` 描边环，以斜向受光底色配宽域多层 `inset` 倒角呈现银/黑两版 CNC 铝壳体与柔和表面肌理（`opacity: 0.055`）；`.screen-glass` 改为无边框暗炭黑玻璃凹槽并维持 `box-sizing: content-box` 与准确 `4:3` LCD 内径；收紧 `.click-wheel` 与 `.wheel-select` 的纯 `inset` 细缝级差。
+  - **收敛 Aqua 光泽与图标细边**：[src/ui/classic-lcd.css](src/ui/classic-lcd.css) 与 [src/ui/firmware-display.css](src/ui/firmware-display.css) 调柔 `--lcd-status-bg`、`--lcd-select-bg`、`--lcd-studio-bg`、`.classic-battery` 与 `.firmware-progress` 的过渡与高光条；移除 `.menu-preview-card` 高亮聚光圈与 `.preview-glyph-stage::after` 浮空椭圆阴影；[src/ui/ClassicGlyph.tsx](src/ui/ClassicGlyph.tsx) 将硬质纯白勾边改柔为半透明金属高光边（`strokeOpacity="0.55"–"0.68"`、`strokeWidth="0.6"–"0.9"`）。
+  - 更新 [UI_METRICS.md](UI_METRICS.md) 合并记录 `DEV141–DEV142`，并刷新预览文件 `ipod_overhaul_preview.md`。
+- **验证与实屏**：
+  - 390×844 DPR 2 实屏核对刷新后的 7 组截图（`home-silver`、`home-black`、`settings-scrolled`、`coverflow-fan`、`now-playing`、`world-clock`、`calendar`），确认 `lcdAspect` 为 `1.3334`、`.wheel-select` 全层 `inset`、无硬线框或贴纸白边且 `PingFang SC` 与 `Source Sans 3` 字重均匀统一。
+  - 全部检查于代码与资源定稿后通过：`npm run check:player-core`、`npm test`（65 文件 / 317 用例）、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（`program 9.102 MB / gzip 0.349 MB / entryGzip 0.154 MB`）、`git diff --check` 及 Playwright `appearance` / `menuFidelity` / `playbackFidelity` / `player`（40 passed）。
+- **状态与下一步**：`CAL-135` 与 `DEV137–DEV142` 随收尾提交推送至 `origin/main`；停止本地 Vite 开发服务并保持 `ANTIGRAVITY_HANDOFF.md` 本地未跟踪。

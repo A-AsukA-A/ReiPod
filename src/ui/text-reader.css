@@ -13,8 +13,8 @@
   overflow: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
-  font-size: calc(var(--lcd-unit) * 14);
-  line-height: calc(var(--lcd-unit) * 21);
+  font-size: calc(var(--lcd-unit) * 13.5);
+  line-height: calc(var(--lcd-unit) * 20);
 }
 .text-reader-viewport::-webkit-scrollbar {
   display: none;
@@ -33,8 +33,8 @@
   justify-content: space-between;
   gap: calc(var(--lcd-unit) * 4);
   padding: calc(var(--lcd-unit) * 2) calc(var(--lcd-unit) * 6);
-  border-top: 1px solid #b6bcc2;
-  background: linear-gradient(#fafafa, #e6e7e9);
+  border-top: 1px solid #adb4bc;
+  background: linear-gradient(180deg, #fcfdfe 0%, #e7ebef 48%, #d7dce2 100%);
   font-size: calc(var(--lcd-unit) * 10);
   line-height: calc(var(--lcd-unit) * 16);
 }

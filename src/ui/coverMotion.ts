@@ -23,9 +23,9 @@ export function coverPose(offset: number) {
   const side = Math.sign(offset);
   const turn = Math.min(1, distance);
   return {
-    x: side * (Math.min(distance, 1) * 76 + Math.max(0, distance - 1) * 31),
-    z: -42 * turn,
-    angle: -side * 64 * turn,
+    x: side * (Math.min(distance, 1) * 86 + Math.max(0, distance - 1) * 34),
+    z: -48 * turn,
+    angle: -side * 66 * turn,
     depth: 100 - Math.round(distance * 10),
     opacity: Math.max(0, Math.min(1, 5 - distance)),
   };

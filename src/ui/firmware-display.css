@@ -34,16 +34,18 @@
 /* G-S (2007): setting values are blue, while the focused row stays white.
    Color is a provisional fit; camera RGB is not a firmware color specification. */
 .split-settings-screen .row-value {
-  color: #3b91b8;
+  color: #2b83ba;
+  font-weight: 500;
 }
 .screen-row.selected .row-value {
   color: #fff;
+  font-weight: 600;
 }
 .screen-row.is-disabled .row-value {
   color: inherit;
 }
 .split-settings-screen .screen-row {
-  font-size: calc(var(--lcd-unit) * 16);
+  font-size: calc(var(--lcd-unit) * 14.5);
 }
 .screen-row.is-disabled {
   color: #888;
@@ -78,18 +80,18 @@
   border: 0;
   border-radius: calc(var(--lcd-unit) * 4);
   overflow: hidden;
-  background: linear-gradient(#e7e9ec, #f7f8f9 48%, #dcdfe3 52%, #e9ebee);
+  background: linear-gradient(#e4e7ec, #f9fafb 48%, #dcdfe4 52%, #eceef1);
   box-shadow:
-    inset 0 var(--lcd-unit) calc(var(--lcd-unit) * 1.5) #00000028,
-    inset 0 calc(var(--lcd-unit) * -1) 0 #ffffffa8;
+    inset 0 var(--lcd-unit) calc(var(--lcd-unit) * 1.5) #00000032,
+    inset 0 calc(var(--lcd-unit) * -1) 0 #ffffffc0;
   accent-color: #2199db;
 }
 .adjustment-meter::-webkit-progress-bar {
   background: transparent;
 }
 .adjustment-meter::-webkit-progress-value {
-  background: linear-gradient(#7cd4f8 0%, #45bce9 47%, #179cd4 51%, #3db9e8 100%);
-  box-shadow: inset 0 var(--lcd-unit) 0 #a8e5fe;
+  background: linear-gradient(180deg, #96e2ff 0%, #44bff2 45%, #1290d6 51%, #3db9ea 100%);
+  box-shadow: inset 0 var(--lcd-unit) 0 #cbf2ffbb;
 }
 .adjustment-meter::-moz-progress-bar {
   background: linear-gradient(#7cd4f8 0%, #45bce9 47%, #179cd4 51%, #3db9e8 100%);
@@ -128,14 +130,16 @@
   height: calc(var(--lcd-unit) * 16);
   overflow: hidden;
   border-radius: calc(var(--lcd-unit) * 8);
-  background: linear-gradient(#e4ebef, #b1c1cc 48%, #d5dfe5);
-  box-shadow: inset 0 calc(var(--lcd-unit) * 1) calc(var(--lcd-unit) * 2) #5c718c;
+  background: linear-gradient(#dfe7ed, #b1c1cc 48%, #d8e1e7);
+  box-shadow:
+    inset 0 calc(var(--lcd-unit) * 1.2) calc(var(--lcd-unit) * 2.2) #4b617a90,
+    0 var(--lcd-unit) 0 #ffffff66;
   margin-bottom: calc(var(--lcd-unit) * 12);
 }
 .about-storage-rail i {
   display: block; height: 100%;
-  background: linear-gradient(180deg, #98e0fb 0%, #50bde8 47%, #1c98d4 51%, #5bc5ee 100%);
-  box-shadow: inset 0 var(--lcd-unit) 0 #c9f0ff;
+  background: linear-gradient(180deg, #a6e6ff 0%, #50bde8 47%, #1895d2 51%, #5bc5ee 100%);
+  box-shadow: inset 0 var(--lcd-unit) 0 #d5f4ff;
 }
 .about-counts, .about-version {
   width: 100%; margin: 0;
@@ -156,37 +160,49 @@
 .coverflow-screen {
   position: relative;
   perspective: calc(var(--lcd-unit) * 550);
-  background: linear-gradient(180deg, #fff 0%, #fff 62%, #f2f4f7 76%, #fff 100%);
+  background: linear-gradient(180deg, #eff3f7 0%, #f8fafc 48%, #ffffff 64%, #e9eef3 78%, #dce2e8 100%);
 }
 .coverflow-scene {
   perspective: calc(var(--lcd-unit) * 550);
 }
 .cf-card,
 .cf-reflection > .album-art {
-  width: calc(var(--lcd-unit) * 126);
-  height: calc(var(--lcd-unit) * 126);
+  width: calc(var(--lcd-unit) * 122);
+  height: calc(var(--lcd-unit) * 122);
 }
 .cf-card {
-  top: calc(var(--lcd-unit) * 24);
+  top: calc(var(--lcd-unit) * 22);
   cursor: default;
 }
+.cf-card[aria-current="true"] > .album-art {
+  box-shadow:
+    inset 0 0 0 var(--lcd-unit) rgba(255, 255, 255, 0.34),
+    0 calc(var(--lcd-unit) * 3) calc(var(--lcd-unit) * 8) rgba(18, 28, 38, 0.22);
+}
 .cf-reflection {
-  height: calc(var(--lcd-unit) * 32);
+  height: calc(var(--lcd-unit) * 44);
+  opacity: 0.42;
+  mask-image: linear-gradient(rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.16) 54%, transparent 95%);
+  -webkit-mask-image: linear-gradient(rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.16) 54%, transparent 95%);
 }
 .cf-caption {
-  height: calc(var(--lcd-unit) * 42);
-  margin-bottom: calc(var(--lcd-unit) * 12);
-  gap: calc(var(--lcd-unit) * 3);
+  height: calc(var(--lcd-unit) * 38);
+  margin-bottom: calc(var(--lcd-unit) * 10);
+  gap: calc(var(--lcd-unit) * 1.5);
 }
 .cf-caption[hidden] {
   display: flex;
   visibility: hidden;
 }
 .cf-caption strong {
-  font-size: calc(var(--lcd-unit) * 16);
+  font-size: calc(var(--lcd-unit) * 14);
+  font-weight: 600;
+  color: #111519;
 }
 .cf-caption > span {
-  font-size: calc(var(--lcd-unit) * 13);
+  font-size: calc(var(--lcd-unit) * 12.5);
+  font-weight: 500;
+  color: #2f363e;
 }
 .cf-album-panel {
   position: absolute;
@@ -198,32 +214,39 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: white;
-  box-shadow: 0 0 calc(var(--lcd-unit) * 3) #0005;
+  background: #f1f4f7;
+  border: var(--lcd-unit) solid #66727e;
+  border-radius: calc(var(--lcd-unit) * 2) calc(var(--lcd-unit) * 2) 0 0;
+  box-shadow: 0 calc(var(--lcd-unit) * 3) calc(var(--lcd-unit) * 8) #00000048;
   backface-visibility: hidden;
   transform-origin: 50% calc(var(--lcd-unit) * 63);
+  overflow: hidden;
 }
 .coverflow-album-heading {
   flex-shrink: 0;
-  padding: calc(var(--lcd-unit) * 3) calc(var(--lcd-unit) * 5);
+  padding: calc(var(--lcd-unit) * 5) calc(var(--lcd-unit) * 8);
   display: flex;
   flex-direction: column;
-  gap: calc(var(--lcd-unit) * 2);
-  background: linear-gradient(#5b7898, #819caa);
+  gap: calc(var(--lcd-unit) * 1.5);
+  background: linear-gradient(180deg, #91a1af 0%, #6e8090 48%, #596c7d 51%, #728494 100%);
+  border-bottom: var(--lcd-unit) solid #465460;
   box-shadow:
-    inset 0 var(--lcd-unit) 0 #a3bfd8,
+    inset 0 var(--lcd-unit) 0 #c6d2dd99,
     0 var(--lcd-unit) calc(var(--lcd-unit) * 3) #00000028;
   color: white;
 }
 .coverflow-album-heading > strong,
 .coverflow-album-heading > span {
   min-width: 0;
-  font-weight: 700;
-  font-size: calc(var(--lcd-unit) * 15);
+  font-weight: 600;
+  font-size: calc(var(--lcd-unit) * 14);
   line-height: 1.15;
+  text-shadow: 0 calc(var(--lcd-unit) * -1) 0 #33404c80;
 }
 .coverflow-album-heading > span {
-  font-size: calc(var(--lcd-unit) * 13);
+  font-size: calc(var(--lcd-unit) * 12);
+  font-weight: 500;
+  color: #e4ebf1;
 }
 .cf-album-panel .screen-song-list {
   flex: 1;
@@ -233,8 +256,16 @@
   scrollbar-width: none;
 }
 .cf-album-panel .screen-row {
-  height: calc(var(--lcd-unit) * 24);
+  height: calc(var(--lcd-unit) * 23);
+  font-size: calc(var(--lcd-unit) * 13);
+  font-weight: 500;
+  padding-inline: calc(var(--lcd-unit) * 7);
   gap: calc(var(--lcd-unit) * 4);
+  border-bottom: var(--lcd-unit) solid #d6dce2;
+}
+.cf-album-panel .screen-row.selected {
+  font-weight: 600;
+  border-bottom-color: #0e5fa1;
 }
 .cf-track-number, .cf-track-duration {
   flex-shrink: 0;
@@ -252,6 +283,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdfe 72%, #f3f6f9 100%);
   padding: calc(var(--lcd-unit) * 10) calc(var(--lcd-unit) * 10)
     var(--np-control-inset);
 }
@@ -306,9 +338,7 @@
 .np-cover > .album-art {
   width: 100%;
   height: 100%;
-  box-shadow:
-    0 0 0 var(--lcd-unit) #00000018,
-    0 calc(var(--lcd-unit) * 2) calc(var(--lcd-unit) * 5) #0000001c;
+  box-shadow: 0 0 0 var(--lcd-unit) #0000001a;
   border: 0;
   border-radius: 0;
 }
@@ -318,10 +348,10 @@
   width: 100%;
   overflow: hidden;
   top: 100%;
-  height: calc(var(--lcd-unit) * 38);
-  opacity: 0.35;
-  mask-image: linear-gradient(#000b, transparent);
-  -webkit-mask-image: linear-gradient(#000b, transparent);
+  height: calc(var(--lcd-unit) * 40);
+  opacity: 0.42;
+  mask-image: linear-gradient(rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.28) 42%, transparent 92%);
+  -webkit-mask-image: linear-gradient(rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.28) 42%, transparent 92%);
 }
 .np-cover-reflection > .album-art {
   width: 100%;
@@ -340,14 +370,16 @@
   justify-content: center;
 }
 .now-playing-top strong {
-  font-size: calc(var(--lcd-unit) * 17);
-  line-height: 1.25;
+  font-size: calc(var(--lcd-unit) * 15.5);
+  font-weight: 600;
+  line-height: 1.24;
+  color: #111418;
 }
 .now-playing-top span {
-  font-size: calc(var(--lcd-unit) * 14);
-  line-height: calc(var(--lcd-unit) * 18);
-  color: #292929;
-  font-weight: 600;
+  font-size: calc(var(--lcd-unit) * 13);
+  line-height: calc(var(--lcd-unit) * 17);
+  color: #5e666f;
+  font-weight: 500;
 }
 .now-playing-top .marquee-text {
   font: inherit;
@@ -355,24 +387,26 @@
 }
 .np-info > strong .marquee-window {
   font: inherit;
-  color: #141414;
+  color: #111418;
 }
 .np-saved-rating {
   display: flex;
   align-items: center;
-  height: calc(var(--lcd-unit) * 16);
-  color: #333;
+  gap: calc(var(--lcd-unit) * 1.5);
+  height: calc(var(--lcd-unit) * 14);
+  margin-top: calc(var(--lcd-unit) * 2);
+  color: #525b63;
 }
 .np-saved-rating .player-icon {
-  width: calc(var(--lcd-unit) * 13);
-  height: calc(var(--lcd-unit) * 13);
+  width: calc(var(--lcd-unit) * 12);
+  height: calc(var(--lcd-unit) * 12);
 }
 .np-sequence {
-  margin-top: calc(var(--lcd-unit) * 8);
-  font-size: calc(var(--lcd-unit) * 13);
-  line-height: calc(var(--lcd-unit) * 18);
+  margin-top: calc(var(--lcd-unit) * 3);
+  font-size: calc(var(--lcd-unit) * 11.5);
+  line-height: calc(var(--lcd-unit) * 16);
   font-weight: 600;
-  color: #292929;
+  color: #2a3036;
 }
 .np-control-bay {
   position: relative;
@@ -408,10 +442,10 @@
   flex-shrink: 0;
   min-width: calc(var(--lcd-unit) * 40);
   font-variant-numeric: tabular-nums;
-  font-size: calc(var(--lcd-unit) * 12);
-  font-weight: 700;
+  font-size: calc(var(--lcd-unit) * 11.5);
+  font-weight: 500;
   line-height: 1;
-  color: #151515;
+  color: #22262b;
 }
 /* The duration supplies the widest readout without guessing font metrics.
    Keep the track fixed when long recordings cross a minute-digit boundary. */
@@ -436,21 +470,25 @@
   flex: 1;
   min-width: 0;
   height: calc(var(--lcd-unit) * 15);
-  background: linear-gradient(#e7e9ec, #f7f8f9 48%, #dcdfe3 52%, #e9ebee);
+  background: linear-gradient(180deg, #d3d8de 0%, #eff2f5 46%, #d9dee4 52%, #e8ecf0 100%);
   box-shadow:
-    inset 0 var(--lcd-unit) calc(var(--lcd-unit) * 1.5) #00000024,
-    inset 0 calc(var(--lcd-unit) * -1) 0 #ffffffa8;
-  -webkit-box-reflect: below calc(var(--lcd-unit) * 2)
-    linear-gradient(transparent 20%, #00000018);
+    inset 0 var(--lcd-unit) calc(var(--lcd-unit) * 1.6) rgba(0, 0, 0, 0.2),
+    inset 0 calc(var(--lcd-unit) * -0.8) 0 rgba(255, 255, 255, 0.85),
+    0 0 0 calc(var(--lcd-unit) * 0.5) rgba(0, 0, 0, 0.12);
+  -webkit-box-reflect: below calc(var(--lcd-unit) * 1.5)
+    linear-gradient(transparent 32%, rgba(0, 0, 0, 0.18));
   border: 0;
   margin: 0;
-  border-radius: 1px;
+  border-radius: 1.5px;
 }
 .firmware-progress > i,
 .np-control-bay .classic-volume-track > i {
   display: block;
   height: 100%;
-  background: linear-gradient(#7cd4f8 0%, #45bce9 47%, #179cd4 51%, #3db9e8 100%);
+  background: linear-gradient(180deg, #77cef8 0%, #3aa6e6 46%, #137fd4 51%, #269be4 92%, #47b3ee 100%);
+  box-shadow:
+    inset 0 var(--lcd-unit) 0 rgba(255, 255, 255, 0.42),
+    inset 0 calc(var(--lcd-unit) * -0.8) 0 rgba(7, 68, 120, 0.42);
 }
 .firmware-progress[data-seeking="true"] {
   height: calc(var(--lcd-unit) * 7);
@@ -465,9 +503,9 @@
   width: calc(var(--lcd-unit) * 7.5);
   height: calc(var(--lcd-unit) * 7.5);
   border-radius: calc(var(--lcd-unit) * 1.5);
-  background: linear-gradient(135deg, #dff5ff 0%, #6bc7f4 44%, #1b8ed4 56%, #0f6eb0 100%);
-  border: 1px solid #0e639c;
-  box-shadow: 0 1px 2px #00000040;
+  background: linear-gradient(135deg, #e7f8ff 0%, #66c7f6 44%, #158bd2 56%, #0c6aa9 100%);
+  border: 1px solid #0b5d94;
+  box-shadow: 0 1px 2px #00000045;
 }
 .np-control-bay .classic-volume {
   position: absolute;
@@ -498,9 +536,11 @@
   height: 100%;
   display: flex;
   padding: var(--lcd-unit);
-  background: linear-gradient(#e2e2e2, #fafafa 72%, #e4e4e4);
+  background: linear-gradient(180deg, #d7dce1 0%, #fafbfc 68%, #e2e6ea 100%);
   border-radius: calc(var(--lcd-unit) * 5);
-  box-shadow: inset 0 1px 2px #0002;
+  box-shadow:
+    inset 0 var(--lcd-unit) calc(var(--lcd-unit) * 2) #00000028,
+    0 var(--lcd-unit) 0 #ffffffc0;
 }
 .np-mode-panel > span {
   flex: 1;
@@ -567,6 +607,13 @@
 .playlist-menu .screen-row,
 .playlist-song-screen .screen-row {
   height: calc(var(--lcd-unit) * 44);
+  font-weight: 500;
+  border-bottom: var(--lcd-unit) solid #e3e7ec;
+}
+.playlist-menu .screen-row.selected,
+.playlist-song-screen .screen-row.selected {
+  font-weight: 600;
+  border-bottom-color: #0e5fa1;
 }
 .playlist-menu .row-label,
 .playlist-song-screen .row-label {
@@ -577,11 +624,11 @@
 .playlist-menu .row-detail,
 .playlist-song-screen .row-detail {
   font: 400 calc(var(--lcd-unit) * 11) / 1.2 var(--font-lcd);
-  color: #777;
+  color: #6f7780;
 }
 .playlist-menu .selected .row-detail,
 .playlist-song-screen .selected .row-detail {
-  color: #fff;
+  color: #e9f5ff;
 }
 .photo-album-list .screen-menu {
   padding-top: 0;
@@ -590,6 +637,12 @@
   height: calc(var(--lcd-unit) * 44);
   padding: 0 calc(var(--lcd-unit) * 5) 0 0;
   gap: calc(var(--lcd-unit) * 7);
+  font-weight: 500;
+  border-bottom: var(--lcd-unit) solid #e3e7ec;
+}
+.photo-album-list .screen-row.selected {
+  font-weight: 600;
+  border-bottom-color: #0e5fa1;
 }
 .photo-album-thumb {
   width: calc(var(--lcd-unit) * 44);
@@ -620,11 +673,11 @@
 }
 .photo-album-list .row-label small {
   font-size: calc(var(--lcd-unit) * 11);
-  color: #777;
+  color: #6f7780;
   font-weight: 400;
 }
 .photo-album-list .selected .row-label small {
-  color: #fff;
+  color: #e9f5ff;
 }
 .photo-grid-header {
   display: flex;
@@ -673,9 +726,14 @@
 /* iLounge's photographed 2007 classic photo grid uses a dark title/date area.
    Colors are provisional fits; the source is not a calibrated framebuffer. */
 .lcd-screen[data-page="photo-grid"] .screen-status {
-  background: linear-gradient(#30393c, #1c2426);
+  background: linear-gradient(180deg, #4b545a 0%, #2e363b 48%, #1d2428 51%, #2b3338 100%);
   color: #fff;
-  border-bottom-color: #11191b;
+  border-bottom-color: #111619;
+  box-shadow: inset 0 var(--lcd-unit) 0 #6e788066;
+}
+.lcd-screen[data-page="photo-grid"] .screen-status > strong {
+  color: #f4f7fa;
+  text-shadow: 0 calc(var(--lcd-unit) * -1) 0 #00000080;
 }
 .photo-full {
   position: relative;

@@ -20,9 +20,7 @@ import type { GameInput } from "./gameInput";
 import type { ScreenLockInput } from "./ClassicScreenLock";
 import type { ScreenLockState } from "../models/classicScreenLock";
 import type { QuizTrack } from "../models/iQuiz";
-
-
-
+import { CoverFlow } from "./CoverFlow";
 import type { TextReaderHandle } from "./TextReader";
 import { classicPreviewModel } from "./classicScreenModel";
 
@@ -32,7 +30,6 @@ const screenLoaders = {
   alarms: () => import("./ClassicAlarms").then(m => ({ default: m.ClassicAlarmsScreen })),
   about: () => import("./ClassicAboutScreen").then(m => ({ default: m.ClassicAboutScreen })),
   organizer: () => import("./ClassicOrganizerScreen").then(m => ({ default: m.ClassicOrganizerScreen })),
-  coverflow: () => import("./CoverFlow").then(m => ({ default: m.CoverFlow })),
   clocks: () => import("./ClassicExtrasScreens").then(m => ({ default: m.ClassicClocksScreen })),
   stopwatch: () => import("./ClassicExtrasScreens").then(m => ({ default: m.ClassicStopwatchScreen })),
   search: () => import("./ClassicSearchScreen").then(m => ({ default: m.ClassicSearchScreen })),
@@ -46,7 +43,6 @@ const NowPlayingScreen = lazy(screenLoaders.playing);
 const ClassicAlarmsScreen = lazy(screenLoaders.alarms);
 const ClassicAboutScreen = lazy(screenLoaders.about);
 const ClassicOrganizerScreen = lazy(screenLoaders.organizer);
-const CoverFlow = lazy(screenLoaders.coverflow);
 const ClassicClocksScreen = lazy(screenLoaders.clocks);
 const ClassicStopwatchScreen = lazy(screenLoaders.stopwatch);
 const ClassicSearchScreen = lazy(screenLoaders.search);

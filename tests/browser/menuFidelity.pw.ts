@@ -32,7 +32,7 @@ test("main menu keeps the same LCD text spacing and grid at phone and desktop sc
 });
 
 test("long menu titles truncate at rest and reveal their ends only while selected", async ({ page }, testInfo) => {
-  const titles = ["A long English menu title 0123456789 — END", "很长的中文菜单标题用于检查省略和滚动末尾0123456789结束"];
+  const titles = ["A very long English menu track title for overflow 0123456789 — END", "很长的中文菜单标题用于检查省略和滚动末尾0123456789结束"];
   await page.addInitScript(() => {
     localStorage.setItem("reipod-demos", "hidden");
     localStorage.setItem("reipod-appearance", JSON.stringify({ backlight: 0, clickSound: false }));

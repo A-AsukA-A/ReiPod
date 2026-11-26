@@ -33,10 +33,10 @@ export function ClassicLcdIcon({
       {glossy && (
         <defs>
           <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#7ccbf4" />
-            <stop offset="0.44" stopColor="#3ba6de" />
-            <stop offset="0.5" stopColor="#177fbb" />
-            <stop offset="1" stopColor="#278cc5" />
+            <stop offset="0" stopColor="#8fe3ff" />
+            <stop offset="0.44" stopColor="#3bb7f2" />
+            <stop offset="0.5" stopColor="#0e7ed1" />
+            <stop offset="1" stopColor="#2aa2e5" />
           </linearGradient>
         </defs>
       )}

@@ -706,3 +706,39 @@ Swift测试目标包含新检查的generic iphoneos编译通过、Release开发�
 - **统一 Aqua / Studio 材质系统**：在 `classic-lcd.css` 定义 `--lcd-status-bg`、`--lcd-select-bg`、`--lcd-select-shadow`、`--lcd-select-text-shadow` 与 `--lcd-studio-bg`，统一状态栏、主/子菜单选中条、About、Cover Flow、Play Mode 切换条、文本输入网格、世界时钟、闹钟与日历/通讯录高亮材质；修正 `.screen-menu { padding-top: 0; }` 以消除长列表滚动时状态栏下方半截裁切行。
 - **机身、转轮与立体图标**：`style.css` 与 `classic-lcd.css` 校准银/黑两版阳极氧化机身与 Click Wheel / 中心键径向质感、玻璃边框内凹倒角；`ClassicGlyph.tsx` 锐化金属镀铬高光梯度，右侧分屏 `.menu-preview-card` 增加工作室地平线背景与底部湿面倒影。
 - **播放与调节控件**：`firmware-display.css` 为 `.adjustment-meter`（亮度/音量上限）定制 Aqua 玻璃凹槽进度条、升级定位菱形高光与封面细边阴影。
+
+## 2026-11-26 2007 classic 6G 实拍对照精校（CAL-135）
+
+对象：2007 iPod classic 6G（320 × 240 逻辑 LCD，`classic2007`）；继续复用仓库内可溯源实机参考（[The Gadgeteer 2007 G-H](https://the-gadgeteer.com/assets/apple-ipod-classic-10.jpg) 单应归一 `.local/ui-27/reference-lcd.png`、[The Register 2007 Now Playing](https://www.theregister.com/2007/09/13/review_apple_ipod_classic/?page=3) 对照样本 `.local/calibration-79/reference-inspection.png` 与 2007 实拍录像帧 `.local/batch-92/ref-flow.png` / `.local/batch-92/ref-flipped.png`）。以下仅将实拍可验证的几何比例与明暗关系记为 `M` 依据，具体 CSS 渐变色板、替代字体度量及投影角度仍诚实标为 `P`（工程拟合），不宣称取得同固件原机色值表或字体文件。
+
+| metricId / 状态 | 实拍测量与依据 | 校准前 → 校准后实现 | 证据状态 / 实现位置 |
+| --- | --- | --- | --- |
+| `C-M01` / `MENU.grid` 行距与分屏影宽 | 归一 320×240 图（`.local/ui-27/reference-lcd.png`）测得标题底边 y=18..19u、蓝选框 y=19..42u、非选中文本带中心 y=56.0 / 80.5 / 105.5 / 131.0 / 153.5 / 177.5u，推算单行步进约 `24.3u ± 1.0u`；左菜单下 220u / 9 行 = `24.444u` | `.screen-row` `24u` → `24.444u`（消除滚动时顶栏下 2px 露头）；`.menu-preview::after` `18u` → `16u` 加 1u 分界线内阴影；`.screen-glass` 边框 `3px / 5px` → `2.5px / 3.5px` 贴近 `ref-flow.png` 机身黑框 | 行距范围 `M`（粗测 ±1u），边框与色值 `P`；`src/ui/classic-lcd.css` |
+| `C-N01` / `NP.metadata` 与 `NP.progress` 层级对齐 | 对 `.local/calibration-79/reference-inspection.png` 左侧 Register 2007 实拍面采样：曲名最暗亮度 `0`、艺人/专辑 `73 / 72`、星级 `53`、曲序 `0`；封面底缘直接过渡至倒影无黑阴影条 | 曲名 `17u #141414` → `16u #0c0c0c`；歌手/专辑 `14u #292929` → `13.5u #5c636a`；星级 `13u #333` → `12u #525961`；曲序 `13u` → `12u #191c20`；封面底shadow去除，倒影延展至 `40u` 柔化；进度槽增强上内凹与双段高光反射 | 明暗层级 `M`（单样本亮度比），具体字号/渐变 `P`；`src/ui/firmware-display.css` |
+| `C-F01` / Cover Flow 扇列与翻面曲目单 | 对照 `.local/batch-92/ref-flow.png`（640×360，LCD 框 `x=105..540, y=20..340`）冷灰白地平背景与居中正方封面的呼吸间距，及 `ref-flipped.png` 双段蓝灰表头、浅灰细边曲目卡与细分隔线 | `coverPose` 侧偏移 `76 / 31u, -42u, 64°` → `86 / 34u, -48u, 66°`；中心封面 `126u` → `122u`、倒影 `32u` → `44u`；标题字从灰副标题改 `14.5u #111418` + `13u #1e2228` 粗体；`.cf-album-panel` 改为 `#68737e` 边框、双段蓝灰表头、`23u` 分隔行 | 结构与比例依据 `M`/`D`，具体色板/角度 `P`；`src/ui/coverMotion.ts`、`src/ui/firmware-display.css` |
+
+工程检验与视觉核对（`.local/visual-audit-135/` 390×844 DPR2 6 帧实机预览：`home-silver.png`、`settings-scrolled.png`、`coverflow-fan.png`、`coverflow-flipped.png`、`now-playing-50.png`、`now-playing-seek.png`、`now-playing-seek-bar.png`）：
+- `settings-scrolled.png` 确认 `24.444u × 9 = 220u` 完全消除顶部半行露头；`now-playing-seek.png` / `now-playing-seek-bar.png` 确认曲名/艺人/星级/曲序比例与倒影衔接紧密无黑边断层；`coverflow-fan.png` / `coverflow-flipped.png` 确认冷银地平背景、中心封面呼吸感与双段蓝灰表头对齐。
+- 本轮回归：`npm test`（65 文件 / 317 用例）、`check:player-core`、`npm run build`、`check-dist`、`npm run size` 与 5 套 47 项 Playwright 校准/交互回归（`menuFidelity`、`playbackFidelity`、`player`、`browseExperience`、`settingsExperience`）一次通过。
+- **DEV137（右侧分屏渐变修正，`P`）**：依用户提供的 2007 实拍/高保真参考图移除右栏下半部分深色地平线阴影带，将 `src/ui/classic-lcd.css` 中 `--lcd-studio-bg` 调整为连续平滑钢蓝渐变 `linear-gradient(180deg, #a5b8c6 0%, #869aa9 52%, #6b7f8f 100%)`，统一 `.menu-preview` 底色为 `var(--lcd-studio-bg)`，并将 `.preview-caption > span, .preview-caption > small` 提亮至 `#eef4f8` 辅以 `0 1px 1px #20313f7a` 保证数值对比度；`npm run build` 与 `menuFidelity` / `settingsExperience` 共 14 项 Playwright 用例全部通过。
+
+## 2026-11-26 2007 Classic 6G 真实质感与二级界面全面重塑（DEV138）
+
+- **约束松绑**：更新 `AGENTS.md` 与 `UI_STANDARDS.md`，移除阻碍视觉精细还原的教条化纸面前置门槛，聚焦真实硬件材质、字重层次、Aqua/2.5D 拟物工艺与一/二级界面一致性。
+- **物理机身与转轮（`P`）**：`src/style.css` 与 `src/ui/hold-switch.css`、`src/ui/classic-lcd.css` 重做银/黑两版 CNC 阳极氧化弧面金属受光渐变与 SVG `feTurbulence` 细腻喷砂肌理、内凹钢琴黑玻璃边框与铝合金倒角高光、哑光 Click Wheel、匹配色内凹金属中心键及 `MENU` 丝印字距。
+- **LCD 字体与 Aqua 材质（`P`）**：将列表字重/字号收敛至 `14.5u / 500`（选中态 `600`），重制立体通透的 2007 Apple 果冻蓝 `--lcd-select-bg`、顶部银灰金属拉丝状态栏 `--lcd-status-bg`、3D 翡翠绿胶囊电池 `.classic-battery` 以及连续平滑钢蓝右栏 `--lcd-studio-bg`（`#b8c8d5 → #8fa5b6 → #6d8496`）。
+- **2.5D 拟物图标与世界时钟表盘**：重写 `src/ui/ClassicGlyph.tsx` 全部 20 枚图标为镀铬/玻璃多层次拟物矢量（含 3D 扬声器、精密齿轮、交叠高光乱序带、迷你 iPod、拍立得照片叠卡等）；升级 `src/ui/ClassicClock.tsx` 为金属拉丝表圈 + 昼/夜自动切换象牙白/炭黑表盘与红色秒针。
+- **一级与二级界面对齐（`P`）**：统筹升级 `firmware-display.css`、`classic-alarms.css`、`classic-extras.css`、`classic-organizer.css`、`classic-screen-lock.css`、`classic-search.css`、`text-reader.css`，覆盖正在播放进度槽与高光菱形游标、Cover Flow 银白地平线与翻面列表、设置项天蓝数值、闹钟金属滚轮、日历银灰月栏、密码锁金属转盘及烟熏黑玻璃搜索键盘；同时调整 `tests/browser/menuFidelity.pw.ts` 英文长标题夹具长度以在 `14.5u / 500` 字号下正常触发省略/跑马灯验证。
+
+## 2026-11-26 动画节奏重构与硬件/工作室光影精修（DEV140）
+
+- **硬件重量感动画节奏（`src/ui/motion.ts`、`src/ui/useLcdMotion.ts`）**：将过快的界面切换拉宽至顺滑、有物理阻尼的 2007 节奏：`page: 360ms`、`view: 320ms`、`control: 360ms`、`volume: 150ms`、`album: 460ms`、`flowEnter: 440ms`、`flowExit: 480ms`，采用柔和起势的 Apple S-curve `cubic-bezier(0.32, 0.08, 0.24, 1)`（封面翻面 `albumEasing: cubic-bezier(0.42, 0.04, 0.24, 1)`），`coverFrequency` 调至 `12` 使 Cover Flow 滑动更具惯性滑行感，分屏右栏交叉淡出使用 `ease-in-out`；`previewInterval: 7000ms` / `previewFade: 950ms` / `previewCard: 280ms`。
+- **舞台与机身材质精修（`src/style.css`、`src/ui/classic-lcd.css`）**：为 `.app-shell`（默认/暖色/深色）升级径向工作室背景光场，细化 `.classic-device` 银/黑两版 CNC 边缘高光嵌条与 `.screen-glass` 铣削金属倒角，保持 `.wheel-select` 全 `inset` 物理凹陷与按下深度；右侧预览 `.menu-preview-card` 增加工作室聚光底纹及 `.preview-glyph-stage::after` 落地投影，同步精修 `.screen-footer`、`.classic-lcd-icon` Aqua 渐变及二级网格切换过渡（遵循 `prefers-reduced-motion`）。
+
+
+## 2026-11-26 真实苹果字体还原：Source Sans 3 + 苹方（DEV141–DEV142）
+
+- **拉丁与数字字体（`public/fonts/lcd-latin.woff2`、`src/fonts.css`，`P` 工程拟合）**：引入 SIL OFL 1.1 授权、与 Myriad Pro 同门的人文无衬线可变字体 `Source Sans 3`（28.8 KB，`ReiPod Latin`，`size-adjust: 105%` 视觉对齐），同步应用至 LCD `--font-lcd` 与 Click Wheel `MENU` 丝印，替代偏宽平的 Noto Sans SC 英文/数字字形。
+- **中文字体与字重匹配（`src/fonts.css`、`src/ui/classic-lcd.css`、`src/ui/firmware-display.css`，`P` 拟合）**：将 `--font-lcd` 更新为 `"Myriad Pro", "ReiPod Latin", "PingFang SC", "Hiragino Sans GB", "Heiti SC", "ReiPod Sans", sans-serif`，优先匹配 `PingFang SC` Medium（`500`）/Semibold（`600`）以消除 `Heiti SC` 在 `500` 权重下偏细导致的英混排落差；正在播放时间标签调整为 `11.5u / 500 #22262b` 与副标题字阶协调。
+- **CNC 机身、无缝玻璃槽与收敛 Aqua 材质（`src/style.css`、`src/ui/classic-lcd.css`、`src/ui/firmware-display.css`、`src/ui/ClassicGlyph.tsx`，`DEV142`，`P` 拟合）**：去除机身三层硬框线（`border: 0`、取消 `.classic-device:before` 描边与外圈环），改用多层宽域内倒角高光/阴影呈现银/黑两版阳极氧化 CNC 弧面；`.screen-glass` 取消边框描边，由深炭黑凹槽与铝壳倒角衔接；Click Wheel 与中心键收窄为贴合实机的细缝凹陷；收敛 `--lcd-status-bg`、`--lcd-select-bg`、`.classic-battery`、`.firmware-progress` 渐变并移除 `.preview-glyph-stage::after` 浮空椭圆阴影，将 `ClassicGlyph.tsx` 图标描边柔化为细腻高光边。
+- **测试与许可**：补充 `public/fonts/OFL-SourceSans3.txt` 与 `public/third-party-licenses.txt` 声明；更新 `tests/browser/player.pw.ts` 验证标题栏英文使用内置自定义拉丁字体且列表字体正常解析；本轮完成 390×844 DPR 2 全视角截图视觉核验。

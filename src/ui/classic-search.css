@@ -16,9 +16,15 @@
   padding-bottom: calc(var(--lcd-unit) * 64);
 }
 .classic-search-screen .classic-search-results > .screen-row {
-  height: calc(var(--lcd-unit) * 54);
+  height: calc(var(--lcd-unit) * 52);
   padding-inline: calc(var(--lcd-unit) * 6);
   gap: calc(var(--lcd-unit) * 8);
+  font-weight: 500;
+  border-bottom: var(--lcd-unit) solid #e4e8ec;
+}
+.classic-search-screen .classic-search-results > .screen-row.selected {
+  font-weight: 600;
+  border-bottom-color: #0e6aa6;
 }
 .classic-search-screen .row-label {
   display: flex;
@@ -26,8 +32,8 @@
   gap: calc(var(--lcd-unit) * 2);
 }
 .classic-search-screen .row-label small {
-  color: #858585;
-  font: 700 calc(var(--lcd-unit) * 13) / 1.2 var(--font-lcd);
+  color: #777f88;
+  font: 400 calc(var(--lcd-unit) * 12) / 1.2 var(--font-lcd);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -63,27 +69,30 @@
   position: absolute;
   left: calc(var(--lcd-unit) * 10);
   right: calc(var(--lcd-unit) * 10);
-  bottom: calc(var(--lcd-unit) * 7);
+  bottom: calc(var(--lcd-unit) * 8);
   height: calc(var(--lcd-unit) * 50);
   display: flex;
   align-items: center;
   gap: calc(var(--lcd-unit) * 6);
   padding: calc(var(--lcd-unit) * 7);
-  border: var(--lcd-unit) solid #777;
-  border-radius: calc(var(--lcd-unit) * 6);
-  background: linear-gradient(#b0b0b0, #4b4b4b 22%, #101010 55%, #050505 85%, #303030);
-  box-shadow: 0 calc(var(--lcd-unit) * 2) calc(var(--lcd-unit) * 7) #0007;
+  border: var(--lcd-unit) solid #5c636b;
+  border-radius: calc(var(--lcd-unit) * 7);
+  background: linear-gradient(180deg, #7f868d 0%, #3d4248 20%, #15181c 50%, #090b0d 52%, #1d2126 100%);
+  box-shadow:
+    inset 0 var(--lcd-unit) 0 #ffffff88,
+    0 calc(var(--lcd-unit) * 3) calc(var(--lcd-unit) * 9) #0000007a;
 }
 .classic-search-value {
   flex: 0 0 calc(var(--lcd-unit) * 72);
   min-width: 0;
   height: calc(var(--lcd-unit) * 30);
   padding-inline: calc(var(--lcd-unit) * 5);
-  border: var(--lcd-unit) solid #555;
+  border: var(--lcd-unit) solid #3f464e;
   border-radius: calc(var(--lcd-unit) * 3);
-  background: #fff;
+  background: linear-gradient(180deg, #eff2f5 0%, #ffffff 35%);
+  box-shadow: inset 0 var(--lcd-unit) calc(var(--lcd-unit) * 1.5) #00000033;
   color: #111;
-  font-size: calc(var(--lcd-unit) * 19);
+  font-size: calc(var(--lcd-unit) * 18);
   line-height: calc(var(--lcd-unit) * 28);
   overflow: hidden;
   white-space: nowrap;

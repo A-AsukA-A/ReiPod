@@ -395,3 +395,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+----------------------------------------
+
+Source Sans 3 (fonts/lcd-latin.woff2) — SIL Open Font License 1.1
+
+Copyright 2010-2023 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+Licensed under the SIL Open Font License, Version 1.1 (see fonts/OFL-SourceSans3.txt).

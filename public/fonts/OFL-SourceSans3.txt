@@ -1,0 +1,6 @@
+Source Sans 3 (lcd-latin.woff2)
+Copyright 2010-2023 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
+
+Licensed under the SIL Open Font License, Version 1.1 (OFL-1.1).
+Full text of the SIL Open Font License 1.1 is provided in OFL-NotoSansSC.txt
+in this directory and at https://scripts.sil.org/OFL.

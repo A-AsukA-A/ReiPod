@@ -32,19 +32,15 @@ Product decision (2026-10-29): local apps provide built-in backend capabilities;
 
 ## UI work
 
-Before changing UI, read [DEVICE_STANDARDS.md](DEVICE_STANDARDS.md), [UI_METRICS.md](UI_METRICS.md), [UI_STANDARDS.md](UI_STANDARDS.md), [REPLICA.md](REPLICA.md), [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md), and [PLAYBACK_INTERACTIONS.md](PLAYBACK_INTERACTIONS.md).
+Before changing UI, use [UI_METRICS.md](UI_METRICS.md), [UI_STANDARDS.md](UI_STANDARDS.md), [DEVICE_STANDARDS.md](DEVICE_STANDARDS.md), and [PLAYBACK_INTERACTIONS.md](PLAYBACK_INTERACTIONS.md) as working references rather than bureaucratic gates.
 
-- The product scope includes all generations of iPod nano, iPod mini, and iPod/classic, including the pre-classic iPod generations. The existing shell/menu baseline remains the 2007 iPod classic 6G; this is the current implementation baseline, not a limit on product scope. Keep each family, generation, hardware revision and firmware distinct; My Classic and web replicas remain comparison samples.
-- Use [MacDB’s iPod/classic catalog](https://macdb.cn/ipod-classic) as a third-party model/specification index and an entry point to Apple technical documents; see [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md). Verify specifications against the corresponding Apple source before adopting them. The linked page does not establish nano/mini coverage or firmware UI geometry.
+- The product scope includes all generations of iPod nano, iPod mini, and iPod/classic, including the pre-classic iPod generations. The existing shell/menu baseline remains the 2007 iPod classic 6G; keep each family, generation, hardware revision and firmware distinct.
+- Prioritize authentic physical hardware craft (anodized CNC aluminum shading, recessed glass bezel, tactile Click Wheel, genuine 2007 LCD typography weights, glossy Apple Aqua chrome, and 2.5D skeuomorphic icons) across both primary and secondary screens over timid placeholder approximations.
 - Follow the four-layer dependency contract in DEVELOPMENT.md. A model/firmware interaction is not an appearance theme. Keep playback/session lifetime independent of model and finish changes.
-- Maintain per-state metric records in UI_METRICS.md. Provisional or unknown metrics cannot pass hardware-fidelity acceptance; browser screenshots are engineering evidence only.
-- Cite evidence for restoration claims. Record model, firmware when known, source URL/revision, coordinate normalization, and measurement uncertainty. An existing CSS value or passing browser test is not proof of a hardware value.
-- Prefer matching physical-device evidence and verified original-system behavior. Use Apple manuals for documented behavior, and treat their illustrations as illustrations. Modern HIG guides ReiPod additions and accessibility; it does not specify legacy firmware geometry.
-- Label numeric values as documented, measured with uncertainty, provisional, or a ReiPod adaptation. Do not call estimates “pixel-perfect,” “manufacturer-specified,” or “hardware calibrated.”
-- Preserve explicit user choices, including full artwork for the main-menu Now Playing preview, the long-Center lyrics shortcut, account/VIP feedback, and the lyrics switch. Document departures from stock behavior instead of silently removing them.
+- Keep notes in UI_METRICS.md honest: distinguish documented specifications (`D`), visual/photo measurements (`M`), engineering fits (`P`), and ReiPod extensions (`A`), without blocking visual polish behind paperwork prerequisites.
+- Prefer matching physical-device look, feel, and verified original-system behavior. Preserve explicit user choices, including full artwork for the main-menu Now Playing preview, the long-Center lyrics shortcut, account/VIP feedback, and the lyrics switch. Document departures from stock behavior instead of silently removing them.
 - Keep the LCD display-only and actions reachable through the wheel/buttons. Use deterministic fixtures and settled screenshots when evaluating layout. Keep motion interruptible and respect reduced motion.
-- For component styling, inspect the final computed styles and cascade before editing. Avoid adding another conflicting override to repair an existing override. Keep geometry and motion sources explicit.
-- Missing measurements are research tasks, not grounds to invent constants. Continue independent work; clarify only when a necessary product choice cannot be inferred. These rules add no separate approval gate to work the user has authorized.
+- For component styling, inspect the final computed styles and cascade before editing. Avoid adding another conflicting override to repair an existing override. Keep geometry and motion sources explicit. Continue independent work cleanly.
 
 ## Validation
 

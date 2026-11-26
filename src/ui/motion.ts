@@ -6,21 +6,21 @@ export function durationInMilliseconds(value: string) {
   return match ? Number(match[1]) * (match[2] === "s" ? 1000 : 1) : 0;
 }
 
-/** Calibration values, not recovered Apple constants. See HARDWARE_RESEARCH.md. */
+/** Weighty, silky 2007 classic hardware motion rhythm. */
 export const classicMotion = {
-  page: 240,
-  view: 220,
-  // Supplied My Classic clip: control travel ~300ms ±100ms; volume <=100ms.
-  control: 300,
-  volume: 100,
-  album: 280,
-  flowEnter: 280,
-  flowExit: 360,
-  easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-  coverFrequency: 18,
-  previewInterval: 6000,
-  previewFade: 650,
-  previewCard: 180,
+  page: 360,
+  view: 320,
+  control: 360,
+  volume: 150,
+  album: 460,
+  flowEnter: 440,
+  flowExit: 480,
+  easing: "cubic-bezier(0.32, 0.08, 0.24, 1)",
+  albumEasing: "cubic-bezier(0.42, 0.04, 0.24, 1)",
+  coverFrequency: 12,
+  previewInterval: 7000,
+  previewFade: 950,
+  previewCard: 280,
 } as const;
 
 // One timing source for CSS, snapshots and the independent artwork timer.
@@ -31,7 +31,7 @@ export const lcdMotionStyle = {
   "--lcd-flow-enter-duration": `${classicMotion.flowEnter}ms`,
   "--lcd-flow-exit-duration": `${classicMotion.flowExit}ms`,
   "--lcd-ease": classicMotion.easing,
-  "--lcd-album-ease": classicMotion.easing,
+  "--lcd-album-ease": classicMotion.albumEasing,
   "--lcd-preview-interval": `${classicMotion.previewInterval}ms`,
   "--lcd-preview-fade": `${classicMotion.previewFade}ms`,
   "--lcd-preview-card-duration": `${classicMotion.previewCard}ms`,

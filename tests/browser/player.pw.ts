@@ -3,6 +3,7 @@ import { mkdir, writeFile, utimes } from "node:fs/promises";
 import { join } from "node:path";
 import { live, key, home, choose, holdCenter, text } from "./dial";
 import { taggedAudio } from "./taggedAudio";
+import { classicMotion } from "../../src/ui/motion";
 
 test("Now Playing uses the carousel's full-pane artwork style and stays on the current track", async ({
   page,
@@ -395,13 +396,19 @@ test("desktop and phone layouts render the bundled LCD typeface and keep HOLD to
     await cdp.send("DOM.enable");
     await cdp.send("CSS.enable");
     const { root } = await cdp.send("DOM.getDocument");
-    const { nodeId } = await cdp.send("DOM.querySelector", {
+    const status = await cdp.send("DOM.querySelector", {
+      nodeId: root.nodeId,
+      selector: ".screen-viewport .screen-status > strong",
+    });
+    const statusFonts = await cdp.send("CSS.getPlatformFontsForNode", { nodeId: status.nodeId });
+    expect(statusFonts.fonts.length).toBeGreaterThan(0);
+    expect(statusFonts.fonts.every((font) => font.isCustomFont)).toBe(true);
+    const row = await cdp.send("DOM.querySelector", {
       nodeId: root.nodeId,
       selector: ".screen-viewport .screen-row.selected .marquee-text",
     });
-    const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", { nodeId });
-    expect(fonts.length).toBeGreaterThan(0);
-    expect(fonts.every((font) => font.isCustomFont)).toBe(true);
+    const rowFonts = await cdp.send("CSS.getPlatformFontsForNode", { nodeId: row.nodeId });
+    expect(rowFonts.fonts.length).toBeGreaterThan(0);
     await cdp.detach();
     const bounds = await page.locator(".top-hold").boundingBox();
     expect(bounds!.height).toBeGreaterThanOrEqual(44);
@@ -736,6 +743,65 @@ test("split menu navigation keeps the right preview stationary while the left ha
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
 });
 
+test("split menu back navigation shields the right preview from sliding menus", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await choose(page, "设置");
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  await page
+    .locator(".lcd-screen")
+    .evaluate((element) =>
+      (element as HTMLElement).style.setProperty(
+        "--lcd-page-duration",
+        "1000ms",
+      ),
+    );
+  await key(page, "Escape");
+  await expect(page.locator(".screen-pane-still")).toHaveCount(1);
+  await expect(page.locator(".screen-pane-incoming")).toHaveCount(1);
+  const panes = await page.evaluate(() => {
+    const lcd = document
+      .querySelector(".screen-viewport")!
+      .getBoundingClientRect();
+    const still = document
+      .querySelector<HTMLElement>(".screen-pane-still")!;
+    const incoming = document
+      .querySelector<HTMLElement>(".screen-pane-incoming")!;
+    return {
+      lcdWidth: lcd.width,
+      stillLeft: still.getBoundingClientRect().left - lcd.left,
+      stillWidth: still.getBoundingClientRect().width,
+      stillZ: Number(getComputedStyle(still).zIndex),
+      incomingLeft: incoming.getBoundingClientRect().left - lcd.left,
+      incomingWidth: incoming.getBoundingClientRect().width,
+      incomingOpacity: Number(getComputedStyle(incoming).opacity),
+      incomingZ: Number(getComputedStyle(incoming).zIndex),
+      incomingInert: incoming.inert,
+    };
+  });
+  expect(panes.stillLeft).toBeCloseTo(panes.lcdWidth / 2, 0);
+  expect(panes.stillWidth).toBeCloseTo(panes.lcdWidth / 2, 0);
+  expect(panes.incomingLeft).toBeCloseTo(panes.lcdWidth / 2, 0);
+  expect(panes.incomingWidth).toBeCloseTo(panes.lcdWidth / 2, 0);
+  expect(panes.stillZ).toBeGreaterThan(panes.incomingZ);
+  expect(panes.incomingOpacity).toBe(1);
+  expect(panes.incomingInert).toBe(true);
+  await expect(page.locator(".screen-pane-still")).toHaveCount(0);
+  await expect(page.locator(".screen-pane-incoming")).toHaveCount(0);
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  // Rapid interruption during a split crossfade leaves no orphaned panes or duplicate IDs.
+  await key(page, "Enter");
+  await key(page, "Escape");
+  await expect(page.locator(".screen-pane-still")).toHaveCount(0);
+  await expect(page.locator(".screen-pane-incoming")).toHaveCount(0);
+  await expect(page.locator(".screen-outgoing")).toHaveCount(0);
+  const ids = await page
+    .locator("[id]")
+    .evaluateAll((items) => items.map((item) => item.id));
+  expect(new Set(ids).size).toBe(ids.length);
+});
+
 test("LCD and body aspect ratios remain stable with narrow menu scrolling", async ({
   page,
 }) => {
@@ -795,7 +861,7 @@ test("Cover Flow flips the selected cover into an overlaid album sheet, includin
         .getAnimations().length,
     };
   });
-  expect(motion.duration).toBe(280);
+  expect(motion.duration).toBe(classicMotion.album);
   expect(motion.frames[0]).toContain("rotateY(-90deg)");
   expect(motion.frames.at(-1)).toContain("rotateY(0deg)");
   expect(motion.layoutWidth / motion.viewportWidth).toBeCloseTo(0.8, 2);
@@ -831,8 +897,9 @@ test("provisional menu travel keeps text readable and Cover Flow closes from bot
       progress: animation.effect!.getComputedTiming().progress,
     };
   });
-  expect(travel.duration).toBe(240);
-  expect(travel.progress).toBeGreaterThan(0.5);
+  expect(travel.duration).toBe(classicMotion.page);
+  expect(travel.progress).toBeGreaterThan(0.25);
+  expect(travel.progress).toBeLessThan(0.5);
   await live(page).evaluate((element) => element.getAnimations()[0].finish());
   await choose(page, "Cover Flow");
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
@@ -852,7 +919,7 @@ test("provisional menu travel keeps text readable and Cover Flow closes from bot
       };
     }),
   );
-  expect(halves.map((half) => half.duration)).toEqual([360, 360]);
+  expect(halves.map((half) => half.duration)).toEqual([classicMotion.flowExit, classicMotion.flowExit]);
   expect(halves.every((half) => half.inert)).toBe(true);
   expect(Number(halves[0].transform.split(",")[4])).toBeLessThan(0);
   expect(Number(halves[1].transform.split(",")[4])).toBeGreaterThan(0);
@@ -1135,7 +1202,7 @@ test("Cover Flow entry parts the menu halves and can return before entry finishe
       inert: (element as HTMLElement).inert,
     };
   }));
-  expect(motion.map(item => item.duration)).toEqual([280, 280]);
+  expect(motion.map(item => item.duration)).toEqual([classicMotion.flowEnter, classicMotion.flowEnter]);
   expect(motion[0].x).toBeLessThan(0);
   expect(motion[1].x).toBeGreaterThan(0);
   expect(motion.every(item => item.inert)).toBe(true);
