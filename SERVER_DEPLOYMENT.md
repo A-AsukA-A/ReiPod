@@ -282,3 +282,11 @@ GitHub Pages [45563007395](https://github.com/A-AsukA-A/ReiPod/actions/runs/4556
 VPS 发布包含 66 个文件（65 个构建产物及 `release.txt = c86680f`），旧发布与 `release.json` 备份至 `/opt/reipod/backups/dist-before-c86680f-20261126T053623Z.tgz`，非入口资源先复制到 `/opt/reipod/dist`（保留旧哈希资源），`index.html` 与 `release.txt` 最后原子替换；暂存与目标 `index.html`（`ace6a4f28f6a4b1d43c0c82e292e567ca638ce3aa39d750e300ad653b561d36f`）及 `release.txt` 校验匹配。`nginx` 与 `reipod-music` 均保持 `active`，个人首页 `https://julyblog.party/` 返回 200，`.local/music-sessions` 与服务进程未受影响。
 
 公网 `https://julyblog.party/ReiPod/` 返回 `HTTP/2 200` 且 HTML SHA-256 与本地 `dist/index.html` 一致；匿名 `POST /api/music/netease/status`（`Origin: https://a-asuka-a.github.io`）与 `POST /api/music/qq/status`（`Origin: https://julyblog.party`）返回 200，非允许来源 `https://example.com` 返回 403。GitHub Pages 工作流 [45762597125](https://github.com/A-AsukA-A/ReiPod/actions/runs/45762597125) 成功，`https://a-asuka-a.github.io/ReiPod/` 返回 `HTTP/2 200` 且 HTML SHA-256 与本地构建一致。本次仍为静态发布与匿名接口检查，不建立物理 iPhone 安装或真实平台账号播放验收。
+
+## 2026-11-26 REL121 视觉校准与 160 kbps 试听发布（含旧音频清理）
+
+前端由 `c86680f` 更新为 [38312be](https://github.com/A-AsukA-A/ReiPod/commit/38312be)（含 `675239c` 的 `VISUAL119` + `AUDIO120` 及入口预加载简化与 `entryGzip` 155 kB 预算调整）；`server/` 源码未变更，后端继续保持 `abf75e2`。显式以 `VITE_MUSIC_API_URL=https://julyblog.party/api/music/` 构建通过 `check-dist` 与体积检查（`programGzip = 339,292 B`、`entryGzip = 149,384 B`、`demoAudio = 17,002,461 B`）。
+
+VPS 在 `675239c` 先将旧发布与 `release.json` 备份至 `/opt/reipod/backups/dist-before-675239c-20261126T060041Z.tgz`，全量更新 66 个文件后清理历史未引用的 3 个 Kevin MacLeod 文件（`carefree.m4a`、`monkeys-spinning-monkeys.m4a`、`sneaky-snitch.m4a`），随后增量同步 `38312be` 的 `assets/`、`index.html` 与 `release.txt`；`nginx` 与 `reipod-music` 均保持 `active`，`.local/music-sessions` 与个人首页未受影响。
+
+公网复核：`https://julyblog.party/ReiPod/` 与 `https://a-asuka-a.github.io/ReiPod/` 均返回 `HTTP/2 200`，HTML SHA-256 均为 `6a2660f2e470b23ac4f0983ecdb5fd0d16526b9a74da10ae116c7888f8ef64a5`（与本地构建一致）；`https://julyblog.party/ReiPod/release.txt` = `38312be`、`https://julyblog.party/` = `200`；`https://julyblog.party/ReiPod/music/qingtian.m4a` 返回 `HTTP/2 200`（`content-length: 5584959`），`carefree.m4a` 返回 `404`；匿名 `POST /api/music/netease/status`（Pages 来源）与 `POST /api/music/qq/status`（主站来源）返回 `200`，非允许来源返回 `403`。GitHub Pages 工作流 [45765480577](https://github.com/A-AsukA-A/ReiPod/actions/runs/45765480577) 成功。

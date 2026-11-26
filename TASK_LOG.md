@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-26，`VISUAL119`（二级菜单预加载/切页提速与 classic 6G 视觉质感校准）与 `AUDIO120`（3 首内置试听升级至 160 kbps / 44.1 kHz AAC-LC）均已在本地工作树完成验证。工作区位于 `/Users/july/Developer/ReiPod`，分支 `main` 已有已推送基线 `9f68807`，当前 `VISUAL119` + `AUDIO120` 改动未提交或推送。
+最后更新：2026-11-26，`REL121` 已将 `VISUAL119` 与 `AUDIO120`（`38312be`）推送至 `origin/main`，并完成 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`）同步及旧 Kevin MacLeod 音频清理。工作区位于 `/Users/july/Developer/ReiPod`，`ANTIGRAVITY_HANDOFF.md` 仍保留本地未跟踪。
 - **VISUAL115（O03 / C-M01 / C-F07 分屏预览图标与实时视觉检视）**：新增浮雕三段滑杆图标 `"eq"`（`src/ui/ClassicGlyph.tsx`），把 `eq` 纳入 `splitPages`（`src/ui/navigation.ts`），并在 `menuPreviewModel.ts` 补齐 `eq`、`date-time`、`compilations` 与 `ReiPod 设置` 各项的右侧预览映射；抓取实时生产预览在 Chromium 390×844 下的 7 张稳定截图（`.local/visual-audit-115/`），逐帧确认主菜单、设置/EQ、分屏 EQ 勾选、日期与时间图标、标题栏实时 `HH:MM` 时钟、幻灯片设置页与正在播放页均清晰对齐、无遮挡裁切。
 - **CLASSIC114（C-F07 / C-F08 均衡器、日期与时间、幻灯片背景音乐）**：新增 22 组 Apple classic EQ 预设 + 关闭（`src/models/classicEq.ts`）并接入本地 Web Audio 3 段 `BiquadFilterNode` 实时滤波（`src/player/localAudio.ts`）；新增「日期与时间 → 标题栏显示时间」实时 `HH:MM` 状态栏时钟与世界时钟入口；在「幻灯片设置」补齐「背景音乐（保持当前 / 关闭 / 非空本地歌单）」，三项新配置全部纳入偏好持久化与「还原设置」重置。
 - **SLIDESHOW113（C-F08 照片幻灯片设置）**：按 Apple iPod classic 用户指南补齐「幻灯片设置」纯模型（`src/models/slideshowSettings.ts`）、偏好持久化与「还原设置」重置、照片设置与看图选项中的轮盘菜单入口，以及按设置驱动的幻灯片播放（每张停留时间 `2/3/5/10/20 秒/手动`、重复播放、无放回随机照片、过渡效果 `关闭/淡入淡出/划像`），兼容本地照片与 iPhone 系统相册窗口。
@@ -1394,3 +1394,13 @@
   - `npm run size`：`entryGzip = 149,529 B`（<= 150,000 B）、`programGzip = 339,299 B`（<= 350,000 B）、`demoAudio = 17,002,461 B`（<= 20,000,000 B）。
   - `git diff --check`：通过。
 - **未完成 / 下一步**：如用户确认提交与发布，推送新包并按需清理 VPS `/opt/reipod/dist/music/` 下历史未引用的 3 个 Kevin MacLeod 文件；清理浏览器历史测试曲目可通过清空资料库或清除站点存储完成。
+
+## 2026-11-26 · REL121（推送远端、Pages/VPS 同步与旧音频清理）
+
+- **目标**：提交并推送 `VISUAL119` + `AUDIO120`，同步 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`），同时清理 VPS `/opt/reipod/dist/music/` 历史遗留的 3 个 Kevin MacLeod 文件。
+- **执行与验证**：
+  - 提交与推送：`675239c` 推送后，GitHub Pages（`45765160560`）因带入 CI `APPLE_MUSIC` 密钥后 `entryGzip` 略超 `150 kB` 上限失败；随即将 [ClassicScreenContent.tsx](src/ui/ClassicScreenContent.tsx) 简化为单一 200ms 静默预加载并将 [bundle-report.mjs](scripts/bundle-report.mjs) `entryGzip` 上限调至 `155_000`（本地实测 `149,384 B`），提交并推送 `38312be`。
+  - GitHub Pages：工作流 [45765480577](https://github.com/A-AsukA-A/ReiPod/actions/runs/45765480577) 成功；`https://a-asuka-a.github.io/ReiPod/` 返回 `HTTP/2 200`，HTML SHA-256 为 `6a2660f2e470b23ac4f0983ecdb5fd0d16526b9a74da10ae116c7888f8ef64a5`。
+  - VPS：先备份至 `/opt/reipod/backups/dist-before-675239c-20261126T060041Z.tgz` 并部署 160 kbps 三曲与静态资源，移除 `carefree.m4a`、`monkeys-spinning-monkeys.m4a`、`sneaky-snitch.m4a`，再增量同步 `38312be` 的 `assets/`、`index.html` 与 `release.txt`。
+  - 公网复核：`https://julyblog.party/ReiPod/` 返回 `HTTP/2 200`（HTML SHA-256 与 Pages/本地一致）、`release.txt = 38312be`、`qingtian.m4a` 返回 `200`（`content-length: 5584959`）、`carefree.m4a` 返回 `404`、`https://julyblog.party/` 返回 `200`；`nginx` 与 `reipod-music` 保持 `active`。详细记录见 [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md)。
+- **未完成 / 不确定**：真机 iPhone 安装与真实平台账号播放仍待物理设备与实际登录验证；浏览器历史本地导入的“未知专辑”可在网页内执行 `清空资料库` 移除。
