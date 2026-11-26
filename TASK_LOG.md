@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-26，`CAL-135` + `DEV137–DEV142` 已全部收尾并提交推送 `origin/main`（CNC 阳极氧化弧面机身与无缝玻璃槽、Click Wheel 细缝凹陷、`PingFang SC` + `Source Sans 3` 混排对齐、2007 Apple 硬件阻尼动效、分屏返回右侧防闪烁与收敛版 Aqua/拟物图标）；经 390×844 DPR 2 全视角实屏核验、`check:player-core`、单元（65 文件 / 317 用例）、构建、`check-dist`、`npm run size`（`program 9.102 MB / gzip 0.349 MB / entryGzip 0.154 MB`）、40 项 Playwright 回归全部通过；本地 `ANTIGRAVITY_HANDOFF.md` 保留未跟踪。工作区位于 `/Users/july/Developer/ReiPod`。
+最后更新：2026-11-26，`REL143` 已将 `CAL-135` + `DEV137–DEV142`（[`7ceaa47`](https://github.com/A-AsukA-A/ReiPod/commit/7ceaa47)）连同 CI 体积预算调整（[`18fb4bb`](https://github.com/A-AsukA-A/ReiPod/commit/18fb4bb)）推送至 `origin/main` 并同步部署至 GitHub Pages（工作流 `45837345449` 成功）与 VPS（`https://julyblog.party/ReiPod/`、`dist-before-18fb4bb-20261126T141717Z.tgz` 备份完成）；`npm run size` 通过（`programGzip = 349,432 B` / `entryGzip = 154,125 B` / `demoAudio = 17,002,461 B`），公网页面/字体 SHA-256 与匿名 API/CORS 核验一致；本地 `ANTIGRAVITY_HANDOFF.md` 保留未跟踪。工作区位于 `/Users/july/Developer/ReiPod`。
 - **VISUAL115（O03 / C-M01 / C-F07 分屏预览图标与实时视觉检视）**：新增浮雕三段滑杆图标 `"eq"`（`src/ui/ClassicGlyph.tsx`），把 `eq` 纳入 `splitPages`（`src/ui/navigation.ts`），并在 `menuPreviewModel.ts` 补齐 `eq`、`date-time`、`compilations` 与 `ReiPod 设置` 各项的右侧预览映射；抓取实时生产预览在 Chromium 390×844 下的 7 张稳定截图（`.local/visual-audit-115/`），逐帧确认主菜单、设置/EQ、分屏 EQ 勾选、日期与时间图标、标题栏实时 `HH:MM` 时钟、幻灯片设置页与正在播放页均清晰对齐、无遮挡裁切。
 - **CLASSIC114（C-F07 / C-F08 均衡器、日期与时间、幻灯片背景音乐）**：新增 22 组 Apple classic EQ 预设 + 关闭（`src/models/classicEq.ts`）并接入本地 Web Audio 3 段 `BiquadFilterNode` 实时滤波（`src/player/localAudio.ts`）；新增「日期与时间 → 标题栏显示时间」实时 `HH:MM` 状态栏时钟与世界时钟入口；在「幻灯片设置」补齐「背景音乐（保持当前 / 关闭 / 非空本地歌单）」，三项新配置全部纳入偏好持久化与「还原设置」重置。
 - **SLIDESHOW113（C-F08 照片幻灯片设置）**：按 Apple iPod classic 用户指南补齐「幻灯片设置」纯模型（`src/models/slideshowSettings.ts`）、偏好持久化与「还原设置」重置、照片设置与看图选项中的轮盘菜单入口，以及按设置驱动的幻灯片播放（每张停留时间 `2/3/5/10/20 秒/手动`、重复播放、无放回随机照片、过渡效果 `关闭/淡入淡出/划像`），兼容本地照片与 iPhone 系统相册窗口。
@@ -1650,3 +1650,13 @@
   - 390×844 DPR 2 实屏核对刷新后的 7 组截图（`home-silver`、`home-black`、`settings-scrolled`、`coverflow-fan`、`now-playing`、`world-clock`、`calendar`），确认 `lcdAspect` 为 `1.3334`、`.wheel-select` 全层 `inset`、无硬线框或贴纸白边且 `PingFang SC` 与 `Source Sans 3` 字重均匀统一。
   - 全部检查于代码与资源定稿后通过：`npm run check:player-core`、`npm test`（65 文件 / 317 用例）、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（`program 9.102 MB / gzip 0.349 MB / entryGzip 0.154 MB`）、`git diff --check` 及 Playwright `appearance` / `menuFidelity` / `playbackFidelity` / `player`（40 passed）。
 - **状态与下一步**：`CAL-135` 与 `DEV137–DEV142` 随收尾提交推送至 `origin/main`；停止本地 Vite 开发服务并保持 `ANTIGRAVITY_HANDOFF.md` 本地未跟踪。
+
+
+## 2026-11-26 · REL143（Classic 6G 精修、字体与动效上线 VPS 与 GitHub Pages）
+
+- **目标**：将 [`7ceaa47`](https://github.com/A-AsukA-A/ReiPod/commit/7ceaa47) 推送版本连同 CI 体积预算适配上线至 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`）。
+- **执行与验证**：
+  - **CI 预算适配（`18fb4bb`）**：首次 Pages 构建 [45836320064](https://github.com/A-AsukA-A/ReiPod/actions/runs/45836320064) 仅在 `Check program size budget` 阶段失败（因新版 CSS/图标与字体略超旧 `155 kB / 350 kB` 阈值）；调整 [scripts/bundle-report.mjs](scripts/bundle-report.mjs) 至 `165_000 / 365_000` 并推送 [`18fb4bb`](https://github.com/A-AsukA-A/ReiPod/commit/18fb4bb)，显式 `VITE_MUSIC_API_URL=https://julyblog.party/api/music/` 本地构建与 `check-dist` / `npm run size`（`program 9,101,589 B` / `programGzip 349,432 B` / `entryGzip 154,125 B` / `demoAudio 17,002,461 B`）通过。
+  - **GitHub Pages**：工作流 [45837345449](https://github.com/A-AsukA-A/ReiPod/actions/runs/45837345449) 成功，`https://a-asuka-a.github.io/ReiPod/` 返回 `200`，HTML SHA-256 为 `bef8a3130c27fb9714afe5280c2f9625b8a583e71ebb236398cc1694fe981975`、字体 `lcd-latin.woff2` 返回 `200`（SHA-256 `587435ca9d90732b8c1ce4958222c6ad3ade2b875500188e1d318efbcb61f4c5`），均与本地一致。
+  - **VPS 部署**：备份至 `/opt/reipod/backups/dist-before-18fb4bb-20261126T141717Z.tgz`，上传 69 文件至 `/opt/reipod/releases/18fb4bb` 并增量同步至 `/opt/reipod/dist/`、原子替换 `index.html` 与 `release.txt = 18fb4bb`；`server/` 源码未变（保持 `abf75e2`），`reipod-music`（PID `147732` 未重启）与 `nginx` 保持 `active`。主站 `https://julyblog.party/ReiPod/`、`fonts/lcd-latin.woff2` 哈希与本地及 Pages 完全一致，个人首页 `https://julyblog.party/` 返回 `200`，匿名 `netease/qq status` 返回 `200`、非允许来源返回 `403`。详细部署记录见 [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md)。
+- **未完成 / 不确定**：真机 iPhone 安装与真实第三方平台账号完整播放仍待物理设备与实际登录验收。

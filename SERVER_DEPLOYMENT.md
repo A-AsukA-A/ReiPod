@@ -298,3 +298,12 @@ VPS 在 `675239c` 先将旧发布与 `release.json` 备份至 `/opt/reipod/backu
 VPS 在备份旧发布与 `release.json` 至 `/opt/reipod/backups/dist-before-efec052-20261126T063229Z.tgz` 后，增量同步 `assets/`、`index.html` 与 `release.txt = efec052`；`nginx` 与 `reipod-music` 均保持 `active`，`.local/music-sessions` 与个人首页未受影响。
 
 公网复核：`https://julyblog.party/ReiPod/` 与 `https://a-asuka-a.github.io/ReiPod/` 均返回 `HTTP/2 200`，HTML SHA-256 均为 `10a451b1a7b23a44f5dce06a0a2c2ba191517bff5b85a7a23d3640a2a19efd38`（与本地 `dist/index.html` 一致）；`https://julyblog.party/ReiPod/release.txt` = `efec052`、`https://julyblog.party/` = `200`；匿名 `POST /api/music/netease/status`（Pages 来源）与 `POST /api/music/qq/status`（主站来源）返回 `200`，非允许来源返回 `403`。GitHub Pages 工作流 [45768654963](https://github.com/A-AsukA-A/ReiPod/actions/runs/45768654963) 成功。
+
+
+## 2026-11-26 REL143 Classic 6G 质感精修、字体与动效发布
+
+前端由 `efec052` 更新为 [18fb4bb](https://github.com/A-AsukA-A/ReiPod/commit/18fb4bb)（涵盖 [7ceaa47](https://github.com/A-AsukA-A/ReiPod/commit/7ceaa47) 的 `CAL-135` / `DEV137–DEV142` 视觉、字体 `Source Sans 3` + 苹方、2007 阻尼动效、分屏返回右侧防闪烁与 CNC/Aqua 精修，以及 `18fb4bb` 的 CI gzip 预算上调至 `165 kB / 365 kB`）；`server/` 源码未变更，后端继续保持 `abf75e2`。显式以 `VITE_MUSIC_API_URL=https://julyblog.party/api/music/` 构建通过 `check-dist` 与体积检查（`program = 9,101,589 B`、`programGzip = 349,432 B`、`entryGzip = 154,125 B`、`demoAudio = 17,002,461 B`）。
+
+VPS 在备份旧发布与 `release.json` 至 `/opt/reipod/backups/dist-before-18fb4bb-20261126T141717Z.tgz` 后，上传暂存 69 个构建文件（含 `release.txt = 18fb4bb`），先增量合并静态资源并保留历史哈希资源，最后原子替换 `index.html` 与 `release.txt`；`reipod-music`（PID `147732` 未重启）与 `nginx` 均保持 `active`，`.local/music-sessions` 与个人首页未受影响。
+
+公网复核：`https://julyblog.party/ReiPod/` 与 `https://a-asuka-a.github.io/ReiPod/` 均返回 `HTTP 200`，HTML SHA-256 均为 `bef8a3130c27fb9714afe5280c2f9625b8a583e71ebb236398cc1694fe981975`（与本地 `dist/index.html` 一致）；新增字体 `/ReiPod/fonts/lcd-latin.woff2` 在主站与 Pages 均返回 `200` 且 SHA-256 均为 `587435ca9d90732b8c1ce4958222c6ad3ade2b875500188e1d318efbcb61f4c5`；`https://julyblog.party/ReiPod/release.txt` = `18fb4bb`、`https://julyblog.party/` = `200`；匿名 `POST /api/music/netease/status`（Pages 来源）与 `POST /api/music/qq/status`（主站来源）均返回 `200`（`{"authorized":false}`），非允许来源 `https://example.com` 返回 `403`。GitHub Pages 工作流 [45837345449](https://github.com/A-AsukA-A/ReiPod/actions/runs/45837345449) 成功（前置 `7ceaa47` 运行 [45836320064](https://github.com/A-AsukA-A/ReiPod/actions/runs/45836320064) 仅因旧 155/350 kB gzip 预算阈值失败）。本次为静态发布与匿名接口检查，不建立物理 iPhone 安装或真实平台账号播放验收。
