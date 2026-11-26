@@ -1,81 +1,84 @@
 # ReiPod
 
-[English](README.md) · [简体中文](README.zh-CN.md) · [开发总纲](DEVELOPMENT.md) · [项目结构](PROJECT_STRUCTURE.md) · [任务日志](TASK_LOG.md)
+[English](README.md) · [简体中文](README.zh-CN.md) · [Web Demo (GitHub Pages)](https://a-asuka-a.github.io/ReiPod/) · [Web Mirror (VPS)](https://julyblog.party/ReiPod/) · [iPhone Guide](ios/README.md)
 
 **Your music, a click wheel away.**
 
-A classic-style music player for the web and iPhone. Browse album artwork with Cover Flow, build a local library, follow lyrics, or connect a music service—all through the wheel and buttons.
+ReiPod is a classic-inspired music player for the web and iPhone, built around the 2007 iPod classic 6G interface. Browse your local library, spin through Cover Flow, follow word-synced lyrics, or connect Apple Music, NetEase Cloud Music, and QQ Music—all through a display-only LCD and Click Wheel.
 
-[Try the web player](https://a-asuka-a.github.io/ReiPod/) · [Install on iPhone](ios/README.md) · [Music service setup](MUSIC_SERVICES.md)
+---
 
-## A look inside
+## Preview
 
-|                                                    Library & menus                                                     |                                           Cover Flow                                            |                                                           Now Playing                                                            |
-| :--------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="assets/screenshots/home.png" alt="ReiPod main menu with album artwork and a silver click wheel" width="260"> | <img src="assets/screenshots/cover-flow.png" alt="ReiPod Cover Flow album browser" width="260"> | <img src="assets/screenshots/now-playing.png" alt="ReiPod Now Playing with artwork, track information and progress" width="260"> |
+| Home & Split Preview | Cover Flow | Now Playing | Settings & EQ |
+| :---: | :---: | :---: | :---: |
+| <img src="assets/screenshots/home.png" alt="ReiPod main menu with split preview and silver Click Wheel" width="200"> | <img src="assets/screenshots/cover-flow.png" alt="ReiPod Cover Flow 3D album browser" width="200"> | <img src="assets/screenshots/now-playing.png" alt="ReiPod Now Playing with tilted artwork reflection and Aqua progress bar" width="200"> | <img src="assets/screenshots/settings.png" alt="ReiPod Settings menu with 3D chrome EQ icon and reflection" width="200"> |
 
-Screenshots show the current web build with included demo music. The interface currently uses Simplified Chinese; these two README versions do not change the app's language. UI calibration against the 2007 iPod classic 6G is ongoing.
+*Screenshots capture the current web build in Simplified Chinese with bundled demo tracks. Visual proportions follow the 2007 classic 6G layout, with ongoing hardware calibration tracked in [UI_METRICS.md](UI_METRICS.md).*
 
-## What you can do
+---
 
-- **Bring your own music.** Import audio with metadata and embedded artwork. Browse artists, albums, compilations, songs, genres and composers; search, favorite tracks and build On-The-Go or browser-local playlists.
-- **Browse with the wheel.** Cover Flow, contextual menu previews, Quick Scroll alphabet jumps on long lists, single-album artist skip, remembered selections, HOLD locking and keyboard controls keep navigation inside the player.
-- **Read lyrics while listening.** YRC follows individual graphemes with soft highlighting, sustained-word waves and staggered line springs; LRC keeps line-level follow. Import LRC or embedded lyrics, or fetch lyrics through the built-in service or HTTPS NetEase/QQ backend. Hold Center and confirm **歌词** (Lyrics) to open them quickly; turn the feature on or off in Settings.
-- **Choose your music source.** Use the iPhone's system music library, configure web Apple Music, or connect NetEase Cloud Music and QQ Music through the built-in iOS service or HTTPS backend. Account sessions and libraries stay separate; catalog VIP/purchase labels and playback errors explain restrictions.
-- **Make it yours.** Silver or black finish, light or dark surroundings, shuffle/repeat, ratings, 22-preset EQ, Sound Check, Time-in-Title clock, backlight and wheel sounds.
-- **Keep more in your pocket.** The updated iPhone shell browses authorized system photo albums directly; the web version keeps local albums and configurable slideshows (time per slide, background music, repeat, shuffle, transitions). Photo/podcast browsers show content, with import, slideshow settings and permission tools under **设置 → ReiPod 设置 → 照片设置 / 播客设置**. System-readable podcasts have show artwork, episode counts and independent playback. **附加功能** (Extras) also includes multi-city World Clocks, a Stopwatch with lap logs, Alarms (with beep or local playlist wake-up), Sleep Timer and Countdown, Calendar/To-Dos and Contacts (with `.ics`/`.vcf` import and read-only iPhone EventKit/Contacts access), a plain-text reader, and independent recreations of **iQuiz**, **Klondike** and **Vortex**.
+## Features
 
-Search now shows live local results for songs, artists, albums, playlists and audio podcasts. Next/Previous enter a space/delete a character while editing; MENU moves to the results. Firmware menus keep their supported original order; imports, services, lyrics options and appearance are grouped under **设置 → ReiPod 设置**. **还原设置** resets implemented firmware choices after confirmation. See [original feature coverage and remaining gaps](FIRMWARE_FEATURES.md).
+- **2007 Classic 6G UI & Click Wheel**
+  - Silver and Space Black anodized finishes with light, warm, or dark surroundings.
+  - Display-only 320×240 logical LCD: split-screen studio previews with chrome icon reflections, glossy Aqua selection bars and status header, Cover Flow stage, Quick Scroll alphabet HUD, HOLD switch locking, and full keyboard/wheel navigation.
+- **Local Library & Audio Engine**
+  - Client-side audio and metadata import (`music-metadata` ID3/MP4 tags, embedded covers, `compilation` and `sort-as` tags) persisted in IndexedDB.
+  - Browse by Artists (with single-album skip), Albums, Compilations, Songs, Genres, Composers, Playlists, and live local search.
+  - Built-in **22-preset Web Audio EQ** (3-band biquad filter), **Sound Check** loudness leveling (`DynamicsCompressorNode`), **Shuffle (Off / Songs / Albums)**, **Repeat (Off / One / All)**, and **On-The-Go** playlists.
+- **Synchronized Lyrics**
+  - YRC grapheme-level soft-edge highlighting with line spring motion; LRC line-by-line sync and embedded lyric import.
+  - Hold **Center** on a track and select **歌词** (Lyrics) to jump straight in, or toggle lyrics availability in Settings.
+- **Multi-Source Music**
+  - Isolated accounts, libraries, and queues across **Local files**, **iPhone system music** (`MediaPlayer`), **Web Apple Music** (`MusicKit`), **NetEase Cloud Music**, and **QQ Music** (via built-in iOS native bridge or HTTPS backend—no browser extensions required).
+- **Extras & Classic Wheel Games**
+  - **Clocks & Time**: Multi-city World Clocks, **Time in Title** status-bar clock, Stopwatch with lap logs, Alarms (beep or local playlist), Sleep Timer, and Countdown.
+  - **Media & Organizer**: Photo albums & configurable Slideshows (slide duration, background music, repeat, shuffle, transitions), Podcasts, Calendar/To-Dos & Contacts (`.ics` / `.vcf` import plus read-only iPhone EventKit/Contacts access), and plain-text **Notes** reader.
+  - **Games**: Independent wheel-driven recreations of **iQuiz**, **Klondike**, and **Vortex**.
 
-Local music also browses by **genre → artist → album → song**, **composer → album → song**, and **compilations** (with ID3/MP4 `compilation` and `sort-as` tags, skipping the album list when an artist has only one album in the current scope). Category filters stay in effect through album queues, and MENU returns to the remembered selection. Genre rows show artist/album counts; Play starts the selected category while Center continues browsing.
+---
 
-Shuffle offers **Off / Songs / Albums**; album shuffle keeps available disc/track order within each album. Local **On-The-Go** supports adding collections, removing songs, saving numbered read-only playlists and confirmed clearing. Failed save/clear operations keep the working list, and saving does not interrupt its active playback queue.
+## Controls
 
-<img src="assets/screenshots/search.png" alt="Live local search with typed results and a horizontal alphabet strip" width="260">
-<img src="assets/screenshots/lyrics.png" alt="Authorized test track with word timing and Lazer-style lyric motion" width="260">
+| Input | Action |
+| :--- | :--- |
+| **Wheel / `↑` `↓`** | Scroll menus, Quick Scroll on long lists, or adjust the active control |
+| **Center / `Enter`** | Confirm; in Now Playing, cycle Artwork → Seek diamond → Shuffle → Rating → Lyrics |
+| **MENU / `Escape`** | Go back; hold **MENU** (or press `Home`) to return to Main Menu |
+| **Play/Pause / `Space`** | Play or pause (starts playback directly on highlighted collections) |
+| **Previous / Next / `←` `→`** | Skip tracks; hold to seek (space / backspace while typing in Search) |
+| **Hold Center** | Open track or photo options |
+| **HOLD Switch** | Lock all wheel and button inputs while playback continues |
 
-## Music sources
+> On updated iPhone builds, turning the wheel on the default Now Playing screen directly adjusts system volume via `MPVolumeView`.
 
-| Source              | What it needs                                                            | Current scope                                                                                                  |
-| ------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| Local files         | A supported browser; no account or backend                               | Imports, artwork, playlists and playback; data stays in that browser                                           |
-| iPhone system music | The native shell, iOS permission and playable music in Apple's Music app | Library, existing playlists and playback through MediaPlayer; no web MusicKit developer token                  |
-| Web Apple Music     | Site-owned MusicKit developer configuration and listener authorization   | Library/catalog integration implemented; production credentials and real-account DRM validation remain pending |
-| NetEase Cloud Music | Built-in iOS service or HTTPS backend; QR login | VPS QR generation verified; real-account login/playback on the VPS remains pending |
-| QQ Music | Built-in iOS service or HTTPS backend; QQ/WeChat QR login | VPS QR generation verified; real-account login/playback remains pending |
+---
 
-**GitHub Pages hosts the static player.** The NetEase/QQ web route connects to the maintainer’s HTTPS backend; the iOS app includes a native network bridge. Browser extensions are no longer used. Build and validation details are in [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md). Their integrations use community APIs, and playback remains subject to account access, region and platform availability. No alternative-source unlocking is provided. See [setup and verification limits](MUSIC_SERVICES.md).
+## Music Sources
 
-## Start listening
+| Source | Requirements | Current Scope |
+| :--- | :--- | :--- |
+| **Local files** | Modern browser (MP3 / M4A / WAV) | Full offline import, artwork, tags, playlists, EQ, and Sound Check in browser storage |
+| **iPhone system music** | Native iOS shell & Media Library permission | Direct playback and playlist browsing via `MediaPlayer` |
+| **Web Apple Music** | Site-owned MusicKit developer token | Catalog/library integration implemented; production DRM & account checks pending |
+| **NetEase / QQ Music** | iOS built-in bridge or HTTPS backend (`server/`) | QR login verified on VPS; real-account playback & background checks tracked in [MUSIC_SERVICES.md](MUSIC_SERVICES.md) |
 
-Open the [web player](https://a-asuka-a.github.io/ReiPod/) and play an included demo track, or use **设置 → ReiPod 设置 → 导入音乐** (Settings → ReiPod Settings → Import Music) to choose your files. MP3, AAC/M4A and PCM WAV are suggested; decoding depends on the browser.
+*Web builds on GitHub Pages connect to the maintainer's HTTPS API (`https://julyblog.party/api/music/`). Browser extensions are retired.*
 
-The LCD is display-only. Use the wheel and buttons:
+---
 
-| Control               | Action                                                                                   |
-| --------------------- | ---------------------------------------------------------------------------------------- |
-| Wheel / ↑ ↓           | Select a menu item; adjust the current playback control                                  |
-| Center / Enter        | Confirm; in Now Playing, cycle artwork → seek → shuffle → rating → lyrics when available |
-| MENU / Escape         | Go back; hold MENU to return home (Home on keyboard)                                     |
-| Play/Pause / Space    | Play or pause                                                                            |
-| Previous / Next / ← → | Change track; hold to seek                                                               |
-| Hold Center           | Open song options; Lyrics is first when available or fetchable                           |
-| HOLD switch           | Lock input while playback continues                                                      |
+## Quick Start & Development
 
-On updated iPhone shells, turning the wheel on the ordinary Now Playing view adjusts system volume directly through `MPVolumeView` (side buttons also work). Lyrics can stay open across menu visits and queue skips; temporary seek/shuffle/rating controls reset. See the [playback state rules](PLAYBACK_INTERACTIONS.md) and [full user guide](USER_GUIDE.md).
-
-Local imports, settings and playlists are stored in the browser. Clearing site data or storage eviction can remove them, so keep your original files. Web playback does not guarantee background or lock-screen behavior; the native system-music route uses iOS playback.
-
-## Run locally
-
-Use **Node.js 24** for the full setup (the web app alone supports 22.12+).
+Requires **Node.js 24** for the full workspace (`22.12+` for the web frontend alone).
 
 ```sh
+# Run the web app locally
 npm ci
 npm run dev
 ```
 
-For the optional NetEase/QQ backend:
+Optional local NetEase/QQ music service:
 
 ```sh
 npm --prefix server ci --ignore-scripts
@@ -83,43 +86,38 @@ npm run build
 npm run music:serve
 ```
 
-Open `http://127.0.0.1:3210/`, then **设置 → ReiPod 设置 → 音乐服务** (Settings → ReiPod Settings → Music Services). The backend listens on localhost by default. This remains an optional development/self-hosted route. For the built-in app service, see [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md); HTTPS self-hosted configuration is documented in [MUSIC_SERVICES.md](MUSIC_SERVICES.md).
-
-For the iPhone app, follow the [Mac/Xcode installation guide](ios/README.md). A free Personal Team can sign for personal-device testing; it is not an App Store release.
-
-## Development
-
-Built with React, TypeScript and Vite. A thin WKWebView/MediaPlayer shell reuses the web interface on iPhone; the optional music backend runs separately.
+Validation & build checks:
 
 ```sh
-npm test
-npm run test:music-server
-npm run build
+npm test                  # Unit tests (Vitest)
+npm run test:music-server # Node backend tests
+npm run check:player-core # Verify DOM-free playback core compilation
+npm run build             # Type-check & Vite production bundle
 node scripts/check-dist.mjs
-npm run size
+npm run size              # Verify entry/program/audio size budgets
+npm run test:browser      # Playwright E2E suite (requires `npx playwright install chromium`)
 ```
 
-Browser regression tests:
+For native iOS builds and Xcode installation, see [ios/README.md](ios/README.md).
 
-```sh
-npx playwright install chromium
-npm run test:browser
-```
+---
 
-Pushes to `main` build and deploy the static site with GitHub Actions. UI work uses physical-device evidence first; existing CSS values and passing tests are not proof of hardware accuracy.
+## Documentation
 
-| Documentation                                                           | Purpose                                                               |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [User guide](USER_GUIDE.md)                                             | Detailed browsing, controls, imports and storage behavior             |
-| [Music services](MUSIC_SERVICES.md)                                     | Configuration, credentials, backend deployment and verification scope |
-| [iPhone app](ios/README.md)                                             | Native build, installation and device checks                          |
-| [UI standards](UI_STANDARDS.md)                                         | Evidence levels, measurements and visual acceptance                   |
-| [Hardware research](HARDWARE_RESEARCH.md) · [Replica notes](REPLICA.md) | Sources, model/version boundaries and provisional values              |
-| [Playback interactions](PLAYBACK_INTERACTIONS.md)                       | Center-button sequence, lyrics shortcut and state restoration         |
-| [Development instructions](AGENTS.md)                                   | Repository conventions and validation                                 |
+| Document | Topic |
+| :--- | :--- |
+| [USER_GUIDE.md](USER_GUIDE.md) | Detailed controls, imports, playlists, and storage behavior |
+| [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md) | Classic firmware feature coverage and remaining gaps |
+| [MUSIC_SERVICES.md](MUSIC_SERVICES.md) · [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md) | Music backend setup, provider isolation, and iOS native bridge |
+| [UI_STANDARDS.md](UI_STANDARDS.md) · [UI_METRICS.md](UI_METRICS.md) | Visual measurement rules and per-state calibration ledger |
+| [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md) · [REPLICA.md](REPLICA.md) | Hardware references, model boundaries, and provisional decisions |
+| [PLAYBACK_INTERACTIONS.md](PLAYBACK_INTERACTIONS.md) | Playback control sequences and state restoration |
+| [DEVELOPMENT.md](DEVELOPMENT.md) · [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) · [TASK_LOG.md](TASK_LOG.md) | Architecture layers, directory layout, and active handoff log |
 
-## Credits
+---
 
-Click-wheel geometry is adapted from [iPod.js](https://github.com/tvillarete/ipod-classic-js); audio metadata uses [music-metadata](https://github.com/Borewit/music-metadata). Fonts use a redistributable Noto Sans SC subset. The included authorized test tracks are Jay Chou’s **晴天**, **七里香** and **兰亭序**, with album covers and synchronized lyrics. Their full-length AAC-LC files total 3.817 MB. 晴天/兰亭序 include word timing; 七里香 uses line timing. Authorization was confirmed by the project owner; underlying music/artwork/lyrics rights remain with their owners, and the old CC BY license does not apply. See [third-party notices](THIRD_PARTY_NOTICES.md) and in-app credits for attribution and license details.
+## Credits & Legal Notice
 
-ReiPod is an independent project, not affiliated with Apple, NetEase or Tencent. Names and trademarks belong to their respective owners.
+- Wheel gesture geometry adapted from [iPod.js](https://github.com/tvillarete/ipod-classic-js); audio metadata powered by [music-metadata](https://github.com/Borewit/music-metadata); UI typography uses a redistributable Noto Sans SC subset.
+- Built-in demo tracks (**晴天**, **七里香**, **兰亭序** by Jay Chou) are encoded as 160 kbps / 44.1 kHz AAC-LC M4A files (`17.00 MB` combined) with embedded covers and synchronized YRC/LRC lyrics under owner-confirmed test authorization. Underlying rights belong to their respective owners; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and in-app credits.
+- ReiPod is an independent project and is not affiliated with Apple, NetEase, or Tencent.

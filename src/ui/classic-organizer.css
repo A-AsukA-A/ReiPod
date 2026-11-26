@@ -10,7 +10,7 @@
 .calendar-grid > div { display: flex; align-items: center; justify-content: center; position: relative; margin: var(--lcd-unit); border: var(--lcd-unit) solid transparent; font-size: calc(var(--lcd-unit) * 15); font-variant-numeric: tabular-nums; line-height: 1; color: #1765a5; }
 .calendar-grid > .outside { color: #b5bac2; }
 .calendar-grid > .today { border-color: #3b7eb3; border-radius: calc(var(--lcd-unit) * 3); }
-.calendar-grid > .selected { color: #fff; background: linear-gradient(#4bb5e9,#178ccc); border-color: #2588c2; border-radius: calc(var(--lcd-unit) * 3); box-shadow: inset 0 var(--lcd-unit) #8bd4f3; }
+.calendar-grid > .selected { color: #fff; background: var(--lcd-select-bg); border-color: #177bb8; border-radius: calc(var(--lcd-unit) * 3); box-shadow: var(--lcd-select-shadow); }
 .calendar-grid i { position: absolute; width: calc(var(--lcd-unit) * 3); height: calc(var(--lcd-unit) * 3); border-radius: 50%; background: currentColor; right: calc(var(--lcd-unit) * 3); bottom: calc(var(--lcd-unit) * 3); }
 .calendar-caption { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; height: calc(var(--lcd-unit) * 22); padding-inline: calc(var(--lcd-unit) * 7); border-top: var(--lcd-unit) solid #b7c0c9; background: #eef1f4; font-size: calc(var(--lcd-unit) * 10); }
 .calendar-caption strong { font-weight: 600; color: #3b6c96; }
@@ -23,7 +23,7 @@
 .organizer-row small { display: block; font-size: calc(var(--lcd-unit) * 10); line-height: calc(var(--lcd-unit) * 13); color: #737c86; padding-bottom: var(--lcd-unit); }
 .organizer-row > i { font-size: calc(var(--lcd-unit) * 20); font-style: normal; line-height: 1; color: #777e87; }
 .organizer-row > span { font-size: calc(var(--lcd-unit) * 12); }
-.organizer-row.selected { background: linear-gradient(#4bb5e9,#178ccc); color: white; border-bottom-color: #278dc6; }
+.organizer-row.selected { background: var(--lcd-select-bg); box-shadow: var(--lcd-select-shadow); color: white; border-bottom-color: #0e6aa6; }
 .organizer-row.selected :is(small,i) { color: #f1f8fc; }
 .organizer-row[aria-disabled="true"] { opacity: .45; }
 .organizer-date { flex-shrink: 0; font-size: calc(var(--lcd-unit) * 12); line-height: calc(var(--lcd-unit) * 28); padding-inline: calc(var(--lcd-unit) * 8); color: #38556d; border-bottom: var(--lcd-unit) solid #b5c0cb; background: #edf2f5; }

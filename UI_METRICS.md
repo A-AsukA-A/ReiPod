@@ -699,3 +699,10 @@ Swift测试目标包含新检查的generic iphoneos编译通过、Release开发�
 - **状态与范围**：全部调整均属工程交互修复及 `P`（暂定视觉校准），未变更 320 × 240 逻辑几何，不代表取得新同固件物理实测常量。
 - **切页与加载**：`classicMotion` 调整为页切 `240 ms`、视图 `220 ms`、封面 `280 ms`、Cover Flow 进/退 `280/360 ms`、右侧卡片 `180 ms`，曲线改为 `cubic-bezier(0.22, 1, 0.36, 1)`；`useLcdMotion` 取消右侧预览 pane 前 `55%` 冻结等待；`ClassicScreenContent` 按焦点行与空闲预加载二级显示模块，消除 `Suspense` 首次打开空白等待。
 - **视觉质感（`P`）**：`classic-lcd.css` 与 `firmware-display.css`、`style.css` 校准标题栏双段银灰高光渐变与阴影、Aqua 蓝双段高光选中行与内阴影、右侧工作室深蓝灰径向渐变及左侧投射阴影、播放条玻璃凹槽与双段蓝填充，以及玻璃面板边框与银色轮盘凹陷层次。
+
+## 2026-11-26 2007 Classic 6G 视觉系统重做（UI122）
+
+- **状态与范围**：全部调整属于 `P`（暂定工程视觉校准），未变更 320 × 240 逻辑布局与硬件常量声称，也不替代原机 decrypted OSOS 源码或同固件物理机取证。
+- **统一 Aqua / Studio 材质系统**：在 `classic-lcd.css` 定义 `--lcd-status-bg`、`--lcd-select-bg`、`--lcd-select-shadow`、`--lcd-select-text-shadow` 与 `--lcd-studio-bg`，统一状态栏、主/子菜单选中条、About、Cover Flow、Play Mode 切换条、文本输入网格、世界时钟、闹钟与日历/通讯录高亮材质；修正 `.screen-menu { padding-top: 0; }` 以消除长列表滚动时状态栏下方半截裁切行。
+- **机身、转轮与立体图标**：`style.css` 与 `classic-lcd.css` 校准银/黑两版阳极氧化机身与 Click Wheel / 中心键径向质感、玻璃边框内凹倒角；`ClassicGlyph.tsx` 锐化金属镀铬高光梯度，右侧分屏 `.menu-preview-card` 增加工作室地平线背景与底部湿面倒影。
+- **播放与调节控件**：`firmware-display.css` 为 `.adjustment-meter`（亮度/音量上限）定制 Aqua 玻璃凹槽进度条、升级定位菱形高光与封面细边阴影。

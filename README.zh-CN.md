@@ -1,81 +1,84 @@
 # ReiPod
 
-[English](README.md) · [简体中文](README.zh-CN.md) · [开发总纲](DEVELOPMENT.md) · [项目结构](PROJECT_STRUCTURE.md) · [任务日志](TASK_LOG.md)
+[English](README.md) · [简体中文](README.zh-CN.md) · [网页版 (GitHub Pages)](https://a-asuka-a.github.io/ReiPod/) · [镜像站 (VPS)](https://julyblog.party/ReiPod/) · [iPhone 安装指南](ios/README.md)
 
 **转动转轮，听见你的音乐。**
 
-面向网页与 iPhone 的经典风格音乐播放器。用 Cover Flow 浏览专辑，建立本地资料库、跟随歌词，或连接音乐服务——通过转轮与按键完成操作。
+ReiPod 是一个面向网页与 iPhone 的经典风格音乐播放器，以 2007 年 **iPod classic 6G** 交互体验为设计基线。仅通过转轮与按键即可管理本地音乐资料库、浏览 Cover Flow、跟随逐字歌词，或连接 Apple Music、网易云音乐与 QQ 音乐。
 
-[在线体验](https://a-asuka-a.github.io/ReiPod/) · [安装到 iPhone](ios/README.md) · [音乐服务配置](MUSIC_SERVICES.md)
+---
 
 ## 界面预览
 
-|                                        资料库与菜单                                         |                                           Cover Flow                                           |                                                    正在播放                                                    |
-| :-----------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------: |
-| <img src="assets/screenshots/home.png" alt="ReiPod 主菜单、专辑封面与银色转轮" width="260"> | <img src="assets/screenshots/cover-flow.png" alt="ReiPod Cover Flow 专辑浏览界面" width="260"> | <img src="assets/screenshots/now-playing.png" alt="ReiPod 正在播放页面，显示封面、歌曲信息和进度" width="260"> |
+| 主菜单与分屏预览 | Cover Flow | 正在播放 | 设置与均衡器 |
+| :---: | :---: | :---: | :---: |
+| <img src="assets/screenshots/home.png" alt="ReiPod 银色机身、主菜单与分屏封面预览" width="200"> | <img src="assets/screenshots/cover-flow.png" alt="ReiPod Cover Flow 3D 专辑封面浏览" width="200"> | <img src="assets/screenshots/now-playing.png" alt="ReiPod 正在播放页面，带透视倒影封面与 Aqua 进度条" width="200"> | <img src="assets/screenshots/settings.png" alt="ReiPod 设置菜单与工作室倒影立体图标" width="200"> |
 
-截图来自当前网页版本，使用项目内置试听音乐。应用界面目前为简体中文；两版 README 是文档语言切换。以 2007 iPod classic 6G 为目标的实机 UI 校准仍在进行。
+*以上截图均采自当前网页构建版本（使用内置试听曲目，应用内语言目前为简体中文）。整体界面参照 2007 iPod classic 6G 视觉规范，实机逐状态校准持续记录于 [UI_METRICS.md](UI_METRICS.md)。*
 
-## 主要功能
+---
 
-- **带上自己的音乐。** 导入音频，读取歌曲标签和内嵌封面；按艺人、专辑、合辑、歌曲、风格与作曲者浏览，搜索、收藏，并建立 On-The-Go 或浏览器本地歌单。
-- **用转轮浏览。** Cover Flow、上下文菜单预览、长列表快转字母跳转（Quick Scroll）、单专辑艺人自动跳级、选中位置记忆、HOLD 锁定与键盘控制，让操作留在播放器内。
-- **边听边看歌词。** YRC 支持逐字符柔边高亮、持续词强调与错时行弹簧，LRC 保留逐行跟随。支持 LRC、内嵌歌词，以及通过 iOS 内置服务或 HTTPS 网易云 / QQ 后端获取歌词。长按中心键，确认首项“歌词”即可直达；设置中可开关。
-- **选择音乐来源。** 连接 iPhone 系统音乐资料库、配置网页版 Apple Music，或通过 iOS 内置服务与 HTTPS 后端连接网易云和 QQ 音乐。各服务的账号会话和资料库独立；VIP / 付费标记与播放错误提示说明访问限制。
-- **调整自己的播放器。** 银色或黑色机身、明暗背景、随机与重复播放、评分、22 组经典 EQ 预设、音量平衡、标题栏实时时钟、背光及转轮声音。
-- **不止音乐。** 新版 iPhone App 进入照片直接浏览授权系统相册；网页保留本地相册与可配置幻灯片（停留时间、背景音乐、重复、随机、过渡效果）。照片和播客浏览页仅显示内容，导入、幻灯片设置和权限管理集中在 **设置 → ReiPod 设置 → 照片设置 / 播客设置**。iPhone 系统可读播客支持节目封面/单集统计与独立播放。**附加功能**还提供多城市世界时钟、带分段记录的秒表、闹钟（支持蜂鸣或本地播放列表唤醒）/ 睡眠定时 / 倒计时、日历 / 待办事项 / 通讯录（支持 `.ics`/`.vcf` 导入及 iPhone 系统 EventKit/Contacts 只读同步）、纯文本阅读器，以及 **iQuiz**、**Klondike** 和 **Vortex** 三款独立重现的经典转轮小游戏。
+## 核心特性
 
-搜索支持本地歌曲、艺人、专辑、播放列表和音频播客的实时结果；编辑时前后键输入空格/退格，MENU 进入结果列表。已支持的原机菜单按原顺序排列，导入、服务、歌词及外观集中在 **设置 → ReiPod 设置**；**还原设置** 经确认恢复已实现的固件选项。完整差异与下一步见[原机功能对照](FIRMWARE_FEATURES.md)。
+- **2007 Classic 6G 视觉与纯转轮操作**
+  - 提供银色、黑色阳极氧化金属外观，以及浅色、暖色、深色背景环境。
+  - 320×240 逻辑网格 LCD 仅作显示：分屏工作室地平线预览与 3D 图标倒影、Aqua 光泽状态栏与高亮选中条、Cover Flow 封面墙、长列表快转字母定位（Quick Scroll）、HOLD 锁定与全套键盘映射。
+- **本地音乐资料库与音频处理**
+  - 浏览器本地导入音频（`music-metadata` 解析 ID3/MP4 标签、内嵌封面、`compilation` 与排序标签），离线持久保存于 IndexedDB。
+  - 支持按艺人（单专辑自动直达歌曲）、专辑、合辑、歌曲、风格、作曲者、歌单浏览，以及实时本地搜索。
+  - 内置 **22 组经典 Web Audio EQ 预设**（3 段滤波）、**音量平衡 / Sound Check**（`DynamicsCompressorNode`）、**随机播放（关闭 / 歌曲 / 专辑）**、**重复播放（关闭 / 单曲 / 全部）** 与 **On-The-Go** 工作列表。
+- **高帧率同步歌词**
+  - YRC 支持逐字柔边高亮与弹簧行运动；LRC 支持逐行同步并可自动解析内嵌歌词。
+  - 长按**中心键**确认首项 **歌词** 即可直达，也可在设置中随时开关。
+- **多音源与隔离架构**
+  - **本地文件**、**iPhone 系统音乐**（`MediaPlayer`）、**网页 Apple Music**（`MusicKit`）、**网易云音乐** 与 **QQ 音乐**（通过 iOS 内置原生桥或 HTTPS 后端连接，已废除浏览器扩展），各来源账号会话与队列完全隔离。
+- **经典附加功能与小游戏**
+  - **时钟与时间**：多城市世界时钟、**标题栏实时时钟**、带分段统计的秒表、闹钟（蜂鸣或本地歌单唤醒）、睡眠定时与倒计时。
+  - **媒体与个人管理**：照片相册与可配置幻灯片（每张停留、背景音乐、重复、随机、过渡效果）、播客浏览、日历/待办与通讯录（支持 `.ics` / `.vcf` 导入及 iPhone 只读系统同步）、纯文本阅读器。
+  - **经典游戏**：独立重现 **iQuiz**、**Klondike** 与 **Vortex** 三款转轮游戏。
 
-本地音乐支持 **风格 → 艺人 → 专辑 → 歌曲**、**作曲者 → 专辑 → 歌曲** 与 **合辑**（支持 ID3/MP4 `compilation` 及 `sort-as` 排序标签；艺人在当前范围仅一张专辑时直接跳入歌曲列表），专辑和播放队列保持当前分类范围，MENU 返回及重进会记住选中项。风格行显示艺人/专辑统计；Play 播放所选分类，Center 继续浏览。
+---
 
-随机播放支持 **关闭 / 歌曲 / 专辑**，专辑内按可用的碟号和曲序播放。本地 **On-The-Go** 支持集合加入、歌曲移除、保存编号只读歌单和清空确认；保存/清空失败时保留工作列表，保存不会打断其已开始的播放队列。
+## 转轮与按键控制
 
-<img src="assets/screenshots/search.png" alt="带分类结果与横向字母条的实时本地搜索" width="260">
-<img src="assets/screenshots/lyrics.png" alt="授权测试曲目的逐词时间与Lazer风格歌词动效" width="260">
+| 操作 | 功能说明 |
+| :--- | :--- |
+| **转轮 / `↑` `↓`** | 上下浏览菜单、快转触发字母索引，或调节当前进度 / 音量 / 评分 |
+| **中心键 / `Enter`** | 确认进入；播放页按 封面 → 进度菱形 → 随机 → 评分 → 歌词 顺序切换 |
+| **MENU / `Escape`** | 返回上一级；长按 **MENU**（或按 `Home`）回到主菜单 |
+| **播放暂停 / `Space`** | 播放或暂停；选中分类时可直接起播 |
+| **上一首 / 下一首 / `←` `→`** | 切换曲目；长按快进 / 快退（搜索输入时作为空格 / 退格） |
+| **长按中心键** | 打开当前曲目或照片选项面板 |
+| **HOLD 开关** | 锁定转轮与按键防误触，音乐继续播放 |
 
-## 音乐来源
+> 在新版 iPhone 容器中，位于默认“正在播放”页面时转动转轮可直接通过 `MPVolumeView` 调节系统音量。
 
-| 来源             | 所需条件                                             | 当前范围                                                                      |
-| ---------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
-| 本地文件         | 支持的浏览器，无需账号或后端                         | 导入、封面、歌单与播放；数据保存在当前浏览器                                  |
-| iPhone 系统音乐  | 原生容器、iOS 授权，以及系统“音乐”App 中可播放的歌曲 | 通过 MediaPlayer 读取资料库、已有歌单并控制播放；无需网页 MusicKit 开发者凭证 |
-| 网页 Apple Music | 站点自己的 MusicKit 开发者配置，以及用户授权         | 已实现资料库 / 目录接入；生产凭证与真实账号 DRM 验证待完成                    |
-| 网易云音乐       | iOS 内置服务或 HTTPS 后端与扫码登录                  | VPS 已验证二维码生成；VPS 真实账号登录与播放待验证                           |
-| QQ 音乐          | iOS 内置服务或 HTTPS 后端，通过 QQ / 微信扫码        | VPS 已验证二维码生成；真实账号登录和播放待验证                               |
+---
 
-**GitHub Pages 只托管静态播放器。** 网易云 / QQ 网页默认连接维护者的 HTTPS 后端；iOS App 使用内置网络桥，浏览器扩展已废除。仍保留开发自托管，推送仓库不会自动部署后端。接入使用社区接口，歌曲可用性仍受账号权限、地区与平台状态影响，不提供替代音源解锁。详见[配置和验证边界](MUSIC_SERVICES.md)。
+## 音乐来源对照
 
-## 开始使用
+| 音源 | 所需条件 | 当前支持范围 |
+| :--- | :--- | :--- |
+| **本地文件** | 现代浏览器（推荐 MP3 / M4A / WAV） | 完整支持标签/封面解析、本地歌单、EQ 与音量平衡 |
+| **iPhone 系统音乐** | 原生 iOS 容器及“媒体资料库”授权 | 通过系统 `MediaPlayer` 浏览资料库/歌单并播放 |
+| **网页 Apple Music** | 站点配置的 MusicKit 开发者密钥 | 已接入目录与资料库接口；生产环境密钥与真机 DRM 验证待完成 |
+| **网易云 / QQ 音乐** | iOS 内置桥或 HTTPS 后端（`server/`） | 已在 VPS 验证二维码链路；真实账号登录与后台播放见 [MUSIC_SERVICES.md](MUSIC_SERVICES.md) |
 
-打开[网页版](https://a-asuka-a.github.io/ReiPod/)，播放内置试听曲目，或通过 **设置 → ReiPod 设置 → 导入音乐** 选择自己的文件。建议使用 MP3、AAC/M4A 或 PCM WAV；实际解码能力取决于浏览器。
+*GitHub Pages 与 VPS 网页均已对接维护者 HTTPS API（`https://julyblog.party/api/music/`），不再依赖第三方浏览器扩展。*
 
-LCD 仅用于显示，请通过转轮和按键操作：
+---
 
-| 控制                  | 操作                                                         |
-| --------------------- | ------------------------------------------------------------ |
-| 转轮 / ↑ ↓            | 选择菜单项，或调整当前播放控件                               |
-| 中心键 / Enter        | 确认；播放页依次切换封面 → 进度定位 → 随机 → 评分 → 可用歌词 |
-| MENU / Escape         | 返回；长按 MENU 回主菜单，键盘可按 Home                      |
-| 播放 / 暂停键 / Space | 播放或暂停                                                   |
-| 上一首 / 下一首 / ← → | 切歌；长按快进或快退                                         |
-| 长按中心键            | 打开歌曲选项；歌词可用或可请求时默认选中首项“歌词”           |
-| HOLD 开关             | 锁定输入，音乐继续播放                                       |
+## 本地运行与开发
 
-新版 iPhone 容器在普通播放封面页可直接转动转轮通过 `MPVolumeView` 调节系统音量（侧键同样可用）。歌词阅读视图可在返回菜单或队列切歌后保留；临时进度定位、随机与评分面板会复位。详见[播放状态约定](PLAYBACK_INTERACTIONS.md)与[完整操作手册（英文）](USER_GUIDE.md)。
-
-本地导入、设置和歌单保存在浏览器中；清除网站数据或存储被回收可能导致丢失，请保留原文件。网页版不保证后台与锁屏播放；原生系统音乐路线由 iOS 接管播放。
-
-## 本地运行
-
-完整配置建议使用 **Node.js 24**，仅运行网页可使用 22.12 及以上版本。
+完整工作区推荐使用 **Node.js 24**（仅运行网页前端可使用 22.12+）。
 
 ```sh
+# 启动网页开发环境
 npm ci
 npm run dev
 ```
 
-启用可选网易云 / QQ 后端：
+如需启用本地自托管网易云 / QQ 音乐后端：
 
 ```sh
 npm --prefix server ci --ignore-scripts
@@ -83,43 +86,38 @@ npm run build
 npm run music:serve
 ```
 
-打开 `http://127.0.0.1:3210/`，进入 **设置 → ReiPod 设置 → 音乐服务**。后端默认仅监听本机；公网网页与 iPhone 使用时需部署 HTTPS 后端并明确允许来源，配置见 [MUSIC_SERVICES.md](MUSIC_SERVICES.md)。
-
-iPhone 安装请参照 [Mac / Xcode 指南](ios/README.md)。可使用免费 Personal Team 在个人设备上调试签名；当前并非 App Store 发行版。
-
-## 开发
-
-网页使用 React、TypeScript 与 Vite。iPhone 通过轻量 WKWebView / MediaPlayer 容器复用界面；可选音乐后端独立运行。
+常用测试与构建检查命令：
 
 ```sh
-npm test
-npm run test:music-server
-npm run build
+npm test                  # 单元测试（Vitest）
+npm run test:music-server # 音乐服务节点测试
+npm run check:player-core # 校验无 DOM 播放核心纯 TS 编译
+npm run build             # 类型检查与 Vite 生产构建
 node scripts/check-dist.mjs
-npm run size
+npm run size              # 校核入口、程序代码与内置音频体积预算
+npm run test:browser      # Playwright 浏览器回归（需先 npx playwright install chromium）
 ```
 
-浏览器回归测试：
+iPhone 真机签名与 Xcode 构建流程请参阅 [ios/README.md](ios/README.md)。
 
-```sh
-npx playwright install chromium
-npm run test:browser
-```
+---
 
-推送到 `main` 后，GitHub Actions 会构建并部署静态站点。UI 开发以实机证据为先，已有 CSS 数值与测试通过不等于实机还原准确。
+## 文档索引
 
-| 文档                                                      | 用途                                |
-| --------------------------------------------------------- | ----------------------------------- |
-| [操作手册（英文）](USER_GUIDE.md)                         | 详细浏览、按键、导入与存储行为      |
-| [音乐服务](MUSIC_SERVICES.md)                             | 配置、凭证、后端部署与验证范围      |
-| [iPhone App](ios/README.md)                               | 原生构建、安装与真机检查            |
-| [UI 开发规范](UI_STANDARDS.md)                            | 证据分级、测量与视觉验收            |
-| [硬件研究](HARDWARE_RESEARCH.md) · [复刻记录](REPLICA.md) | 资料来源、机型 / 版本边界与暂定参数 |
-| [播放交互](PLAYBACK_INTERACTIONS.md)                      | 中心键顺序、歌词快捷入口与状态恢复  |
-| [开发约定](AGENTS.md)                                     | 仓库规则与验证要求                  |
+| 文档 | 说明 |
+| :--- | :--- |
+| [USER_GUIDE.md](USER_GUIDE.md) | 详细操作指引、导入格式与本地存储说明（英文） |
+| [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md) | Classic 原固件功能覆盖对照与待补项 |
+| [MUSIC_SERVICES.md](MUSIC_SERVICES.md) · [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md) | 音乐后端配置、服务隔离与 iOS 原生网络桥 |
+| [UI_STANDARDS.md](UI_STANDARDS.md) · [UI_METRICS.md](UI_METRICS.md) | UI 证据分级、测量方法与逐状态指标台账 |
+| [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md) · [REPLICA.md](REPLICA.md) | 原机参考资料、版本边界与当前实现记录 |
+| [PLAYBACK_INTERACTIONS.md](PLAYBACK_INTERACTIONS.md) | 播放状态流转、中心键顺序与歌词快捷规范 |
+| [DEVELOPMENT.md](DEVELOPMENT.md) · [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) · [TASK_LOG.md](TASK_LOG.md) | 四层架构约定、目录分工与持续交接日志 |
 
-## 致谢
+---
 
-转轮几何参考自 [iPod.js](https://github.com/tvillarete/ipod-classic-js)，音频标签解析使用 [music-metadata](https://github.com/Borewit/music-metadata)，字体使用可再分发的 Noto Sans SC 子集。内置测试曲目已换为周杰伦的 **晴天、七里香、兰亭序**，含专辑封面与同步歌词，完整曲长AAC-LC合计3.817 MB。晴天/兰亭序含逐词时间，七里香使用逐行时间；项目所有者已确认使用授权，底层录音/封面/歌词权利归原权利人，不沿用旧曲目CC BY许可。完整归属与许可证见[第三方声明](THIRD_PARTY_NOTICES.md)及应用内版权页面。
+## 致谢与声明
 
-ReiPod 是独立项目，与 Apple、网易或腾讯无隶属关系。相关名称与商标归其各自权利人所有。
+- 转轮几何交互参考自 [iPod.js](https://github.com/tvillarete/ipod-classic-js)，音频元数据解析使用 [music-metadata](https://github.com/Borewit/music-metadata)，UI 字体采用可再分发的 Noto Sans SC 子集。
+- 内置试听曲目为周杰伦 **晴天**、**七里香**、**兰亭序**（160 kbps / 44.1 kHz AAC-LC 立体声 M4A，合计 `17.00 MB`，含内嵌封面及同步 YRC/LRC 歌词），仅依据项目所有者确认的授权用于测试演示，底层版权归原权利人所有；详细归属见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 及应用内版权页。
+- ReiPod 为独立开源项目，与 Apple、网易或腾讯无隶属关系，相关商标归各自权利人所有。

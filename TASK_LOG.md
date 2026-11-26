@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-26，`REL121` 已将 `VISUAL119` 与 `AUDIO120`（`38312be`）推送至 `origin/main`，并完成 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`）同步及旧 Kevin MacLeod 音频清理。工作区位于 `/Users/july/Developer/ReiPod`，`ANTIGRAVITY_HANDOFF.md` 仍保留本地未跟踪。
+最后更新：2026-11-26，`UI122`（2007 iPod classic 6G 视觉系统重做与 8 屏实时截图检视）已在本地工作树完成验证。工作区位于 `/Users/july/Developer/ReiPod`，分支 `main` 已有已推送基线 `b2e398a`（`REL121`），当前 `UI122` 改动未提交或推送。
 - **VISUAL115（O03 / C-M01 / C-F07 分屏预览图标与实时视觉检视）**：新增浮雕三段滑杆图标 `"eq"`（`src/ui/ClassicGlyph.tsx`），把 `eq` 纳入 `splitPages`（`src/ui/navigation.ts`），并在 `menuPreviewModel.ts` 补齐 `eq`、`date-time`、`compilations` 与 `ReiPod 设置` 各项的右侧预览映射；抓取实时生产预览在 Chromium 390×844 下的 7 张稳定截图（`.local/visual-audit-115/`），逐帧确认主菜单、设置/EQ、分屏 EQ 勾选、日期与时间图标、标题栏实时 `HH:MM` 时钟、幻灯片设置页与正在播放页均清晰对齐、无遮挡裁切。
 - **CLASSIC114（C-F07 / C-F08 均衡器、日期与时间、幻灯片背景音乐）**：新增 22 组 Apple classic EQ 预设 + 关闭（`src/models/classicEq.ts`）并接入本地 Web Audio 3 段 `BiquadFilterNode` 实时滤波（`src/player/localAudio.ts`）；新增「日期与时间 → 标题栏显示时间」实时 `HH:MM` 状态栏时钟与世界时钟入口；在「幻灯片设置」补齐「背景音乐（保持当前 / 关闭 / 非空本地歌单）」，三项新配置全部纳入偏好持久化与「还原设置」重置。
 - **SLIDESHOW113（C-F08 照片幻灯片设置）**：按 Apple iPod classic 用户指南补齐「幻灯片设置」纯模型（`src/models/slideshowSettings.ts`）、偏好持久化与「还原设置」重置、照片设置与看图选项中的轮盘菜单入口，以及按设置驱动的幻灯片播放（每张停留时间 `2/3/5/10/20 秒/手动`、重复播放、无放回随机照片、过渡效果 `关闭/淡入淡出/划像`），兼容本地照片与 iPhone 系统相册窗口。
@@ -13,7 +13,7 @@
 
 ### 当前目标与进行中
 
-- 无进行中任务。`VISUAL119`（二级菜单提速与 classic 6G 视觉质感）与 `AUDIO120`（内置 3 曲升级至 160 kbps / 44.1 kHz AAC-LC）已在本地完成单元、无 DOM 核心编译、生产构建与产物校验及包体积预算检查，待审阅提交并同步部署。
+- 无进行中任务。`UI122`（2007 iPod classic 6G 视觉系统重做与全页面统一）已在本地完成单元、无 DOM 核心编译、生产构建与产物校验、包体积检查、Playwright 回归及 8 屏实时截图视觉检视，等待用户审阅并决定是否提交/推送。
 - 近期里程碑（详细过程见下方任务记录）：
   - **2026-11-26 VISUAL115**：补齐 `eq`/`date-time`/`compilations` 与 ReiPod 设置分屏预览图标并完成实时渲染 7 帧视觉核对。
   - **2026-11-26 CLASSIC114**：经典机均衡器（22 组预设 + 实时 Web Audio 3 段滤波）、日期与时间（标题栏时钟）、幻灯片背景音乐。
@@ -1404,3 +1404,16 @@
   - VPS：先备份至 `/opt/reipod/backups/dist-before-675239c-20261126T060041Z.tgz` 并部署 160 kbps 三曲与静态资源，移除 `carefree.m4a`、`monkeys-spinning-monkeys.m4a`、`sneaky-snitch.m4a`，再增量同步 `38312be` 的 `assets/`、`index.html` 与 `release.txt`。
   - 公网复核：`https://julyblog.party/ReiPod/` 返回 `HTTP/2 200`（HTML SHA-256 与 Pages/本地一致）、`release.txt = 38312be`、`qingtian.m4a` 返回 `200`（`content-length: 5584959`）、`carefree.m4a` 返回 `404`、`https://julyblog.party/` 返回 `200`；`nginx` 与 `reipod-music` 保持 `active`。详细记录见 [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md)。
 - **未完成 / 不确定**：真机 iPhone 安装与真实平台账号播放仍待物理设备与实际登录验证；浏览器历史本地导入的“未知专辑”可在网页内执行 `清空资料库` 移除。
+
+## 2026-11-26 · UI122（2007 Classic 6G 视觉系统重做）
+
+- **目标**：重做整体外观与界面质感，统一银/黑机身材质、Click Wheel、LCD 边框、2007 Aqua 状态栏/选中条/控制条、右侧分屏工作室倒影及次级固件界面，在不虚构未取得解密 OSOS 源码/原机常量的前提下整体逼近 2007 iPod classic 6G 原版系统视觉。
+- **改动**：
+  - **统一 Aqua / Studio Token 与菜单滚动修复**（[classic-lcd.css](src/ui/classic-lcd.css)）：在 `.lcd-screen` 定义 `--lcd-status-bg`、`--lcd-select-bg`、`--lcd-select-shadow`、`--lcd-select-text-shadow` 与 `--lcd-studio-bg`；明确覆盖 `.screen-menu { padding-top: 0; }`；重做 `.screen-status`、`.screen-row.selected`、`.classic-battery`（高光绿条）、`.screen-glass`（双层内凹斜切光泽）与 `.click-wheel`（银色哑光径向转轮与凹槽）。
+  - **工作室预览倒影与 3D 镀铬图标**（[ClassicGlyph.tsx](src/ui/ClassicGlyph.tsx)、[classic-lcd.css](src/ui/classic-lcd.css)）：升级金属图标高光停止点与边缘线，`.menu-preview-card` 采用工作室地平线双段渐变，`.classic-glyph` 下方增加 `-webkit-box-reflect` 湿面倒影并调节间距避免干扰标题文字。
+  - **银/黑阳极氧化外壳与次级界面统一**（[style.css](src/style.css)、[firmware-display.css](src/ui/firmware-display.css)、[classic-extras.css](src/ui/classic-extras.css)、[classic-alarms.css](src/ui/classic-alarms.css)、[classic-organizer.css](src/ui/classic-organizer.css)、[classic-search.css](src/ui/classic-search.css)、[UI_METRICS.md](UI_METRICS.md)）：重调银色/黑色金属面板与中心键径向渐变；为 `.adjustment-meter`（亮度/音量上限）定制玻璃凹槽与 Aqua 蓝进度填充；升级 Seek 菱形、封面细边阴影、About、Cover Flow 舞台与全部次级菜单高亮条。
+- **验证结果**：
+  - 最终 CSS 调整后：`npm test`（62 files / 308 tests 通过）、`npm run check:player-core` 通过、`npm run build` + `node scripts/check-dist.mjs` + `npm run size` 通过（`entryGzip = 149,376 B`、`programGzip = 339,422 B`、`demoAudio = 17,002,461 B`）。
+  - Playwright 回归（`BypassSandbox: true`）：6 套件 52/52 全部通过；随后微调 `.menu-preview-card > .classic-glyph` 倒影间距与淡出后，复跑 `menuFidelity.pw.ts` 7/7 通过。
+  - 实时视觉审计（`.local/visual-audit-122/{home-silver,home-black,settings-eq,eq-choice,about,coverflow,now-playing,now-playing-seek}.png`）：8 张高清截图逐张检视通过，确认无文字重影、裁切、对比度回退或组件错位。
+- **诚实边界**：当前仓库不包含已解密的 Apple 原版 OSOS 系统源码（参见 [HARDWARE_RESEARCH.md](HARDWARE_RESEARCH.md)）；`UI122` 颜色、光泽与倒影参数仍标注为 `P`（暂定工程视觉校准），未宣称提取自实机固件常量；`UI122` 尚未提交或部署。

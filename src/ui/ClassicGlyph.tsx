@@ -38,13 +38,13 @@ export function ClassicGlyph({ name }: { name: ClassicGlyphName }) {
     >
       <defs>
         <linearGradient id={`metal-${id}`} x1="0" y1="0" x2="0.3" y2="1">
-          <stop offset="0" stopColor="#f4f9ff" />
-          <stop offset=".45" stopColor="#d4e2ef" />
-          <stop offset=".52" stopColor="#b1c6da" />
-          <stop offset="1" stopColor="#d1dfeb" />
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset=".46" stopColor="#e0ebf5" />
+          <stop offset=".5" stopColor="#a5bdd3" />
+          <stop offset="1" stopColor="#d2e1ee" />
         </linearGradient>
       </defs>
-      <g fill={fill} stroke="#d6e5f1" strokeWidth="0.65" strokeLinejoin="round">
+      <g fill={fill} stroke="#e6f1fa" strokeWidth="0.8" strokeLinejoin="round">
         {name === "shuffle" ? (
           <>
             <path d="M8 23h17c14 0 23 12 32 25 8 12 13 19 23 19h3V56l13 16-13 16V77h-3c-16 0-23-11-32-24-8-12-15-20-24-20H8Z" />

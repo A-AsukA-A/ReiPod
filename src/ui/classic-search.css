@@ -115,7 +115,7 @@
 }
 .classic-search-letters > span[aria-current="true"] {
   color: #fff;
-  background: linear-gradient(#49b6e8, #0b88c9 52%, #0673b4);
-  box-shadow: inset 0 var(--lcd-unit) #a1ddf5;
+  background: var(--lcd-select-bg);
+  box-shadow: var(--lcd-select-shadow);
   border-radius: calc(var(--lcd-unit) * 3);
 }

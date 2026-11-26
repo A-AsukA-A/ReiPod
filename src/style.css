@@ -578,8 +578,8 @@ button:disabled {
     calc(100vw - max(10px, var(--host-safe-left, env(safe-area-inset-left))) - max(10px, var(--host-safe-right, env(safe-area-inset-right)))),
     calc((100dvh - max(16px, var(--host-safe-top, env(safe-area-inset-top))) - max(16px, var(--host-safe-bottom, env(safe-area-inset-bottom))) - 12px) / var(--device-aspect)));
   --shell-unit: calc(var(--device-width) / 390);
-  --wheel-ink: #90969c;
-  --wheel-center-surface: linear-gradient(155deg, #c2c7cb 0%, #d8dcdf 52%, #ebedef 100%);
+  --wheel-ink: #848b92;
+  --wheel-center-surface: radial-gradient(circle at 38% 32%, #eceff1 0%, #d7dbdf 58%, #c5cacf 100%);
   --wheel-center-depth: inset 0 var(--shell-unit) calc(var(--shell-unit) * 2) #717b8360, inset 0 calc(var(--shell-unit) * -1) var(--shell-unit) #fffa;
   background: transparent;
   padding: max(16px, var(--host-safe-top, env(safe-area-inset-top)))
@@ -596,17 +596,18 @@ button:disabled {
   border-radius: calc(var(--device-width) * 0.09);
   border-color: #969b9f;
   background: linear-gradient(
-    108deg,
-    #eceeed 0%,
-    #c9cdcf 18%,
-    #d7dadb 49%,
-    #e0e3e3 73%,
-    #bdc3c6 100%
+    115deg,
+    #f3f5f6 0%,
+    #dce0e3 18%,
+    #e4e7e9 46%,
+    #d4d8dc 76%,
+    #c1c6ca 100%
   );
   box-shadow:
-    inset 0 var(--shell-unit) calc(var(--shell-unit) * 2) calc(var(--shell-unit) * 2) #ffffffd9,
-    inset calc(var(--shell-unit) * 3) 0 calc(var(--shell-unit) * 3) #fff8,
-    inset calc(var(--shell-unit) * -3) 0 calc(var(--shell-unit) * 3) #91989c66,
+    inset 0 var(--shell-unit) calc(var(--shell-unit) * 2) calc(var(--shell-unit) * 2) #ffffffea,
+    inset calc(var(--shell-unit) * 3) 0 calc(var(--shell-unit) * 4) #fff9,
+    inset calc(var(--shell-unit) * -3) 0 calc(var(--shell-unit) * 4) #8e959a66,
+    inset 0 calc(var(--shell-unit) * -4) calc(var(--shell-unit) * 6) #8b929840,
     0 calc(var(--shell-unit) * 2) calc(var(--shell-unit) * 3) #39404666,
     0 calc(var(--shell-unit) * 22) calc(var(--shell-unit) * 35) calc(var(--shell-unit) * -17) #30323866;
 }
@@ -798,21 +799,23 @@ button:disabled {
   background-color: #d8dce0;
 }
 .app-shell[data-finish="black"] .classic-device {
-  --wheel-ink: #e3e6e8;
-  --wheel-center-surface: linear-gradient(145deg, #171b1f, #262c30 60%, #333a3f);
+  --wheel-ink: #eef1f4;
+  --wheel-center-surface: radial-gradient(circle at 38% 32%, #3a4048 0%, #272b31 62%, #1c2025 100%);
   --wheel-center-depth: inset 0 var(--shell-unit) calc(var(--shell-unit) * 2) #030608b3, inset 0 calc(var(--shell-unit) * -1) var(--shell-unit) #65707966;
   border-color: #14171b;
   background: linear-gradient(
-    110deg,
-    #41454a,
-    #22262b 30%,
-    #30343b 75%,
-    #1a1e24
+    115deg,
+    #4b5057 0%,
+    #2b2f36 22%,
+    #353a42 52%,
+    #23272d 82%,
+    #191c21 100%
   );
   box-shadow:
-    inset 0 var(--shell-unit) calc(var(--shell-unit) * 2) #8a9098,
-    inset calc(var(--shell-unit) * 3) 0 calc(var(--shell-unit) * 3) #5d6472,
-    inset calc(var(--shell-unit) * -3) 0 calc(var(--shell-unit) * 3) #05080b99,
+    inset 0 var(--shell-unit) calc(var(--shell-unit) * 2) #9298a1,
+    inset calc(var(--shell-unit) * 3) 0 calc(var(--shell-unit) * 4) #5d647280,
+    inset calc(var(--shell-unit) * -3) 0 calc(var(--shell-unit) * 4) #05080bb3,
+    inset 0 calc(var(--shell-unit) * -4) calc(var(--shell-unit) * 6) #04060870,
     0 calc(var(--shell-unit) * 3) calc(var(--shell-unit) * 4) #0007,
     0 calc(var(--shell-unit) * 22) calc(var(--shell-unit) * 35) calc(var(--shell-unit) * -17) #101010aa;
 }
@@ -820,9 +823,11 @@ button:disabled {
   border-color: #81889544;
 }
 .app-shell[data-finish="black"] .click-wheel {
-  background: linear-gradient(120deg, #272b31, #171b20);
+  background: radial-gradient(circle at 50% 42%, #2a2e34 0%, #1d2025 70%, #15181c 100%);
   border-color: #11151b;
-  box-shadow: inset 0 var(--shell-unit) calc(var(--shell-unit) * 2) #444a50;
+  box-shadow:
+    0 var(--shell-unit) calc(var(--shell-unit) * 1.5) #4d535c66,
+    inset 0 var(--shell-unit) calc(var(--shell-unit) * 3) #05070a90;
 }
 .app-shell[data-finish="black"] .wheel-select {
   background: var(--wheel-center-surface);

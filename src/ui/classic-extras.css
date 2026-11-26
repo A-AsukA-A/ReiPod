@@ -1,7 +1,7 @@
 /* Functional classic extras, using the existing logical LCD grid. Geometry is provisional. */
 .classic-clocks { flex: 1; min-height: 0; position: relative; overflow: auto; scrollbar-width: none; }
 .world-clock { display: flex; align-items: center; gap: calc(var(--lcd-unit) * 14); min-height: calc(var(--lcd-unit) * 105); padding: calc(var(--lcd-unit) * 8) calc(var(--lcd-unit) * 12); }
-.world-clock[aria-current="true"] { background: linear-gradient(#41b6e8, #0584c3); color: #fff; }
+.world-clock[aria-current="true"] { background: var(--lcd-select-bg); box-shadow: var(--lcd-select-shadow); color: #fff; }
 .classic-clock-face { flex-shrink: 0; width: calc(var(--lcd-unit) * 84); height: calc(var(--lcd-unit) * 84); }
 .world-clock > div { min-width: 0; display: flex; flex-direction: column; gap: calc(var(--lcd-unit) * 2); }
 .world-clock strong { font-size: calc(var(--lcd-unit) * 14); }
