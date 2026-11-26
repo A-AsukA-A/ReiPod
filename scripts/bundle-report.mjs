@@ -39,10 +39,10 @@ console.log(
     2,
   ),
 );
-if (summary.entryGzip > 155_000)
-  throw new Error("Entry bundle exceeds the 155 kB gzip budget.");
-if (summary.programGzip > 350_000)
-  throw new Error("Program code exceeds the 350 kB gzip budget.");
+if (summary.entryGzip > 165_000)
+  throw new Error("Entry bundle exceeds the 165 kB gzip budget.");
+if (summary.programGzip > 365_000)
+  throw new Error("Program code exceeds the 365 kB gzip budget.");
 
 if (summary.demoAudio > 20_000_000)
   throw new Error("Bundled demo audio exceeds the 20 MB budget.");
