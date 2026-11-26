@@ -1,6 +1,6 @@
 import { test,expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { choose,home,key,live } from "./dial";
+import { choose,holdCenter,home,key,live } from "./dial";
 async function pick(page:Page,label:string){
  const rows=live(page).locator(".alarm-row");await expect.poll(()=>rows.locator("strong").allTextContents()).toContain(label);
  const items=await rows.evaluateAll(es=>es.map(e=>({text:e.querySelector("strong")?.textContent,current:e.getAttribute("aria-current")==="true"})));
@@ -11,9 +11,11 @@ const stored=(page:Page)=>page.evaluate(()=>JSON.parse(localStorage.getItem("rei
 async function alarms(page:Page){await home(page);await choose(page,"附加功能");await choose(page,"闹钟");await expect(live(page).locator(".classic-alarms")).toBeVisible();}
 test("wheel edits, saves, cancels and deletes alarms; timer pause/resume, reload, ringing and sleep choices work",async({page},info)=>{
  await page.emulateMedia({reducedMotion:"reduce"});await page.addInitScript(()=>{localStorage.setItem("reipod-appearance",JSON.stringify({clickSound:false,backlight:0}));const probe={audio:null as HTMLAudioElement|null,pauses:0};(window as any).__alarmAudio=probe;window.Audio=new Proxy(window.Audio,{construct(target,args){const audio=Reflect.construct(target,args) as HTMLAudioElement;audio.addEventListener("playing",()=>{probe.audio=audio;});audio.addEventListener("pause",()=>{if(probe.audio===audio)probe.pauses++;});return audio;}});});
- await page.goto("/");await key(page,"Space");await expect.poll(()=>page.evaluate(()=>(window as any).__alarmAudio.audio?.currentTime??0)).toBeGreaterThan(.1);await alarms(page);await pick(page,"创建闹钟");await pick(page,"时间");
- await key(page,"ArrowDown");await key(page,"Enter");await key(page,"ArrowDown");await key(page,"Enter");await pick(page,"重复");await pick(page,"工作日");await pick(page,"标签");await pick(page,"练习");await pick(page,"保存闹钟");
- await expect.poll(async()=>(await stored(page)).alarms?.length).toBe(1);let saved=(await stored(page)).alarms[0];expect(saved).toMatchObject({minute:481,repeat:"weekdays",label:"练习"});
+ await page.goto("/");await key(page,"Space");await expect.poll(()=>page.evaluate(()=>(window as any).__alarmAudio.audio?.currentTime??0)).toBeGreaterThan(.1);
+ await holdCenter(page);await choose(page,"添加到 On-The-Go");
+ await alarms(page);await pick(page,"创建闹钟");await pick(page,"时间");
+ await key(page,"ArrowDown");await key(page,"Enter");await key(page,"ArrowDown");await key(page,"Enter");await pick(page,"重复");await pick(page,"工作日");await pick(page,"声音");await pick(page,"On-The-Go");await pick(page,"标签");await pick(page,"练习");await pick(page,"保存闹钟");
+ await expect.poll(async()=>(await stored(page)).alarms?.length).toBe(1);let saved=(await stored(page)).alarms[0];expect(saved).toMatchObject({minute:481,repeat:"weekdays",label:"练习",sound:{playlistId:"on-the-go",playlistName:"On-The-Go"}});
  await info.attach("saved-alarm",{body:await live(page).screenshot(),contentType:"image/png"});
  await pick(page,"练习 08:01");await pick(page,"闹钟");await key(page,"Escape");await pick(page,"放弃更改");expect((await stored(page)).alarms[0].enabled).toBe(true);
  await pick(page,"睡眠定时");await pick(page,"30 分钟");await expect(page.locator(".lcd-screen")).toHaveAttribute("data-page","alarms");expect((await stored(page)).sleepAt).toBeGreaterThan(Date.now());
@@ -24,10 +26,15 @@ test("wheel edits, saves, cancels and deletes alarms; timer pause/resume, reload
  await page.reload();await alarms(page);await pick(page,"倒计时");await expect(live(page).locator(".countdown-display")).toContainText("已暂停");await pick(page,"继续");
  const background=await page.context().newPage();await background.goto("about:blank");await background.bringToFront();await background.waitForTimeout(5200);await page.bringToFront();await background.close();
  await expect(live(page).getByRole("alert",{name:"倒计时结束"})).toBeVisible({timeout:8000});await info.attach("timer-ringing",{body:await live(page).screenshot(),contentType:"image/png"});await key(page,"Enter");await expect(live(page).getByRole("alert")).toHaveCount(0);
- await key(page,"Escape");await pick(page,"练习 08:01");await pick(page,"删除闹钟…");await pick(page,"取消");expect((await stored(page)).alarms).toHaveLength(1);await pick(page,"删除闹钟…");await pick(page,"删除闹钟");await expect.poll(async()=>(await stored(page)).alarms.length).toBe(0);
- expect(await page.evaluate(()=>(window as any).__alarmAudio.pauses)).toBe(0);
- await key(page,"Space");await expect.poll(()=>page.evaluate(()=>(window as any).__alarmAudio.audio?.currentTime??0)).toBeGreaterThan(.1);
- await pick(page,"睡眠定时");await pick(page,"15 分钟");await page.clock.install();await page.clock.fastForward(15*60000+500);
+ await key(page,"Escape");await pick(page,"练习 08:01");await pick(page,"删除闹钟…");await pick(page,"取消");expect((await stored(page)).alarms).toHaveLength(1);
+ await pick(page,"重复");await pick(page,"每天");await pick(page,"保存闹钟");
+ await page.clock.install();await page.clock.fastForward(24*3600000);
+ await expect(live(page).getByRole("alert",{name:"闹钟响铃"})).toBeVisible();
+ await expect.poll(()=>page.evaluate(()=>(window as any).__alarmAudio.audio?.paused)).toBe(false);
+ await key(page,"Enter");await expect(live(page).getByRole("alert")).toHaveCount(0);
+ expect(await page.evaluate(()=>(window as any).__alarmAudio.audio?.paused)).toBe(false);
+ await pick(page,"练习 08:01");await pick(page,"删除闹钟…");await pick(page,"删除闹钟");await expect.poll(async()=>(await stored(page)).alarms.length).toBe(0);
+ await pick(page,"睡眠定时");await pick(page,"15 分钟");await page.clock.fastForward(15*60000+500);
  await expect(page.locator(".lcd-screen")).toHaveAttribute("data-sleeping","true");expect(await page.evaluate(()=>(window as any).__alarmAudio.audio.paused)).toBe(true);
 });
 test("native schedule permission, denied retry and stop receipts survive foreground refresh without duplicate ringing",async({page})=>{

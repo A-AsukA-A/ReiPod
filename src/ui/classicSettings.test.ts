@@ -86,3 +86,43 @@ it("defaults to an always-on display while preserving an explicit existing timeo
   expect(parsePreferences({ backlight: 30 }).backlight).toBe(30);
   expect(parsePreferences({ backlight: 10, backlightVersion: 1 }).backlight).toBe(10);
 });
+
+it("parses slideshow settings with defaults and clamps invalid fields", () => {
+  expect(parsePreferences(null).slideshow).toEqual({
+    timePerSlide: 3,
+    music: "keep",
+    repeat: true,
+    shuffle: false,
+    transition: "fade",
+  });
+  expect(
+    parsePreferences({
+      slideshow: { timePerSlide: 20, music: "off", repeat: false, shuffle: true, transition: "wipe" },
+    }).slideshow,
+  ).toEqual({
+    timePerSlide: 20,
+    music: "off",
+    repeat: false,
+    shuffle: true,
+    transition: "wipe",
+  });
+  expect(
+    parsePreferences({
+      eq: "bass-booster",
+      soundCheck: true,
+      timeInTitle: true,
+      slideshow: { timePerSlide: 99, music: 123, repeat: "bad", shuffle: 0, transition: "bad" },
+    }),
+  ).toMatchObject({
+    eq: "bass-booster",
+    soundCheck: true,
+    timeInTitle: true,
+    slideshow: {
+      timePerSlide: 3,
+      music: "keep",
+      repeat: true,
+      shuffle: false,
+      transition: "fade",
+    },
+  });
+});

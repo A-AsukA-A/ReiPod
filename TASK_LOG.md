@@ -4,82 +4,37 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-25，REL109发布收口完成：功能提交 `570d897`、仅CI精简提交 `cd5ab55` 已推送。Pages 成功后从公网实际打开；iPhone 云端构建／模拟器测试成功。VPS 前端已由3954076发布为cd5ab55，65文件在服务器目标逐SHA匹配，后端abf75e2、会话、个人首页与服务均未改；公网全量读取曾有一条歌词TLS临时失败，带重试的定点SHA随后匹配，页面、字体样本和接口边界已确认。build5 IPA 的开发profile已过期，物理手机仍unavailable，不能作为安装交付；真实账号／系统同步／原机精确UI与全代际仍开放。
+最后更新：2026-11-26，`COMMIT117` 将已验证的 `ALARMPLAY111`–`SOUNDCHECK116` 改动本地提交至 `main`（领先 `origin/main` 1 个提交，未推送）。工作区位于 `/Users/july/Developer/ReiPod`，未重复已完成的 `REL109` 发布，未推送或部署。
+- **VISUAL115（O03 / C-M01 / C-F07 分屏预览图标与实时视觉检视）**：新增浮雕三段滑杆图标 `"eq"`（`src/ui/ClassicGlyph.tsx`），把 `eq` 纳入 `splitPages`（`src/ui/navigation.ts`），并在 `menuPreviewModel.ts` 补齐 `eq`、`date-time`、`compilations` 与 `ReiPod 设置` 各项的右侧预览映射；抓取实时生产预览在 Chromium 390×844 下的 7 张稳定截图（`.local/visual-audit-115/`），逐帧确认主菜单、设置/EQ、分屏 EQ 勾选、日期与时间图标、标题栏实时 `HH:MM` 时钟、幻灯片设置页与正在播放页均清晰对齐、无遮挡裁切。
+- **CLASSIC114（C-F07 / C-F08 均衡器、日期与时间、幻灯片背景音乐）**：新增 22 组 Apple classic EQ 预设 + 关闭（`src/models/classicEq.ts`）并接入本地 Web Audio 3 段 `BiquadFilterNode` 实时滤波（`src/player/localAudio.ts`）；新增「日期与时间 → 标题栏显示时间」实时 `HH:MM` 状态栏时钟与世界时钟入口；在「幻灯片设置」补齐「背景音乐（保持当前 / 关闭 / 非空本地歌单）」，三项新配置全部纳入偏好持久化与「还原设置」重置。
+- **SLIDESHOW113（C-F08 照片幻灯片设置）**：按 Apple iPod classic 用户指南补齐「幻灯片设置」纯模型（`src/models/slideshowSettings.ts`）、偏好持久化与「还原设置」重置、照片设置与看图选项中的轮盘菜单入口，以及按设置驱动的幻灯片播放（每张停留时间 `2/3/5/10/20 秒/手动`、重复播放、无放回随机照片、过渡效果 `关闭/淡入淡出/划像`），兼容本地照片与 iPhone 系统相册窗口。
+- **ALARMPLAY111（C-F08 闹钟声音与本地播放列表唤醒）**：按 Apple 2008 classic 120GB User Guide 印刷 p50 实现闹钟「声音（蜂鸣／系统默认或已有非空本地歌单）」轮盘选择、持久化与前台歌单唤醒播放；停止提醒仅关闭响铃浮层，不打断已唤醒音乐。
+- **CLEANUP112（全仓代码、存储、CSS 与文档优化）**：精简 `classicAlarms.ts` / `ClassicAlarms.tsx` 冗余代码；修复 `photos.ts` 与 `textDocuments.ts` IndexedDB 生命周期；补齐 `podcasts.ts` 删曲/清库同步清理；清理 ~580 行无引用遗留 CSS；更新用户手册与日志结构。
 
 ### 当前目标与进行中
 
-- REL109进行中（2026-11-11，承接BATCH108与VOL100–FINISH106）：用户新明确授权“全部检查完所有东西做完自动提交并更新”。完成本批剩余问题后对当前全部待交付树做代码／产物／必要全量回归及凭证／忽略边界检查，自动Git提交／推送，更新既有VPS／Pages与iPhone包；设备可连接则同Bundle ID覆盖安装。无需再问提交发布许可；原机未知／物理平台不支持和真实账号未验不得冒称已完成。
-
-- REL109检查／发布进行中（2026-11-25）：重新读取总纲、任务日志及 UI／原生规范，复核实际 63 个已跟踪文件和 27 个新增文件的工作树；BATCH108 功能及完整回归已经就绪，现进入 Git 审阅、提交、推送与自动发布观察。外部 VPS 不具备可用 SSH publickey 身份；仅重试无交互既有身份，绝不保存、回显或使用聊天中的口令。
-
-- REL109服务器更新继续（2026-11-25）：用户要求推送服务器版本并删除多余测试。保留本批变更对应的单元、原生边界与浏览器回归，因为它们覆盖闹钟、系统同步、音量、合辑和游戏的非重复风险；不为减少计数删除必要覆盖。VPS 只接受已解锁的本机 publickey 身份，未获得此身份前不执行远程写入，也不将聊天中的秘密写入文件、日志或命令行。
-
-- BATCH108进行中（C-F05/C-F07/C-F08，继承FINISH106及此前未提交树）：用户明确直接开始后续工作。先核实并补classic合辑归类／排序元数据与整条浏览播放返回，再落实有公开宿主能力的原机设置，随后补小游戏规则／表现；保护账号／队列／原生授权和现有导入。先读证据与平台能力，再实现可见结果；只做必要关键验证，不提交／发布或宣称全项目完成。
-
-- PLAN107已完成剩余工作核对（C-F05/C-F07/C-F08/C-F09/C-F10、VOL100/NATIVEORG104/FINISH106、全代际与发布）：区分真机／真实账户、classic设置与分类规则、附加功能／游戏、原机视觉证据、媒体／机型扩展及统一发布。现有成果不重列为待开发；日历默认只读和既定播客路线保持，不新增系统写入需求。下一独立批次为核实并补classic分类规则／可实现设置与小游戏细节，手机可连接时穿插build4真实验收，classic收口后再扩其他代际。本轮仅日志，未改产品或执行新测试／安装／发布。
-
-- FINISH106工程交付完成（C-F08/C-F05/O03，整体完工目标保持开放）：按用户“自己做”继续整块实现，继承VOL100—NATIVEORG104全部未提交树。闹钟取消／重复／标签／保存／删除、睡眠定时、倒计时设置／暂停／刷新恢复／到时停止都走通；修新建重复闹钟误补响保存前时间、页面回前台恢复提示、拒权仍可关闭已有计划及延迟取消。音乐／队列保持，睡眠到期才暂停当前Player，原生不额外创建网页音频。
-  - 可用：[4206](http://127.0.0.1:4206/)→附加功能→闹钟；[对照图](.local/finish-106/comparison.png)、[到时画面](.local/finish-106/timer-ringing.png)、[产物与工程证据](.local/finish-106/manifest.json)。首轮294单元中293通过，新增设置入口的旧预期修正后相关8通过，最终模型2通过；35服务端／player-core／25条去重必要浏览器通过，最终前台返回／撤权两整套再复核通过；build／check-dist／size／ios:prepare通过。入口145147B／程序335363B gzip。
-  - 原生：generic iphoneos build-for-testing含新有界计划检查编译通过；Release签名archive／严格codesign／64 Web资源SHA／IPA压缩完整性通过，Swift测试没有执行。[build4 IPA](.local/finish-106/ReiPod-alarms-development.ipa)12486855B，SHA256 `fb494232304ebfd490fd9ca0668eb686b34da3fb6999c0e06201daeea416671f`；[安装清单](.local/finish-106/install-manifest.json)。与当前dist和冻结预览一致，仅既有登记设备，profile 11-12 20:52:04北京时间到期。没有安装／发布／真实账号操作。
-  - 尚未完成：闹钟播放列表唤醒／全部原声调，睡眠后台精准停止，原游戏全内容／nano-mini全代际与其他C-F07–10缺口。不确定：真实AlarmKit权限／后台／锁屏／重启／系统停止回执、旧系统通知与iPhone日历／音量，当前手机unavailable、无Simulator runtime；对应原机固件字体／几何无足够证据。下一步按[FIRMWARE_FEATURES](FIRMWARE_FEATURES.md)继续独立可见项；手机可用后覆盖安装build4，实际近时闹钟／后台倒计时→系统停止→回App无重复，再验日历变更和音量。网页只保证前台，睡眠挂起后回前台补执行；不得据替身／编译将以上项目标通过。
-
-- STATUS105已完成状态核对：用户追问是否完工／完全还原；本轮目标为核对整体交付和还原边界，关联C-F07／C-F08／C-F09／C-F10及NATIVEORG104。已读总纲／当前接续和功能缺口并检查实际工作树；结论仍为classic2007基线的可运行开发版，未整体完工／未完全还原。没有新代码、测试、原生安装或发布；下一实际工作仍按未完成清单推进，当前手机同步／音量真实验收须可连接设备。
-
-- NATIVEORG104工程完成／待真实系统同步验收：EventKit／Contacts独立只读桥、主文档／动作／窗口约束、三类分别授权、日历空分组／六周实例、提醒状态／截止、联系人分页和详情头像；默认新版iPhone系统，网页／旧容器及显式副本保持导入。系统变化／回前台／时区重读，撤权／后台／迟到结果清理；系统内容不进入页面持久化／导入副本／音乐后端。[实现与边界](ios/README.md#2026-11-10-系统日历提醒事项与通讯录nativeorg104)。
-  - 实际完成：292单元／35服务端／player-core，2桥替身＋1文件完整路线通过，最终字段修改后2桥／3解析复核通过；generic iphoneos build-for-testing含新增原生只读／来源／日期边界检查编译通过，未执行Swift测试。生产／体积／iOS资源、Release签名archive、严格codesign／60资源SHA／IPA完整性通过；程序gzip326198B／入口149736B。
-  - 交付：[build3开发IPA](.local/native-organizer-104/ReiPod-system-organizer-development.ipa)、[安装清单](.local/native-organizer-104/install-manifest.json)，含全部游戏／ORG103／VOL100；签名到2026-11-12 20:52:04北京时间，仅既有登记设备。没有安装、提交／推送／VPS或Pages发布，线上仍REL98旧版。
-  - 未完成：配对物理iPhone仍unavailable、无Simulator runtime，真实三类授权／部分联系人／日程重复与变更／到机同步和实际音量未验；项目整体与nano／mini、闹钟／倒计时等原开放项没有因此关闭。未确定：真实SDK和系统库边界需手机操作证据，编译或替身不能代验。下一步连接解锁后同Bundle ID覆盖安装build3，不卸载；分别打开日历／待办／通讯录授权，修改系统样本后回App核刷新，并检查VOL100实际音量。原机字体／几何继续待证。
-
-- ORG103工程完成：用户明确自行选题、可见完善优先和避免大量无用测试，已选整块日历／通讯录并完成。月历按天／月浏览、日程／待办详情与长内容滚动，通讯录多字段／照片／姓氏或名字排序；.ics/.vcs／.vcf本地导入、更新／刷新／清空取消及确认、播放保持。支持范围有明确格式子集和失败提示，LCD只读；[当前规范](FIRMWARE_FEATURES.md#2026-11-10-日历与通讯录org103)、[逐状态](UI_METRICS.md#2026-11-10-日历与通讯录org103)。
-  - 当前可用：[4203](http://127.0.0.1:4203/)，[四画面](.local/organizer-103/comparison.png)、5.76秒连续自动操作视频、[原创示例日历](.local/organizer-103/sample-calendar.ics)／[联系人](.local/organizer-103/sample-contacts.vcf)、[清单](.local/organizer-103/manifest.json)。预览／iOS生产资源逐SHA对应；程序gzip323723B／入口149741B。
-  - 验证：新增3解析＋1整套浏览器；单元首轮290/292，旧设置两预期修正后该6项通过，最终解析3项通过；35服务端／player-core／已有菜单7＋About1＋新路径1通过，build／check-dist／size／ios:prepare通过。没有原机／iPhone／真实账号／新IPA／提交发布。
-  - 未完成：系统日历／通讯录同步、编辑／提醒、复杂重复／旧式编码与完整格式；原字体与准确2007固件几何仍U/P，引用图片直链404未冒称看过。下一步直接体验4203当前两块；后续可见块候选为闹钟／倒计时，先核实宿主提醒能力及原机连续操作，不把当前前台功能冒称后台支持。VOL100真实声音仍独立待物理手机。
-
-- GAME102工程完成／原机完整度未关闭：十题Trivia、Lightning真按假等／中性跳过、Who/What/When双标签匹配、奖励类型→押分→下一轮完整流程。Vortex新增黏球／快慢球／缩小／三挡板／强力球，爆炸连锁及金属砖、耐久激光和清关；旧存档兼容。确认新开后分类页现在保存null题局，刷新不再复活旧局；大库出题先抽样。 [范围](FIRMWARE_FEATURES.md)、[逐状态工程证据](UI_METRICS.md#2026-11-10-游戏奖励回合与特殊砖game102)。289单元／35服务端／7条相关浏览器、生产／体积／iOS资源通过，57份预览／iOS资源SHA匹配；入口gzip149774B／程序313365B。
-  - 当前可用：[4202](http://127.0.0.1:4202/)，`.local/games-102/after-dist`冻结产物；[对照图](.local/games-102/comparison.png)、[清单](.local/games-102/manifest.json)、6.24秒自动轮盘视频。右侧Vortex图为明确标记的第4关存档样本，不是通关证明；4199保留前一版本。
-  - 未完成：原题库／主持音画／音频识曲、Chance原圆盘、原三维／全关卡、伸缩砖／额外生命／两种控制和所有规则。当前五轮／九道具是独立重现子集。未确定：2007精确固件／字体／几何、金属砖特殊攻击边界，需对应原机资料；VOL100需物理手机实际声音。没有本轮新原生包／设备／账号／提交／发布。下一步直接4202体验当前新增回合／道具，不重复已交付项。
-
-- VIS101/GAME101工程完成／原机精度与全内容待续：用户指定先视觉收口和小游戏，PLAN99闹钟／日历顺序被替代。14u字号／20u栏保留、标题行盒使用现有栏高，修复中文重音裁字；6px状态间距改6u，未知轮廓不盲改。三款独立绘图／规则实现可用转轮操作，Menu／短Play暂停、HOLD／睡眠／后台暂停，存档独立、音乐队列保持；Klondike撤销引用缺陷已修。 [范围](FIRMWARE_FEATURES.md#2026-11-10-classic文字与小游戏vis101game101)、[逐状态与实测](UI_METRICS.md#2026-11-10-classic文字与小游戏vis101game101)。284单元／35服务端，相关42条路径最终通过（首轮41＋修正旧搜索helper后重跑1），最终行盒变更再跑游戏／菜单11条通过；生产与ios:prepare通过，入口gzip149779B／程序311523B。4199最终冻结预览；无本轮新原生包／设备／账号／发布操作。
-  - 后续状态：GAME102已补双奖励与更多道具；iQuiz原题库／听歌片段／主持音画、Vortex原三维引擎／全关卡及其余内容、Klondike原版精确计分与所有画面仍未完成；独立核心玩法不等于Apple游戏完整复原。
-  - 不确定：精确字体、中文固件、游戏几何／图标轮廓仍U/P，需匹配原机固件资料／测量；原生真实音量继续归VOL100真机验收。下一步直接4199的附加功能→游戏体验，不重复开发已交付核心。
-
-- VOL100工程修复完成／待真机：旧NativeSystemPlayer音量能力固定false且setVolume为空；新容器以MPVolumeView系统滑条、明确volumeControl快照和受限volume操作接通，快速旋转合并目标、保护新值、与播放/定位指令独立，旧容器回退保持。原机逻辑为普通画面直接转轮音量、Center定位等面板，不新增音量页。[签名开发IPA](.local/volume-100/ReiPod-volume-fix-development.ipa)、[清单](.local/volume-100/install-manifest.json)、[实现及验证边界](ios/README.md#2026-11-10-系统音乐播客转轮音量vol100)。276单元／35服务端／5条必要浏览器路径最终通过，原生含测试代码编译、签名archive/55资源SHA/压缩完整性通过；没有运行Swift测试或安装/实际声音验收。手机unavailable、无模拟器运行时；下一步连接解锁配对iPhone，复核11-12 20:52到期profile并覆盖安装验证。未提交/推送/部署，PLAN99扩展暂停。
-
-- PLAN99已完成路线核对：下一开发批次建议C-F08闹钟/倒计时完整轮盘流程，再日历/通讯录，随后C-F10/O03字体/图标与中英文逐状态视觉收口；nano/mini在classic现有体验收口后。开始时HEAD=e85bf33、工作区干净；本轮仅日志更新，未启动实现或重新部署/手机操作。闹钟后台提醒须按实际宿主能力实现验证，字体/几何需匹配设备证据；具体下一步先核实原机闹钟/倒计时连续操作与现有平台提醒能力，再固定整套体验范围。
-
-- REL98已完成：功能3954076已更新[VPS](https://julyblog.party/ReiPod/)与[Pages](https://a-asuka-a.github.io/ReiPod/)，公网56/55文件SHA一致、Pages流程42658164246成功。已连接iPhone同Bundle ID覆盖安装0.2.0/build2并启动，未先卸载。清14旧备份+10旧暂存目录264302754B，保留新/上一静态回滚、新/旧后端恢复与provider副本共5份，暂存保留3954076/fdb6c19；nginx/music active、PID147732与个人首页/后端哈希不变。当前回滚`/opt/reipod/backups/dist-before-3954076-20261109T165335Z.tgz`；[部署回执](SERVER_DEPLOYMENT.md#2026-11-10-classic整套ui与附加功能发布rel98)、[设备回执](ios/README.md#2026-11-10-连接设备更新rel98)。签名11-12 20:52北京时间到期，云端iPhoneCI42658164245仍queued，安装不等于账号/后台/像素验证；下一步直接使用三端新版，无需再次执行部署/清理。
-
-- PUSH97已完成：3954076已推送origin/main并以git ls-remote核实完整SHA；本次回执作为独立文档提交上传，使用[skip ci]避免日志重复触发构建。源码推送符合既有Pages/iPhone触发条件，但本轮未验证自动工作流终态/线上资源；没有VPS部署或手机安装。
-
-- COMMIT96已完成：任务77–95累积的44个跟踪修改与18个新增源码/测试已作本地Git提交；审阅暂存差异、路径/文件类型和高可信凭证模式，无私有素材/签名/生成资源进入提交，diff --check通过。没有新功能变更或重跑完整测试，任务95历史验证保留原范围。未推送/部署/安装；后续可继续在4195预览附加功能。
-
-- BATCH95已完成（CLOCK95/STOP95/SHELL95/PACK95，C-F08/O03/O02）：三批连续交付不逐项确认。世界时钟按地区添加城市、顺序保存/删除；秒表Play开始停止、Center分段、继续/新计时/日志统计/删除清空确认/刷新保持，播放独立。银黑壳体边缘/外框/阴影统一缩放，三视口LCD内容宽不变，字体未盲换；附加/浏览显示按需加载保持体积预算。[4195样本](http://127.0.0.1:4195/)（PID42781）、[前后四格](.local/extras-95/comparison.png)、[48.48秒连续视频](.local/extras-95/clocks-stopwatch-shell.webm)、[开发IPA](.local/extras-95/ReiPod-2026-11-10-development.ipa)。0.2.0/build2、55份Web文件哈希一致，profile到期11-12 20:52:04北京时间，仅登记设备；未安装/手机操作/提交发布。[逐状态指标](UI_METRICS.md#2026-11-10-世界时钟秒表与整机缩放batch95)、[签名边界](ios/README.md#2026-11-10-开发包交付pack95)。下一步直接打开4195：附加功能→时钟/秒表体验完整成果；后续C-F08闹钟/倒计时/日历等另需对应原机行为证据，原机字体/像素和实机边界不因此关闭。
-
-- MEDIA94已完成（POD94/LIST94/C-F06/C-F08/O03）：播客重进保留单集与窗口，原断点路线保留；歌单根列表名称/数量、曲目歌名/艺人双行，真实歌单先列、原库快捷入口保留，删除曲目页重复标题/额外底计数/曲目箭头。自建歌单候选和Play队列都使用音乐库，避免播客/另一播放会话混入。On-The-Go加入/取消清空/保存只读副本/清空/刷新及播放队列保持整套走通。[4194完整样本](http://127.0.0.1:4194/)（会话11631，34音乐/22播客）、[前后对照](.local/media-94/comparison.png)、[46.84秒连续视频](.local/media-94/podcasts-playlists.webm)；[4175](http://127.0.0.1:4175/)普通预览刷新生效。[指标](UI_METRICS.md#2026-11-10-播客与播放列表整块media94)。未读/日期无可靠数据不伪造，几何P/恢复和库快捷A，未提交发布或手机操作。下一步可直接在4194按Home，播客进节目/播放/返回/重进，音乐→播放列表查看两层变化；后续按PLAN93进入附加功能批次，勿重复小端点或逐项确认。
-
-- BATCH92已完成FLOW92/SEARCH92/PHOTO92：Cover Flow翻面曲序/时长、顶部和行高、长标题省略；搜索长副标题选中可滚动读完，原有输入/结果数/类型/返回不重做；照片网格按相册和锚照片记忆，原窗口内邻图切换返回不跳。左旧右新三块[对照](.local/batch-92/comparison.png)、[34.12秒连续视频](.local/batch-92/three-experiences.webm)，普通[4175](http://127.0.0.1:4175/)刷新生效、独立[4192样本](http://127.0.0.1:4192/)（会话84890，34原创静音曲/9专辑/45生成图）。用户已授权先列数块后自动连续做，勿再逐项确认；功能/外观优先、只做必要检查。下一步直接在4192按Home，音乐→Cover Flow/搜索，照片→所有照片看整套成果。原机精确字体/几何P/U仍不关闭。
-
-- SETTINGS90已完成整块工程交付：About三页Center循环/Menu返回、所选库计数与真实网页估算/软件版本；主菜单可选歌曲快捷；亮度/音量上限去除自加字幕。显示/音量封顶、主/音乐菜单刷新保持、还原取消/确认、背光与合成声音、服务/播放隔离已验证。[4175预览](http://127.0.0.1:4175/)刷新后设置→关于本机连续按Center，设置→主菜单勾选歌曲可直接进入列表；[指标](UI_METRICS.md#2026-11-09-设置与关于本机整套settings90)。前后/三视口工程图、44.36秒实际App视频在`.local/settings-90/`。精确原机About/调整页字体/几何仍P/U，存储及应用字段A，不冒充硬盘/Apple身份；C-F07其余设置/O03继续开放。
-
-- QUICK88完成工程交付：长列表>100项，快转字母定位→松手细选→原路径播放返回，歌曲/本地歌曲/艺人/专辑接通，HOLD/取消/来源变更清理，背光活动保持。独立[159项静音样本预览4188](http://127.0.0.1:4188/)由会话94616保留，原[4175](http://127.0.0.1:4175/)普通预览保留用户资料库；图片/19.04秒连续演示在`.local/quick-scroll-88/`。行为有文档/2007第一手依据，HUD尺寸P/中文和触控真机U，详见[指标](UI_METRICS.md#2026-11-09-长曲库快速找歌c-f07-q--quick88)。下一步打开4188，在机身转轮按住持续快转，再松手细选、Center播放和MENU返回；不把暂定值称为硬件校准。
-
-- FIX86完成：用户质疑截图小字后，确认它们为代理自行添加，已从呈现与CSS删除，并修正当前规范；整块交付不授权自创无依据UI。刷新[4175](http://127.0.0.1:4175/)即可看到删除后的定位页。PLAY83旧截图/视频含已撤回字幕，只作历史，不作为当前成果；用户指定的控制风格、歌词、大封面和既有实际修复保留。
-
-- BROWSE85完成：整条浏览与播放返回路径已修复并回归；原先返回约跳五行，现保留选中行与可见位置，范围/账号/provider隔离；专辑缩略图/副标题/计数统一LCD比例，专辑/风格长副标题选中可读全文。24组before/24组after、前后图、24.12秒演示在`.local/browse-85/`；[指标](UI_METRICS.md#2026-11-09-主菜单与音乐浏览整块browse85)。下一步直接[打开4175](http://127.0.0.1:4175/)，音乐→艺人→专辑选歌播放，MENU返回检查同一窗口；后续按整块体验推进，不重开单端点单元。HEAD=cc67ab7，22跟踪修改/2新测试文件，包含之前成果，未提交发布。
-
-- PLAY83保留的修复：音量0/100%继续转轮可续期、随机选中/评分可读性与既有面板流程；自行增加的定位百分比/音量字幕/随机方式文字/评分读数已于FIX86撤回。原[指标](UI_METRICS.md#2026-11-09-整套播放控制play83)已标注替代关系，旧.local/playback-83图和视频不再代表当前预览。
-- PLAN82已被本轮整块交付替代；CAL81长时间读数/轨道稳定、CAL79元数据、CAL77菜单成果全部保留。下一步直接打开4175，播放后用Center依次切换定位→随机→评分→歌词，转轮调整；后续开发按整块菜单/浏览体验检查和集中修复，不再单独交付一个端点。该轮成果与当前工作树一并保留，未提交/推送/部署。
-
-- REL75已完成：应用[fdb6c19](https://github.com/A-AsukA-A/ReiPod/commit/fdb6c19)已推送main，VPS/Pages/iPhone均已更新；47文件/13公网资源哈希、实际转轮/试听/分类/On-The-Go与网页照片10秒批次通过。Pages42167276359与iPhone42167276347成功，云端Swift Testing实际11项通过；发布回执已记录，不再连接用户手机。
-- 当前产品决定：按My Classic式App内独立播客播放/后台/锁屏，旧POD05完整Apple播客会话接管目标已被用户撤回；播客/照片浏览页不放导入，导入集中ReiPod设置。照片为PhotoKit只读、最近优先、最多8图批内随机、每10秒逐批更早、离焦重置；切图保留旧图至新图解码。默认常亮/前台idle管理、原生触觉、全面屏安全区/透明底层、启动背景与原生电池已接入；具体适配和静态启动屏限制见[ios/README](ios/README.md)。
-- 已有真机验收：用户确认系统相册/缩略图/单图、播客列表/封面/播放/返回、主页播客封面正常，切图不再黑屏，实际拔插电源同步正常；任务69的下载播客前台/后台/锁屏结果保留其原范围，不扩大到完整订阅/真实第三方账号。最近优先新轮播/默认常亮/冷启动缺少逐项最终用户反馈，见U07/APP03。
-- 原机目标仍是nano/mini/iPod/classic全代际；现有classic2007基线不等于全代际实现，UI优先且逐状态补证，C-F05/C-F06仅部分工程完成。APP02的120fps未实现（公开配置已启用，当前WebKit约59fps），PHOTO02/POD02、C-F07及O01–O06/U01–U07按下表继续，不因发布而关闭。
-- REL75历史线上状态（已由REL98更新前端）：前端fdb6c19、后端abf75e2，nginx/music active，音乐PID147732和个人首页/受检后端哈希保持。回滚包`/opt/reipod/backups/dist-before-fdb6c19-20261106T051551Z.tgz`；未重启后端、改会话/凭证或重新验证真实第三方账号。[发布详情](SERVER_DEPLOYMENT.md#2026-11-06-系统相册与iphone体验发布任务75)。
+- 无进行中任务。`ALARMPLAY111`、`CLEANUP112`、`SLIDESHOW113`、`CLASSIC114`、`VISUAL115` 与 `SOUNDCHECK116` 已在完成单元、服务端、无 DOM 核心编译、生产构建与体积和 Playwright 回归验证后本地提交至 `main`（未推送，`ANTIGRAVITY_HANDOFF.md` 保留未跟踪状态）。
+- 近期里程碑（详细过程见下方任务记录）：
+  - **2026-11-26 VISUAL115**：补齐 `eq`/`date-time`/`compilations` 与 ReiPod 设置分屏预览图标并完成实时渲染 7 帧视觉核对。
+  - **2026-11-26 CLASSIC114**：经典机均衡器（22 组预设 + 实时 Web Audio 3 段滤波）、日期与时间（标题栏时钟）、幻灯片背景音乐。
+  - **2026-11-26 SLIDESHOW113**：照片幻灯片设置（停留时间 / 重复 / 随机 / 过渡效果）、偏好持久化、还原设置重置及按设置驱动的幻灯片播放。
+  - **2026-11-25 ALARMPLAY111 & CLEANUP112**：闹钟本地播放列表唤醒 + 媒体/播客存储生命周期修复 + ~580 行废弃 CSS 清理 + 用户文档与日志瘦身。
+  - **2026-11-25 REL109（`cd5ab55` / `ac0c1df`）**：合辑（Compilations）与 ID3/MP4 `compilation`/`sort-as`、Vortex 五档难度与转轮绝对位置控制，连同 VOL100、VIS101/GAME101–102、ORG103/NATIVEORG104、FINISH106 统一提交并部署至 VPS 与 GitHub Pages，云端 Pages / iPhone Actions 通过。
 
 ### 已完成
 
 | ID | 结果与边界 | 依据 |
 | --- | --- | --- |
+| VISUAL115 | 补齐 `eq` 浮雕三段滑杆图标与分屏选择页、`date-time`/`alarm-settings`/`photo-settings`/`podcast-settings`/`organizer`/`compilations` 等右侧分屏预览映射，并在实时渲染截图（`.local/visual-audit-115/`）完成逐帧视觉对齐检查；同固件实机精确字体/像素测量仍待真实物理机证据 | `src/ui/ClassicGlyph.tsx`、`src/ui/menuPreviewModel.ts`、`src/ui/navigation.ts`、`src/ui/menuPreview.test.ts` |
+| CLASSIC114 | 均衡器 22 组经典预设 + 关闭（接入本地 Web Audio 3 段 BiquadFilter 实时滤波）、日期与时间（标题栏实时 `HH:MM` 时钟 + 世界时钟入口）、幻灯片背景音乐（保持当前 / 关闭 / 非空本地歌单），均支持偏好持久化与「还原设置」；在线/iOS 系统音乐路由暂保持各自原生管线，不做网页端滤波改写 | `src/models/classicEq.ts`、`src/player/localAudio.ts`、`src/ui/ClassicStatusBar.tsx`、`src/ui/settingsMenus.ts`、`src/ui/mediaMenus.ts`、`src/app/App.tsx` |
+| SLIDESHOW113 | 照片幻灯片设置（每张停留时间 2/3/5/10/20s/手动、重复、随机照片、过渡 关闭/淡入淡出/划像）、`reipod-appearance` 持久化、「还原设置」恢复默认值与按设置驱动幻灯片播放；幻灯片背景音乐配乐仍待补 | `src/models/slideshowSettings.ts`、`src/ui/mediaMenus.ts`、`src/ui/classicSettings.ts`、`src/app/App.tsx`、`tests/browser/slideshowSettings.pw.ts` |
+| CLEANUP112 | 修复照片/文本 IndexedDB 连接生命周期与导入恢复顺序，补齐删曲/清库时播客 ID 与书签同步清理；清理 ~580 行无引用遗留 CSS（主样式 3592→3013 行）；更新中英用户文档并精简日志与规范赘述 | `src/media/photos.ts`、`src/media/textDocuments.ts`、`src/media/podcasts.ts`、`src/player/store.ts`、`src/style.css`、`src/ui/classic-lcd.css`、`src/ui/firmware-display.css` |
+| ALARMPLAY111 | 经典机闹钟声音轮盘选择（蜂鸣／非空本地歌单）、有界持久化与前台歌单唤醒起播；停止提醒不中断唤醒音乐，歌单缺失或系统后台回退蜂鸣；原机内置声调与真机后台仍待验 | [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md#2026-11-10-闹钟睡眠定时与倒计时finish106)、`src/models/classicAlarms.ts`、`src/ui/ClassicAlarms.tsx` |
+| REL109 | 合辑入口与 `compilation`/`sort-as` 元数据、Vortex 五档难度与绝对转轮控制，连同 VOL100–FINISH106 统一提交并更新 VPS/Pages，云端 Pages 与 iPhone workflow 通过 | [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md)、`cd5ab55` |
+| FINISH106 | 闹钟创建/编辑/重复/标签/删除、睡眠定时、倒计时暂停/恢复/到时停止、原生 AlarmKit/通知桥及艺人单专辑跳级；真机后台待验 | [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md#2026-11-10-闹钟睡眠定时与倒计时finish106)、[ios/README.md](ios/README.md#2026-11-10-闹钟与倒计时finish106) |
+| NATIVEORG104 / ORG103 | 月历/日程/待办/通讯录轮盘只读浏览、本地 `.ics`/`.vcf` 导入，以及 iPhone EventKit/Contacts 只读桥；真机授权同步待验 | [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md#2026-11-10-系统日历提醒事项通讯录nativeorg104)、[ios/README.md](ios/README.md#2026-11-10-系统日历提醒事项与通讯录nativeorg104) |
+| VIS101 / GAME101–102 | 标题栏 20u 行盒与 6u 状态图标间距修复；iQuiz（含双奖励回合与押分）、Klondike（1/3 张发牌与撤销）、Vortex（9 类道具与爆炸/金属砖）独立核心实现 | [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md#2026-11-10-classic文字与小游戏vis101game101)、[UI_METRICS.md](UI_METRICS.md#2026-11-10-classic文字与小游戏vis101game101) |
+| VOL100 | iPhone 普通播放封面页转轮通过 `MPVolumeView` 调节系统音量并与 Center 定位面板互斥，旧容器兼容回退；真机扬声器/耳机输出待验 | [PLAYBACK_INTERACTIONS.md](PLAYBACK_INTERACTIONS.md)、[ios/README.md](ios/README.md#2026-11-10-系统音乐播客转轮音量vol100) |
 | BATCH95 | 世界时钟/秒表完整轮盘与持久化、银黑壳体缩放、按需加载、最终开发签名IPA；工程完成，未安装发布，固件像素P/U | [指标](UI_METRICS.md#2026-11-10-世界时钟秒表与整机缩放batch95)、任务95 |
 | MEDIA94 | 播客重进位置、歌单/曲目双行、音乐成员/Play队列隔离及On-The-Go完整路径；46.84秒演示，未发布/原机精度仍待证 | [指标](UI_METRICS.md#2026-11-10-播客与播放列表整块media94)、任务94 |
 | BATCH92 | 连续三块Cover Flow/搜索/照片可见修整与完整操作，前后对照/34.12秒视频/4192样本；必要路径及构建通过，硬件精度仍待证 | [指标](UI_METRICS.md#2026-11-09-cover-flow搜索照片整块batch92)、任务92 |
@@ -142,13 +97,13 @@
 | APP03 | 冷启动/默认常亮代码和自动检查完成，真实划掉重开无闪白与50秒常亮待验；系统启动页静态黑色，任意浅/深用户主题不能动态写入系统启动画面 | 最新版已安装；待用户冷启动/常亮反馈，若仍有闪白定位系统快照、宿主首帧或WebKit，不以资源打包测试代验 |
 | APP02 | 用户要求的高帧率尚未达成：公开ProMotion配置已启用，物理iPhone17 Pro/iOS27.3的WebKit rAF仍约59fps；硬件上限120、低电量关闭 | 先区分网页回调/合成呈现与系统帧率限制；取得公开可用平台能力或原生呈现方案后重新测量，不用私有偏好或无用定时器伪造120fps |
 | PHOTO02 | 真实有限照片授权增减、拒绝/撤销、相册/照片变更、仅iCloud及离线失败；当前仅已确认正常授权浏览，边界由替身覆盖 | [iPhone说明](ios/README.md#iphone-系统相册photo01)；在相同设备按边界逐项记录，不以8项自动测试代替 |
-| C-F06 | C-F06-A工程实现完成；精确原机闪烁/几何、元数据不足时的分组差异及真实原生/后台仍待验；本地On-The-Go不含iTunes/平台歌单写入 | [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md)、[任务67指标](UI_METRICS.md#2026-11-05-随机与on-the-goc-f06-a--任务67)；下一C-F07 |
-| C-F05 | 基础分层已实现，单专辑跳级、编译专辑、sort-as及匹配2007固件连续操作验收仍待证据；可用碟号排序已由C-F06接入 | [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md)、[来源限制](HARDWARE_RESEARCH.md#classic分类浏览层级--2026-11-05--任务66)；下一工程单元C-F07 |
-| POD02 | 任务69已通过本机下载项可见/前台控制/保留进度/封面/后台/锁屏/返回同步；权限拒绝撤销、自然切集、重开、下载变更和Apple播客安装/卸载唤起仍待验，App内独立播放范围见任务70 | 按 [ios/README.md](ios/README.md#iphone-系统播客pod01) 安装新版并逐项记录；普通网页和模拟器替身不能代验 |
-| O01 | 全仓逐模块审查与垃圾代码清理；每个删除项须证明无用并完成适用检查 | 从大文件职责和调用关系建立清单，保留动态/原生入口；见 DEVELOPMENT 审视结论 |
-| O02 | 四层代码迁移；账户菜单/命令、播放页控制器、classic 机身入口与输入控制器已提取，机型配置已接入；其余菜单生成、核心与平台依赖梳理及其他机型尚未完成 | 按 UI 实施遇到的边界按需整改，照片/文本存储保留待办；删除/清库协调、音频存储、导入/恢复、会话持久化/React 绑定、Player 端口与媒体菜单已整改，核心错误文案等残留继续审查，切换机型/主题须保留会话，继续检查各层边界 |
+| C-F06 | C-F06-A工程实现完成；精确原机闪烁/几何、元数据不足时的分组差异及真实原生/后台仍待验；本地On-The-Go不含iTunes/平台歌单写入 | [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md)、[任务67指标](UI_METRICS.md#2026-11-05-随机与on-the-goc-f06-a--任务67) |
+| C-F05 | 基础分层、可用碟号排序（C-F06）、单专辑艺人跳级（FINISH106）、合辑与 `compilation`/`sort-as` 元数据（REL109）已实现；匹配2007固件连续操作实机证据仍待补 | [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md)、[来源限制](HARDWARE_RESEARCH.md#classic分类浏览层级--2026-11-05--任务66) |
+| POD02 | 任务69已通过本机下载项可见/前台控制/保留进度/封面/后台/锁屏/返回同步；权限拒绝撤销、自然切集、重开、下载变更和Apple播客安装/卸载唤起仍待验，App内独立播放范围见任务70 | 按 [ios/README.md](ios/README.md#iphone-系统播客pod01) 安装新版并逐项记录 |
+| O01 | 全仓逐模块审查与垃圾代码清理；`CLEANUP112` 已修复照片/文本/播客存储生命周期并删除无引用历史 CSS；后续随架构演进继续保持零死代码 | 见 DEVELOPMENT 审视结论 |
+| O02 | 四层代码迁移；账户菜单/命令、播放页控制器、classic 机身入口与输入控制器已提取，机型配置已接入，音频/照片/文本/播客存储生命周期已对齐；其余核心错误文案与第二机型抽象待按需推进 | 切换机型/主题须保留会话，继续检查各层边界 |
 | O03 | classic 逐状态 UI 校准；取得证据、测量、集中实现、对照截图和输入回归后才能验收 | C-M01 已修正分屏箭头尺寸/选中状态与投影；继续匹配固件的中英文/数字、长标题与滚动；见 [UI_METRICS.md](UI_METRICS.md#classic-首批逐状态验收) |
-| O04 | 菜单首批覆盖声明已清理；其余 CSS 继续逐组件审查，保留状态/媒体查询差异 | 检查 `src/style.css → src/ui/classic-lcd.css → src/ui/firmware-display.css` 的 computed style |
+| O04 | 菜单覆盖声明及 `CLEANUP112` ~580 行无引用遗留选择器已清理（三份主样式 3592→3013 行）；其余活动组件 CSS 继续按逐状态校准收敛 | 检查 `src/style.css → src/ui/classic-lcd.css → src/ui/firmware-display.css` 的 computed style |
 | O05 | 全代际官方资料和实机指标补齐；各硬件/固件独立记录，不能套 classic 参数 | 按 [机型覆盖表](DEVICE_STANDARDS.md#全系列覆盖与开发状态) 继续研究，先补当前基线证据 |
 | O06 | HTTP / 内置桥调度维护风险审查及真实环境验收 | 对照两宿主的验证/取消/会话契约；实际状态查 [MUSIC_BRIDGE.md](MUSIC_BRIDGE.md)、[SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md) |
 
@@ -1301,3 +1256,101 @@
 - 服务器：本机 publickey 解锁后，VPS静态前端由3954076更新到cd5ab55；新回滚包`/opt/reipod/backups/dist-before-cd5ab55-20261125T070022Z.tgz`及后端快照均已建立。65个文件在服务器目标逐SHA匹配；后端abf75e2、9个受检后端文件、个人首页、music PID与nginx／音乐服务保持不变且active。
 - 公网：`https://julyblog.party/ReiPod/`为200；网易云／QQ匿名status与Pages来源为200且未授权，非允许来源403。页面和字体样本哈希匹配；完整资源并发读取曾遇到单条歌词TLS临时失败，随后带重试的定点读取SHA匹配；未把这一部分成功扩写为单次65文件公网全量通过。
 - 云端：Pages重跑后成功，公网已实际打开；iPhone workflow [45563007276](https://github.com/A-AsukA-A/ReiPod/actions/runs/45563007276)成功。它们不替代物理iPhone安装、真实系统资料／音量或第三方账号验证。
+
+## 2026-11-25 · ALARMPLAY111：经典机闹钟声音与本地播放列表唤醒
+
+- 目标与开始：接手 `/Users/july/Developer/ReiPod`，先读 `ANTIGRAVITY_HANDOFF.md`、`DEVELOPMENT.md`、`TASK_LOG.md`、`AGENTS.md` 及 `FIRMWARE_FEATURES.md`、`UI_METRICS.md`、`PLAYBACK_INTERACTIONS.md`、`PROJECT_STRUCTURE.md` 等专题。核对分支 `main` 与 `origin/main` 同步、HEAD=`ac0c1df`，保留工作树中未提交的 `ANTIGRAVITY_HANDOFF.md` 与 `TASK_LOG.md` 交接记录，不重复已完成的 REL109 发布。从 `TASK_LOG.md` 与 `FIRMWARE_FEATURES.md` 的未完成事项中选定证据充分（Apple 2008 classic 120GB User Guide 印刷 p50 明示 Alarms → Sound 可选 Beep 或播放列表）、可独立推进的 C-F08 闹钟声音与本地播放列表唤醒整块体验（`ALARMPLAY111`）。
+- 实现与职责边界：
+  - 纯模型（`src/models/classicAlarms.ts`）：新增 `AlarmSound`（`"beep"` 或有界 `{ playlistId, playlistName }`）、`validAlarmSound`、`alarmPlaylistId`、`alarmSoundLabel`；`parseAlarms` 兼容旧存档缺省 `"beep"` 并校验字段长度；`advanceAlarms` 在闹钟触发时把有效 `playlistId` 写入 `AlarmNotice`。
+  - 界面与宿主装配（`src/ui/ClassicAlarms.tsx`、`src/ui/ClassicScreenContent.tsx`、`src/app/App.tsx`）：闹钟编辑页「声音」行由原固定提示改为进入 `mode="sound"` 轮盘子列表，提供「蜂鸣（或系统默认）」及当前所有非空本地播放列表（含 On-The-Go、已保存副本与自建歌单）；`AlarmRuntime` 在前台可见且闹钟携带 `playlistId` 时调用 `App` 注入的 `onPlayPlaylist`（暂停非本地源、切至 `local`、用该歌单有效本地曲目建立队列并激活首曲），成功起播时抑制合成蜂鸣；按 Center／Menu／Play 停止提醒仅关闭响铃浮层，不暂停已唤醒的音乐；若歌单被删／为空或处于系统后台提醒，则安全回退蜂鸣／系统默认声音。
+- 实际验证：
+  - `npm test`：60 文件、300 项单元测试全部通过（含新增 `src/models/classicAlarms.test.ts` 的声音持久化、旧存档默认回退、歌单重命名展示及触发 `playlistId` 检查）。
+  - `npm run test:music-server`：35 项全部通过。
+  - `npm run check:player-core`：无 DOM 核心编译检查通过。
+  - `npx playwright test tests/browser/alarmsExperience.pw.ts`：2 项端到端浏览器检查通过（覆盖长按中心键将试听曲加入 On-The-Go、创建闹钟在「声音」中选择 On-The-Go 并保存、倒计时暂停／刷新恢复／后台返回补提醒、闹钟到时自动唤醒本地歌单播放、停止提醒后音乐继续播放、睡眠定时到期暂停播放并休眠，以及原生调度桥替身权限与停止回执）。
+  - `npm run build`、`node scripts/check-dist.mjs`、`npm run size`：全部通过（total 12,852,171 bytes、programGzip 337,629 bytes、entryGzip 146,220 bytes、demoAudio 3,817,420 bytes）。
+  - 文档同步与 `git diff --check`：已同步更新 `DEVELOPMENT.md`、`FIRMWARE_FEATURES.md`、`UI_METRICS.md`、`PLAYBACK_INTERACTIONS.md`、`PROJECT_STRUCTURE.md`、`REPLICA.md`、`USER_GUIDE.md` 与 `TASK_LOG.md`，格式检查通过。
+- 未完成／未验证边界与下一步：
+  - 未执行 `git commit`、推送、VPS／Pages 部署或 iOS 打包安装；本机无可用物理 iPhone 且旧开发签名已过期，未进行真机 AlarmKit／通知、系统日历／提醒／通讯录（NATIVEORG104）、原生系统音量（VOL100）或真实第三方账号（U04）验证。
+  - 歌单唤醒仅在应用前台可运行时切换本地队列起播，不伪装 iOS 后台自动启动网页音频或原机全部内置声调；新增列表沿用既有 `.alarm-row` 暂定几何（P/A），2007 精确固件字体／几何（C-F10 / O03 / U01）及 nano／mini／其他代际（O05）继续开放。
+  - 下一步：可继续从 classic 剩余可见功能（如 C-F08 照片幻灯片设置在有原机依据时的补齐、C-F07 其余可实现设置或 O04 样式级联清理）推进，或在连接解锁物理 iPhone 并更新开发签名后执行 VOL100／NATIVEORG104／FINISH106 真机验收。
+
+## 2026-11-25 · CLEANUP112：全仓代码、存储生命周期、遗留 CSS 与文档大刀阔斧优化
+
+- 目标与范围：按用户审阅指示（关联 O01 / O02 / O04 / C-F08），一次性清理全仓发现的代码/存储隐患、无引用历史 CSS 与文档冗余：
+  1. **闹铃代码精简与媒体/播客存储生命周期修复**：
+     - 精简 `src/models/classicAlarms.ts`（用 `{ ...a, sound: ... }` 替代 8 字段手写铺开）与 `src/ui/ClassicAlarms.tsx`（移除多余 `try/catch` 包装，保留简洁单行触发与 `${row.label}:${i}` key）。
+     - 修复 `src/media/photos.ts` 与 `src/media/textDocuments.ts` 的 IndexedDB 连接缓存生命周期（补齐 `db.onversionchange` 与 `db.onclose` 缓存重置、`tx.onabort` 错误回传，并在 `importPhotos` 前等待 `restorePhotos()`，防止首屏并发导入与恢复竞态）。
+     - 在 `src/media/podcasts.ts` 新增 `removePodcast(id)` 与 `clearPodcasts()`（并将 `player.subscribe` 改为惰性挂载以避免与 `store.ts` 产生顶层循环依赖求值异常）并接入 `src/player/store.ts` 的删除单曲/清空曲库流程，彻底消除孤儿播客 ID（`reipod-podcasts`）与残留断点进度（`reipod-podcast-positions`）。
+  2. **无引用遗留 CSS 彻底清理（O01 / O04）**：
+     - 经全仓 `.ts`/`.tsx`/`.html` 静态与模板字面量交叉核对（保留动态拼接的 `.wheel-*` 与 `.game-*`），从 `src/style.css`（1405→1019 行）、`src/ui/classic-lcd.css`（1172→984 行）与 `src/ui/firmware-display.css`（1015→1010 行）删除 ~580 行 100% 无引用的早期遗留选择器（`.record-art`/`.record-disc`/`.record-label`、`.screen-indicators`/`.screen-power`、`.device-engraving`、`.is-dragging`、`.screen-back`、`.preview-stack`、`.np-index`/`.np-actions`/`.play-view-dots`、`.screen-progress input` 旧滑块与 `.is-seeking`、`.volume-overlay`、`.screen-error`、`.lcd-text-entry`/`.name-entry`、`.preview-cover-link`、`.np-firmware-control`、`.np-repeat-options`）。
+  3. **用户文档更新与防御性赘述瘦身**：
+     - 更新 `README.md` 与 `README.zh-CN.md`，补齐合辑（Compilations）与 `sort-as`、单专辑艺人跳级、长列表快转字母跳转（Quick Scroll）、世界时钟、秒表、闹钟（含本地歌单唤醒）/ 睡眠定时 / 倒计时、日历 / 待办 / 通讯录（含 iPhone 系统只读同步）、三款经典游戏（iQuiz / Klondike / Vortex）以及 iPhone 播放封面页转轮系统音量（`MPVolumeView`）。
+     - 将 `USER_GUIDE.md` 中混杂的中文段落（`### iPhone体验设置（任务72）`）统一改写为英文 `### iPhone experience and system integration`，并同步音量与合辑浏览说明。
+     - 收拢 `TASK_LOG.md` 顶部堆积的 70 行旧完成流水账，刷新 `C-F05`/`O01`/`O02`/`O04` 状态，并精简 `DEVELOPMENT.md`、`FIRMWARE_FEATURES.md`、`REPLICA.md` 末尾重复的防御性免责声明。
+  4. **实际验证**：
+     - `npm test`（60 文件、300 项单元）、`npm run test:music-server`（35 项）、`npm run check:player-core`、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（total 12,844,311 bytes、programGzip 336,010 bytes、entryGzip 146,407 bytes，主 CSS 体积进一步下降）全部通过。
+     - 8 个 Playwright 端到端回归套件（`alarmsExperience`、`appearance`、`libraryMutations`、`texts`、`photoPreview`、`podcastPreview`、`playbackFidelity`、`menuFidelity`，共 29 条用例）与 `git diff --check` 全部通过。
+
+## 2026-11-26 · SLIDESHOW113：经典机照片幻灯片设置（C-F08）
+
+- 目标与开始：响应自动规划与项目完善指令，核对 [FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md) 开放项并保持既定工作区树（`HEAD = ac0c1df`，保留 `ALARMPLAY111` / `CLEANUP112` 改动）。选定 Apple iPod classic 用户指南中明确记录且可独立闭环的 C-F08 照片「幻灯片设置」。
+- 实现：
+  - 纯模型（`src/models/slideshowSettings.ts`）：定义并校验 `timePerSlide`（`2 / 3 / 5 / 10 / 20 秒 / 手动`）、`repeat`（开/关）、`shuffle`（开/关）、`transition`（`关闭 / 淡入淡出 / 划像`），实现确定性无放回随机序列 `buildSlideshowOrder` 与推进计算 `nextSlideshowStep`。
+  - 偏好与菜单（`src/ui/classicSettings.ts`、`src/ui/settingsMenus.ts`、`src/ui/navigation.ts`、`src/ui/classicScreenModel.ts`、`src/ui/mediaMenus.ts`）：在 `Preferences` 接入 `slideshow` 并于「还原设置」还原默认值（`3 秒 / 重复开启 / 随机关闭 / 淡入淡出`）；在 `照片设置` 与看图选项 `photo-options` 接入 `幻灯片设置`、停留时间与过渡效果子菜单，保持 `照片` 根菜单只浏览、无设置/导入杂项。
+  - 播放控制（`src/app/App.tsx`）：替换原固定 3000ms 定时切换，按 `prefs.slideshow` 驱动自动间隔或手动模式、无放回随机序、单轮结束提示 `"幻灯片播放结束"` 及 `fade`（`replace`）/ `wipe`（`forward`）过渡，兼容本地照片与 iPhone 系统相册窗口。
+- 实际验证：
+  - `npm test`：61 文件、305 项单元通过（含 `slideshowSettings.test.ts` 3 项、`classicSettings.test.ts` 7 项、`settingsMenus.test.ts` 6 项、`mediaMenus.test.ts` 9 项）。
+  - `npm run test:music-server`（35 项）、`npm run check:player-core`、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（total 12,847,119 bytes、programGzip 336,944 bytes、entryGzip 147,355 bytes）通过。
+  - Playwright 端到端回归（`slideshowSettings.pw.ts`、`player.pw.ts`、`settingsExperience.pw.ts`、`photoPreview.pw.ts`，共 35 条用例）全部通过。
+- 未完成边界与下一步：幻灯片背景音乐配乐（Apple 指南中同步音乐选择）、iPhone 真实系统相册实机幻灯片确认与 `VOL100`/`NATIVEORG104`/`FINISH106` 真机验收继续开放；下一步可继续补齐 C-F07 其余可实现设置（如语言/均衡器评估）或整理工作树提交。
+
+## 2026-11-26 · CLASSIC114：经典机均衡器、日期与时间、幻灯片背景音乐
+
+- 目标与开始：按用户「继续完成上述内容」指令，从功能对照表未完成设置与 C-F08 缺口中选取可在当前 classic 基线独立闭环的三项原机能力（`C-F07` 均衡器、日期与时间；`C-F08` 幻灯片背景音乐）。核对 `HEAD = ac0c1df`，保留已有未提交工作树。
+- 实现：
+  - **均衡器（`src/models/classicEq.ts`、`src/player/localAudio.ts`、`src/ui/classic.ts`、`src/ui/settingsMenus.ts`）**：按 Apple iPod classic 22 组经典 EQ 预设 + `关闭` 建立模型与选中菜单，`LocalGainAudio` 内接入 3 段 `BiquadFilterNode`（120Hz `lowshelf`、1kHz `peaking`、8kHz `highshelf`）随偏好变化实时更新增益；桌面端启用非零 EQ 时亦自动路由至 `LocalGainAudio`，而 iPhone 原生系统音乐/远程 DRM 路由保持原有独立边界，不宣称系统硬件 EQ。
+  - **日期与时间（`src/ui/ClassicStatusBar.tsx`、`src/ui/primaryMenus.ts`、`src/ui/settingsMenus.ts`）**：新增「设置 → 日期与时间」，支持开启/关闭「标题栏显示时间」（在顶栏标题位置每 15 秒刷新本地 `HH:MM`，保留无障碍 `title` 原页面名称），并提供快捷进入世界时钟；偏好支持保存与「还原设置」复位（默认关闭）。
+  - **幻灯片背景音乐（`src/models/slideshowSettings.ts`、`src/ui/mediaMenus.ts`、`src/app/App.tsx`）**：扩展 `SlideshowSettings.music` 支持 `保持当前`（`"keep"`，默认）、`关闭`（`"off"`，幻灯片启动时暂停当前音乐）与任意非空本地播放列表（启动幻灯片时复用 `playLocalPlaylist` 切回本地歌单首曲起播）。
+- 实际验证：
+  - `npm test`：62 文件、307 项单元测试全部通过（含 `classicEq.test.ts`、`localAudio.test.ts` 3 段 EQ 测试、`slideshowSettings.test.ts`、`classicSettings.test.ts`、`settingsMenus.test.ts`、`mediaMenus.test.ts`）。
+  - `npm run test:music-server`（35 项）、`npm run check:player-core`（无 DOM 核心编译）、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（total 12,851,363 bytes、programGzip 338,502 bytes、entryGzip 148,925 bytes ≤ 150,000 B）全部通过。
+  - Playwright 浏览器端到端回归（`slideshowSettings.pw.ts`、`settingsExperience.pw.ts`、`player.pw.ts`、`alarmsExperience.pw.ts`，共 33 条用例）全部通过。
+- 未完成边界与下一步：C-F07 音量平衡/多语言切换与精确原机像素/字体校准（C-F10/O03）、全代际机型（O05）及 `VOL100`/`NATIVEORG104`/`FINISH106` 真机验收继续开放；下一步可继续处理 C-F07 剩余可实现设置、提交整理当前工作树，或在连接真机后进行真机验收。
+
+## 2026-11-26 · VISUAL115：分屏预览图标补齐与实时视觉效果检查
+
+- 目标与开始：按用户要求对照原机与当前渲染核查视觉效果。在静态检查与分屏菜单排查中发现：`均衡器（eq）` 缺少右侧浮雕预览图标且未接入 `splitPages` 分屏选择页；`date-time`、`compilations`（封面预览）、`alarm-settings`、`photo-settings`、`podcast-settings`、`organizer`、`music-services`、`haptics`、`metadata-license`、`font-license` 在 `menuPreviewModel.ts` 中默认回退为普通音符图标。
+- 实现：
+  - `src/ui/ClassicGlyph.tsx`：新增 `"eq"` 三段浮雕垂直滑杆矢量，复用共享金属渐变与描边风格。
+  - `src/ui/navigation.ts`：把 `"eq"` 接入 `splitPages`，使均衡器选择页采用与随机/重复/声音相同的分屏选择+左侧滑动转场。
+  - `src/ui/menuPreviewModel.ts` & `src/ui/menuPreview.test.ts`：补齐 `"compilations"` 封面预览，以及 `eq`、`date-time`、`alarm-settings`、`photo-settings`、`podcast-settings`、`organizer`、`music-services`、`haptics`、`metadata-license`、`font-license` 的上下文图标映射并补充单测。
+- 实时渲染截图检视与验证：
+  - `npm test`：62 文件、307 项单元全部通过；`npm run test:music-server`（35 项）、`npm run check:player-core`、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（total 12,852,082 B、programGzip 338,680 B、entryGzip 149,064 B ≤ 150,000 B）通过。
+  - 在 Chromium 390×844 下针对 `npm run preview` 抓取 7 张稳定结算截图（`.local/visual-audit-115/home.png`、`settings-eq.png`、`eq-choice.png`、`settings-datetime.png`、`time-in-title.png`、`slideshow-settings.png`、`now-playing.png`）并逐帧检视，确认菜单阴影、选中箭头与对勾、浮雕 `eq`/`clock` 图标、状态栏 `13:02` 实时时钟、幻灯片 5 行设置与 Now Playing 封面倒影/进度条均无重叠或裁切。
+  - Playwright 浏览器回归（`slideshowSettings.pw.ts`、`menuFidelity.pw.ts`、`playbackFidelity.pw.ts`、`settingsExperience.pw.ts`，共 17 条用例）全部通过。
+- 原机对比结论：结构、比例（103.5×61.8 机身、320×240 逻辑 LCD）、交互反馈与分屏材质与 2007 classic 6G 一致性高；字体仍为可再分发 Noto Sans SC 替代字型（`A`），菜单网格/封面投影/动画曲线为工程视觉拟合（`P`/`M`），同固件实体机逐状态实测仍待物理设备完成。
+
+## 2026-11-26 · SOUNDCHECK116（C-F07 设置音量平衡 / Sound Check）
+
+- **目标**：补全 `C-F07` Classic `设置 → 音量平衡`（Sound Check：`关闭` / `开启`）UI、偏好持久化、Reset Settings 还原，以及本地 Web Audio `DynamicsCompressorNode` 响度平衡链路，并同步单测、Playwright 回归与文档。
+- **实现与修改**：
+  - 本地 Web Audio 链路（[src/player/localAudio.ts](src/player/localAudio.ts)）：新增模块状态 `activeSoundCheck` 与导出 `setLocalSoundCheck(enabled)`，在 `LocalGainAudio` 中接入 `DynamicsCompressorNode`（`applySoundCheck` 开启时 `threshold = -24, knee = 24, ratio = 4, attack = 0.005, release = 0.25`，关闭时旁路 `threshold = 0, knee = 0, ratio = 1`），`createLocalAudio()` 在 iOS、任一 EQ 增益非零或开启 Sound Check 时路由至 `LocalGainAudio`，`removeAttribute("src")` 时同步 `disconnect()`；缺少 `createDynamicsCompressor` 的测试/精简上下文安全降级直连。
+  - 配置与菜单接线（[src/models/classic.ts](src/models/classic.ts)、[src/ui/classicSettings.ts](src/ui/classicSettings.ts)、[src/ui/navigation.ts](src/ui/navigation.ts)、[src/ui/classicScreenModel.ts](src/ui/classicScreenModel.ts)、[src/ui/menuPreviewModel.ts](src/ui/menuPreviewModel.ts)、[src/ui/primaryMenus.ts](src/ui/primaryMenus.ts)、[src/ui/settingChoices.ts](src/ui/settingChoices.ts)、[src/ui/settingsMenus.ts](src/ui/settingsMenus.ts)、[src/app/App.tsx](src/app/App.tsx)）：在 `settingsOrder` 的 `eq` 后加入 `"sound-check"`（保持前 9 项索引不变）；`Preferences` 新增 `soundCheck: boolean`；`"sound-check"` 接入分屏单选列表（`关闭` / `开启`）、右栏 `speaker` 预览图标、`Reset Settings` 还原，以及 `App.tsx` 的 `setLocalSoundCheck(prefs.soundCheck)` 同步。
+  - 单元测试、E2E 与文档（[src/player/localAudio.test.ts](src/player/localAudio.test.ts)、[src/ui/classicSettings.test.ts](src/ui/classicSettings.test.ts)、[src/ui/settingsMenus.test.ts](src/ui/settingsMenus.test.ts)、[src/ui/menuPreview.test.ts](src/ui/menuPreview.test.ts)、[tests/browser/slideshowSettings.pw.ts](tests/browser/slideshowSettings.pw.ts)、[FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md)、[USER_GUIDE.md](USER_GUIDE.md)、[README.md](README.md)、[README.zh-CN.md](README.zh-CN.md)）：覆盖 `DynamicsCompressorNode` 连接/旁路/释放与桌面路由切换、`soundCheck` 解析、预览、重载持久化与 Reset Settings 还原，并更新功能文档。
+- **验证结果**：
+  - `npm test`：62 files / 308 tests 全部通过。
+  - `npm run test:music-server`：35/35 通过。
+  - `npm run check:player-core`：通过。
+  - `npm run build` + `node scripts/check-dist.mjs`：通过。
+  - `npm run size`：`entryGzip = 149,273 B`（<= 150,000 B）、`programGzip = 338,871 B`（<= 350,000 B）、`demoAudio = 3,817,420 B`（<= 4,000,000 B）。
+  - `npx playwright test tests/browser/slideshowSettings.pw.ts tests/browser/settingsExperience.pw.ts tests/browser/player.pw.ts`（`BypassSandbox: true`，因沙盒内 `config.webServer` 无法监听 localhost:4173）：31/31 通过。
+  - `git diff --check`：通过。
+- **未完成 / 不确定**：音量平衡压缩参数及各分屏菜单像素边界尚未与同固件实体 iPod classic 实机逐一对照；Safari/WebKit 实际硬件音频响应尚未在真机实测。
+- **下一步**：提交或继续 `C-F07` 语言设置 / 更多原机对比校准。
+
+## 2026-11-26 · COMMIT117（本地提交 ALARMPLAY111–SOUNDCHECK116）
+
+- **目标**：将已验证的 `ALARMPLAY111`–`SOUNDCHECK116` 项目代码、测试与文档改动本地提交至 `main`（不推送，保留本地未跟踪的 `ANTIGRAVITY_HANDOFF.md`）。
+- **暂存与检查**：通过 `git add -u` 与显式添加 5 个新增文件（`src/models/classicEq.ts`、`src/models/classicEq.test.ts`、`src/models/slideshowSettings.ts`、`src/models/slideshowSettings.test.ts`、`tests/browser/slideshowSettings.pw.ts`），随后以 `git diff --cached --check` 复核暂存范围与空白格式后提交。
+- **下一步**：如需同步远端或触发发布工作流再执行推送；否则可继续推进 `C-F07` 语言设置或真机对比工作。

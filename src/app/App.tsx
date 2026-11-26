@@ -13,6 +13,9 @@ import { useMenuConfirmation } from "../ui/useMenuConfirmation";
 import { usePhotoPreview } from "./usePhotoPreview";
 import { nativePhotoKey, useNativePhotos } from "./useNativePhotos";
 import { nativePhotoAlbumRows, nativePhotoSettingsRows } from "../ui/nativePhotoMenus";
+import { eqPresetGains } from "../models/classicEq";
+import { buildSlideshowOrder, nextSlideshowStep } from "../models/slideshowSettings";
+import { setLocalEq, setLocalSoundCheck } from "../player/localAudio";
 import { createTrackMenuOverrides } from "../ui/trackMenuOverrides";
 import { ClassicScreenContent } from "../ui/ClassicScreenContent";
 import { classicScreenTitle } from "../ui/classicScreenModel";
@@ -164,6 +167,23 @@ export function App() {
     () => localState.tracks.filter((track) => !podcastIds.includes(track.id)),
     [localState.tracks, podcastIds],
   );
+  const localMusicIdSet = useMemo(() => new Set(localMusicTracks.map((track) => track.id)), [localMusicTracks]);
+  const alarmPlaylists = useMemo(
+    () => localPlaylistRows.flatMap((playlist) => {
+      const count = playlist.trackIds.filter((id) => localMusicIdSet.has(id)).length;
+      return count > 0 ? [{ id: playlist.id, name: playlist.name, count }] : [];
+    }),
+    [localPlaylistRows, localMusicIdSet],
+  );
+  const playLocalPlaylist = (playlistId: string): boolean => {
+    const playlist = localPlaylistRows.find((item) => item.id === playlistId);
+    const queue = playlist?.trackIds.filter((id) => localMusicIdSet.has(id)) ?? [];
+    if (!queue.length) return false;
+    if (services.playback !== "local") playerFor(services.playback).pause();
+    playbackFrom("local");
+    localPlayer.activate(queue[0], queue);
+    return true;
+  };
   const musicTracks = cloud ? services.libraryTracks : localMusicTracks;
   const podcastTracks = useMemo(
     () => localState.tracks.filter((track) => podcastIds.includes(track.id)),
@@ -260,6 +280,8 @@ export function App() {
     loadLyrics: loadThirdPartyLyrics,
   });
   const [slideshow, setSlideshow] = useState(false);
+  const slideshowRun = useRef<{ order: number[]; step: number; total: number; shuffle: boolean } | null>(null);
+  const slideshowMusicApplied = useRef(false);
   const textEntry = useWheelTextEntry(
     state.tracks
       .map((track) => `${track.title}${track.artist ?? ""}${track.album ?? ""}`)
@@ -727,6 +749,10 @@ export function App() {
       back,
       setNotice,
       setSlideshow,
+      slideshowSettings: prefs.slideshow,
+      setSlideshowSettings: (patch) =>
+        setPreferences({ slideshow: { ...prefs.slideshow, ...patch } }),
+      slideshowPlaylists: alarmPlaylists,
       getNavigation: () => navigationRef.current,
       systemPhotos: systemPhotoScope,
       photoSettingsRows: [
@@ -849,6 +875,25 @@ export function App() {
   });
 
   useEffect(() => {
+    setLocalEq(eqPresetGains(prefs.eq));
+  }, [prefs.eq]);
+
+  useEffect(() => {
+    setLocalSoundCheck(prefs.soundCheck);
+  }, [prefs.soundCheck]);
+  useEffect(() => {
+    const activeSlideshow = slideshow && page === "photo-full";
+    if (!activeSlideshow) {
+      slideshowMusicApplied.current = false;
+      return;
+    }
+    if (slideshowMusicApplied.current) return;
+    slideshowMusicApplied.current = true;
+    const music = prefs.slideshow.music;
+    if (music === "off") player.pause();
+    else if (typeof music === "object") playLocalPlaylist(music.playlistId);
+  }, [slideshow, page]);
+  useEffect(() => {
     localPlayer.setVolumeLimit(prefs.volumeLimit);
     applePlayer.setVolumeLimit(prefs.volumeLimit);
     playerFor("qq").setVolumeLimit(prefs.volumeLimit);
@@ -873,25 +918,62 @@ export function App() {
     return onLibraryNotice(setNotice);
   }, []);
   useEffect(() => {
-    if (
-      !slideshow ||
-      page !== "photo-full" ||
-      held ||
-      sleeping ||
-      (systemPhotoScope ? nativePhotos.total : activePhotos.length) < 2
-    )
+    const total = systemPhotoScope ? nativePhotos.total : activePhotos.length;
+    if (!slideshow || page !== "photo-full") {
+      slideshowRun.current = null;
       return;
+    }
+    if (held || sleeping || total < 2 || prefs.slideshow.timePerSlide === 0)
+      return;
+    if (
+      !slideshowRun.current ||
+      slideshowRun.current.total !== total ||
+      slideshowRun.current.shuffle !== prefs.slideshow.shuffle ||
+      slideshowRun.current.order[slideshowRun.current.step] !== photoIndex
+    ) {
+      slideshowRun.current = {
+        order: buildSlideshowOrder(total, photoIndex, prefs.slideshow.shuffle),
+        step: 0,
+        total,
+        shuffle: prefs.slideshow.shuffle,
+      };
+    }
     const timer = setTimeout(() => {
-      capture("replace");
+      const run = slideshowRun.current;
+      if (!run) return;
+      const next = nextSlideshowStep(run.order, run.step, prefs.slideshow.repeat);
+      if (!next) {
+        slideshowRun.current = null;
+        setSlideshow(false);
+        setNotice("幻灯片播放结束");
+        return;
+      }
+      run.step = next.nextStep;
+      if (prefs.slideshow.transition === "fade") capture("replace");
+      else if (prefs.slideshow.transition === "wipe") capture("forward");
       dispatch({
         type: "select",
         key: systemPhotoScope && photoAlbumScope
-          ? nativePhotoKey(photoAlbumScope, (photoIndex + 1) % nativePhotos.total)
-          : activePhotos[(photoIndex + 1) % activePhotos.length].id,
+          ? nativePhotoKey(photoAlbumScope, next.nextIndex)
+          : activePhotos[next.nextIndex].id,
       });
-    }, 3000);
+    }, prefs.slideshow.timePerSlide * 1000);
     return () => clearTimeout(timer);
-  }, [slideshow, page, photoIndex, activePhotos, held, sleeping, systemPhotoScope, photoAlbumScope, nativePhotos.total]);
+  }, [
+    slideshow,
+    page,
+    photoIndex,
+    activePhotos,
+    held,
+    sleeping,
+    systemPhotoScope,
+    photoAlbumScope,
+    nativePhotos.total,
+    prefs.slideshow.timePerSlide,
+    prefs.slideshow.repeat,
+    prefs.slideshow.shuffle,
+    prefs.slideshow.transition,
+  ]);
   useEffect(() => {
     document
       .querySelector('meta[name="theme-color"]')
@@ -936,12 +1018,13 @@ export function App() {
       onCommand: value => { quickScroll.end(); command(value); }, onFeedback: feedback,
         playLabel: page === "stopwatch-timer" ? extras.state.current.started !== null ? "停止计时" : "开始计时" : busy ? "取消载入" : active ? "暂停" : "播放" }}
       quickScrollLetter={quickScroll.letter}
-      header={<ClassicStatusBar title={title} shuffle={state.shuffle} repeat={state.repeat}
+      header={<ClassicStatusBar title={title} timeInTitle={prefs.timeInTitle} shuffle={state.shuffle} repeat={state.repeat}
         held={held} hasCurrent={!!current} active={active} busy={busy} transportHint={transportHint} />}
       imports={<>
       <Suspense fallback={null}><AlarmRuntime input={alarmInput} screenInput={alarmPageInput}
         onWake={() => { quickScroll.end(); setNotice(""); setSleeping(false); activate(); }}
-        onSleep={() => { extras.pause(); player.pause(); setSleeping(true); }} onRinging={setAlarmRinging} notice={setNotice} /></Suspense>
+        onSleep={() => { extras.pause(); player.pause(); setSleeping(true); }} onRinging={setAlarmRinging}
+        onPlayPlaylist={playLocalPlaylist} notice={setNotice} /></Suspense>
       <FileImports
         audio={input}
         photos={photoInput}
@@ -970,7 +1053,7 @@ export function App() {
       <ClassicScreenContent
         page={page} groupKey={groupKey} title={title}
         extras={extras.state}
-        alarms={{ input: alarmPageInput, exit: back, open, notice: setNotice }}
+        alarms={{ input: alarmPageInput, playlists: alarmPlaylists, exit: back, open, notice: setNotice }}
         organizer={{ input: organizerInput, active: !held && !sleeping, exit: back, notice: setNotice }}
         games={{ input: gameInput, active: !held && !sleeping && !alarmRinging, tracks: musicTracks,
           scope: JSON.stringify([services.selected, services.profile?.id ?? services.auth]),

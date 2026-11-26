@@ -17,7 +17,8 @@ export type ClassicGlyphName =
   | "background"
   | "info"
   | "clear"
-  | "clock";
+  | "clock"
+  | "eq";
 
 const gear = Array.from({ length: 48 }, (_, index) => {
   const angle = (index * Math.PI) / 24;
@@ -141,6 +142,15 @@ export function ClassicGlyph({ name }: { name: ClassicGlyphName }) {
               stroke="#526774"
               strokeWidth="4"
             />
+          </>
+        ) : name === "eq" ? (
+          <>
+            <rect x="20" y="12" width="8" height="76" rx="4" fill="#637985" />
+            <rect x="46" y="12" width="8" height="76" rx="4" fill="#637985" />
+            <rect x="72" y="12" width="8" height="76" rx="4" fill="#637985" />
+            <rect x="13" y="25" width="22" height="12" rx="3" />
+            <rect x="39" y="54" width="22" height="12" rx="3" />
+            <rect x="65" y="34" width="22" height="12" rx="3" />
           </>
         ) : (
           <>

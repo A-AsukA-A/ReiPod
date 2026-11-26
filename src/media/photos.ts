@@ -19,7 +19,17 @@ function database() {
     const request = indexedDB.open("reipod-photos", 1);
     request.onupgradeneeded = () =>
       request.result.createObjectStore("photos", { keyPath: "id" });
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => {
+        opening = null;
+        db.close();
+      };
+      db.onclose = () => {
+        opening = null;
+      };
+      resolve(db);
+    };
     request.onerror = () => {
       opening = null;
       reject(request.error);
@@ -36,6 +46,7 @@ function makePhoto(file: File, album: string): Photo {
   };
 }
 export async function importPhotos(files: File[]) {
+  await restorePhotos();
   const valid = files.filter((file) =>
     /\.(jpe?g|png|webp|gif|avif|bmp)$/i.test(file.name),
   );
@@ -66,7 +77,8 @@ export async function importPhotos(files: File[]) {
           album: photo.album,
         });
       tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
+      tx.onabort = tx.onerror = () =>
+        reject(tx.error ?? new DOMException("Photo transaction aborted", "AbortError"));
     });
     return { added: added.length, persisted: true };
   } catch {
@@ -105,7 +117,8 @@ export async function deletePhoto(id: string) {
     const tx = db.transaction("photos", "readwrite");
     tx.objectStore("photos").delete(id);
     tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
+    tx.onabort = tx.onerror = () =>
+      reject(tx.error ?? new DOMException("Photo transaction aborted", "AbortError"));
   });
   photos
     .filter((photo) => photo.id === id)

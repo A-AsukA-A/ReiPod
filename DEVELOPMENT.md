@@ -296,6 +296,8 @@ CAL79以有封面/50%普通art状态核对既有2007照片与最终级联，保�
 
 CAL81补齐C-N01工程0/50/100%矩阵，修复长录音时间位数变化导致轨道长度跳动；保持300秒基线像素、既有字体与几何。预留宽度来自当前总时长的实际字体排布，不是新硬件常量。原机精确端点证据仍缺，详见[UI_METRICS](UI_METRICS.md#2026-11-09-普通播放条0100端点c-n01--cal81)；下一UI单元为C-S01定位页，平台/队列/歌词边界不变。
 
-## 2026-11-10 闹钟／计时整套体验（FINISH106）
+## 2026-11-10 闹钟／计时与全仓代码文档精简（FINISH106 / ALARMPLAY111 / CLEANUP112）
 
-按用户自主继续要求，补齐轮盘闹钟编辑／保存／取消／删除、睡眠定时及适配倒计时；原生AlarmKit／旧系统通知独立于Player和系统日历只读桥。源行为／功能边界见FIRMWARE_FEATURES、数值P/A见UI_METRICS、签名与真实设备待验见ios/README的FINISH106。保存时刻作为新／编辑重复闹钟的下界，避免补响保存之前的当天事件；后台睡眠定时不作精确保障。艺人单专辑跳级根据第一手记录实施，但未知固件完整验收保持开放。沿用原字号／状态栏，未虚构原机字体或校准值；整体项目仍未标完工。
+补齐轮盘闹钟编辑／保存／取消／删除、睡眠定时及适配倒计时；原生AlarmKit／旧系统通知独立于Player和系统日历只读桥。ALARMPLAY111（2026-11-25）按手册p50补齐闹钟「声音」轮盘选择（蜂鸣／系统默认或已有非空本地歌单）与前台本地播放列表唤醒，停止提醒不打断已唤醒的音乐队列，歌单缺失或系统后台提醒回退蜂鸣／系统默认。保存时刻作为新／编辑重复闹钟的下界，避免补响保存之前的当天事件；源行为与数值级别见[FIRMWARE_FEATURES.md](FIRMWARE_FEATURES.md)和[UI_METRICS.md](UI_METRICS.md)，原生边界见[ios/README.md](ios/README.md)。
+
+CLEANUP112（2026-11-25）完成全仓审视优化：修复 `photos.ts` 与 `textDocuments.ts` 的 IndexedDB `onversionchange`/`onclose`/`onabort` 生命周期与恢复时序；在 `podcasts.ts` 与 `store.ts` 接入单曲删除与清空曲库时的播客 ID 及书签同步清理；从 `src/style.css`、`src/ui/classic-lcd.css` 与 `src/ui/firmware-display.css` 移除 ~580 行无引用的历史遗留选择器（旧黑胶唱片、旧底部按钮栏、旧 `<input type="range">` 滑块、旧铭刻与浮层），样式总行数由 3592 行降至 3013 行；更新中英文 README / USER_GUIDE（消除中英混杂章节）并压缩 `TASK_LOG.md` 当前摘要与重复防御性套话。

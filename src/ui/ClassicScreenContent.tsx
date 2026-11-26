@@ -15,6 +15,7 @@ import type { MenuScrollPositions, MenuItem } from "./MenuRows";
 const NowPlayingScreen = lazy(() => import("./NowPlayingScreen").then(module => ({ default: module.NowPlayingScreen })));
 import { WheelTextEntry } from "./WheelTextEntry";
 import type { AlarmPageInput } from "./alarmInput";
+import type { AlarmPlaylistOption } from "./ClassicAlarms";
 import type { OrganizerInput } from "./organizerInput";
 import type { GameInput } from "./gameInput";
 import type { QuizTrack } from "../models/iQuiz";
@@ -58,7 +59,7 @@ type Props = {
   prefs: { brightness: number; volumeLimit: number };
   about: { index: number; information: ClassicAboutInformation };
   extras: ExtrasState;
-  alarms: { input: RefObject<AlarmPageInput | null>; exit: () => void; open: (page: Page) => void; notice: (message: string) => void };
+  alarms: { input: RefObject<AlarmPageInput | null>; playlists: readonly AlarmPlaylistOption[]; exit: () => void; open: (page: Page) => void; notice: (message: string) => void };
   organizer: { input: RefObject<OrganizerInput | null>; active: boolean; exit: () => void; notice: (message: string) => void };
   games: { input: RefObject<GameInput | null>; active: boolean; tracks: readonly QuizTrack[]; scope: string;
     open: (id: string) => void; exit: () => void; notice: (message: string) => void };

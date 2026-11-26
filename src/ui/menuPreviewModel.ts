@@ -21,6 +21,8 @@ export function menuPreview(
     "lyrics-display": "info",
     "shuffle-mode": "shuffle",
     "repeat-mode": "repeat",
+    eq: "eq",
+    "sound-check": "speaker",
   };
   if (choiceIcons[page])
     return {
@@ -34,7 +36,7 @@ export function menuPreview(
   if (page === "home" && key === "podcasts")
     return { kind: "covers", icon: "music", title: label, detail, source: "podcasts" };
   if (
-    ["coverflow", "music", "albums", "songs", "all", "demo"].includes(key) &&
+    ["coverflow", "music", "albums", "songs", "all", "demo", "compilations"].includes(key) &&
     page !== "settings"
   )
     return { kind: "covers", icon: "music", title: label, detail };
@@ -47,8 +49,14 @@ export function menuPreview(
     settings: "settings",
     "reipod-settings": "settings",
     "reset-settings": "settings",
+    haptics: "settings",
+    eq: "eq",
+    "sound-check": "speaker",
+    "date-time": "clock",
+    "alarm-settings": "clock",
     import: "import",
     playlists: "playlists",
+    organizer: "playlists",
     artists: "artists",
     search: "search",
     click: "speaker",
@@ -59,16 +67,21 @@ export function menuPreview(
     about: "info",
     credits: "info",
     licenses: "info",
+    "metadata-license": "info",
+    "font-license": "info",
     extras: "clock",
     "main-menu": "playlists",
     "music-menu": "music",
+    "music-services": "music",
     backlight: "background",
     brightness: "background",
     "volume-limit": "speaker",
     photos: "albums",
     "all-photos": "albums",
+    "photo-settings": "albums",
     "photo-import": "import",
     podcasts: "music",
+    "podcast-settings": "music",
     "podcast-import": "import",
   };
   return { kind: "card", icon: icons[key] ?? "music", title: label, detail };

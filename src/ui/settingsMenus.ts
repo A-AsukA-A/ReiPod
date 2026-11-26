@@ -5,6 +5,7 @@ import type { MenuItem } from "./MenuRows";
 import type { Preferences } from "./classicSettings";
 import { backlightTimes, optionalMainItems, optionalMusicItems, mainMenuOrder, parsePreferences } from "./classicSettings";
 import { classic2007 } from "../models/classic";
+import { classicEqPresets } from "../models/classicEq";
 import { settingChoices } from "./settingChoices";
 
 type Context = {
@@ -75,7 +76,9 @@ export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud
         // A physical finish, service account and ReiPod extensions are not firmware settings.
         setPreferences({ clickSound: defaults.clickSound, brightness: defaults.brightness,
           backlight: defaults.backlight, volumeLimit: defaults.volumeLimit,
-          mainMenu: defaults.mainMenu, musicMenu: defaults.musicMenu });
+          mainMenu: defaults.mainMenu, musicMenu: defaults.musicMenu,
+          eq: defaults.eq, soundCheck: defaults.soundCheck, timeInTitle: defaults.timeInTitle,
+          slideshow: defaults.slideshow });
         shuffle(false); repeat("off"); back();
       } },
     ],
@@ -148,6 +151,30 @@ export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud
     })),
     brightness: [{ key: "done", label: "完成", action: () => back() }],
     "volume-limit": [{ key: "done", label: "完成", action: () => back() }],
+    eq: classicEqPresets.map((preset) => ({
+      key: preset.id,
+      label: preset.label,
+      value: prefs.eq === preset.id ? "✓" : undefined,
+      leaf: true,
+      action: () => {
+        setPreferences({ eq: preset.id });
+        back();
+      },
+    })),
+    "date-time": [
+      {
+        key: "time-in-title",
+        label: "标题栏显示时间",
+        value: prefs.timeInTitle ? "开启" : "关闭",
+        leaf: true,
+        action: () => setPreferences({ timeInTitle: !prefs.timeInTitle }),
+      },
+      {
+        key: "clock",
+        label: "世界时钟",
+        action: () => open("clock"),
+      },
+    ],
   };
   return { settingsItems, confirmItems, managedRows };
 }

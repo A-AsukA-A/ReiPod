@@ -63,7 +63,17 @@ function database() {
     const request = indexedDB.open("reipod-texts", 1);
     request.onupgradeneeded = () =>
       request.result.createObjectStore("texts", { keyPath: "id" });
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => {
+        opening = undefined;
+        db.close();
+      };
+      db.onclose = () => {
+        opening = undefined;
+      };
+      resolve(db);
+    };
     request.onerror = () => {
       opening = undefined;
       reject(request.error);

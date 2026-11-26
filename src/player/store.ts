@@ -9,6 +9,7 @@ import { clearFiles, readFiles, saveFiles, removeFile } from "./storage";
 import { createSessionPersistence } from "./sessionPersistence";
 import { clearRatings, setRating } from "./ratings";
 import { clearPlaylists, removeFromPlaylists } from "./playlists";
+import { clearPodcasts, removePodcast } from "../media/podcasts";
 export const player = new Player(createLocalAudio, URL.revokeObjectURL);
 let removedDemos: string[] = [];
 try {
@@ -84,7 +85,19 @@ const mutations = createLibraryMutations({
   },
   clearSavedFiles: clearFiles,
   hideDemos: () => localStorage.setItem("reipod-demos", "hidden"),
-  removeRating: id => setRating(id, 0), removeFromPlaylists, clearRatings, clearPlaylists, notify,
+  removeRating: id => setRating(id, 0),
+  removeFromPlaylists: id => {
+    const playlistsOk = removeFromPlaylists(id);
+    const podcastsOk = removePodcast(id);
+    return playlistsOk && podcastsOk;
+  },
+  clearRatings,
+  clearPlaylists: () => {
+    const playlistsOk = clearPlaylists();
+    const podcastsOk = clearPodcasts();
+    return playlistsOk && podcastsOk;
+  },
+  notify,
 });
 export const removeTrack = mutations.removeTrack;
 export const clearLibrary = mutations.clearLibrary;

@@ -64,17 +64,11 @@
   z-index: 3;
   border-right: 1px solid #9c9fa3;
 }
-.lcd-screen[data-split="true"] .screen-back {
-  display: none;
-}
 .lcd-screen[data-split="true"] .play-modes {
   display: none;
 }
 .lcd-screen .settings-screen .screen-menu {
   overflow: auto;
-}
-.screen-status .screen-back {
-  display: none;
 }
 .adjustment-meter {
   width: 85%;
@@ -464,8 +458,7 @@
 .np-control-bay .classic-volume .volume-waves {
   opacity: 1;
 }
-.np-control-bay .np-shuffle-options,
-.np-control-bay .np-repeat-options {
+.np-control-bay .np-shuffle-options {
   position: absolute;
   inset: 0;
   display: block;
@@ -512,10 +505,6 @@
 .classic-rating .player-icon {
   width: calc(var(--lcd-unit) * 19);
   height: calc(var(--lcd-unit) * 19);
-}
-.screen-error small {
-  display: block;
-  margin-top: 4px;
 }
 .now-playing-screen.view-lyrics {
   padding: 0;

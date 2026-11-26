@@ -1,8 +1,18 @@
 import type { Photo } from "../media/photos";
 import type { Album } from "../player/library";
+import {
+  defaultSlideshowSettings,
+  slideshowDurations,
+  slideshowDurationLabel,
+  slideshowMusicLabel,
+  slideshowTransitions,
+  slideshowTransitionLabel,
+  type SlideshowSettings,
+} from "../models/slideshowSettings";
 import type { Page, NavigationState } from "./navigation";
 import type { MenuItem } from "./MenuRows";
 type PhotoSummary = Pick<Photo, "id" | "name" | "album" | "url">;
+type SlideshowPlaylistSummary = { id: string; name: string; count: number };
 type MediaMenuContext = {
   photos: readonly PhotoSummary[];
   activePhotos: readonly PhotoSummary[];
@@ -15,6 +25,9 @@ type MediaMenuContext = {
   back: (levels?: number) => void;
   setNotice: (message: string) => void;
   setSlideshow: (value: boolean) => void;
+  slideshowSettings?: SlideshowSettings;
+  setSlideshowSettings?: (patch: Partial<SlideshowSettings>) => void;
+  slideshowPlaylists?: readonly SlideshowPlaylistSummary[];
   getNavigation: () => NavigationState;
   systemPhotos?: boolean;
   photoSettingsRows?: MenuItem[];
@@ -31,10 +44,17 @@ export function createMediaMenus({
   back,
   setNotice,
   setSlideshow,
+  slideshowSettings = defaultSlideshowSettings,
+  setSlideshowSettings,
+  slideshowPlaylists = [],
   getNavigation,
   systemPhotos = false,
   photoSettingsRows = [],
 }: MediaMenuContext): Partial<Record<Page, MenuItem[]>> {
+  const selectedMusicKey =
+    typeof slideshowSettings.music === "string"
+      ? slideshowSettings.music
+      : slideshowSettings.music.playlistId;
   return {
     photos: [
       {
@@ -72,7 +92,104 @@ export function createMediaMenus({
         label: "导入相册文件夹…",
         action: () => openPhotos(true),
       },
+      {
+        key: "slideshow-settings",
+        label: "幻灯片设置",
+        action: () => open("slideshow-settings"),
+      },
     ],
+    "slideshow-settings": [
+      {
+        key: "time",
+        label: "每张停留时间",
+        value: slideshowDurationLabel(slideshowSettings.timePerSlide),
+        action: () => open("slideshow-duration", String(slideshowSettings.timePerSlide)),
+      },
+      {
+        key: "music",
+        label: "背景音乐",
+        value: slideshowMusicLabel(slideshowSettings.music, slideshowPlaylists),
+        action: () => open("slideshow-music", selectedMusicKey),
+      },
+      {
+        key: "repeat",
+        label: "重复播放",
+        value: slideshowSettings.repeat ? "开启" : "关闭",
+        leaf: true,
+        action: () => setSlideshowSettings?.({ repeat: !slideshowSettings.repeat }),
+      },
+      {
+        key: "shuffle",
+        label: "随机照片",
+        value: slideshowSettings.shuffle ? "开启" : "关闭",
+        leaf: true,
+        action: () => setSlideshowSettings?.({ shuffle: !slideshowSettings.shuffle }),
+      },
+      {
+        key: "transition",
+        label: "过渡效果",
+        value: slideshowTransitionLabel(slideshowSettings.transition),
+        action: () => open("slideshow-transition", slideshowSettings.transition),
+      },
+    ],
+    "slideshow-music": [
+      {
+        key: "keep",
+        label: "保持当前",
+        value: slideshowSettings.music === "keep" ? "✓" : undefined,
+        leaf: true,
+        action: () => {
+          setSlideshowSettings?.({ music: "keep" });
+          back();
+        },
+      },
+      {
+        key: "off",
+        label: "关闭",
+        value: slideshowSettings.music === "off" ? "✓" : undefined,
+        leaf: true,
+        action: () => {
+          setSlideshowSettings?.({ music: "off" });
+          back();
+        },
+      },
+      ...slideshowPlaylists.map((playlist) => ({
+        key: playlist.id,
+        label: playlist.name,
+        value:
+          typeof slideshowSettings.music === "object" &&
+          slideshowSettings.music.playlistId === playlist.id
+            ? "✓"
+            : `${playlist.count} 首`,
+        leaf: true,
+        action: () => {
+          setSlideshowSettings?.({
+            music: { playlistId: playlist.id, playlistName: playlist.name },
+          });
+          back();
+        },
+      })),
+    ],
+    "slideshow-duration": slideshowDurations.map((seconds) => ({
+      key: String(seconds),
+      label: slideshowDurationLabel(seconds),
+      value: slideshowSettings.timePerSlide === seconds ? "✓" : undefined,
+      leaf: true,
+      action: () => {
+        setSlideshowSettings?.({ timePerSlide: seconds });
+        back();
+      },
+    })),
+    "slideshow-transition": slideshowTransitions.map((transition) => ({
+      key: transition,
+      label: slideshowTransitionLabel(transition),
+      value: slideshowSettings.transition === transition ? "✓" : undefined,
+      leaf: true,
+      action: () => {
+        setSlideshowSettings?.({ transition });
+        back();
+      },
+    })),
     "photo-grid": activePhotos.map((photo) => ({
       key: photo.id,
       label: photo.name,
@@ -91,6 +208,11 @@ export function createMediaMenus({
           back();
           setSlideshow(true);
         },
+      },
+      {
+        key: "slideshow-settings",
+        label: "幻灯片设置",
+        action: () => open("slideshow-settings"),
       },
       ...(!systemPhotos ? [{
         key: "delete",

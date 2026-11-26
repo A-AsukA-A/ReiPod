@@ -1,7 +1,7 @@
 import { useEffect,useImperativeHandle,useRef,useState,useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import type { Ref,RefObject } from "react";
-import { advanceAlarms,alarmDay,alarmLabels,alarmRepeats,alarmTime,formatCountdown,freshAlarm,nextAlarm,timerRemaining } from "../models/classicAlarms";
+import { advanceAlarms,alarmDay,alarmLabels,alarmPlaylistId,alarmRepeats,alarmSoundLabel,alarmTime,formatCountdown,freshAlarm,nextAlarm,timerRemaining } from "../models/classicAlarms";
 import type { AlarmState,ClassicAlarm } from "../models/classicAlarms";
 import { alarmsStore } from "../services/alarmsStore";
 import { alarmHost,createAlarmChime,nativeAlarmsAvailable } from "../services/alarmHost";
@@ -9,11 +9,12 @@ import type { AlarmHostState } from "../services/alarmHost";
 import type { AlarmInput,AlarmPageInput } from "./alarmInput";
 import { MarqueeText } from "./MarqueeText";
 import "./classic-alarms.css";
+export type AlarmPlaylistOption={id:string;name:string;count:number};
 const useAlarms=()=>useSyncExternalStore(alarmsStore.subscribe,alarmsStore.snapshot);
 const message=(e:unknown)=>e instanceof Error?e.message:String(e);
-export function AlarmRuntime({input,screenInput,onWake,onSleep,onRinging,notice}:{input:Ref<AlarmInput>;screenInput:RefObject<AlarmPageInput|null>;onWake:()=>void;onSleep:()=>void;onRinging:(value:boolean)=>void;notice:(message:string)=>void}){
- const {state}=useAlarms(),[visible,setVisible]=useState(!document.hidden),[host,setHost]=useState<AlarmHostState>({engine:"foreground",authorization:"authorized"}),ready=useRef(false),checking=useRef(0),chime=useRef<ReturnType<typeof createAlarmChime>>(null);
- const live=useRef({onWake,onSleep,onRinging,notice,screenInput});live.current={onWake,onSleep,onRinging,notice,screenInput};
+export function AlarmRuntime({input,screenInput,onWake,onSleep,onRinging,onPlayPlaylist,notice}:{input:Ref<AlarmInput>;screenInput:RefObject<AlarmPageInput|null>;onWake:()=>void;onSleep:()=>void;onRinging:(value:boolean)=>void;onPlayPlaylist?:(playlistId:string)=>boolean;notice:(message:string)=>void}){
+ const {state}=useAlarms(),[visible,setVisible]=useState(!document.hidden),[host,setHost]=useState<AlarmHostState>({engine:"foreground",authorization:"authorized"}),ready=useRef(false),checking=useRef(0),chime=useRef<ReturnType<typeof createAlarmChime>>(null),launched=useRef<{key:string;playing:boolean}>({key:"",playing:false});
+ const live=useRef({onWake,onSleep,onRinging,onPlayPlaylist,notice,screenInput});live.current={onWake,onSleep,onRinging,onPlayPlaylist,notice,screenInput};
  useEffect(()=>{
   chime.current=createAlarmChime();
   const unlock=()=>{if(!nativeAlarmsAvailable())chime.current?.unlock();};
@@ -46,8 +47,19 @@ export function AlarmRuntime({input,screenInput,onWake,onSleep,onRinging,notice}
   const timer=setInterval(tick,250);void synchronize();
   return()=>{checking.current++;clearInterval(timer);document.removeEventListener("keydown",unlock);document.removeEventListener("pointerdown",unlock);document.removeEventListener("visibilitychange",changed);window.removeEventListener("reipod-native-alarms",changed);chime.current?.dispose();};
  },[]);
- const alert=state.alerts[0];
- useEffect(()=>{live.current.onRinging(!!alert);if(alert&&host.engine==="foreground"&&visible){chime.current?.start();live.current.onWake();}else chime.current?.stop();return()=>chime.current?.stop();},[alert?.id,host.engine,visible]);
+ const alert=state.alerts[0],alertKey=alert?`${alert.id}:${alert.at}:${alert.playlistId??""}`:"";
+ useEffect(()=>{
+  live.current.onRinging(!!alert);
+  if(!alert){launched.current={key:"",playing:false};chime.current?.stop();return;}
+  if(visible){
+   if(launched.current.key!==alertKey){
+    launched.current={key:alertKey,playing:!!alert.playlistId&&!!live.current.onPlayPlaylist?.(alert.playlistId)};
+   }
+   if(!launched.current.playing&&host.engine==="foreground")chime.current?.start();else chime.current?.stop();
+   live.current.onWake();
+  }else chime.current?.stop();
+  return()=>chime.current?.stop();
+ },[alertKey,host.engine,visible]);
  useImperativeHandle(input,()=>({get ringing(){return alarmsStore.snapshot().state.alerts.length>0;},rotate:steps=>{if(!alarmsStore.snapshot().state.alerts.length)live.current.screenInput.current?.rotate(steps);},command:value=>{
   const alert=alarmsStore.snapshot().state.alerts[0];
   if(alert){if(["select","menu","play"].includes(value))void alarmsStore.acknowledge(alert.id);return;}
@@ -61,30 +73,33 @@ export function AlarmRuntime({input,screenInput,onWake,onSleep,onRinging,notice}
 }
 
 type Page="alarms"|"countdown"|"sleep-timer"|"alarm-settings";
-type Mode="root"|"edit"|"time"|"date"|"repeat"|"label"|"delete"|"discard"|"duration";
-export function ClassicAlarmsScreen({page,input,exit,open,notice}:{page:Page;input:Ref<AlarmPageInput>;exit:()=>void;open:(page:Page)=>void;notice:(text:string)=>void}){
+type Mode="root"|"edit"|"time"|"date"|"repeat"|"sound"|"label"|"delete"|"discard"|"duration";
+export function ClassicAlarmsScreen({page,input,playlists=[],exit,open,notice}:{page:Page;input:Ref<AlarmPageInput>;playlists?:readonly AlarmPlaylistOption[];exit:()=>void;open:(page:Page)=>void;notice:(text:string)=>void}){
  const {state,saving,error}=useAlarms(),[mode,setMode]=useState<Mode>("root"),[index,setIndex]=useState(0),[draft,setDraft]=useState<ClassicAlarm|null>(null),[field,setField]=useState(0),[duration,setDuration]=useState(state.timer.duration),[now,setNow]=useState(Date.now),[host,setHost]=useState<AlarmHostState>({engine:"foreground",authorization:"authorized"});
  const initial=useRef(""),selected=useRef<HTMLDivElement>(null),list=useRef<HTMLDivElement>(null);
  useEffect(()=>{setMode("root");setIndex(0);void alarmHost("status").then(setHost).catch(e=>notice(message(e)));},[page,notice]);
  useEffect(()=>{const timer=setInterval(()=>{if(!document.hidden)setNow(Date.now());},250);return()=>clearInterval(timer);},[]);
  const enter=(mode:Mode)=>{setMode(mode);setIndex(0);setField(0);};
  const change=(reduce:(s:AlarmState)=>AlarmState,done?:()=>void,authorize=true)=>{void alarmsStore.change(reduce,authorize).then(()=>{done?.();}).catch(e=>notice(message(e)));};
- const edit=(alarm?:ClassicAlarm)=>{const value=alarm?{...alarm}:freshAlarm(crypto.randomUUID(),Date.now());setDraft(value);initial.current=alarm?JSON.stringify(alarm):"";enter("edit");};
- const save=()=>{if(!draft)return;if(draft.enabled&&nextAlarm(draft,Date.now())===null){notice("请选择将来的闹钟日期和时间");return;}const value={...draft,lastFired:Date.now()};change(s=>({...s,alarms:[...s.alarms.filter(a=>a.id!==value.id),value],alerts:s.alerts.filter(a=>a.id!==value.id)}),()=>{enter("root");notice("闹钟已保存");});};
+ const edit=(alarm?:ClassicAlarm)=>{const value=alarm?{...alarm,sound:alarm.sound??"beep"}:freshAlarm(crypto.randomUUID(),Date.now());setDraft(value);initial.current=alarm?JSON.stringify({...alarm,sound:alarm.sound??"beep"}):"";enter("edit");};
+ const save=()=>{if(!draft)return;if(draft.enabled&&nextAlarm(draft,Date.now())===null){notice("请选择将来的闹钟日期和时间");return;}const value={...draft,sound:draft.sound??"beep",lastFired:Date.now()};change(s=>({...s,alarms:[...s.alarms.filter(a=>a.id!==value.id),value],alerts:s.alerts.filter(a=>a.id!==value.id)}),()=>{enter("root");notice("闹钟已保存");});};
  const toggleTimer=()=>change(s=>{const remaining=timerRemaining(s,Date.now());return{...s,timer:s.timer.deadline===null?{...s.timer,remaining:remaining||s.timer.duration*1000,deadline:Date.now()+(remaining||s.timer.duration*1000)}:{...s.timer,remaining,deadline:null}};});
- const timerText=formatCountdown(timerRemaining(state,now)),dirty=!!draft&&JSON.stringify(draft)!==initial.current;
+ const timerText=formatCountdown(timerRemaining(state,now)),dirty=!!draft&&JSON.stringify(draft)!==initial.current,beepLabel=host.engine==="foreground"?"蜂鸣":"系统默认",selectedPlaylistId=alarmPlaylistId(draft?.sound);
  const rows:{label:string;value?:string;detail?:string;disabled?:boolean;action:()=>void}[]=mode==="delete"?[
   {label:"取消",action:()=>enter("edit")},{label:"删除闹钟",action:()=>{if(draft)change(s=>({...s,alarms:s.alarms.filter(a=>a.id!==draft.id),alerts:s.alerts.filter(a=>a.id!==draft.id)}),()=>enter("root"),false);}},
  ]:mode==="discard"?[
   {label:"继续编辑",action:()=>enter("edit")},{label:"放弃更改",action:()=>enter("root")},
  ]:mode==="repeat"?Object.entries(alarmRepeats).map(([key,label])=>({label,value:draft?.repeat===key?"✓":undefined,action:()=>{setDraft(d=>d?{...d,repeat:key as ClassicAlarm["repeat"]}:d);enter("edit");}}))
- :mode==="label"?alarmLabels.map(label=>({label,value:draft?.label===label?"✓":undefined,action:()=>{setDraft(d=>d?{...d,label}:d);enter("edit");}}))
+ :mode==="sound"?[
+  {label:beepLabel,value:!selectedPlaylistId?"✓":undefined,action:()=>{setDraft(d=>d?{...d,sound:"beep"}:d);enter("edit");}},
+  ...playlists.map(item=>({label:item.name,value:selectedPlaylistId===item.id?"✓":`${item.count} 首`,action:()=>{setDraft(d=>d?{...d,sound:{playlistId:item.id,playlistName:item.name}}:d);enter("edit");}})),
+ ]:mode==="label"?alarmLabels.map(label=>({label,value:draft?.label===label?"✓":undefined,action:()=>{setDraft(d=>d?{...d,label}:d);enter("edit");}}))
  :mode==="edit"&&draft?[
   {label:"闹钟",value:draft.enabled?"开启":"关闭",action:()=>setDraft(d=>d?{...d,enabled:!d.enabled}:d)},
   {label:"时间",value:alarmTime(draft.minute),action:()=>enter("time")},
   {label:"日期",value:draft.day,action:()=>enter("date")},
   {label:"重复",value:alarmRepeats[draft.repeat],action:()=>enter("repeat")},
-  {label:"声音",value:host.engine==="foreground"?"蜂鸣":"系统默认",action:()=>notice(host.engine==="foreground"?"前台使用合成蜂鸣":"使用系统默认闹钟声音")},
+  {label:"声音",value:alarmSoundLabel(draft.sound,beepLabel,playlists),action:()=>enter("sound")},
   {label:"标签",value:draft.label,action:()=>enter("label")},
   {label:saving?"正在保存…":"保存闹钟",action:save},
   ...(state.alarms.some(a=>a.id===draft.id)?[{label:"删除闹钟…",action:()=>enter("delete")}]:[]),
@@ -137,7 +152,7 @@ export function ClassicAlarmsScreen({page,input,exit,open,notice}:{page:Page;inp
    {page==="sleep-timer"&&state.sleepAt&&<div className="alarm-context">{formatCountdown(state.sleepAt-now)} 后停止播放</div>}
    {mode==="delete"&&<div className="alarm-context">删除此闹钟？</div>}
    {mode==="discard"&&<div className="alarm-context">放弃未保存的更改？</div>}
-   <div className="alarm-rows" ref={list} role="list" aria-label="闹钟选项">{rows.map((row,i)=><div className={`alarm-row ${i===index?"selected":""}`} key={row.label} ref={i===index?selected:undefined} role="listitem" aria-current={i===index?"true":undefined} aria-disabled={saving||row.disabled||undefined}><strong><MarqueeText text={row.label} active={i===index}/></strong>{row.value?<span>{row.value}</span>:<i aria-hidden="true">›</i>}</div>)}</div>
+   <div className="alarm-rows" ref={list} role="list" aria-label="闹钟选项">{rows.map((row,i)=><div className={`alarm-row ${i===index?"selected":""}`} key={`${row.label}:${i}`} ref={i===index?selected:undefined} role="listitem" aria-current={i===index?"true":undefined} aria-disabled={saving||row.disabled||undefined}><strong><MarqueeText text={row.label} active={i===index}/></strong>{row.value?<span>{row.value}</span>:<i aria-hidden="true">›</i>}</div>)}</div>
   </>}
   {error&&<div className="alarm-error" role="status">{error}</div>}
  </div>;

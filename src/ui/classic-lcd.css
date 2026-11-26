@@ -41,25 +41,10 @@
   box-shadow: var(--wheel-center-depth);
 }
 
-.screen-back {
-  height: 22px;
-  width: 15px;
-  border-radius: 0;
-}
-.screen-back:disabled {
-  display: none;
-}
-.screen-back {
-  color: #34383e;
-}
 .player-icon {
   display: block;
   flex-shrink: 0;
   width: 15px;
-  height: 15px;
-}
-.screen-back .player-icon {
-  width: 12px;
   height: 15px;
 }
 .screen-playing-link .player-icon {
@@ -280,65 +265,8 @@
   position: relative;
   padding: 12px 9px 4px;
 }
-.np-index {
-  color: #777;
-  font-size: 10px;
-  margin-bottom: 2px;
-}
 .screen-progress {
   margin-top: auto;
-}
-.screen-progress input::-webkit-slider-runnable-track {
-  height: 6px;
-  border-color: #8f979f;
-  background: linear-gradient(
-    to right,
-    #51a1e1 var(--progress),
-    #ededee var(--progress)
-  );
-  box-shadow: inset 0 1px #00000012;
-}
-.view-seek .screen-progress {
-  outline: none;
-  background: transparent;
-}
-.view-seek .screen-progress input::-webkit-slider-thumb {
-  background: #f6fbff;
-}
-.np-actions {
-  margin-top: 5px;
-  min-height: 24px;
-  gap: 6px;
-}
-.np-actions button {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 23px;
-  color: #8b8b8d;
-}
-.np-actions button .player-icon {
-  width: 16px;
-  height: 16px;
-}
-.np-actions button:last-child {
-  color: #8b8b8d;
-}
-.play-view-dots {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-.play-view-dots i {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #d0d0d0;
-}
-.play-view-dots i.active {
-  background: #71777e;
 }
 
 /* The reference's lyrics page uses the entire LCD, with controls in the song header. */
@@ -466,9 +394,6 @@
   .lyrics-lines.synchronized p { filter: none !important; transform: none !important; }
   .lyric-glyph { transform: none !important; text-shadow: none !important; }
 }
-.view-lyrics .np-actions {
-  display: none;
-}
 .view-lyrics .screen-progress {
   position: absolute;
   bottom: -6px;
@@ -478,36 +403,6 @@
 }
 .view-lyrics .screen-progress > div {
   display: none;
-}
-.view-lyrics .screen-progress input {
-  height: 16px;
-}
-.view-lyrics .screen-progress input::-webkit-slider-runnable-track {
-  height: 3px;
-  border: 0;
-  border-radius: 0;
-  background: linear-gradient(
-    to right,
-    #5da7e4 var(--progress),
-    transparent var(--progress)
-  );
-  box-shadow: none;
-}
-.view-lyrics .screen-progress input::-moz-range-track {
-  height: 3px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-.view-lyrics .screen-progress input::-moz-range-progress {
-  height: 3px;
-  background: #5da7e4;
-}
-.view-lyrics .screen-progress input::-moz-range-thumb {
-  opacity: 0;
-}
-.view-lyrics .screen-progress.is-seeking input::-webkit-slider-thumb {
-  opacity: 0;
 }
 
 @media (max-width: 350px) {
@@ -572,57 +467,6 @@
   }
 }
 
-/* Editing stays inside the LCD; menu rows keep the same wheel selection model. */
-.lcd-text-entry {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 5px;
-  padding: 5px;
-  border-bottom: 1px solid #aeb5bd;
-  background: linear-gradient(#eef1f4, #dce1e6);
-}
-.classic-device .lcd-text-entry input {
-  width: 100%;
-  min-width: 0;
-  height: 28px;
-  padding: 3px 6px;
-  border: 1px solid #8b969f;
-  border-radius: 2px;
-  background: #fff;
-  color: #15191d;
-  font:
-    16px Arial,
-    "PingFang SC",
-    sans-serif;
-  user-select: text;
-  -webkit-user-select: text;
-  box-shadow: inset 0 1px 2px #0002;
-}
-.classic-device .lcd-text-entry input:focus {
-  border-color: #0876cb;
-  box-shadow:
-    inset 0 1px 2px #0002,
-    0 0 0 1px #0876cb;
-}
-.lcd-text-entry button {
-  font-size: 20px;
-  padding-inline: 4px;
-  background: transparent;
-  color: #495768;
-}
-.lcd-text-entry input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-}
-.name-entry {
-  flex-direction: column;
-  align-items: stretch;
-  padding: 7px;
-}
-.name-entry label {
-  font-size: 11px;
-  color: #5c6269;
-}
 .lcd-toolbar {
   display: flex;
   align-items: center;
@@ -695,15 +539,6 @@
   border-radius: 0;
   background: transparent;
   overflow: hidden;
-}
-.preview-cover-link {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  border: 0;
-  padding: 0;
 }
 .preview-cover-outgoing {
   z-index: 1;
@@ -1085,13 +920,6 @@
   opacity: 0.62;
   pointer-events: none;
 }
-.np-firmware-control {
-  margin-top: calc(var(--lcd-unit) * 2);
-}
-.np-firmware-control > small {
-  font-size: calc(var(--lcd-unit) * 10);
-  color: #747d85;
-}
 .np-shuffle-options,
 .classic-rating {
   display: flex;
@@ -1122,22 +950,6 @@
 .classic-rating .player-icon {
   width: calc(var(--lcd-unit) * 15);
   height: calc(var(--lcd-unit) * 15);
-}
-.view-seek .screen-progress input::-webkit-slider-thumb {
-  width: calc(var(--lcd-unit) * 8);
-  height: calc(var(--lcd-unit) * 8);
-  border-radius: 0;
-  transform: rotate(45deg);
-  border: 1px solid #5983a7;
-  background: #e7f4fc;
-}
-.view-seek .screen-progress input::-moz-range-thumb {
-  width: calc(var(--lcd-unit) * 8);
-  height: calc(var(--lcd-unit) * 8);
-  border-radius: 0;
-  transform: rotate(45deg);
-  border: 1px solid #5983a7;
-  background: #e7f4fc;
 }
 .music-login-qr {
   display: grid;

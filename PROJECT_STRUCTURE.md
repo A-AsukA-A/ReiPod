@@ -70,7 +70,7 @@ ReiPod/
 | `src/ui/searchMenus.ts`、`ClassicSearchScreen.tsx`、`classic-search.css` | 分类结果导航、只读实时结果/横向选字条 | 转轮经输入控制器编辑，不把LCD变成输入表单；歌单命名保留独立编辑器 |
 | `src/ui/settingsMenus.ts` | 原机/扩展设置分组、还原设置、偏好选择、菜单定制与清空确认 | 偏好保存、播放模式、清空与导航操作均由 App 注入；不创建播放会话 |
 | `src/ui/textMenus.ts` | 文本列表、阅读选项、删除反馈与返回保护 | 文本删除/阅读位置/导入命令均注入；异步完成读取最新导航，不能把其他文档带回列表 |
-| `src/ui/mediaMenus.ts` | 照片分组、照片操作与播客节目菜单 | 只消费只读照片摘要及注入的导入/删除/导航命令；不访问文件输入 DOM、React ref 或媒体存储单例 |
+| `src/ui/mediaMenus.ts` | 照片分组、幻灯片设置（含背景音乐）、照片操作与播客节目菜单 | 只消费只读照片摘要及注入的导入/删除/导航命令；不访问文件输入 DOM、React ref 或媒体存储单例；幻灯片策略模型位于 `src/models/slideshowSettings.ts`，EQ 预设模型位于 `src/models/classicEq.ts` |
 | `src/ui/Lyrics.tsx`、`lyricEffects.ts`、`useLyricLayout.ts` | 媒体时间驱动字素高亮与近视口行弹簧，保留转轮浏览/减弱动态 | 不复制播放时钟、账号或歌词获取；数学运动、行位置与渲染分开 |
 | `src/ui/` | 当前 classic 的导航、屏幕、预览与运动 | 不创建第二份播放/账号状态；不是全机型通用固件 |
 | `src/services/nativePhotos.ts`、`src/app/useNativePhotos.ts`、`src/ui/nativePhotoMenus.ts` | 系统照片消息契约、会话内授权/分页协调与只读菜单 | 与音乐账户/播放独立；范围变化/撤销丢弃迟到数据，PhotoKit标识/图片不持久化到页面 |
@@ -171,4 +171,4 @@ GAME102：规则继续归原游戏模型，未添加服务／播放器。iQuiz�
 
 `src/services/nativeOrganizer.ts`定义并验证消息／权限，`src/app/useNativeOrganizer.ts`管理按月／资源读取、分页、撤权／后台／迟到结果与内存快照；`useOrganizer.ts`仍只保存导入副本，source偏好与系统内容分开。`ClassicOrganizerScreen`组合两条来源，原用户显式选择保留，默认新版iPhone系统；文件／网页路线不变。权限和刷新入口属于现代管理页，播放核心没有新增主机依赖。新增原生边界检查在NativeBoundaryTests，两个浏览器场景在nativeOrganizer.pw.ts；浏览器使用明确替身，不作为真实系统数据证明。
 
-FINISH106：`src/models/classicAlarms.ts`独占纯日期／重复／截止时间／有界设置解析，`src/services/alarmsStore.ts`管理独立持久化与排队提交，`alarmHost.ts`承接固定原生协议及网页蜂鸣资源。`src/ui/ClassicAlarms.tsx`／`classic-alarms.css`呈现编辑、倒计时及全局LCD提醒，`alarmInput.ts`为注入端口；App只装配现有Player.pause、休眠／唤醒和导航。`classicInputController`先拦截响铃与闹钟页，不增播放器。播放显示与账户Header按需加载，原播放会话常驻。`ios/ReiPod/AlarmsBridge.swift`在原生拥有AlarmKit／UserNotifications调度、权限、自己的计划与停止回执；AppDelegate在启动结束前设置通知delegate，PlayerViewController连接固定主文档桥。生成IPA／预览／证据均在忽略的`.local/finish-106/`。
+FINISH106 / ALARMPLAY111：`src/models/classicAlarms.ts`独占纯日期／重复／声音（蜂鸣或有界本地歌单引用）／截止时间／有界设置解析，`src/services/alarmsStore.ts`管理独立持久化与排队提交，`alarmHost.ts`承接固定原生协议及网页蜂鸣资源。`src/ui/ClassicAlarms.tsx`／`classic-alarms.css`呈现编辑、声音歌单选择、倒计时及全局LCD提醒，`alarmInput.ts`为注入端口；App只装配现有本地歌单只读摘要、歌单唤醒播放回调、Player.pause、休眠／唤醒和导航。`classicInputController`先拦截响铃与闹钟页，不增播放器。播放显示与账户Header按需加载，原播放会话常驻。`ios/ReiPod/AlarmsBridge.swift`在原生拥有AlarmKit／UserNotifications调度、权限、自己的计划与停止回执；AppDelegate在启动结束前设置通知delegate，PlayerViewController连接固定主文档桥。生成IPA／预览／证据均在忽略的`.local/finish-106/`。

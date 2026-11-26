@@ -48,7 +48,7 @@ it("empty photos link to settings and imports stay outside media browsers", () =
   const menus = f.menus();
   expect(menus.photos![0].disabled).toBe(true);
   expect(menus.photos!.slice(1).map(row => row.key)).toEqual(["photo-status"]);
-  expect(menus["photo-settings"]!.map(row => row.key)).toEqual(["photo-import", "photo-folder"]);
+  expect(menus["photo-settings"]!.map(row => row.key)).toEqual(["photo-import", "photo-folder", "slideshow-settings"]);
   expect(menus["photo-grid"]).toEqual([]);
   expect(menus.podcasts).toEqual([]);
 });
@@ -64,7 +64,7 @@ it("podcasts use show fallback labels and retain episode selection without invok
 it("system photo menus never expose the local-copy deletion command", () => {
   const f = fixture();
   f.context.systemPhotos = true;
-  expect(f.menus()["photo-options"]!.map(row => row.key)).toEqual(["slideshow", "cancel"]);
+  expect(f.menus()["photo-options"]!.map(row => row.key)).toEqual(["slideshow", "slideshow-settings", "cancel"]);
 });
 it("slideshow starts after returning and cancel only returns", () => {
   const f = fixture();
@@ -98,4 +98,34 @@ it("deletion returns only for the matching confirmation and exposes failure feed
   f.menus()["photo-delete"]![1].action();
   await vi.waitFor(() => expect(f.context.back).toHaveBeenCalledWith(3));
   expect(f.context.deletePhoto).toHaveBeenCalledWith("one");
+});
+it("slideshow settings expose duration, music, repeat, shuffle, and transition choices", () => {
+  const f = fixture();
+  const setSlideshowSettings = vi.fn();
+  f.context.setSlideshowSettings = setSlideshowSettings;
+  f.context.slideshowPlaylists = [{ id: "pl-1", name: "Morning", count: 4 }];
+  f.context.slideshowSettings = { timePerSlide: 5, music: { playlistId: "pl-1", playlistName: "Old" }, repeat: false, shuffle: true, transition: "wipe" };
+  const menus = f.menus();
+  const rows = menus["slideshow-settings"]!;
+  expect(rows.map(r => [r.key, r.value])).toEqual([
+    ["time", "5 秒"],
+    ["music", "Morning"],
+    ["repeat", "关闭"],
+    ["shuffle", "开启"],
+    ["transition", "划像"],
+  ]);
+  rows.find(r => r.key === "repeat")!.action();
+  expect(setSlideshowSettings).toHaveBeenCalledWith({ repeat: true });
+  rows.find(r => r.key === "shuffle")!.action();
+  expect(setSlideshowSettings).toHaveBeenCalledWith({ shuffle: false });
+  expect(menus["slideshow-music"]!.find(r => r.key === "pl-1")?.value).toBe("✓");
+  menus["slideshow-music"]!.find(r => r.key === "off")!.action();
+  expect(setSlideshowSettings).toHaveBeenCalledWith({ music: "off" });
+  expect(menus["slideshow-duration"]!.find(r => r.key === "5")?.value).toBe("✓");
+  menus["slideshow-duration"]!.find(r => r.key === "0")!.action();
+  expect(setSlideshowSettings).toHaveBeenCalledWith({ timePerSlide: 0 });
+  expect(menus["slideshow-transition"]!.find(r => r.key === "wipe")?.value).toBe("✓");
+  menus["slideshow-transition"]!.find(r => r.key === "off")!.action();
+  expect(setSlideshowSettings).toHaveBeenCalledWith({ transition: "off" });
+  expect(f.context.back).toHaveBeenCalledTimes(3);
 });

@@ -5,6 +5,7 @@ import type { Playlist } from "../player/playlists";
 import type { Preferences } from "./preferences";
 import type { Page } from "./navigation";
 import type { MenuItem } from "./MenuRows";
+import { eqPresetLabel } from "../models/classicEq";
 import { mainMenuOrder } from "./classicSettings";
 export const repeatText = { off: "关闭", all: "全部", one: "单曲" };
 type PrimaryMenuContext = {
@@ -237,6 +238,24 @@ export function createPrimaryMenus({
       label: "转轮声音",
       value: prefs.clickSound ? "开启" : "关闭",
       action: () => open("click-sound", String(prefs.clickSound)),
+    },
+    {
+      key: "eq",
+      label: "均衡器",
+      value: eqPresetLabel(prefs.eq),
+      action: () => open("eq", prefs.eq),
+    },
+    {
+      key: "sound-check",
+      label: "音量平衡",
+      value: prefs.soundCheck ? "开启" : "关闭",
+      action: () => open("sound-check", String(prefs.soundCheck)),
+    },
+    {
+      key: "date-time",
+      label: "日期与时间",
+      value: prefs.timeInTitle ? "标题显示时间" : undefined,
+      action: () => open("date-time"),
     },
     {
       key: "finish",

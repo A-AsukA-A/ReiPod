@@ -22,6 +22,13 @@ export type Page =
   | "photo-options"
   | "photo-delete"
   | "photo-settings"
+  | "slideshow-settings"
+  | "slideshow-duration"
+  | "slideshow-music"
+  | "slideshow-transition"
+  | "eq"
+  | "sound-check"
+  | "date-time"
   | "podcasts"
   | "podcast-episodes"
   | "podcast-settings"
@@ -101,6 +108,8 @@ export const splitPages = new Set<Page>([
   "lyrics-display",
   "shuffle-mode",
   "repeat-mode",
+  "eq",
+  "sound-check",
 ]);
 export type NavigationState = {
   screen: Screen;

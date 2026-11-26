@@ -70,7 +70,7 @@ it("Reset Settings restores implemented firmware preferences through their owner
   rows[0].action();
   expect(f.context.setPreferences).not.toHaveBeenCalled();
   rows[1].action();
-  expect(f.context.setPreferences).toHaveBeenCalledWith({ clickSound: true, brightness: 1, volumeLimit: 1, backlight: 0, mainMenu: parsePreferences(null).mainMenu, musicMenu: parsePreferences(null).musicMenu });
+  expect(f.context.setPreferences).toHaveBeenCalledWith({ clickSound: true, brightness: 1, volumeLimit: 1, backlight: 0, mainMenu: parsePreferences(null).mainMenu, musicMenu: parsePreferences(null).musicMenu, eq: "off", soundCheck: false, timeInTitle: false, slideshow: parsePreferences(null).slideshow });
   expect(f.context.shuffle).toHaveBeenCalledWith(false);
   expect(f.context.repeat).toHaveBeenCalledWith("off");
   expect(f.context.clear).not.toHaveBeenCalled();

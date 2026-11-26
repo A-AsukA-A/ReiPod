@@ -1,9 +1,16 @@
+import { useEffect, useState } from "react";
 import { BatteryIndicator } from "./BatteryIndicator";
 import { ClassicLcdIcon } from "./ClassicLcdIcon";
 import { repeatText } from "./primaryMenus";
 
+function localClockText() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
 type Props = {
   title: string;
+  timeInTitle?: boolean;
   shuffle: boolean;
   repeat: "off" | "all" | "one";
   held: boolean;
@@ -14,11 +21,18 @@ type Props = {
 };
 
 export function ClassicStatusBar({
-  title, shuffle, repeat, held, hasCurrent, active, busy, transportHint,
+  title, timeInTitle = false, shuffle, repeat, held, hasCurrent, active, busy, transportHint,
 }: Props) {
+  const [clockText, setClockText] = useState(localClockText);
+  useEffect(() => {
+    if (!timeInTitle) return;
+    setClockText(localClockText());
+    const timer = setInterval(() => setClockText(localClockText()), 15000);
+    return () => clearInterval(timer);
+  }, [timeInTitle]);
   return (
     <div className="screen-status">
-      <strong title={title}>{title}</strong>
+      <strong title={title}>{timeInTitle ? clockText : title}</strong>
       <span className="play-modes">
         {shuffle && (
           <span title="随机播放" aria-label="随机播放">

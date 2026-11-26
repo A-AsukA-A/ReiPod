@@ -50,6 +50,12 @@ export function settingChoices(
       selected: prefs.clickSound === value,
       apply: () => save({ clickSound: value }),
     })),
+    "sound-check": [false, true].map((value) => ({
+      key: String(value),
+      label: value ? "开启" : "关闭",
+      selected: prefs.soundCheck === value,
+      apply: () => save({ soundCheck: value }),
+    })),
     "shuffle-mode": ([false, true, "albums"] as const).map((value) => ({
       key: String(value),
       label: value === "albums" ? "专辑" : value ? "歌曲" : "关闭",

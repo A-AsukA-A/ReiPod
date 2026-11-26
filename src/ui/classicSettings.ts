@@ -1,4 +1,6 @@
 import { classic2007 } from "../models/classic";
+import { parseEqPreset, type EqPresetId } from "../models/classicEq";
+import { parseSlideshowSettings, type SlideshowSettings } from "../models/slideshowSettings";
 import { parseAppearance } from "./appearance";
 import type { Appearance } from "./appearance";
 export const optionalMainItems = [
@@ -37,6 +39,10 @@ export type Preferences = Appearance & {
   volumeLimit: number;
   mainMenu: string[];
   musicMenu: string[];
+  eq: EqPresetId;
+  soundCheck: boolean;
+  timeInTitle: boolean;
+  slideshow: SlideshowSettings;
 };
 export function parsePreferences(value: unknown): Preferences {
   const saved =
@@ -80,5 +86,9 @@ export function parsePreferences(value: unknown): Preferences {
           (!Array.isArray(saved.musicMenu) && item.key !== "compilations") || Array.isArray(saved.musicMenu) && saved.musicMenu.includes(item.key),
       )
       .map((item) => item.key),
+    eq: parseEqPreset(saved.eq),
+    soundCheck: saved.soundCheck === true,
+    timeInTitle: saved.timeInTitle === true,
+    slideshow: parseSlideshowSettings(saved.slideshow),
   };
 }

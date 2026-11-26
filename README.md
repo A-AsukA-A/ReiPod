@@ -18,16 +18,16 @@ Screenshots show the current web build with included demo music. The interface c
 
 ## What you can do
 
-- **Bring your own music.** Import audio with metadata and embedded artwork. Browse artists, albums, songs and genres; search, favorite tracks and make browser-local playlists.
-- **Browse with the wheel.** Cover Flow, contextual menu previews, remembered selections, HOLD locking and keyboard controls keep navigation inside the player.
+- **Bring your own music.** Import audio with metadata and embedded artwork. Browse artists, albums, compilations, songs, genres and composers; search, favorite tracks and build On-The-Go or browser-local playlists.
+- **Browse with the wheel.** Cover Flow, contextual menu previews, Quick Scroll alphabet jumps on long lists, single-album artist skip, remembered selections, HOLD locking and keyboard controls keep navigation inside the player.
 - **Read lyrics while listening.** YRC follows individual graphemes with soft highlighting, sustained-word waves and staggered line springs; LRC keeps line-level follow. Import LRC or embedded lyrics, or fetch lyrics through the built-in service or HTTPS NetEase/QQ backend. Hold Center and confirm **歌词** (Lyrics) to open them quickly; turn the feature on or off in Settings.
 - **Choose your music source.** Use the iPhone's system music library, configure web Apple Music, or connect NetEase Cloud Music and QQ Music through the built-in iOS service or HTTPS backend. Account sessions and libraries stay separate; catalog VIP/purchase labels and playback errors explain restrictions.
-- **Make it yours.** Silver or black finish, light or dark surroundings, shuffle/repeat, ratings, backlight and wheel sounds.
-- **Keep more in your pocket.** The updated iPhone shell browses authorized system photo albums directly; the web version keeps local albums and slideshows. Photo/podcast browsers show content, with import and permission tools under **设置 → ReiPod 设置 → 照片设置 / 播客设置**. System-readable podcasts have show artwork, episode counts and independent playback. Photo browsing and podcast playback/background/lock-screen behavior have been checked on the test iPhone; remaining device and restoration limits are recorded in the [native guide](ios/README.md).
+- **Make it yours.** Silver or black finish, light or dark surroundings, shuffle/repeat, ratings, 22-preset EQ, Sound Check, Time-in-Title clock, backlight and wheel sounds.
+- **Keep more in your pocket.** The updated iPhone shell browses authorized system photo albums directly; the web version keeps local albums and configurable slideshows (time per slide, background music, repeat, shuffle, transitions). Photo/podcast browsers show content, with import, slideshow settings and permission tools under **设置 → ReiPod 设置 → 照片设置 / 播客设置**. System-readable podcasts have show artwork, episode counts and independent playback. **附加功能** (Extras) also includes multi-city World Clocks, a Stopwatch with lap logs, Alarms (with beep or local playlist wake-up), Sleep Timer and Countdown, Calendar/To-Dos and Contacts (with `.ics`/`.vcf` import and read-only iPhone EventKit/Contacts access), a plain-text reader, and independent recreations of **iQuiz**, **Klondike** and **Vortex**.
 
 Search now shows live local results for songs, artists, albums, playlists and audio podcasts. Next/Previous enter a space/delete a character while editing; MENU moves to the results. Firmware menus keep their supported original order; imports, services, lyrics options and appearance are grouped under **设置 → ReiPod 设置**. **还原设置** resets implemented firmware choices after confirmation. See [original feature coverage and remaining gaps](FIRMWARE_FEATURES.md).
 
-Local music also browses by **genre → artist → album → song** and **composer → album → song**. Category filters stay in effect through album queues, and MENU returns to the remembered selection. Genre rows show artist/album counts; Play starts the selected category while Center continues browsing. These paths remain subject to the firmware differences documented above.
+Local music also browses by **genre → artist → album → song**, **composer → album → song**, and **compilations** (with ID3/MP4 `compilation` and `sort-as` tags, skipping the album list when an artist has only one album in the current scope). Category filters stay in effect through album queues, and MENU returns to the remembered selection. Genre rows show artist/album counts; Play starts the selected category while Center continues browsing.
 
 Shuffle offers **Off / Songs / Albums**; album shuffle keeps available disc/track order within each album. Local **On-The-Go** supports adding collections, removing songs, saving numbered read-only playlists and confirmed clearing. Failed save/clear operations keep the working list, and saving does not interrupt its active playback queue.
 
@@ -62,7 +62,7 @@ The LCD is display-only. Use the wheel and buttons:
 | Hold Center           | Open song options; Lyrics is first when available or fetchable                           |
 | HOLD switch           | Lock input while playback continues                                                      |
 
-On iPhone, use the side buttons for system volume. Lyrics can stay open across menu visits and queue skips; temporary seek/shuffle/rating controls reset. See the [playback state rules](PLAYBACK_INTERACTIONS.md) and [full user guide](USER_GUIDE.md).
+On updated iPhone shells, turning the wheel on the ordinary Now Playing view adjusts system volume directly through `MPVolumeView` (side buttons also work). Lyrics can stay open across menu visits and queue skips; temporary seek/shuffle/rating controls reset. See the [playback state rules](PLAYBACK_INTERACTIONS.md) and [full user guide](USER_GUIDE.md).
 
 Local imports, settings and playlists are stored in the browser. Clearing site data or storage eviction can remove them, so keep your original files. Web playback does not guarantee background or lock-screen behavior; the native system-music route uses iOS playback.
 
