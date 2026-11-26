@@ -39,25 +39,6 @@ const screenLoaders = {
   games: () => import("./ClassicGamesScreen").then(m => ({ default: m.ClassicGamesScreen })),
 } as const;
 
-const focusPreload: Partial<Record<string, keyof typeof screenLoaders>> = {
-  about: "about",
-  coverflow: "coverflow",
-  search: "search",
-  photos: "photos",
-  clock: "clocks",
-  stopwatch: "stopwatch",
-  alarms: "alarms",
-  countdown: "alarms",
-  "sleep-timer": "alarms",
-  "alarm-settings": "alarms",
-  calendar: "organizer",
-  contacts: "organizer",
-  organizer: "organizer",
-  games: "games",
-  notes: "notes",
-  playing: "playing",
-};
-
 const NowPlayingScreen = lazy(screenLoaders.playing);
 const ClassicAlarmsScreen = lazy(screenLoaders.alarms);
 const ClassicAboutScreen = lazy(screenLoaders.about);
@@ -109,13 +90,9 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
   const { textEntry, query, playlistName, textDocument, reader } = text;
   const { activePhotos, photoIndex, slideshow } = photos;
   useEffect(() => {
-    const target = focusedRow?.key ? focusPreload[focusedRow.key] : undefined;
-    if (target) void screenLoaders[target]().catch(() => {});
-  }, [focusedRow?.key]);
-  useEffect(() => {
     const timer = setTimeout(() => {
       Object.values(screenLoaders).forEach((load) => { void load().catch(() => {}); });
-    }, 500);
+    }, 200);
     return () => clearTimeout(timer);
   }, []);
   const renderPreview = () => <MenuPreview {...classicPreviewModel(preview)} />;
