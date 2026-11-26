@@ -274,3 +274,11 @@ iPhone同Bundle ID覆盖安装0.2.0/build2并启动成功，见[iPhone回执](io
 后端继续为abf75e2，9个受检模块／package文件、音乐会话、个人首页、音乐PID147732均保持不变；nginx与reipod-music均active，未重启服务或读取账号数据。公网`/ReiPod/`返回200；网易云、QQ匿名status及Pages允许来源返回200且未授权，非允许来源403。页面和字体样本的公网哈希匹配；完整并发读取时单条歌词请求出现临时TLS错误，带重试的定点读取随后SHA匹配，因此不将此有限复查表述为“单次所有65个公网文件哈希已完成”。
 
 GitHub Pages [45563007395](https://github.com/A-AsukA-A/ReiPod/actions/runs/45563007395)第二次尝试成功；iPhone CI [45563007276](https://github.com/A-AsukA-A/ReiPod/actions/runs/45563007276)成功。它们不建立真实设备安装、系统媒体／日历、后台播放或真实第三方账号验收。
+
+## 2026-11-26 REL118 幻灯片/均衡器/音量平衡/日期时间/闹钟播放发布
+
+前端由 `cd5ab55` 更新为 [c86680f](https://github.com/A-AsukA-A/ReiPod/commit/c86680f)（涵盖 `ALARMPLAY111`–`SOUNDCHECK116`）；`server/` 源码未变更，后端继续保持 `abf75e2`。显式以 `VITE_MUSIC_API_URL=https://julyblog.party/api/music/` 构建通过 `check-dist` 与体积检查（`programGzip = 338,869 B`、`entryGzip = 149,268 B`、`demoAudio = 3,817,420 B`）。
+
+VPS 发布包含 66 个文件（65 个构建产物及 `release.txt = c86680f`），旧发布与 `release.json` 备份至 `/opt/reipod/backups/dist-before-c86680f-20261126T053623Z.tgz`，非入口资源先复制到 `/opt/reipod/dist`（保留旧哈希资源），`index.html` 与 `release.txt` 最后原子替换；暂存与目标 `index.html`（`ace6a4f28f6a4b1d43c0c82e292e567ca638ce3aa39d750e300ad653b561d36f`）及 `release.txt` 校验匹配。`nginx` 与 `reipod-music` 均保持 `active`，个人首页 `https://julyblog.party/` 返回 200，`.local/music-sessions` 与服务进程未受影响。
+
+公网 `https://julyblog.party/ReiPod/` 返回 `HTTP/2 200` 且 HTML SHA-256 与本地 `dist/index.html` 一致；匿名 `POST /api/music/netease/status`（`Origin: https://a-asuka-a.github.io`）与 `POST /api/music/qq/status`（`Origin: https://julyblog.party`）返回 200，非允许来源 `https://example.com` 返回 403。GitHub Pages 工作流 [45762597125](https://github.com/A-AsukA-A/ReiPod/actions/runs/45762597125) 成功，`https://a-asuka-a.github.io/ReiPod/` 返回 `HTTP/2 200` 且 HTML SHA-256 与本地构建一致。本次仍为静态发布与匿名接口检查，不建立物理 iPhone 安装或真实平台账号播放验收。

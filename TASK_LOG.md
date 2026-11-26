@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-26，`COMMIT117` 将已验证的 `ALARMPLAY111`–`SOUNDCHECK116` 改动本地提交至 `main`（领先 `origin/main` 1 个提交，未推送）。工作区位于 `/Users/july/Developer/ReiPod`，未重复已完成的 `REL109` 发布，未推送或部署。
+最后更新：2026-11-26，`REL118` 已将 `c86680f` 推送至 `origin/main` 并完成 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`）静态同步。工作区位于 `/Users/july/Developer/ReiPod`，`ANTIGRAVITY_HANDOFF.md` 仍保留本地未跟踪。
 - **VISUAL115（O03 / C-M01 / C-F07 分屏预览图标与实时视觉检视）**：新增浮雕三段滑杆图标 `"eq"`（`src/ui/ClassicGlyph.tsx`），把 `eq` 纳入 `splitPages`（`src/ui/navigation.ts`），并在 `menuPreviewModel.ts` 补齐 `eq`、`date-time`、`compilations` 与 `ReiPod 设置` 各项的右侧预览映射；抓取实时生产预览在 Chromium 390×844 下的 7 张稳定截图（`.local/visual-audit-115/`），逐帧确认主菜单、设置/EQ、分屏 EQ 勾选、日期与时间图标、标题栏实时 `HH:MM` 时钟、幻灯片设置页与正在播放页均清晰对齐、无遮挡裁切。
 - **CLASSIC114（C-F07 / C-F08 均衡器、日期与时间、幻灯片背景音乐）**：新增 22 组 Apple classic EQ 预设 + 关闭（`src/models/classicEq.ts`）并接入本地 Web Audio 3 段 `BiquadFilterNode` 实时滤波（`src/player/localAudio.ts`）；新增「日期与时间 → 标题栏显示时间」实时 `HH:MM` 状态栏时钟与世界时钟入口；在「幻灯片设置」补齐「背景音乐（保持当前 / 关闭 / 非空本地歌单）」，三项新配置全部纳入偏好持久化与「还原设置」重置。
 - **SLIDESHOW113（C-F08 照片幻灯片设置）**：按 Apple iPod classic 用户指南补齐「幻灯片设置」纯模型（`src/models/slideshowSettings.ts`）、偏好持久化与「还原设置」重置、照片设置与看图选项中的轮盘菜单入口，以及按设置驱动的幻灯片播放（每张停留时间 `2/3/5/10/20 秒/手动`、重复播放、无放回随机照片、过渡效果 `关闭/淡入淡出/划像`），兼容本地照片与 iPhone 系统相册窗口。
@@ -1354,3 +1354,12 @@
 - **目标**：将已验证的 `ALARMPLAY111`–`SOUNDCHECK116` 项目代码、测试与文档改动本地提交至 `main`（不推送，保留本地未跟踪的 `ANTIGRAVITY_HANDOFF.md`）。
 - **暂存与检查**：通过 `git add -u` 与显式添加 5 个新增文件（`src/models/classicEq.ts`、`src/models/classicEq.test.ts`、`src/models/slideshowSettings.ts`、`src/models/slideshowSettings.test.ts`、`tests/browser/slideshowSettings.pw.ts`），随后以 `git diff --cached --check` 复核暂存范围与空白格式后提交。
 - **下一步**：如需同步远端或触发发布工作流再执行推送；否则可继续推进 `C-F07` 语言设置或真机对比工作。
+
+## 2026-11-26 · REL118（推送远端、GitHub Pages 与 VPS 同步）
+
+- **目标**：将 `c86680f`（`ALARMPLAY111`–`SOUNDCHECK116`）推送至 `origin/main`，完成 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`）静态同步。
+- **执行与验证**：
+  - `git push origin main`：`ac0c1df..c86680f`，触发 Pages 工作流 [45762597125](https://github.com/A-AsukA-A/ReiPod/actions/runs/45762597125) 并成功完成；`https://a-asuka-a.github.io/ReiPod/` 返回 `HTTP/2 200`，HTML SHA-256 为 `ace6a4f28f6a4b1d43c0c82e292e567ca638ce3aa39d750e300ad653b561d36f`（与本地 `dist/index.html` 一致）。
+  - VPS 静态构建（`VITE_MUSIC_API_URL=https://julyblog.party/api/music/`）：`check-dist` 与 `size` 通过（`programGzip = 338,869 B`、`entryGzip = 149,268 B`、`demoAudio = 3,817,420 B`）；备份 `/opt/reipod/backups/dist-before-c86680f-20261126T053623Z.tgz`，原子更新 `/opt/reipod/dist`（66 文件）及 `release.json`，`nginx` 与 `reipod-music` 保持 `active`。
+  - 公网复核：`https://julyblog.party/ReiPod/` 返回 `HTTP/2 200`（HTML SHA-256 一致）、`release.txt = c86680f`、`https://julyblog.party/` 返回 `200`；匿名 `POST /api/music/netease/status`（Pages 来源）与 `POST /api/music/qq/status`（主站来源）返回 `200`，非允许来源返回 `403`。详细部署记录见 [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md)。
+- **未完成 / 不确定**：同前，真机 iPhone 安装与真实平台账号播放仍待物理设备与实际登录验证。
