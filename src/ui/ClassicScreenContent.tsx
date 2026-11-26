@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import type { ComponentProps, RefObject, ReactNode } from "react";
 import type { Page } from "./navigation";
 import type { PlayerState, Track } from "../player/Player";
@@ -12,7 +12,6 @@ import { ClassicGlyph } from "./ClassicGlyph";
 import type { ClassicAboutInformation } from "./ClassicAboutScreen";
 import { MenuRows } from "./MenuRows";
 import type { MenuScrollPositions, MenuItem } from "./MenuRows";
-const NowPlayingScreen = lazy(() => import("./NowPlayingScreen").then(module => ({ default: module.NowPlayingScreen })));
 import { WheelTextEntry } from "./WheelTextEntry";
 import type { AlarmPageInput } from "./alarmInput";
 import type { AlarmPlaylistOption } from "./ClassicAlarms";
@@ -25,19 +24,51 @@ import type { QuizTrack } from "../models/iQuiz";
 import type { TextReaderHandle } from "./TextReader";
 import { classicPreviewModel } from "./classicScreenModel";
 
-// Secondary displays load only when opened; all files remain bundled for native/offline use.
-const ClassicAlarmsScreen = lazy(() => import("./ClassicAlarms").then(module => ({ default: module.ClassicAlarmsScreen })));
-const ClassicAboutScreen = lazy(() => import("./ClassicAboutScreen").then(module => ({ default: module.ClassicAboutScreen })));
-const ClassicOrganizerScreen = lazy(() => import("./ClassicOrganizerScreen").then(module => ({ default: module.ClassicOrganizerScreen })));
-const CoverFlow = lazy(() => import("./CoverFlow").then(module => ({ default: module.CoverFlow })));
-const ClassicClocksScreen = lazy(() => import("./ClassicExtrasScreens").then(module => ({ default: module.ClassicClocksScreen })));
-const ClassicStopwatchScreen = lazy(() => import("./ClassicExtrasScreens").then(module => ({ default: module.ClassicStopwatchScreen })));
+// Secondary displays split initially for bundle budget and warm silently on idle/focus.
+const screenLoaders = {
+  playing: () => import("./NowPlayingScreen").then(m => ({ default: m.NowPlayingScreen })),
+  alarms: () => import("./ClassicAlarms").then(m => ({ default: m.ClassicAlarmsScreen })),
+  about: () => import("./ClassicAboutScreen").then(m => ({ default: m.ClassicAboutScreen })),
+  organizer: () => import("./ClassicOrganizerScreen").then(m => ({ default: m.ClassicOrganizerScreen })),
+  coverflow: () => import("./CoverFlow").then(m => ({ default: m.CoverFlow })),
+  clocks: () => import("./ClassicExtrasScreens").then(m => ({ default: m.ClassicClocksScreen })),
+  stopwatch: () => import("./ClassicExtrasScreens").then(m => ({ default: m.ClassicStopwatchScreen })),
+  search: () => import("./ClassicSearchScreen").then(m => ({ default: m.ClassicSearchScreen })),
+  notes: () => import("./TextReader").then(m => ({ default: m.TextReader })),
+  photos: () => import("./PhotoScreen").then(m => ({ default: m.PhotoScreen })),
+  games: () => import("./ClassicGamesScreen").then(m => ({ default: m.ClassicGamesScreen })),
+} as const;
 
-const ClassicSearchScreen = lazy(() => import("./ClassicSearchScreen").then(module => ({ default: module.ClassicSearchScreen })));
-const TextReader = lazy(() => import("./TextReader").then(module => ({ default: module.TextReader })));
+const focusPreload: Partial<Record<string, keyof typeof screenLoaders>> = {
+  about: "about",
+  coverflow: "coverflow",
+  search: "search",
+  photos: "photos",
+  clock: "clocks",
+  stopwatch: "stopwatch",
+  alarms: "alarms",
+  countdown: "alarms",
+  "sleep-timer": "alarms",
+  "alarm-settings": "alarms",
+  calendar: "organizer",
+  contacts: "organizer",
+  organizer: "organizer",
+  games: "games",
+  notes: "notes",
+  playing: "playing",
+};
 
-const PhotoScreen = lazy(() => import("./PhotoScreen").then(module => ({ default: module.PhotoScreen })));
-const ClassicGamesScreen = lazy(() => import("./ClassicGamesScreen").then(module => ({ default: module.ClassicGamesScreen })));
+const NowPlayingScreen = lazy(screenLoaders.playing);
+const ClassicAlarmsScreen = lazy(screenLoaders.alarms);
+const ClassicAboutScreen = lazy(screenLoaders.about);
+const ClassicOrganizerScreen = lazy(screenLoaders.organizer);
+const CoverFlow = lazy(screenLoaders.coverflow);
+const ClassicClocksScreen = lazy(screenLoaders.clocks);
+const ClassicStopwatchScreen = lazy(screenLoaders.stopwatch);
+const ClassicSearchScreen = lazy(screenLoaders.search);
+const TextReader = lazy(screenLoaders.notes);
+const PhotoScreen = lazy(screenLoaders.photos);
+const ClassicGamesScreen = lazy(screenLoaders.games);
 
 type Props = {
   page: Page; groupKey?: string; title: string;
@@ -77,6 +108,16 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
   const { state, current, active, playView, lyricWheel, rating, volumeOverlay } = playback;
   const { textEntry, query, playlistName, textDocument, reader } = text;
   const { activePhotos, photoIndex, slideshow } = photos;
+  useEffect(() => {
+    const target = focusedRow?.key ? focusPreload[focusedRow.key] : undefined;
+    if (target) void screenLoaders[target]().catch(() => {});
+  }, [focusedRow?.key]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Object.values(screenLoaders).forEach((load) => { void load().catch(() => {}); });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
   const renderPreview = () => <MenuPreview {...classicPreviewModel(preview)} />;
   const renderRows = (showFocus = true) => (
     <MenuRows

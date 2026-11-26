@@ -8,19 +8,19 @@ export function durationInMilliseconds(value: string) {
 
 /** Calibration values, not recovered Apple constants. See HARDWARE_RESEARCH.md. */
 export const classicMotion = {
-  page: 360,
-  view: 300,
+  page: 240,
+  view: 220,
   // Supplied My Classic clip: control travel ~300ms ±100ms; volume <=100ms.
   control: 300,
   volume: 100,
-  album: 360,
-  flowEnter: 320,
-  flowExit: 480,
-  easing: "cubic-bezier(0.42, 0, 0.58, 1)",
+  album: 280,
+  flowEnter: 280,
+  flowExit: 360,
+  easing: "cubic-bezier(0.22, 1, 0.36, 1)",
   coverFrequency: 18,
   previewInterval: 6000,
   previewFade: 650,
-  previewCard: 400,
+  previewCard: 180,
 } as const;
 
 // One timing source for CSS, snapshots and the independent artwork timer.

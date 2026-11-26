@@ -64,10 +64,10 @@ VOL100（2026-11-10）交互修复：C-V01接通新iPhone原生系统音乐／�
 | 音量原机 | 2009 eHow 斜拍归一轨道约 12–18u，±6u；不覆盖全端点 | M，精度不足以定最终值 |
 | 当前播放封面 CSS | 138u 方图；perspective 550u、rotateY(22deg)、scaleX(1.18) | P 拟合，不能称硬件角度 |
 | 当前定位控件 | 7.5u 轨道、10.6u 正方形旋转；圆角等按比较片 | A，My Classic 比较样本/用户选择 |
-| 页面/视图/封面动画 | 360/300/360 ms；Cover Flow 进入/退出 320/480 ms | P；唯一实现源 src/ui/motion.ts |
+| 页面/视图/封面动画 | 240/220/280 ms；Cover Flow 进入/退出 280/360 ms | P；唯一实现源 src/ui/motion.ts |
 | 控制条/音量动画 | 300/100 ms；比较视频控制移动约 300±100 ms | A，比较样本不是原机时序 |
-| 预览定时 | 间隔 6000、淡入 650、卡片 400 ms | P，不能升级为固件默认 |
-| easing | cubic-bezier(0.42, 0, 0.58, 1) | P，尚无原机逐帧拟合 |
+| 预览定时 | 间隔 6000、淡入 650、卡片 180 ms | P，不能升级为固件默认 |
+| easing | cubic-bezier(0.22, 1, 0.36, 1) | P，尚无原机逐帧拟合 |
 | 歌词运动 | focus .35 s、manualHold 2500 ms 等 | A；唯一实现源 lyricMotion |
 
 直接参考：[iLounge 2007 实机评测](https://www.ilounge.com/index.php/reviews/entry/apple-ipod-classic-80gb-160gb)、[Register 2007 实机评测](https://www.theregister.com/2007/09/13/review_apple_ipod_classic/?page=3)、[2007 操作录像](https://www.youtube.com/watch?v=ge56Li0PuQ0)、[2009 音量操作录像](https://www.youtube.com/watch?v=qYmOjuYXz70)。这些既有研究不因本轮整理而提升精度；准确固件仍未知。
@@ -693,3 +693,9 @@ Swift测试目标包含新检查的generic iphoneos编译通过、Release开发�
 固定样本为自行建立的“练习07:00／工作日”闹钟与默认五分钟倒计时，无真实系统资料。字体加载稳定／减少动态，viewport 320／390／1280×844、DPR1下采集computed style与LCD。LCD宽/高分别246.594/184.938、304.141/228.094、320.578/240.422 CSS px；倒计时数字30.0546／37.0674／39.071px，行高19.5／23.8125／25.0469px，三个状态均无内容横向溢出。数字对应缩放与取整，不是原LCD测量。样本／最终CSS通过摘要核对；后续前台声音／撤权修补未改几何。
 
 工程证据：[两机界面对照](.local/finish-106/comparison.png)、[时间编辑](.local/finish-106/time-device.png)、[五秒到时](.local/finish-106/timer-ringing.png)、[390计算值](.local/finish-106/computed-countdown-390.json)、[产物清单](.local/finish-106/manifest.json)、[冻结预览4206](http://127.0.0.1:4206/)。实际连续操作覆盖创建／时分／重复／标签／保存、放弃／删除取消、睡眠开关、5秒倒计时暂停与刷新恢复、离开网页再返回补提醒、停止、音乐保持，以及模拟15分钟到期的当前播放器暂停；后者是浏览器受控时钟工程验证，不是实际等待或iPhone后台证明。原生替身覆盖拒绝／重试／计划／系统停止回执／撤权关闭。播放／账户按需加载后8条已有路径也通过，工程回归不代替字体／固件验收。
+
+## 2026-11-26 菜单切页响应与视觉质感调整（VISUAL119）
+
+- **状态与范围**：全部调整均属工程交互修复及 `P`（暂定视觉校准），未变更 320 × 240 逻辑几何，不代表取得新同固件物理实测常量。
+- **切页与加载**：`classicMotion` 调整为页切 `240 ms`、视图 `220 ms`、封面 `280 ms`、Cover Flow 进/退 `280/360 ms`、右侧卡片 `180 ms`，曲线改为 `cubic-bezier(0.22, 1, 0.36, 1)`；`useLcdMotion` 取消右侧预览 pane 前 `55%` 冻结等待；`ClassicScreenContent` 按焦点行与空闲预加载二级显示模块，消除 `Suspense` 首次打开空白等待。
+- **视觉质感（`P`）**：`classic-lcd.css` 与 `firmware-display.css`、`style.css` 校准标题栏双段银灰高光渐变与阴影、Aqua 蓝双段高光选中行与内阴影、右侧工作室深蓝灰径向渐变及左侧投射阴影、播放条玻璃凹槽与双段蓝填充，以及玻璃面板边框与银色轮盘凹陷层次。

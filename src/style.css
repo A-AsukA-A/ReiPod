@@ -579,7 +579,7 @@ button:disabled {
     calc((100dvh - max(16px, var(--host-safe-top, env(safe-area-inset-top))) - max(16px, var(--host-safe-bottom, env(safe-area-inset-bottom))) - 12px) / var(--device-aspect)));
   --shell-unit: calc(var(--device-width) / 390);
   --wheel-ink: #90969c;
-  --wheel-center-surface: linear-gradient(145deg, #bdc3c6, #d0d4d6 55%, #e1e4e5);
+  --wheel-center-surface: linear-gradient(155deg, #c2c7cb 0%, #d8dcdf 52%, #ebedef 100%);
   --wheel-center-depth: inset 0 var(--shell-unit) calc(var(--shell-unit) * 2) #717b8360, inset 0 calc(var(--shell-unit) * -1) var(--shell-unit) #fffa;
   background: transparent;
   padding: max(16px, var(--host-safe-top, env(safe-area-inset-top)))

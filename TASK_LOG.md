@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-26，`REL118` 已将 `c86680f` 推送至 `origin/main` 并完成 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`）静态同步。工作区位于 `/Users/july/Developer/ReiPod`，`ANTIGRAVITY_HANDOFF.md` 仍保留本地未跟踪。
+最后更新：2026-11-26，`VISUAL119`（二级菜单预加载/切页提速与 classic 6G 视觉质感校准）与 `AUDIO120`（3 首内置试听升级至 160 kbps / 44.1 kHz AAC-LC）均已在本地工作树完成验证。工作区位于 `/Users/july/Developer/ReiPod`，分支 `main` 已有已推送基线 `9f68807`，当前 `VISUAL119` + `AUDIO120` 改动未提交或推送。
 - **VISUAL115（O03 / C-M01 / C-F07 分屏预览图标与实时视觉检视）**：新增浮雕三段滑杆图标 `"eq"`（`src/ui/ClassicGlyph.tsx`），把 `eq` 纳入 `splitPages`（`src/ui/navigation.ts`），并在 `menuPreviewModel.ts` 补齐 `eq`、`date-time`、`compilations` 与 `ReiPod 设置` 各项的右侧预览映射；抓取实时生产预览在 Chromium 390×844 下的 7 张稳定截图（`.local/visual-audit-115/`），逐帧确认主菜单、设置/EQ、分屏 EQ 勾选、日期与时间图标、标题栏实时 `HH:MM` 时钟、幻灯片设置页与正在播放页均清晰对齐、无遮挡裁切。
 - **CLASSIC114（C-F07 / C-F08 均衡器、日期与时间、幻灯片背景音乐）**：新增 22 组 Apple classic EQ 预设 + 关闭（`src/models/classicEq.ts`）并接入本地 Web Audio 3 段 `BiquadFilterNode` 实时滤波（`src/player/localAudio.ts`）；新增「日期与时间 → 标题栏显示时间」实时 `HH:MM` 状态栏时钟与世界时钟入口；在「幻灯片设置」补齐「背景音乐（保持当前 / 关闭 / 非空本地歌单）」，三项新配置全部纳入偏好持久化与「还原设置」重置。
 - **SLIDESHOW113（C-F08 照片幻灯片设置）**：按 Apple iPod classic 用户指南补齐「幻灯片设置」纯模型（`src/models/slideshowSettings.ts`）、偏好持久化与「还原设置」重置、照片设置与看图选项中的轮盘菜单入口，以及按设置驱动的幻灯片播放（每张停留时间 `2/3/5/10/20 秒/手动`、重复播放、无放回随机照片、过渡效果 `关闭/淡入淡出/划像`），兼容本地照片与 iPhone 系统相册窗口。
@@ -13,7 +13,7 @@
 
 ### 当前目标与进行中
 
-- 无进行中任务。`ALARMPLAY111`、`CLEANUP112`、`SLIDESHOW113`、`CLASSIC114`、`VISUAL115` 与 `SOUNDCHECK116` 已在完成单元、服务端、无 DOM 核心编译、生产构建与体积和 Playwright 回归验证后本地提交至 `main`（未推送，`ANTIGRAVITY_HANDOFF.md` 保留未跟踪状态）。
+- 无进行中任务。`VISUAL119`（二级菜单提速与 classic 6G 视觉质感）与 `AUDIO120`（内置 3 曲升级至 160 kbps / 44.1 kHz AAC-LC）已在本地完成单元、无 DOM 核心编译、生产构建与产物校验及包体积预算检查，待审阅提交并同步部署。
 - 近期里程碑（详细过程见下方任务记录）：
   - **2026-11-26 VISUAL115**：补齐 `eq`/`date-time`/`compilations` 与 ReiPod 设置分屏预览图标并完成实时渲染 7 帧视觉核对。
   - **2026-11-26 CLASSIC114**：经典机均衡器（22 组预设 + 实时 Web Audio 3 段滤波）、日期与时间（标题栏时钟）、幻灯片背景音乐。
@@ -1363,3 +1363,34 @@
   - VPS 静态构建（`VITE_MUSIC_API_URL=https://julyblog.party/api/music/`）：`check-dist` 与 `size` 通过（`programGzip = 338,869 B`、`entryGzip = 149,268 B`、`demoAudio = 3,817,420 B`）；备份 `/opt/reipod/backups/dist-before-c86680f-20261126T053623Z.tgz`，原子更新 `/opt/reipod/dist`（66 文件）及 `release.json`，`nginx` 与 `reipod-music` 保持 `active`。
   - 公网复核：`https://julyblog.party/ReiPod/` 返回 `HTTP/2 200`（HTML SHA-256 一致）、`release.txt = c86680f`、`https://julyblog.party/` 返回 `200`；匿名 `POST /api/music/netease/status`（Pages 来源）与 `POST /api/music/qq/status`（主站来源）返回 `200`，非允许来源返回 `403`。详细部署记录见 [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md)。
 - **未完成 / 不确定**：同前，真机 iPhone 安装与真实平台账号播放仍待物理设备与实际登录验证。
+
+## 2026-11-26 · VISUAL119（二级菜单进入提速与 Classic 6G 视觉质感校准）
+
+- **目标**：消除进入二级菜单时的 chunk 加载等待/空白闪烁与拖沓切页时长，并依据 2007 iPod classic 6G 视觉参考补齐状态栏、Aqua 选中条、分屏预览面板、播放条凹槽及玻璃边框/轮盘质感校准。
+- **改动**：
+  - **切页与二级加载**（[motion.ts](src/ui/motion.ts)、[useLcdMotion.ts](src/ui/useLcdMotion.ts)、[ClassicScreenContent.tsx](src/ui/ClassicScreenContent.tsx)）：收紧 `classicMotion`（页切 `240ms`、视图 `220ms`、封面 `280ms`、Cover Flow 进/退 `280/360ms`、右栏卡片 `180ms`，曲线改为 `cubic-bezier(0.22, 1, 0.36, 1)`）；取消 `staticPane` 前 55% 冻结延迟；在 `ClassicScreenContent` 中抽取 `screenLoaders` 保持首包分片体积并新增焦点行即时预加载 + 挂载后 500ms 静默暖加载。
+  - **视觉质感校准（`P` 暂定校准）**（[classic-lcd.css](src/ui/classic-lcd.css)、[firmware-display.css](src/ui/firmware-display.css)、[style.css](src/style.css)、[UI_METRICS.md](UI_METRICS.md)）：升级 `.screen-status` 双段高光渐变与标题浅高光、`.screen-row.selected` 2007 Aqua 双段高光与微内阴影、`.menu-preview-card` 工作室冷调蓝灰径向渐变及左侧渐隐投射阴影、`.firmware-progress` 玻璃凹槽内阴影与双段蓝填充，以及 `.screen-glass` / `.click-wheel` 凹陷边框深度；同步更新 `UI_METRICS.md` 及 [player.pw.ts](tests/browser/player.pw.ts) 对应暂定动画断言。
+- **验证结果**：
+  - `npm test`：62 files / 308 tests 通过。
+  - `npm run check:player-core`：通过。
+  - `npm run build` + `node scripts/check-dist.mjs` + `npm run size`：通过，`entryGzip = 149,537 B`（<= 150,000 B）、`programGzip = 339,293 B`（<= 350,000 B）、`demoAudio = 3,817,420 B`（<= 4,000,000 B）。
+  - `npx playwright test tests/browser/menuFidelity.pw.ts tests/browser/playbackFidelity.pw.ts tests/browser/player.pw.ts tests/browser/slideshowSettings.pw.ts tests/browser/battery.pw.ts`（`BypassSandbox: true`）：47/47 通过（另记：此前同轮全量并发跑时 `menuFidelity.pw.ts:34:1` 偶发一次 `choose("音乐")` 超时，单独复跑 7/7 通过且修改 `player.pw.ts` 后完整 47/47 一次通过）。
+  - 实时截图检视（`.local/visual-audit-119/{home,settings-eq,eq-choice,now-playing}.png`）：已逐张核对主菜单、设置、EQ 勾选与正在播放页面，状态栏、选中高亮、右侧投影与进度条无裁切、溢出或对比度回退。
+- **未完成 / 不确定**：所有颜色/渐变/动效时长仍标注为 `P`（暂定工程校准），未取代同固件物理 iPod classic 6G 实机取证；`VISUAL119` 尚未提交或部署。
+
+## 2026-11-26 · AUDIO120（内置试听高码率重编码与“未知专辑”核查）
+
+- **“未知专辑”残留核查**：
+  - 仓库 [demoCatalog.json](src/player/demoCatalog.json)、[public/music/](public/music/) 与构建检查脚本均仅包含《晴天》（叶惠美）、《七里香》（七里香）、《兰亭序》（魔杰座）3 首正式曲目；仓库中无任何“未知专辑”内置曲目，该条目来自浏览器本地 IndexedDB 此前导入的无专辑标签测试文件（可通过 `设置 → ReiPod 设置 → 清空资料库` 或清浏览器存储移除）。
+  - 另查得 VPS `/opt/reipod/dist/music/` 目录历史保留有 3 个未被引用的旧版 Kevin MacLeod 音频文件（`carefree.m4a`、`monkeys-spinning-monkeys.m4a`、`sneaky-snitch.m4a`），可在下次部署或清理时安全移除，当前公网清单与索引未引用它们。
+- **高音质重编码与元数据回写**：
+  - 使用本地源码 `.local/music-56/{qingtian-source.m4a,qilixiang-source.mp3,lantingxu-source.mp3}` 与 `.local/music-56/ffmpeg-bin/ffmpeg` 以 `AAC-LC 160 kbps / 44.1 kHz / 立体声` 重新编码输出至 [public/music/](public/music/)，并用 `.local/audio-tools/mutagen` 完整回写歌曲名、艺人、专辑、音轨号、作曲、年份、封面及 LRC/YRC 同步歌词标签。
+  - 新体积：`qingtian.m4a` `5,584,959 B`（`269.5272s`）、`qilixiang.m4a` `6,133,425 B`（`297.2967s`）、`lantingxu.m4a` `5,284,077 B`（`253.9595s`），合计 `17,002,461 B`（约 `17.002 MB`，原为 `34.5 kbps / 32 kHz` 合计 `3,817,420 B`）。
+  - 同步更新 [demoCatalog.json](src/player/demoCatalog.json)、[public/music/credits.txt](public/music/credits.txt)，以及 [scripts/bundle-report.mjs](scripts/bundle-report.mjs) 中 `demoAudio` 预算上限（`4,000,000 B → 20,000,000 B`）。
+- **验证结果**：
+  - `npm test`：62 files / 308 tests 通过（含 [demoTracks.test.ts](src/player/demoTracks.test.ts) 实际解析新 `.m4a` 内嵌封面、标签与时间轴歌词往返测试）。
+  - `npm run check:player-core`：通过。
+  - `npm run build` + `node scripts/check-dist.mjs`：通过（3 首音频文件体积与 SHA-256 校验通过）。
+  - `npm run size`：`entryGzip = 149,529 B`（<= 150,000 B）、`programGzip = 339,299 B`（<= 350,000 B）、`demoAudio = 17,002,461 B`（<= 20,000,000 B）。
+  - `git diff --check`：通过。
+- **未完成 / 下一步**：如用户确认提交与发布，推送新包并按需清理 VPS `/opt/reipod/dist/music/` 下历史未引用的 3 个 Kevin MacLeod 文件；清理浏览器历史测试曲目可通过清空资料库或清除站点存储完成。

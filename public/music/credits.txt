@@ -32,7 +32,7 @@ inventing word times. Source hashes/links and contributor names are in the catal
 All three include LRC sidecars; 晴天 and 兰亭序 also include YRC sidecars.
 
 Changes: full source lengths retained, re-encoded with FFmpeg AAC-LC,
-34.5 kbps / 32 kHz / stereo; title, artist, album, track, composer, artwork and
+160 kbps / 44.1 kHz / stereo; title, artist, album, track, composer, artwork and
 synchronized lyrics embedded in every M4A. Album covers were resized to 320px.
-Combined M4A size: 3,817,420 bytes (previous collection: 3,816,471 bytes).
+Combined M4A size: 17,002,461 bytes (previous low-bitrate pass: 3,817,420 bytes).
 The original creators and lyric contributors do not endorse ReiPod.

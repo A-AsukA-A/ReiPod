@@ -795,7 +795,7 @@ test("Cover Flow flips the selected cover into an overlaid album sheet, includin
         .getAnimations().length,
     };
   });
-  expect(motion.duration).toBe(360);
+  expect(motion.duration).toBe(280);
   expect(motion.frames[0]).toContain("rotateY(-90deg)");
   expect(motion.frames.at(-1)).toContain("rotateY(0deg)");
   expect(motion.layoutWidth / motion.viewportWidth).toBeCloseTo(0.8, 2);
@@ -831,8 +831,8 @@ test("provisional menu travel keeps text readable and Cover Flow closes from bot
       progress: animation.effect!.getComputedTiming().progress,
     };
   });
-  expect(travel.duration).toBe(360);
-  expect(travel.progress).toBeLessThan(0.2);
+  expect(travel.duration).toBe(240);
+  expect(travel.progress).toBeGreaterThan(0.5);
   await live(page).evaluate((element) => element.getAnimations()[0].finish());
   await choose(page, "Cover Flow");
   await expect(page.locator(".screen-outgoing")).toHaveCount(0);
@@ -852,7 +852,7 @@ test("provisional menu travel keeps text readable and Cover Flow closes from bot
       };
     }),
   );
-  expect(halves.map((half) => half.duration)).toEqual([480, 480]);
+  expect(halves.map((half) => half.duration)).toEqual([360, 360]);
   expect(halves.every((half) => half.inert)).toBe(true);
   expect(Number(halves[0].transform.split(",")[4])).toBeLessThan(0);
   expect(Number(halves[1].transform.split(",")[4])).toBeGreaterThan(0);
@@ -1135,7 +1135,7 @@ test("Cover Flow entry parts the menu halves and can return before entry finishe
       inert: (element as HTMLElement).inert,
     };
   }));
-  expect(motion.map(item => item.duration)).toEqual([320, 320]);
+  expect(motion.map(item => item.duration)).toEqual([280, 280]);
   expect(motion[0].x).toBeLessThan(0);
   expect(motion[1].x).toBeGreaterThan(0);
   expect(motion.every(item => item.inert)).toBe(true);
