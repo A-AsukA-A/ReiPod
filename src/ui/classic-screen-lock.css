@@ -1,0 +1,69 @@
+.screen-lock-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--lcd-unit) * 10);
+  padding: calc(var(--lcd-unit) * 14) calc(var(--lcd-unit) * 12);
+  text-align: center;
+  background: linear-gradient(180deg, #f8fafc 0%, #e7edf2 100%);
+  color: #161c22;
+}
+.classic-screen-lock-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+.classic-screen-lock-overlay > .screen-lock-panel {
+  background: linear-gradient(180deg, #e9eff4 0%, #cfd8e0 100%);
+}
+.screen-lock-icon {
+  width: calc(var(--lcd-unit) * 28);
+  height: calc(var(--lcd-unit) * 28);
+  color: #2f5573;
+}
+.screen-lock-title {
+  font-size: calc(var(--lcd-unit) * 14);
+  font-weight: 700;
+  color: #182129;
+}
+.lock-tumbler {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--lcd-unit) * 8);
+}
+.lock-digit {
+  display: grid;
+  place-items: center;
+  width: calc(var(--lcd-unit) * 34);
+  height: calc(var(--lcd-unit) * 44);
+  border-radius: calc(var(--lcd-unit) * 4);
+  border: var(--lcd-unit) solid #96a4b0;
+  background: linear-gradient(180deg, #ffffff 0%, #dfe6ec 100%);
+  color: #1f2933;
+  font-size: calc(var(--lcd-unit) * 24);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 var(--lcd-unit) 0 #fff;
+}
+.lock-digit.is-active {
+  border-color: #176da8;
+  background: var(--lcd-select-bg, linear-gradient(#4db7f1 0%, #1d85cf 100%));
+  color: #fff;
+  box-shadow: var(--lcd-select-shadow, 0 0 0 1px #176da8);
+  text-shadow: var(--lcd-select-text-shadow, 0 -1px 0 #0c4d7a);
+}
+.screen-lock-error {
+  font-size: calc(var(--lcd-unit) * 11);
+  font-weight: 700;
+  color: #b42318;
+}
+.screen-lock-hint {
+  font-size: calc(var(--lcd-unit) * 10);
+  color: #5b6773;
+}

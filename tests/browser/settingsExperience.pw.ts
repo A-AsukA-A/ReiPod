@@ -118,12 +118,14 @@ test("timed backlight wakes on wheel input, Always On persists, and Clicker cont
   await page.clock.install();
   await choose(page, "背光时间"); await choose(page, "5 秒");
   await page.clock.runFor(5001);
-  await expect(page.locator(".lcd-backlight-dim")).toHaveCount(1);
+  const saver = page.locator(".lcd-backlight-dim");
+  await expect(saver).toHaveCount(1);
+  await expect(saver.locator(".screensaver-clock")).toHaveText(/\d{1,2}:\d{2}/);
   await key(page, "ArrowDown");
-  await expect(page.locator(".lcd-backlight-dim")).toHaveCount(0);
+  await expect(saver).toHaveCount(0);
   await choose(page, "背光时间"); await choose(page, "始终开启");
   await page.clock.runFor(60001);
-  await expect(page.locator(".lcd-backlight-dim")).toHaveCount(0);
+  await expect(saver).toHaveCount(0);
   const starts = () => page.evaluate(() => (window as any).__clickStarts);
   expect(await starts()).toBe(0);
   await choose(page, "转轮声音"); await choose(page, "开启");
@@ -134,4 +136,39 @@ test("timed backlight wakes on wheel input, Always On persists, and Clicker cont
   expect(await starts()).toBe(muted);
   await page.reload();
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("reipod-appearance")!))).toMatchObject({ backlight: 0, clickSound: false });
+});
+
+test("date and time format switches between 24h and 12h in title bar and screen saver and resets on Reset Settings", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-11-26T14:30:00") });
+  await page.goto("/");
+  await choose(page, "设置");
+  await choose(page, "日期与时间");
+  await choose(page, "标题栏显示时间");
+  await expect(page.locator(".screen-status > strong")).toHaveText("14:30");
+  await choose(page, "时间格式");
+  await expect(page.locator(".screen-status > strong")).toHaveText("2:30 PM");
+  await key(page, "Escape");
+  await choose(page, "背光时间");
+  await choose(page, "5 秒");
+  await page.clock.runFor(5001);
+  await expect(page.locator(".lcd-backlight-dim .screensaver-clock")).toHaveText(/2:30\s*PM/);
+  await key(page, "ArrowDown");
+  await expect(page.locator(".lcd-backlight-dim")).toHaveCount(0);
+  await choose(page, "还原设置");
+  await choose(page, "还原");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("reipod-appearance")!))).toMatchObject({
+    timeInTitle: false,
+    timeFormat: "24h",
+  });
+});
+
+test("playback speed updates preference and resets cleanly via Reset Settings", async ({ page }) => {
+  await page.goto("/");
+  await choose(page, "设置");
+  await choose(page, "播放速度");
+  await choose(page, "1.5×（快速）");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("reipod-appearance")!).playbackSpeed)).toBe(1.5);
+  await choose(page, "还原设置");
+  await choose(page, "还原");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("reipod-appearance")!).playbackSpeed)).toBe(1);
 });

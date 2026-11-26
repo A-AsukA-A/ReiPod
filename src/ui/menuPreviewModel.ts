@@ -23,6 +23,7 @@ export function menuPreview(
     "repeat-mode": "repeat",
     eq: "eq",
     "sound-check": "speaker",
+    "playback-speed": "speaker",
   };
   if (choiceIcons[page])
     return {
@@ -32,9 +33,9 @@ export function menuPreview(
       detail: detail === "✓" ? undefined : detail,
     };
   if (page === "home" && key === "photos")
-    return { kind: "covers", icon: "albums", title: label, detail, source: "photos" };
+    return { kind: "covers", icon: "photos", title: label, detail, source: "photos" };
   if (page === "home" && key === "podcasts")
-    return { kind: "covers", icon: "music", title: label, detail, source: "podcasts" };
+    return { kind: "covers", icon: "podcasts", title: label, detail, source: "podcasts" };
   if (
     ["coverflow", "music", "albums", "songs", "all", "demo", "compilations"].includes(key) &&
     page !== "settings"
@@ -52,8 +53,12 @@ export function menuPreview(
     haptics: "settings",
     eq: "eq",
     "sound-check": "speaker",
+    "playback-speed": "speaker",
     "date-time": "clock",
+    "time-in-title": "clock",
+    "time-format": "clock",
     "alarm-settings": "clock",
+    "screen-lock": "settings",
     import: "import",
     playlists: "playlists",
     organizer: "playlists",
@@ -76,12 +81,12 @@ export function menuPreview(
     backlight: "background",
     brightness: "background",
     "volume-limit": "speaker",
-    photos: "albums",
-    "all-photos": "albums",
-    "photo-settings": "albums",
+    photos: "photos",
+    "all-photos": "photos",
+    "photo-settings": "photos",
     "photo-import": "import",
-    podcasts: "music",
-    "podcast-settings": "music",
+    podcasts: "podcasts",
+    "podcast-settings": "podcasts",
     "podcast-import": "import",
   };
   return { kind: "card", icon: icons[key] ?? "music", title: label, detail };

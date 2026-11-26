@@ -15,12 +15,13 @@ import { nativePhotoKey, useNativePhotos } from "./useNativePhotos";
 import { nativePhotoAlbumRows, nativePhotoSettingsRows } from "../ui/nativePhotoMenus";
 import { eqPresetGains } from "../models/classicEq";
 import { buildSlideshowOrder, nextSlideshowStep } from "../models/slideshowSettings";
-import { setLocalEq, setLocalSoundCheck } from "../player/localAudio";
+import { setLocalEq, setLocalPlaybackRate, setLocalSoundCheck } from "../player/localAudio";
 import { createTrackMenuOverrides } from "../ui/trackMenuOverrides";
 import { ClassicScreenContent } from "../ui/ClassicScreenContent";
 import { classicScreenTitle } from "../ui/classicScreenModel";
 import { createClassicInputController } from "../ui/classicInputController";
 import { ClassicShell } from "../ui/ClassicShell";
+import { ClassicScreenSaver } from "../ui/ClassicScreenSaver";
 import { ClassicStatusBar } from "../ui/ClassicStatusBar";
 import { syncNativeAppearance } from "../services/nativeExperience";
 import { backgroundColors } from "../ui/appearance";
@@ -71,6 +72,8 @@ import { searchLibrary } from "../player/librarySearch";
 import type { LibrarySearchResult } from "../player/librarySearch";
 import { createSearchMenu } from "../ui/searchMenus";
 import { useRatings, setRating } from "../player/ratings";
+import { clearPlayHistory, recordTrackPlay, usePlayHistory } from "../player/playHistory";
+import { selectMostPlayedTracks, selectRecentlyPlayedTracks, selectTopRatedTracks } from "../player/playHistoryModel";
 import {
   usePlaylists,
   createPlaylist,
@@ -83,7 +86,10 @@ import { createPrimaryMenus } from "../ui/primaryMenus";
 
 const MusicAccountHeader = lazy(() => import("../ui/MusicAccountHeader").then(module => ({ default: module.MusicAccountHeader })));
 const AlarmRuntime = lazy(() => import("../ui/ClassicAlarms").then(module => ({ default: module.AlarmRuntime })));
+const ClassicScreenLockOverlay = lazy(() => import("../ui/ClassicScreenLock").then(module => ({ default: module.ClassicScreenLockOverlay })));
 import type { AlarmInput, AlarmPageInput } from "../ui/alarmInput";
+import type { ScreenLockInput } from "../ui/ClassicScreenLock";
+import { parseScreenLock, type ScreenLockState } from "../models/classicScreenLock";
 import { canShowLyrics } from "../ui/nowPlaying";
 import { createMediaMenus, podcastShowRows } from "../ui/mediaMenus";
 import { createLibraryMenus } from "../ui/libraryMenus";
@@ -185,6 +191,23 @@ export function App() {
     return true;
   };
   const musicTracks = cloud ? services.libraryTracks : localMusicTracks;
+  const playHistory = usePlayHistory();
+  const lastRecordedPlayId = useRef<string | null>(null);
+  const musicIdSet = useMemo(() => new Set(musicTracks.map((track) => track.id)), [musicTracks]);
+  useEffect(() => {
+    if (!state.currentId) {
+      lastRecordedPlayId.current = null;
+      return;
+    }
+    if (state.status !== "playing") return;
+    if (!musicIdSet.has(state.currentId)) return;
+    if (lastRecordedPlayId.current === state.currentId) return;
+    lastRecordedPlayId.current = state.currentId;
+    recordTrackPlay(state.currentId);
+  }, [state.currentId, state.status, musicIdSet]);
+  const topRatedTracks = useMemo(() => selectTopRatedTracks(musicTracks, ratings), [musicTracks, ratings]);
+  const mostPlayedTracks = useMemo(() => selectMostPlayedTracks(musicTracks, playHistory), [musicTracks, playHistory]);
+  const recentlyPlayedTracks = useMemo(() => selectRecentlyPlayedTracks(musicTracks, playHistory), [musicTracks, playHistory]);
   const podcastTracks = useMemo(
     () => localState.tracks.filter((track) => podcastIds.includes(track.id)),
     [localState.tracks, podcastIds],
@@ -233,6 +256,32 @@ export function App() {
   const alarmPageInput = useRef<AlarmPageInput>(null);
   const gameInput = useRef<GameInput>(null);
   const organizerInput = useRef<OrganizerInput>(null);
+  const screenLockPageInput = useRef<ScreenLockInput>(null);
+  const screenLockOverlayInput = useRef<ScreenLockInput>(null);
+  const screenLockInput = useMemo(
+    () => ({
+      get current() {
+        return screenLockOverlayInput.current ?? screenLockPageInput.current;
+      },
+    }),
+    [],
+  );
+  const [screenLock, setScreenLock] = useState<ScreenLockState>(() => {
+    try {
+      return parseScreenLock(JSON.parse(localStorage.getItem("reipod-screen-lock") ?? "null"));
+    } catch {
+      return { code: null, locked: false };
+    }
+  });
+  const commitScreenLock = (updater: (prev: ScreenLockState) => ScreenLockState) => {
+    setScreenLock((prev) => {
+      const next = updater(prev);
+      try {
+        localStorage.setItem("reipod-screen-lock", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
   const [importingTexts, setImportingTexts] = useState(false);
   const categoryTracks = useMemo(() => tracksForCategory(musicTracks, category), [musicTracks, category]);
   const allArtists = useMemo(() => artistsFor(musicTracks), [musicTracks]);
@@ -324,6 +373,9 @@ export function App() {
     "artist-tracks",
     "favorites",
     "recent",
+    "top-rated",
+    "most-played",
+    "recently-played",
     "queue",
     "playlist-tracks",
     "playlist-add-tracks",
@@ -369,6 +421,9 @@ export function App() {
       return [...state.tracks].sort(
         (a, b) => (b.importedAt ?? 0) - (a.importedAt ?? 0),
       );
+    if (page === "top-rated") return topRatedTracks;
+    if (page === "most-played") return mostPlayedTracks;
+    if (page === "recently-played") return recentlyPlayedTracks;
     return musicTracks;
   }, [
     page,
@@ -389,6 +444,9 @@ export function App() {
     services.searchResults,
     cloud,
     searchResults,
+    topRatedTracks,
+    mostPlayedTracks,
+    recentlyPlayedTracks,
   ]);
   const visibleIds = useMemo(
     () => new Set(visibleTracks.map((track) => track.id)),
@@ -642,6 +700,9 @@ export function App() {
     podcastShows: browsePodcastShows,
     podcastFirstKey: !browsePodcastShows.length ? "podcast-status" : undefined,
     musicCount: musicTracks.length,
+    topRatedCount: topRatedTracks.length,
+    mostPlayedCount: mostPlayedTracks.length,
+    recentlyPlayedCount: recentlyPlayedTracks.length,
     current,
     playlists,
     trackById,
@@ -662,7 +723,7 @@ export function App() {
       const error = player.getSnapshot().error;
       if (error) setNotice(error);
     }, repeat: value => player.setRepeat(value),
-    clear: () => { capture("back"); clearLibrary(); dispatch({ type: "reset" }); setNotice("资料库已清空"); },
+    clear: () => { capture("back"); clearLibrary(); clearPlayHistory(); dispatch({ type: "reset" }); setNotice("资料库已清空"); },
   });
   const serviceActions = createMusicServiceActions({
     getServices: getMusicServices,
@@ -872,6 +933,7 @@ export function App() {
     games: gameInput,
     organizer: organizerInput,
     alarms: alarmInput,
+    screenLock: screenLockInput,
   });
 
   useEffect(() => {
@@ -881,6 +943,9 @@ export function App() {
   useEffect(() => {
     setLocalSoundCheck(prefs.soundCheck);
   }, [prefs.soundCheck]);
+  useEffect(() => {
+    setLocalPlaybackRate(prefs.playbackSpeed);
+  }, [prefs.playbackSpeed]);
   useEffect(() => {
     const activeSlideshow = slideshow && page === "photo-full";
     if (!activeSlideshow) {
@@ -1004,6 +1069,27 @@ export function App() {
       held={held}
       sleeping={sleeping}
       dimmed={dimmed}
+      screenSaver={
+        <ClassicScreenSaver
+          timeFormat={prefs.timeFormat}
+          held={held}
+          hasCurrent={!!current}
+          active={active}
+          trackTitle={current?.title}
+          trackArtist={current?.artist}
+        />
+      }
+      lockOverlay={
+        screenLock.locked && screenLock.code !== null ? (
+          <Suspense fallback={null}>
+            <ClassicScreenLockOverlay
+              code={screenLock.code}
+              input={screenLockOverlayInput}
+              onUnlock={() => commitScreenLock((prev) => ({ ...prev, locked: false }))}
+            />
+          </Suspense>
+        ) : undefined
+      }
       brightness={prefs.brightness}
       notice={notice}
       contentRef={content}
@@ -1013,12 +1099,12 @@ export function App() {
         if (quickScroll.rotate(steps, source, rotation)) activate();
         else rotate(steps, source);
       }, onRotateEnd: quickScroll.end,
-      onPosition: radians => !held && !sleeping && !alarmInput.current?.ringing && page === "game"
+      onPosition: radians => !held && !sleeping && !alarmInput.current?.ringing && !screenLock.locked && page === "game"
         ? gameInput.current?.position?.(radians) ?? false : false,
       onCommand: value => { quickScroll.end(); command(value); }, onFeedback: feedback,
         playLabel: page === "stopwatch-timer" ? extras.state.current.started !== null ? "停止计时" : "开始计时" : busy ? "取消载入" : active ? "暂停" : "播放" }}
       quickScrollLetter={quickScroll.letter}
-      header={<ClassicStatusBar title={title} timeInTitle={prefs.timeInTitle} shuffle={state.shuffle} repeat={state.repeat}
+      header={<ClassicStatusBar title={title} timeInTitle={prefs.timeInTitle} timeFormat={prefs.timeFormat} shuffle={state.shuffle} repeat={state.repeat}
         held={held} hasCurrent={!!current} active={active} busy={busy} transportHint={transportHint} />}
       imports={<>
       <Suspense fallback={null}><AlarmRuntime input={alarmInput} screenInput={alarmPageInput}
@@ -1058,6 +1144,14 @@ export function App() {
         games={{ input: gameInput, active: !held && !sleeping && !alarmRinging, tracks: musicTracks,
           scope: JSON.stringify([services.selected, services.profile?.id ?? services.auth]),
           open: id => open("game", undefined, id), exit: back, notice: setNotice }}
+        screenLock={{
+          state: screenLock,
+          input: screenLockPageInput,
+          onSaveCode: (code) => commitScreenLock((prev) => ({ code, locked: code === null ? false : prev.locked })),
+          onLockNow: () => commitScreenLock((prev) => prev.code ? { ...prev, locked: true } : prev),
+          exit: back,
+          notice: setNotice,
+        }}
         about={{ index: aboutPage(navigation.screen.selectedKey), information: {
           storage: aboutStorage, songs: musicTracks.length, albums: albums.length, artists: allArtists.length,
           photos: localPhotos.length, podcasts: podcastTracks.length, texts: texts.length,

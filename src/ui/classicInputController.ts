@@ -10,6 +10,7 @@ import type { TextReaderHandle } from "./TextReader";
 import type { AlarmInput } from "./alarmInput";
 import type { OrganizerInput } from "./organizerInput";
 import type { GameInput } from "./gameInput";
+import type { ScreenLockInput } from "./ClassicScreenLock";
 import type { useWheelTextEntry } from "./WheelTextEntry";
 import type { useLcdMotion } from "./useLcdMotion";
 
@@ -85,6 +86,7 @@ type Context = {
   alarms?: { readonly current: AlarmInput | null };
   organizer?: { readonly current: OrganizerInput | null };
   games?: { readonly current: GameInput | null };
+  screenLock?: { readonly current: ScreenLockInput | null };
   settings: {
     prefs: Adjustment;
     setPreferences: (patch: Partial<Adjustment>) => void;
@@ -117,6 +119,9 @@ export function createClassicInputController(context: Context) {
     }
     if (context.alarms?.current?.ringing || ["alarms", "countdown", "sleep-timer", "alarm-settings"].includes(page)) {
       context.alarms?.current?.rotate(steps); feedback("step"); return;
+    }
+    if (context.screenLock?.current?.locked || page === "screen-lock") {
+      context.screenLock?.current?.rotate(steps); feedback("step"); return;
     }
     if (["calendar", "contacts", "organizer-settings"].includes(page)) {
       context.organizer?.current?.rotate(steps); feedback("step"); return;
@@ -203,6 +208,16 @@ export function createClassicInputController(context: Context) {
     }
     if ((context.alarms?.current?.ringing || ["alarms", "countdown", "sleep-timer", "alarm-settings"].includes(page)) && value !== "home" && value !== "sleep" && (context.alarms?.current?.ringing || value !== "play" || page === "countdown")) {
       context.alarms?.current?.command(value); return;
+    }
+    if (context.screenLock?.current?.locked && value !== "play" && value !== "sleep") {
+      if (["select", "menu", "previous", "next"].includes(value)) {
+        context.screenLock.current.command(value);
+      }
+      return;
+    }
+    if (page === "screen-lock" && ["select", "menu", "previous", "next"].includes(value)) {
+      context.screenLock?.current?.command(value);
+      return;
     }
     if (["calendar", "contacts", "organizer-settings"].includes(page) && ["select", "menu", "previous", "next", "options", "seek-forward", "seek-backward"].includes(value)) {
       context.organizer?.current?.command(value); return;

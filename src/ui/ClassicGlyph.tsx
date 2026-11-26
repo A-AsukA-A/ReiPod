@@ -18,7 +18,9 @@ export type ClassicGlyphName =
   | "info"
   | "clear"
   | "clock"
-  | "eq";
+  | "eq"
+  | "photos"
+  | "podcasts";
 
 const gear = Array.from({ length: 48 }, (_, index) => {
   const angle = (index * Math.PI) / 24;
@@ -152,6 +154,19 @@ export function ClassicGlyph({ name }: { name: ClassicGlyphName }) {
             <rect x="39" y="54" width="22" height="12" rx="3" />
             <rect x="65" y="34" width="22" height="12" rx="3" />
           </>
+        ) : name === "photos" ? (
+          <>
+            <path fillRule="evenodd" d="M14 18h72a6 6 0 0 1 6 6v52a6 6 0 0 1-6 6H14a6 6 0 0 1-6-6V24a6 6 0 0 1 6-6Zm4 8v48h64V26Z" />
+            <path d="M22 69 41 44l14 17 11-12 16 20Z" />
+            <circle cx="67" cy="39" r="6" />
+          </>
+        ) : name === "podcasts" ? (
+          <>
+            <circle cx="50" cy="52" r="9" />
+            <path d="M35 88c0-14 6-22 15-22s15 8 15 22Z" />
+            <path d="M31 48a19 19 0 0 1 38 0" fill="none" stroke={fill} strokeWidth="6" strokeLinecap="round" />
+            <path d="M20 44a30 30 0 0 1 60 0" fill="none" stroke={fill} strokeWidth="6" strokeLinecap="round" />
+          </>
         ) : (
           <>
             <path d="M33 22 77 12v54c0 17-26 22-28 7-2-11 15-17 23-12V30l-34 8v39c0 17-26 22-28 7-2-11 15-17 23-12Z" />
@@ -159,5 +174,13 @@ export function ClassicGlyph({ name }: { name: ClassicGlyphName }) {
         )}
       </g>
     </svg>
+  );
+}
+
+export function PreviewGlyph({ name }: { name: ClassicGlyphName }) {
+  return (
+    <div className="preview-glyph-stage">
+      <ClassicGlyph name={name} />
+    </div>
   );
 }

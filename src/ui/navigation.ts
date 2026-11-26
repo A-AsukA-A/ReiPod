@@ -28,6 +28,7 @@ export type Page =
   | "slideshow-transition"
   | "eq"
   | "sound-check"
+  | "playback-speed"
   | "date-time"
   | "podcasts"
   | "podcast-episodes"
@@ -45,6 +46,7 @@ export type Page =
   | "countdown"
   | "sleep-timer"
   | "alarm-settings"
+  | "screen-lock"
   | "extras"
   | "games"
   | "game"
@@ -78,6 +80,9 @@ export type Page =
   | "artist-tracks"
   | "favorites"
   | "recent"
+  | "top-rated"
+  | "most-played"
+  | "recently-played"
   | "playlists"
   | "queue"
   | "search"
@@ -110,6 +115,7 @@ export const splitPages = new Set<Page>([
   "repeat-mode",
   "eq",
   "sound-check",
+  "playback-speed",
 ]);
 export type NavigationState = {
   screen: Screen;

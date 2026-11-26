@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Album } from "../player/library";
-import { ClassicGlyph } from "./ClassicGlyph";
+import { PreviewGlyph } from "./ClassicGlyph";
 import { AlbumArt } from "./AlbumArt";
 import { classicMotion } from "./motion";
 
@@ -153,9 +153,11 @@ export function AlbumPreview({
         </>
       ) : (
         <div className="album-preview-empty">
-          <span aria-hidden="true">{source === "photos" ? <ClassicGlyph name="albums" /> : "♫"}</span>
-          <strong>{source === "photos" ? "照片" : source === "podcasts" ? "播客封面" : "专辑封面"}</strong>
-          <small>{source === "photos" ? "有可用照片后在这里自动展示" : source === "podcasts" ? "有可用播客后在这里自动展示" : "导入音乐后在这里自动展示"}</small>
+          <PreviewGlyph name={source === "photos" ? "photos" : source === "podcasts" ? "podcasts" : "music"} />
+          <div className="preview-caption">
+            <strong>{source === "photos" ? "照片" : source === "podcasts" ? "播客封面" : "专辑封面"}</strong>
+            <small>{source === "photos" ? "有可用照片后在这里自动展示" : source === "podcasts" ? "有可用播客后在这里自动展示" : "导入音乐后在这里自动展示"}</small>
+          </div>
         </div>
       )}
     </aside>

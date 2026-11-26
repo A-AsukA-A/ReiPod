@@ -1,3 +1,5 @@
+import type { DeviceModelSpec } from "./deviceModel";
+
 /** Implemented ReiPod baseline, not a claim that a specific Apple firmware is running. */
 export const classic2007 = {
   id: "classic-2007",
@@ -34,7 +36,7 @@ export const classic2007 = {
     // Unsupported Videos omitted; Cover Flow is an optional home shortcut.
     homeOrder: ["music", "songs", "coverflow", "compilations", "photos", "podcasts", "extras", "settings", "shuffle-all", "playing"],
     // G-S 2007 photograph; unavailable stock functions are omitted, not dummy rows.
-    settingsOrder: ["about", "shuffle", "repeat", "main-menu", "music-menu", "volume-limit", "backlight", "brightness", "click", "eq", "sound-check", "date-time"],
+    settingsOrder: ["about", "shuffle", "repeat", "main-menu", "music-menu", "volume-limit", "backlight", "brightness", "click", "eq", "sound-check", "playback-speed", "date-time"],
     settingsSource: "https://the-gadgeteer.com/assets/apple-ipod-classic-42.jpg",
   },
   playback: {
@@ -42,4 +44,4 @@ export const classic2007 = {
     views: ["art", "seek", "shuffle", "rating", "lyrics"],
     evidence: "adaptation",
   },
-} as const;
+} as const satisfies DeviceModelSpec;

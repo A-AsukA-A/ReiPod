@@ -1,5 +1,6 @@
 import { classic2007 } from "../models/classic";
 import { parseEqPreset, type EqPresetId } from "../models/classicEq";
+import type { TimeFormat } from "../models/classicExtras";
 import { parseSlideshowSettings, type SlideshowSettings } from "../models/slideshowSettings";
 import { parseAppearance } from "./appearance";
 import type { Appearance } from "./appearance";
@@ -28,6 +29,8 @@ export const optionalMusicItems = [
 ];
 export const backlightTimes = [0, 5, 10, 20, 30, 60] as const;
 export type BacklightTime = (typeof backlightTimes)[number];
+export const playbackSpeeds = [0.75, 1, 1.25, 1.5, 2] as const;
+export type PlaybackSpeed = (typeof playbackSpeeds)[number];
 export type Preferences = Appearance & {
   menuVersion: 3;
   backlightVersion: 1;
@@ -41,7 +44,9 @@ export type Preferences = Appearance & {
   musicMenu: string[];
   eq: EqPresetId;
   soundCheck: boolean;
+  playbackSpeed: PlaybackSpeed;
   timeInTitle: boolean;
+  timeFormat: TimeFormat;
   slideshow: SlideshowSettings;
 };
 export function parsePreferences(value: unknown): Preferences {
@@ -88,7 +93,11 @@ export function parsePreferences(value: unknown): Preferences {
       .map((item) => item.key),
     eq: parseEqPreset(saved.eq),
     soundCheck: saved.soundCheck === true,
+    playbackSpeed: playbackSpeeds.includes(saved.playbackSpeed as PlaybackSpeed)
+      ? (saved.playbackSpeed as PlaybackSpeed)
+      : 1,
     timeInTitle: saved.timeInTitle === true,
+    timeFormat: saved.timeFormat === "12h" ? "12h" : "24h",
     slideshow: parseSlideshowSettings(saved.slideshow),
   };
 }

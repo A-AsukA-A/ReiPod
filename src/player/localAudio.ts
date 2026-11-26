@@ -4,7 +4,9 @@ let context: AudioContext | undefined;
 const playbackContext = () => (context ??= new AudioContext({ latencyHint: "playback" }));
 let activeEq: readonly [number, number, number] = [0, 0, 0];
 let activeSoundCheck = false;
+let activePlaybackRate = 1;
 const instances = new Set<LocalGainAudio>();
+const plainAudios = new Set<WeakRef<HTMLAudioElement>>();
 
 export function setLocalEq(gains: readonly [number, number, number]) {
   activeEq = gains;
@@ -14,6 +16,18 @@ export function setLocalEq(gains: readonly [number, number, number]) {
 export function setLocalSoundCheck(enabled: boolean) {
   activeSoundCheck = enabled;
   for (const instance of instances) instance.applySoundCheck(enabled);
+}
+
+export function setLocalPlaybackRate(rate: number) {
+  if (!Number.isFinite(rate)) return;
+  activePlaybackRate = Math.max(0.5, Math.min(2, rate));
+  for (const instance of instances) instance.applyPlaybackRate(activePlaybackRate);
+  for (const ref of plainAudios) {
+    const audio = ref.deref();
+    if (!audio) { plainAudios.delete(ref); continue; }
+    audio.defaultPlaybackRate = activePlaybackRate;
+    audio.playbackRate = activePlaybackRate;
+  }
 }
 
 /** iOS element.volume is not a reliable software fader. Local/blob and same-origin
@@ -42,6 +56,10 @@ export class LocalGainAudio implements AudioPort {
     this.compressor.attack.value = 0.005;
     this.compressor.release.value = 0.25;
   }
+  applyPlaybackRate(rate: number) {
+    this.audio.defaultPlaybackRate = rate;
+    this.audio.playbackRate = rate;
+  }
   private resumeOutput() {
     if (this.resuming) return this.resuming;
     const promise = this.context!.resume();
@@ -65,7 +83,9 @@ export class LocalGainAudio implements AudioPort {
   constructor(
     private audio: HTMLAudioElement = new Audio(),
     private getContext: () => AudioContext = playbackContext,
-  ) {}
+  ) {
+    this.applyPlaybackRate(activePlaybackRate);
+  }
   get src() { return this.audio.src; }
   set src(value: string) { this.audio.src = value; }
   get preload() { return this.audio.preload; }
@@ -155,6 +175,7 @@ export class LocalGainAudio implements AudioPort {
     }
     // Both calls happen in the user's gesture, before awaiting either promise.
     // Resuming also handles Safari's interrupted/suspended context on retry.
+    this.applyPlaybackRate(activePlaybackRate);
     await Promise.all([this.resumeOutput(), this.audio.play()]);
   }
   pause() { this.wanted = false; this.audio.pause(); }
@@ -179,5 +200,10 @@ export class LocalGainAudio implements AudioPort {
 export function createLocalAudio(): AudioPort {
   const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  return ios || activeEq.some((value) => value !== 0) || activeSoundCheck ? new LocalGainAudio() : new Audio();
+  if (ios || activeEq.some((value) => value !== 0) || activeSoundCheck || activePlaybackRate !== 1) {
+    return new LocalGainAudio();
+  }
+  const audio = new Audio();
+  plainAudios.add(new WeakRef(audio));
+  return audio;
 }

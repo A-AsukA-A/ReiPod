@@ -25,6 +25,7 @@ export function createTextMenus({ texts, groupKey, isLocalText, importingTexts, 
         action: () => open("notes", texts[0]?.id ?? "reader-guide"),
       },
       { key: "stopwatch", label: "秒表", action: () => open("stopwatch", "timer") },
+      { key: "screen-lock", label: "屏幕锁定", action: () => open("screen-lock") },
       { key: "games", label: "游戏", action: () => open("games") },
     ],
     notes: [

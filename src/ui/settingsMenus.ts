@@ -77,8 +77,8 @@ export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud
         setPreferences({ clickSound: defaults.clickSound, brightness: defaults.brightness,
           backlight: defaults.backlight, volumeLimit: defaults.volumeLimit,
           mainMenu: defaults.mainMenu, musicMenu: defaults.musicMenu,
-          eq: defaults.eq, soundCheck: defaults.soundCheck, timeInTitle: defaults.timeInTitle,
-          slideshow: defaults.slideshow });
+          eq: defaults.eq, soundCheck: defaults.soundCheck, playbackSpeed: defaults.playbackSpeed,
+          timeInTitle: defaults.timeInTitle, timeFormat: defaults.timeFormat, slideshow: defaults.slideshow });
         shuffle(false); repeat("off"); back();
       } },
     ],
@@ -168,6 +168,13 @@ export function createSettingsMenus({ prefs, state, originalSettingsItems, cloud
         value: prefs.timeInTitle ? "开启" : "关闭",
         leaf: true,
         action: () => setPreferences({ timeInTitle: !prefs.timeInTitle }),
+      },
+      {
+        key: "time-format",
+        label: "时间格式",
+        value: prefs.timeFormat === "12h" ? "12 小时制" : "24 小时制",
+        leaf: true,
+        action: () => setPreferences({ timeFormat: prefs.timeFormat === "12h" ? "24h" : "12h" }),
       },
       {
         key: "clock",

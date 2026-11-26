@@ -1,18 +1,23 @@
 /** Classic alarm fields follow Apple classic120GB guide p50; timer limits/labels are adaptations. */
 export type AlarmRepeat="once"|"daily"|"weekdays"|"weekends"|"weekly";
-export type AlarmSound="beep"|{playlistId:string;playlistName:string};
+export type AlarmToneId="beep"|"chime"|"double"|"pulse";
+export const alarmToneOptions:readonly {id:AlarmToneId;label:string}[]=[{id:"beep",label:"蜂鸣"},{id:"chime",label:"清脆钟声"},{id:"double",label:"双音提示"},{id:"pulse",label:"脉冲铃声"}];
+export type AlarmSound=AlarmToneId|{playlistId:string;playlistName:string};
 export type ClassicAlarm={id:string;label:string;day:string;minute:number;repeat:AlarmRepeat;enabled:boolean;lastFired:number;sound?:AlarmSound};
-export type AlarmNotice={id:string;label:string;at:number;kind:"alarm"|"timer";playlistId?:string};
+export type AlarmNotice={id:string;label:string;at:number;kind:"alarm"|"timer";playlistId?:string;tone?:AlarmToneId};
 export type AlarmState={alarms:ClassicAlarm[];timer:{id:string;duration:number;remaining:number;deadline:number|null};sleepAt:number|null;alerts:AlarmNotice[]};
 export const alarmLabels=["起床","约会","提醒","练习","出发"];
 export const alarmRepeats:Record<AlarmRepeat,string>={once:"一次",daily:"每天",weekdays:"工作日",weekends:"周末",weekly:"每周"};
 export const alarmDay=(date:Date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
 const validDay=(day:string)=>/^\d{4}-\d{2}-\d{2}$/.test(day)&&day>="1900-01-01"&&day<="2199-12-31"&&alarmDay(new Date(`${day}T12:00:00`))===day;
 export const validAlarmId=(id:unknown):id is string=>typeof id==="string"&&/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id);
-export const validAlarmSound=(sound:unknown):sound is AlarmSound|undefined=>sound===undefined||sound==="beep"||!!sound&&typeof sound==="object"&&typeof (sound as {playlistId?:unknown}).playlistId==="string"&&(sound as {playlistId:string}).playlistId.trim().length>0&&(sound as {playlistId:string}).playlistId.length<=80&&typeof (sound as {playlistName?:unknown}).playlistName==="string"&&(sound as {playlistName:string}).playlistName.trim().length>0&&(sound as {playlistName:string}).playlistName.length<=60;
-export const alarmPlaylistId=(sound?:AlarmSound)=>sound&&sound!=="beep"?sound.playlistId:undefined;
+export const isAlarmTone=(value:unknown):value is AlarmToneId=>typeof value==="string"&&alarmToneOptions.some(t=>t.id===value);
+export const alarmToneId=(sound?:AlarmSound):AlarmToneId=>isAlarmTone(sound)?sound:"beep";
+export const validAlarmSound=(sound:unknown):sound is AlarmSound|undefined=>sound===undefined||isAlarmTone(sound)||!!sound&&typeof sound==="object"&&typeof (sound as {playlistId?:unknown}).playlistId==="string"&&(sound as {playlistId:string}).playlistId.trim().length>0&&(sound as {playlistId:string}).playlistId.length<=80&&typeof (sound as {playlistName?:unknown}).playlistName==="string"&&(sound as {playlistName:string}).playlistName.trim().length>0&&(sound as {playlistName:string}).playlistName.length<=60;
+export const alarmPlaylistId=(sound?:AlarmSound)=>sound&&!isAlarmTone(sound)?sound.playlistId:undefined;
 export const alarmSoundLabel=(sound:AlarmSound|undefined,defaultBeep:string,playlists:readonly {id:string;name:string}[]=[])=>{
  if(!sound||sound==="beep")return defaultBeep;
+ if(isAlarmTone(sound))return alarmToneOptions.find(t=>t.id===sound)?.label??defaultBeep;
  return playlists.find(item=>item.id===sound.playlistId)?.name??sound.playlistName;
 };
 export function freshAlarm(id:string,now:number):ClassicAlarm{
@@ -38,8 +43,8 @@ export function parseAlarms(value:unknown,timerId:string):AlarmState{
  const x=value as AlarmState,finite=(n:unknown):n is number=>typeof n==="number"&&Number.isFinite(n)&&n>=0&&n<=Number.MAX_SAFE_INTEGER;
  const alarms=Array.isArray(x.alarms)?x.alarms.filter(a=>a&&validAlarmId(a.id)&&typeof a.label==="string"&&a.label.length<=40&&validDay(a.day)&&Number.isInteger(a.minute)&&a.minute>=0&&a.minute<1440&&Object.hasOwn(alarmRepeats,a.repeat)&&typeof a.enabled==="boolean"&&finite(a.lastFired)&&validAlarmSound(a.sound)).slice(0,8):[];
  const t=x.timer,validTimer=t&&validAlarmId(t.id)&&Number.isInteger(t.duration)&&t.duration>=1&&t.duration<=86399&&finite(t.remaining)&&t.remaining<=86399000&&(t.deadline===null||finite(t.deadline));
- return{alarms:[...new Map(alarms.map(a=>[a.id,{...a,sound:a.sound&&a.sound!=="beep"?{playlistId:a.sound.playlistId.trim(),playlistName:a.sound.playlistName.trim()}:("beep" as const)}])).values()],timer:validTimer?{id:t.id,duration:t.duration,remaining:t.remaining,deadline:t.deadline}:fallback.timer,sleepAt:x.sleepAt===null||finite(x.sleepAt)?x.sleepAt:null,
- alerts:Array.isArray(x.alerts)?x.alerts.filter(a=>a&&validAlarmId(a.id)&&typeof a.label==="string"&&a.label.length<=40&&finite(a.at)&&["alarm","timer"].includes(a.kind)&&(a.playlistId===undefined||typeof a.playlistId==="string"&&a.playlistId.trim().length>0&&a.playlistId.length<=80)).slice(0,9).map(a=>({id:a.id,label:a.label,at:a.at,kind:a.kind,...(a.playlistId?{playlistId:a.playlistId.trim()}:{})})) :[]};
+ return{alarms:[...new Map(alarms.map(a=>[a.id,{...a,sound:a.sound&&!isAlarmTone(a.sound)?{playlistId:a.sound.playlistId.trim(),playlistName:a.sound.playlistName.trim()}:alarmToneId(a.sound)}])).values()],timer:validTimer?{id:t.id,duration:t.duration,remaining:t.remaining,deadline:t.deadline}:fallback.timer,sleepAt:x.sleepAt===null||finite(x.sleepAt)?x.sleepAt:null,
+ alerts:Array.isArray(x.alerts)?x.alerts.filter(a=>a&&validAlarmId(a.id)&&typeof a.label==="string"&&a.label.length<=40&&finite(a.at)&&["alarm","timer"].includes(a.kind)&&(a.playlistId===undefined||typeof a.playlistId==="string"&&a.playlistId.trim().length>0&&a.playlistId.length<=80)&&(a.tone===undefined||isAlarmTone(a.tone))).slice(0,9).map(a=>({id:a.id,label:a.label,at:a.at,kind:a.kind,...(a.playlistId?{playlistId:a.playlistId.trim()}:{}),...(a.tone?{tone:a.tone}:{})})) :[]};
 }
 export function advanceAlarms(state:AlarmState,now:number):AlarmState{
  let changed=false;const alerts=[...state.alerts],alarms=state.alarms.map(alarm=>{
@@ -49,7 +54,7 @@ export function advanceAlarms(state:AlarmState,now:number):AlarmState{
   const lookback=Math.max(alarm.lastFired,now-86400000),due=nextAlarm({...alarm,lastFired:alarm.lastFired},lookback-1);
   if(due===null||due>now||due<=alarm.lastFired)return alarm;
   const playlistId=alarmPlaylistId(alarm.sound);
-  changed=true;if(!alerts.some(a=>a.id===alarm.id))alerts.push({id:alarm.id,label:alarm.label,at:due,kind:"alarm",...(playlistId?{playlistId}:{})});
+  changed=true;if(!alerts.some(a=>a.id===alarm.id))alerts.push({id:alarm.id,label:alarm.label,at:due,kind:"alarm",...(playlistId?{playlistId}:{tone:alarmToneId(alarm.sound)})});
   return{...alarm,lastFired:due,enabled:alarm.repeat!=="once"};
  });
  let timer=state.timer;if(timer.deadline!==null&&timer.deadline<=now){changed=true;if(!alerts.some(a=>a.id===timer.id))alerts.push({id:timer.id,label:"倒计时结束",at:timer.deadline,kind:"timer"});timer={...timer,remaining:0,deadline:null};}

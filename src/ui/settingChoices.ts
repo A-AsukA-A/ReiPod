@@ -56,6 +56,18 @@ export function settingChoices(
       selected: prefs.soundCheck === value,
       apply: () => save({ soundCheck: value }),
     })),
+    "playback-speed": ([
+      [0.75, "0.75×（慢速）"],
+      [1, "1×（正常）"],
+      [1.25, "1.25×"],
+      [1.5, "1.5×（快速）"],
+      [2, "2×"],
+    ] as const).map(([value, label]) => ({
+      key: String(value),
+      label,
+      selected: prefs.playbackSpeed === value,
+      apply: () => save({ playbackSpeed: value }),
+    })),
     "shuffle-mode": ([false, true, "albums"] as const).map((value) => ({
       key: String(value),
       label: value === "albums" ? "专辑" : value ? "歌曲" : "关闭",

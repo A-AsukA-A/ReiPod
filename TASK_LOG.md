@@ -4,7 +4,7 @@
 
 ## 当前接续摘要
 
-最后更新：2026-11-26，`REL123` 已将 `UI122`（2007 Classic 6G UI 重做）、新版主页截图及重写后的 `README.md` / `README.zh-CN.md`（`efec052`）推送至 `origin/main`，并同步完成 GitHub Pages 与 VPS（`https://julyblog.party/ReiPod/`）部署。工作区位于 `/Users/july/Developer/ReiPod`，`ANTIGRAVITY_HANDOFF.md` 仍保留本地未跟踪。
+最后更新：2026-11-26，`REL133` 已将 `UI124`–`COMPLETE-132` 全部改动提交并推送至 `origin/main`（保留 `COMPLETE-132` 全套验证记录与物理设备/真账号待验边界）。工作区位于 `/Users/july/Developer/ReiPod`，`ANTIGRAVITY_HANDOFF.md` 仍保留本地未跟踪。
 - **VISUAL115（O03 / C-M01 / C-F07 分屏预览图标与实时视觉检视）**：新增浮雕三段滑杆图标 `"eq"`（`src/ui/ClassicGlyph.tsx`），把 `eq` 纳入 `splitPages`（`src/ui/navigation.ts`），并在 `menuPreviewModel.ts` 补齐 `eq`、`date-time`、`compilations` 与 `ReiPod 设置` 各项的右侧预览映射；抓取实时生产预览在 Chromium 390×844 下的 7 张稳定截图（`.local/visual-audit-115/`），逐帧确认主菜单、设置/EQ、分屏 EQ 勾选、日期与时间图标、标题栏实时 `HH:MM` 时钟、幻灯片设置页与正在播放页均清晰对齐、无遮挡裁切。
 - **CLASSIC114（C-F07 / C-F08 均衡器、日期与时间、幻灯片背景音乐）**：新增 22 组 Apple classic EQ 预设 + 关闭（`src/models/classicEq.ts`）并接入本地 Web Audio 3 段 `BiquadFilterNode` 实时滤波（`src/player/localAudio.ts`）；新增「日期与时间 → 标题栏显示时间」实时 `HH:MM` 状态栏时钟与世界时钟入口；在「幻灯片设置」补齐「背景音乐（保持当前 / 关闭 / 非空本地歌单）」，三项新配置全部纳入偏好持久化与「还原设置」重置。
 - **SLIDESHOW113（C-F08 照片幻灯片设置）**：按 Apple iPod classic 用户指南补齐「幻灯片设置」纯模型（`src/models/slideshowSettings.ts`）、偏好持久化与「还原设置」重置、照片设置与看图选项中的轮盘菜单入口，以及按设置驱动的幻灯片播放（每张停留时间 `2/3/5/10/20 秒/手动`、重复播放、无放回随机照片、过渡效果 `关闭/淡入淡出/划像`），兼容本地照片与 iPhone 系统相册窗口。
@@ -13,7 +13,7 @@
 
 ### 当前目标与进行中
 
-- 无进行中任务。`UI122` 与中英文 GitHub README / 展示截图刷新已完成并随 `REL123`（`efec052`）推送至 `origin/main`、GitHub Pages 与 VPS；`ANTIGRAVITY_HANDOFF.md` 保留本地未跟踪。
+- 进行中：无（`UI124` 已完成本地验证与视觉检查，待确认或提交）。`UI122` 与中英文 GitHub README / 展示截图刷新已完成并随 `REL123`（`efec052`）同步。
 - 近期里程碑（详细过程见下方任务记录）：
   - **2026-11-26 VISUAL115**：补齐 `eq`/`date-time`/`compilations` 与 ReiPod 设置分屏预览图标并完成实时渲染 7 帧视觉核对。
   - **2026-11-26 CLASSIC114**：经典机均衡器（22 组预设 + 实时 Web Audio 3 段滤波）、日期与时间（标题栏时钟）、幻灯片背景音乐。
@@ -1428,3 +1428,123 @@
   - VPS：先备份至 `/opt/reipod/backups/dist-before-efec052-20261126T063229Z.tgz`，同步 `efec052` 的 `assets/`、`index.html` 与 `release.txt`，`nginx` 与 `reipod-music` 保持 `active`。
   - 公网复核：`https://julyblog.party/ReiPod/` 返回 `HTTP/2 200`（HTML SHA-256 与 Pages/本地一致）、`release.txt = efec052`、`https://julyblog.party/` 返回 `200`；匿名 `POST /api/music/netease/status`（Pages 来源）与 `POST /api/music/qq/status`（主站来源）返回 `200`，非允许来源返回 `403`。详细部署记录见 [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md)。
 - **未完成 / 不确定**：同前，真机 iPhone 安装与真实平台账号播放仍待物理设备与实际登录验证。
+
+## 2026-11-26 · UI124（空照片/播客预览与菜单右侧倒影重做）
+
+- 目标：修复主菜单选中空“照片”/“播客”选项卡时右侧仍显示白底灰色小音符的不协调预览，并修复其它菜单选项卡右侧倒影因 `-webkit-box-reflect` 裁切而显得不完整、被文字压住且跨地平线过渡生硬的问题。
+- 已完成改动：
+  - `src/ui/ClassicGlyph.tsx`：新增 `"photos"`（带边框风景山峰与太阳）和 `"podcasts"`（人物剪影与顶部双广播弧线）金属矢量图标，并导出 `PreviewGlyph` 组件，渲染统一 `.preview-glyph-stage` 与垂直镜像 `.preview-glyph-reflection`。
+  - `src/ui/menuPreviewModel.ts` 与 `src/ui/menuPreview.test.ts`：将 `photos` / `all-photos` / `photo-settings` 映射至 `"photos"`，将 `podcasts` / `podcast-settings` 映射至 `"podcasts"`。
+  - `src/ui/AlbumPreview.tsx` 与 `src/ui/MenuPreview.tsx`：统一 `.album-preview-empty` 与 `.menu-preview-card` 使用 `<PreviewGlyph>` 与 `.preview-caption` 底部标签结构，空播客预览保留“播客封面”标题。
+  - `src/ui/classic-lcd.css`：将 `--lcd-studio-bg` 地平线对齐 `53.5%–54.5%`，移除旧白底 `.album-preview-empty` 样式，并用真实镜像舞台 `.preview-glyph-stage`（`88u × 88u`）、`.preview-glyph-reflection`（`height: 34u` 渐隐遮罩）及 `.preview-caption` 替代 `-webkit-box-reflect`，使倒影在文字上方自然消隐不重叠。
+- 实测与检查：
+  - 视觉截图核对（`.local/visual-audit-124/{home-photos-empty,home-podcasts-empty,home-extras,home-settings,settings-eq}.png`）：空照片、空播客以及附加功能、设置、均衡器右侧倒影在地平线附近自然渐隐且与底部标题保持清晰间距。
+  - 最终编辑后通过：`npm test`（62 个文件、308 项测试通过）、`npm run check:player-core`、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（`entryGzip = 149,622 B`、`programGzip = 339,754 B`、`demoAudio = 17,002,461 B`）与 `git diff --check`。
+  - 浏览器回归通过：`npx playwright test tests/browser/photoPreview.pw.ts tests/browser/podcastPreview.pw.ts tests/browser/menuFidelity.pw.ts tests/browser/player.pw.ts`（39/39 通过）。
+- 下一步：等待用户确认视觉效果，或按需提交并同步远端仓库与页面部署。
+
+## 2026-11-26 · DEV125（启动本地预览服务）
+
+- 目标：启动本地 Vite 开发服务器供用户直接查看 `UI124` 实时效果。
+- 执行：在后台启动 `npm run dev -- --host 127.0.0.1 --port 5173`（Vite 8.3.5 ready in 236 ms，监听 `http://127.0.0.1:5173/`）；未改动代码或项目状态。
+
+## 2026-11-26 · UI126（停止本地预览服务并删除菜单右侧预览倒影）
+
+- 目标：按用户要求停止本地 Vite 开发服务器，并移除菜单右侧预览卡片中的图标倒影效果。
+- 已完成改动：
+  - 停止后台 Vite 开发服务器（`task-1360`，确认无后台任务残留）。
+  - `src/ui/ClassicGlyph.tsx`：从 `PreviewGlyph` 移除 `.preview-glyph-reflection` 镜像渲染。
+  - `src/ui/classic-lcd.css`：删除 `.preview-glyph-reflection` 及其子规则，调整 `.menu-preview-card, .album-preview-empty`（`justify-content: center; gap: calc(var(--lcd-unit) * 14); padding: calc(var(--lcd-unit) * 18) calc(var(--lcd-unit) * 10);`）与 `.preview-glyph-stage` 间距以保持图标与标题居中平衡；保留 Cover Flow（`.cf-reflection`）与正在播放（`.np-cover-reflection`）倒影未动。
+- 实测与检查：
+  - 最终编辑后通过：`npm test`（62 个测试文件、308 项测试通过）、`npm run check:player-core`、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（`entryGzip = 149,608 B`、`programGzip = 339,665 B`、`demoAudio = 17,002,461 B`）与 `git diff --check`。
+  - 浏览器回归：`npx playwright test tests/browser/photoPreview.pw.ts tests/browser/podcastPreview.pw.ts tests/browser/menuFidelity.pw.ts` 首次并发运行 13/14 通过（`menuFidelity.pw.ts:34:1` 于 `choose` 处超时偶发），随后单独复测 `menuFidelity.pw.ts` 7/7 全部通过。
+- 下一步：等待用户确认效果，或按需移除 Cover Flow / 正在播放倒影，或提交并同步远端仓库。
+
+## 2026-11-26 · CLOCKSAVER127（背光时钟屏保与 12/24 小时制切换）
+
+- 目标：补齐 `C-F07` 缺失的 2007 iPod classic 6G 背光超时单色时钟屏保，并在「设置 → 日期与时间」新增 12/24 小时制偏好切换（统一驱动标题栏时间、世界时钟与屏保时钟）。
+- 已完成改动：
+  - `src/models/classicExtras.ts` 与 `src/models/classicExtras.test.ts`：新增 `TimeFormat`（`"24h" | "12h"`）及纯时间格式化工具 `formatClassicTime`，并新增 `24h`/`12h` UTC 单元测试。
+  - `src/ui/classicSettings.ts`、`src/ui/classicSettings.test.ts`、`src/ui/settingsMenus.ts`、`src/ui/settingsMenus.test.ts`、`src/ui/menuPreviewModel.ts`：接入 `timeFormat` 偏好（默认 `"24h"`）、「日期与时间 → 时间格式（24 小时制 / 12 小时制）」菜单项、右侧时钟图标映射，并纳入「还原设置」重置。
+  - `src/ui/ClassicStatusBar.tsx`、`src/ui/ClassicExtrasScreens.tsx`、`src/ui/ClassicScreenContent.tsx`：状态栏标题时间与世界时钟统一使用 `formatClassicTime(..., timeFormat)`。
+  - `src/ui/ClassicScreenSaver.tsx`、`src/ui/ClassicShell.tsx`、`src/app/App.tsx`、`src/ui/classic-lcd.css`：在背光超时 `dimmed` 状态替换原纯黑半透明遮罩为单色 LCD 时钟屏保（保持 `.lcd-backlight-dim` 类名与 `pointer-events: none`，展示大号数字时钟、`AM/PM` 标识、中文日期、HOLD/播放状态、电量与可选当前曲目信息；精确字号与布局暂标 P/A）。
+  - `FIRMWARE_FEATURES.md` 与 `tests/browser/settingsExperience.pw.ts`：更新 `C-F07` 说明，补充屏保实时数字时钟及 `12 小时制`/`24 小时制` 切换与还原浏览器验证。
+- 实测与检查：
+  - 最终编辑后通过：`npm test`（62 个文件、310 项测试通过）、`npm run check:player-core`、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（`entryGzip = 150,190 B`、`programGzip = 340,583 B`、`demoAudio = 17,002,461 B`）与 `git diff --check`。
+  - 浏览器回归通过（非沙箱本地服务器端口执行）：`npx playwright test tests/browser/settingsExperience.pw.ts tests/browser/quickScroll.pw.ts`（11/11 通过）。
+- 下一步：可继续按 `FIRMWARE_FEATURES.md` / `UI_METRICS.md` 推进其他原机细节（或提交并推送当前 `UI124`/`UI126`/`CLOCKSAVER127` 改动）。
+
+## 2026-11-26 · REVIEW128（待办事项盘点）
+
+- 目标：向用户汇总当前项目尚未完成与待实机/证据确认的事项数量。
+- 结果：已基于 `TASK_LOG.md`（12 项未完成、7 项未确定）与 `FIRMWARE_FEATURES.md`（6 项 `C-F05`–`C-F10` 开放边界）完成盘点，未改动代码或项目状态。
+
+## 2026-11-26 · CF08-129（内置闹钟合成声调与附加功能屏幕锁定）
+
+- 目标：针对 `FIRMWARE_FEATURES.md` 中 `C-F08` 缺口，推进两项可直接使用的固件功能体验：内置经典闹钟合成声调与「附加功能 → 屏幕锁定」4 位转轮组合密码锁。
+- 已完成改动：
+  - **闹钟四档内置合成声调**：
+    - `src/models/classicAlarms.ts` 与 `src/models/classicAlarms.test.ts`：扩展 `AlarmToneId`（`"beep" | "chime" | "double" | "pulse"`）、`alarmToneOptions`、`isAlarmTone`、`alarmToneId`，并把有效 `tone` 持久化到 `ClassicAlarm.sound` 与无歌单响铃时的 `AlarmNotice.tone`。
+    - `src/services/alarmHost.ts` 与 `src/ui/ClassicAlarms.tsx`：在前台 `createAlarmChime` 新增四档 Web Audio 合成波形（单频蜂鸣 / 清脆三角波双音钟声 / 双音提示 / 三步上升脉冲）并支持声音菜单试听与响铃分发；iOS 原生或本地播放列表唤醒仍各自保留独立行为。
+  - **附加功能 → 屏幕锁定（4 位转轮组合密码）**：
+    - `src/models/classicScreenLock.ts` 与 `src/models/classicScreenLock.test.ts`：新增 4 位数字组合锁状态、校验与转轮模 10 拨号逻辑及单元测试。
+    - `src/ui/ClassicScreenLock.tsx` 与 `src/ui/classic-screen-lock.css`：实现设置/确认/立即锁定/验证更改/验证关闭页面 `ClassicScreenLockScreen`，以及覆盖整屏的全屏锁定交互浮层 `ClassicScreenLockOverlay`。
+    - `src/ui/navigation.ts`、`src/ui/textMenus.ts`、`src/ui/classicScreenModel.ts`、`src/ui/menuPreviewModel.ts`、`src/ui/ClassicShell.tsx`、`src/ui/classicInputController.ts`、`src/ui/ClassicScreenContent.tsx`、`src/app/App.tsx`：接入「附加功能 → 屏幕锁定」入口、`localStorage`（`reipod-screen-lock`）持久化及锁屏输入优先级拦截（锁定时仅转轮/确认/左右/Menu 拨号解锁与 Play/Sleep 保持响应，Home/Options/菜单穿透均被隔离）。
+  - **文档与浏览器验证**：更新 `FIRMWARE_FEATURES.md`（`C-F08`）并新增 `tests/browser/screenLockAndTones.pw.ts`。
+- 实测与检查：
+  - 最终代码编辑后通过：`npm test`（63 个文件、313 项测试通过）、`npm run check:player-core`、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（`entryGzip = 151,936 B`、`programGzip = 343,270 B`、`demoAudio = 17,002,461 B`）与 `git diff --check`。
+  - 浏览器回归通过（非沙箱本地服务器端口执行）：`npx playwright test tests/browser/screenLockAndTones.pw.ts tests/browser/alarmsExperience.pw.ts`（4/4 通过）。
+- 下一步：可继续推进 `FIRMWARE_FEATURES.md` 的剩余开放项（如 `C-F07` 关于本机/调整页与 `C-F08` 文本/秒表/世界时钟实机对齐），或提交当前工作区改动。
+
+## 2026-11-26 · SMARTPL-130（经典智能播放列表：我的高评分 / 最常播放 / 最近播放）
+
+- 目标：围绕 `FIRMWARE_FEATURES.md` 中 `C-F05` 原机浏览能力，补齐经典 iPod 的三组动态智能播放列表（`我的高评分`、`最常播放`、`最近播放`）与有界播放历史存储，同时严格隔离播客内容。
+- 已完成改动：
+  - `src/player/playHistoryModel.ts`、`src/player/playHistory.ts`、`src/player/playHistory.test.ts`：新增无 DOM 纯播放历史模型（上限 500 条按 `lastPlayedAt` 淘汰）与 `selectTopRatedTracks`（>=4 星按星级降序）、`selectMostPlayedTracks`（前 25 首按次数降序）、`selectRecentlyPlayedTracks`（前 25 首按时间倒序）选择器，并通过 `reipod-play-history-v1` 在本地持久化。
+  - `src/ui/navigation.ts`、`src/ui/classicScreenModel.ts`、`src/ui/primaryMenus.ts`、`src/ui/classicMenuModel.ts`、`src/ui/ClassicScreenContent.tsx`、`src/app/App.tsx`：接入 `top-rated` / `most-played` / `recently-played` 路由与播放列表菜单条目、实时计数、空列表专属提示文案，并在音乐进入 `"playing"` 状态时（仅限当前音乐库 `musicTracks`，排除播客且同一轮暂停/继续不重复计数）记录播放。
+  - `FIRMWARE_FEATURES.md` 与 `tests/browser/smartPlaylists.pw.ts`：更新 `C-F05` 说明并新增浏览器端智能列表空提示、播放计数及 5 星评分联动回归。
+- 实测与检查：
+  - 最终代码编辑后通过：`npm test`（64 个文件、315 项测试通过）、`npm run check:player-core`、`npm run build`、`node scripts/check-dist.mjs`、`npm run size`（`entryGzip = 152,883 B`、`programGzip = 344,224 B`、`demoAudio = 17,002,461 B`）与 `git diff --check`。
+  - 浏览器回归通过（非沙箱本地服务器端口执行）：`npx playwright test tests/browser/smartPlaylists.pw.ts tests/browser/firmwarePlayback.pw.ts`（6/6 通过）。
+- 下一步：可继续推进 `FIRMWARE_FEATURES.md` 剩余 `C-F07`/`C-F08` 细节或提交当前工作区改动。
+
+## 2026-11-26 · BATCH-131（本地播放速度、iQuiz 60 题扩充、锁屏分包优化与队列/历史收口）
+
+- 目标：连续完成四项功能与工程收口，进一步推进 `FIRMWARE_FEATURES.md`（`C-F06` / `C-F07` / `C-F08`）与 `O01` 构建整洁度。
+- 已完成改动：
+  - **本地播放速度（`0.75×` / `1×` / `1.25×` / `1.5×` / `2×`）**：
+    - `src/player/localAudio.ts` 与 `src/player/localAudio.test.ts`：新增 `setLocalPlaybackRate`，同步作用到 `LocalGainAudio`（构造与 `play()`）及桌面普通 `Audio`（`WeakRef` 追踪，不破坏实例类型）；新增速率单测。
+    - `src/models/classic.ts`、`src/ui/classicSettings.ts`、`src/ui/classicSettings.test.ts`、`src/ui/navigation.ts`、`src/ui/settingChoices.ts`、`src/ui/primaryMenus.ts`、`src/ui/settingsMenus.ts`、`src/ui/settingsMenus.test.ts`、`src/ui/classicScreenModel.ts`、`src/ui/menuPreviewModel.ts`、`src/app/App.tsx`：在「设置」中按原机相对顺序于「音量平衡」之后接入「播放速度」分屏选项，接入偏好解析与「还原设置」重置，并联动 `setLocalPlaybackRate(prefs.playbackSpeed)`。
+  - **扩充 `iQuiz` 原创题库（36 → 60 题）**：`src/models/iQuiz.ts` 为音乐、电影、电视三类各补充 8 道原创事实题（每类 20 题，共 60 题）。
+  - **修复 `ClassicScreenLock` 静态/动态混用分包（`O01`）**：`src/app/App.tsx` 将 `ClassicScreenLockOverlay` 改为 `lazy(...)` + `<Suspense fallback={null}>`，独立拆出 `ClassicScreenLock-*.js`（1.67 kB gzip）与 `ClassicScreenLock-*.css`（0.58 kB gzip），消除 Vite `[INEFFECTIVE_DYNAMIC_IMPORT]` 构建告警。
+  - **播放列表队列快捷入口 & 清库清除播放历史**：`src/ui/primaryMenus.ts` 在当前队列非空时于「播放列表」展示「播放队列」及曲数入口；`src/app/App.tsx` 在「清空本地音乐资料库」时同步调用 `clearPlayHistory()`。
+  - **文档与测试**：更新 `FIRMWARE_FEATURES.md`（设置顺序表、`C-F07` 与 `iQuiz` 题库规模）与 `tests/browser/settingsExperience.pw.ts`（播放速度设置、持久化与还原设置回归）。
+- 实测与检查：
+  - 最终代码编辑后通过：`npm test`（64 个文件、316 项测试通过）、`npm run check:player-core`、`npm run build`（零告警）、`node scripts/check-dist.mjs`、`npm run size`（`entryGzip = 152,143 B`、`programGzip = 346,659 B`、`demoAudio = 17,002,461 B`）与 `git diff --check`。
+  - 浏览器回归通过（非沙箱本地服务器端口执行）：`npx playwright test tests/browser/settingsExperience.pw.ts tests/browser/smartPlaylists.pw.ts tests/browser/gamesExperience.pw.ts`（16/16 通过）。
+- 下一步：等待用户确认工作区全部积累改动（`UI124` / `UI126` / `CLOCKSAVER127` / `CF08-129` / `SMARTPL-130` / `BATCH-131`）或按需提交并部署远端。
+
+## 2026-11-26 · COMPLETE-132（工程收口：机型契约与注册表、结构地图同步及全链路验收）
+
+- 目标：在本地能力范围内完成可交付的工程收口与文档同步，形式化 `O02` 机型配置契约，执行完整本地测试/构建/iOS 资源生成与多套件浏览器回归，并诚实区分仍需物理硬件与真实账号才能闭环的待验项。
+- 已完成改动：
+  - **正式化机型配置契约与注册表（`O02`）**：
+    - `src/models/deviceModel.ts`：定义 `EvidenceLabel`（`"documented" | "measured" | "provisional" | "adaptation"`）与 `DeviceModelSpec` 机型接口（含物理尺寸、LCD 原生像素、输入设备类型与时序证据标注、菜单与播放面板策略）。
+    - `src/models/classic.ts`：使用 `satisfies DeviceModelSpec` 对 `classic2007` 基线配置执行编译期契约校验。
+    - `src/models/registry.ts` 与 `src/models/registry.test.ts`：导出 `implementedModels` 与 `getDeviceModel`（未知 ID 安全回退 `classic2007`）并补充单测。
+  - **同步结构目录地图**：`PROJECT_STRUCTURE.md` 补录 `deviceModel.ts`、`registry.ts`、`classicScreenLock.ts`、`playHistoryModel.ts`、`playHistory.ts`、`ClassicScreenSaver.tsx` 与 `ClassicScreenLock.tsx` 的实际职责与边界。
+- 本轮全链路实测（最终代码编辑后）：
+  - `npm test`：65 个文件、317 项单元测试全部通过。
+  - `npm run test:music-server`：35/35 项服务端契约测试通过。
+  - `npm run check:player-core`：核心层无 DOM TypeScript 编译检查通过。
+  - `npm run build`、`node scripts/check-dist.mjs`、`npm run size`：`entryGzip = 152,143 B`、`programGzip = 346,659 B`、`demoAudio = 17,002,461 B`、总产物 `26,061,349 B`，无构建告警。
+  - `npm run ios:prepare`：生成 `ios/ReiPod/Web` 资源与 `music-runtime.js`（480.71 kB / gzip 164.01 kB）成功。
+  - Playwright 回归（非沙箱本地服务器端口执行）：10 套 44 项并发测试（`settingsExperience`、`smartPlaylists`、`screenLockAndTones`、`alarmsExperience`、`gamesExperience`、`photoPreview`、`podcastPreview`、`menuFidelity`、`firmwarePlayback`、`quickScroll`）中 43/44 通过（`menuFidelity.pw.ts:34:1` 于 4 worker 下偶发超时），单独复测 `menuFidelity.pw.ts` 7/7 全部通过。
+- 物理硬件/真实账号保留边界（不在本地工程环境闭环）：
+  - 真实 iPhone 安装、冷启动/常亮/触觉手感与 ProMotion 帧率（`APP02`/`APP03`/`U07`），真实 PhotoKit/系统播客/后台闹钟提醒（`PHOTO02`/`POD02`/`U06`），真实 NetEase/QQ/Apple Music 账号线上播放（`U04`），以及 2007 classic 与全代际物理真机的精确像素/字体度量对照（`O03`–`O05`/`U01`–`U03`）。
+- 下一步：等待用户决定是否提交工作区全部修改（`UI124`–`COMPLETE-132`）并推送远端 / 部署 VPS 与 Pages。
+
+## 2026-11-26 · REL133（提交并推送 UI124–COMPLETE-132 至 origin/main）
+
+- 目标：按用户要求提交工作区中已验证的 `UI124`、`UI126`、`CLOCKSAVER127`、`CF08-129`、`SMARTPL-130`、`BATCH-131` 与 `COMPLETE-132` 改动并推送至远端 `origin/main`（保留 `ANTIGRAVITY_HANDOFF.md` 与 `.local/` 在本地不纳入提交）。
+- 校验复用：代码零改动，`COMPLETE-132` 的 65 文件/317 单元测试、35 项服务端测试、`check:player-core`、零警告构建、`check-dist`、`size`、`ios:prepare` 与 44 项（含重跑 `menuFidelity.pw.ts` 7/7）Playwright 回归保持有效。

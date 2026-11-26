@@ -110,13 +110,17 @@ it("parses slideshow settings with defaults and clamps invalid fields", () => {
     parsePreferences({
       eq: "bass-booster",
       soundCheck: true,
+      playbackSpeed: 1.5,
       timeInTitle: true,
+      timeFormat: "12h",
       slideshow: { timePerSlide: 99, music: 123, repeat: "bad", shuffle: 0, transition: "bad" },
     }),
   ).toMatchObject({
     eq: "bass-booster",
     soundCheck: true,
+    playbackSpeed: 1.5,
     timeInTitle: true,
+    timeFormat: "12h",
     slideshow: {
       timePerSlide: 3,
       music: "keep",
@@ -125,4 +129,5 @@ it("parses slideshow settings with defaults and clamps invalid fields", () => {
       transition: "fade",
     },
   });
+  expect(parsePreferences({ timeFormat: "invalid", playbackSpeed: 99 })).toMatchObject({ timeFormat: "24h", playbackSpeed: 1 });
 });

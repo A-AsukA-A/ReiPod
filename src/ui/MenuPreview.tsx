@@ -3,7 +3,7 @@ import type { Album } from "../player/library";
 import type { Track } from "../player/Player";
 import type { MenuPreviewSpec } from "./menuPreviewModel";
 import { AlbumPreview } from "./AlbumPreview";
-import { ClassicGlyph } from "./ClassicGlyph";
+import { PreviewGlyph } from "./ClassicGlyph";
 
 export function MenuPreview({
   spec,
@@ -80,8 +80,8 @@ export function MenuPreview({
           className="menu-preview-card"
           key={`${spec.kind}:${spec.icon}:${spec.title}`}
         >
-          <>
-            <ClassicGlyph name={spec.icon} />
+          <PreviewGlyph name={spec.icon} />
+          <div className="preview-caption">
             <strong>{spec.title}</strong>
             {spec.icon === "shuffle" && (
               <span>{spec.detail ?? `${count} 首歌曲`}</span>
@@ -107,7 +107,7 @@ export function MenuPreview({
               spec.icon !== "shuffle" &&
               spec.detail && <span>{spec.detail}</span>
             )}
-          </>
+          </div>
         </div>
       )}
     </aside>

@@ -70,16 +70,17 @@ ReiPod/
 | `src/ui/searchMenus.ts`、`ClassicSearchScreen.tsx`、`classic-search.css` | 分类结果导航、只读实时结果/横向选字条 | 转轮经输入控制器编辑，不把LCD变成输入表单；歌单命名保留独立编辑器 |
 | `src/ui/settingsMenus.ts` | 原机/扩展设置分组、还原设置、偏好选择、菜单定制与清空确认 | 偏好保存、播放模式、清空与导航操作均由 App 注入；不创建播放会话 |
 | `src/ui/textMenus.ts` | 文本列表、阅读选项、删除反馈与返回保护 | 文本删除/阅读位置/导入命令均注入；异步完成读取最新导航，不能把其他文档带回列表 |
-| `src/ui/mediaMenus.ts` | 照片分组、幻灯片设置（含背景音乐）、照片操作与播客节目菜单 | 只消费只读照片摘要及注入的导入/删除/导航命令；不访问文件输入 DOM、React ref 或媒体存储单例；幻灯片策略模型位于 `src/models/slideshowSettings.ts`，EQ 预设模型位于 `src/models/classicEq.ts` |
+| `src/ui/mediaMenus.ts` | 照片分组、幻灯片设置（含背景音乐）、照片操作与播客节目菜单 | 只消费只读照片摘要及注入的导入/删除/导航命令；不访问文件输入 DOM、React ref 或媒体存储单例；幻灯片策略模型位于 `src/models/slideshowSettings.ts`，EQ 预设模型位于 `src/models/classicEq.ts`，组合密码锁模型位于 `src/models/classicScreenLock.ts` |
 | `src/ui/Lyrics.tsx`、`lyricEffects.ts`、`useLyricLayout.ts` | 媒体时间驱动字素高亮与近视口行弹簧，保留转轮浏览/减弱动态 | 不复制播放时钟、账号或歌词获取；数学运动、行位置与渲染分开 |
-| `src/ui/` | 当前 classic 的导航、屏幕、预览与运动 | 不创建第二份播放/账号状态；不是全机型通用固件 |
+| `src/ui/` | 当前 classic 的导航、屏幕、预览、屏保（`ClassicScreenSaver.tsx`）与锁屏（`ClassicScreenLock.tsx`） | 不创建第二份播放/账号状态；不是全机型通用固件 |
+| `src/player/playHistoryModel.ts`、`playHistory.ts` | 智能播放列表（我的高评分 / 最常播放 / 最近播放）纯规则与本地有界播放历史存储 | 仅统计当前音乐库曲目并隔离播客；清库同步清理历史 |
 | `src/services/nativePhotos.ts`、`src/app/useNativePhotos.ts`、`src/ui/nativePhotoMenus.ts` | 系统照片消息契约、会话内授权/分页协调与只读菜单 | 与音乐账户/播放独立；范围变化/撤销丢弃迟到数据，PhotoKit标识/图片不持久化到页面 |
 | `ios/ReiPod/NativePhotoService.swift`、`PhotoBridge.swift` | PhotoKit授权/相册/图片读取与限定主文档的原生桥 | 无照片写操作；固定尺寸/不透明句柄，取消与权限/库代际复核 |
 | `src/media/` | 附加本地媒体和阅读数据 | 保留导入、恢复与存储边界 |
 
 ## 机型与外观边界
 
-`src/models/classic.ts` 是当前唯一接入的机型配置：2007 classic 基线、320×240 LCD、Click Wheel 及已有菜单/面板策略。容量和固件为 null，避免误称已识别具体硬件。轮盘时序是 ReiPod 适配，不是 Apple 的硬件常量；输入组件从装配点接收参数。
+`src/models/classic.ts` 是当前唯一接入的机型配置（实现 `src/models/deviceModel.ts` 契约并经 `src/models/registry.ts` 注册导出）：2007 classic 基线、320×240 LCD、Click Wheel 及已有菜单/面板策略。容量和固件为 null，避免误称已识别具体硬件。轮盘时序是 ReiPod 适配，不是 Apple 的硬件常量；输入组件从装配点接收参数。
 
 `src/ui/appearance.ts` 只解析 finish/background，供 classic 设置沿用原存储结构，并提供网页状态栏背景色。外观不包含机型、LCD 或平台能力字段；机身 CSS 仍是现有实现，不宣称已完成通用主题注册器。ClassicShell 将机型 LCD 配置传给 CSS；App 注入内容、状态与命令，主题选择不设置 React key 或重建 Player。
 

@@ -1,7 +1,7 @@
 import { useEffect,useImperativeHandle,useRef,useState,useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import type { Ref,RefObject } from "react";
-import { advanceAlarms,alarmDay,alarmLabels,alarmPlaylistId,alarmRepeats,alarmSoundLabel,alarmTime,formatCountdown,freshAlarm,nextAlarm,timerRemaining } from "../models/classicAlarms";
+import { advanceAlarms,alarmDay,alarmLabels,alarmPlaylistId,alarmRepeats,alarmSoundLabel,alarmTime,alarmToneId,alarmToneOptions,formatCountdown,freshAlarm,nextAlarm,timerRemaining } from "../models/classicAlarms";
 import type { AlarmState,ClassicAlarm } from "../models/classicAlarms";
 import { alarmsStore } from "../services/alarmsStore";
 import { alarmHost,createAlarmChime,nativeAlarmsAvailable } from "../services/alarmHost";
@@ -47,7 +47,7 @@ export function AlarmRuntime({input,screenInput,onWake,onSleep,onRinging,onPlayP
   const timer=setInterval(tick,250);void synchronize();
   return()=>{checking.current++;clearInterval(timer);document.removeEventListener("keydown",unlock);document.removeEventListener("pointerdown",unlock);document.removeEventListener("visibilitychange",changed);window.removeEventListener("reipod-native-alarms",changed);chime.current?.dispose();};
  },[]);
- const alert=state.alerts[0],alertKey=alert?`${alert.id}:${alert.at}:${alert.playlistId??""}`:"";
+ const alert=state.alerts[0],alertKey=alert?`${alert.id}:${alert.at}:${alert.playlistId??""}:${alert.tone??"beep"}`:"";
  useEffect(()=>{
   live.current.onRinging(!!alert);
   if(!alert){launched.current={key:"",playing:false};chime.current?.stop();return;}
@@ -55,7 +55,7 @@ export function AlarmRuntime({input,screenInput,onWake,onSleep,onRinging,onPlayP
    if(launched.current.key!==alertKey){
     launched.current={key:alertKey,playing:!!alert.playlistId&&!!live.current.onPlayPlaylist?.(alert.playlistId)};
    }
-   if(!launched.current.playing&&host.engine==="foreground")chime.current?.start();else chime.current?.stop();
+   if(!launched.current.playing&&host.engine==="foreground")chime.current?.start(alert.tone??"beep");else chime.current?.stop();
    live.current.onWake();
   }else chime.current?.stop();
   return()=>chime.current?.stop();
@@ -76,7 +76,8 @@ type Page="alarms"|"countdown"|"sleep-timer"|"alarm-settings";
 type Mode="root"|"edit"|"time"|"date"|"repeat"|"sound"|"label"|"delete"|"discard"|"duration";
 export function ClassicAlarmsScreen({page,input,playlists=[],exit,open,notice}:{page:Page;input:Ref<AlarmPageInput>;playlists?:readonly AlarmPlaylistOption[];exit:()=>void;open:(page:Page)=>void;notice:(text:string)=>void}){
  const {state,saving,error}=useAlarms(),[mode,setMode]=useState<Mode>("root"),[index,setIndex]=useState(0),[draft,setDraft]=useState<ClassicAlarm|null>(null),[field,setField]=useState(0),[duration,setDuration]=useState(state.timer.duration),[now,setNow]=useState(Date.now),[host,setHost]=useState<AlarmHostState>({engine:"foreground",authorization:"authorized"});
- const initial=useRef(""),selected=useRef<HTMLDivElement>(null),list=useRef<HTMLDivElement>(null);
+ const initial=useRef(""),selected=useRef<HTMLDivElement>(null),list=useRef<HTMLDivElement>(null),tonePreview=useRef<ReturnType<typeof createAlarmChime>>(null);
+ useEffect(()=>{tonePreview.current=createAlarmChime();return()=>tonePreview.current?.dispose();},[]);
  useEffect(()=>{setMode("root");setIndex(0);void alarmHost("status").then(setHost).catch(e=>notice(message(e)));},[page,notice]);
  useEffect(()=>{const timer=setInterval(()=>{if(!document.hidden)setNow(Date.now());},250);return()=>clearInterval(timer);},[]);
  const enter=(mode:Mode)=>{setMode(mode);setIndex(0);setField(0);};
@@ -91,7 +92,15 @@ export function ClassicAlarmsScreen({page,input,playlists=[],exit,open,notice}:{
   {label:"继续编辑",action:()=>enter("edit")},{label:"放弃更改",action:()=>enter("root")},
  ]:mode==="repeat"?Object.entries(alarmRepeats).map(([key,label])=>({label,value:draft?.repeat===key?"✓":undefined,action:()=>{setDraft(d=>d?{...d,repeat:key as ClassicAlarm["repeat"]}:d);enter("edit");}}))
  :mode==="sound"?[
-  {label:beepLabel,value:!selectedPlaylistId?"✓":undefined,action:()=>{setDraft(d=>d?{...d,sound:"beep"}:d);enter("edit");}},
+  ...alarmToneOptions.map(tone=>({
+   label:tone.id==="beep"?beepLabel:tone.label,
+   value:!selectedPlaylistId&&alarmToneId(draft?.sound)===tone.id?"✓":undefined,
+   action:()=>{
+    if(host.engine==="foreground")tonePreview.current?.preview(tone.id);
+    setDraft(d=>d?{...d,sound:tone.id}:d);
+    enter("edit");
+   },
+  })),
   ...playlists.map(item=>({label:item.name,value:selectedPlaylistId===item.id?"✓":`${item.count} 首`,action:()=>{setDraft(d=>d?{...d,sound:{playlistId:item.id,playlistName:item.name}}:d);enter("edit");}})),
  ]:mode==="label"?alarmLabels.map(label=>({label,value:draft?.label===label?"✓":undefined,action:()=>{setDraft(d=>d?{...d,label}:d);enter("edit");}}))
  :mode==="edit"&&draft?[

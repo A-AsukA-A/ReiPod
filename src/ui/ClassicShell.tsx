@@ -18,6 +18,8 @@ type Props = {
   held: boolean;
   sleeping: boolean;
   dimmed: boolean;
+  screenSaver?: ReactNode;
+  lockOverlay?: ReactNode;
   brightness: number;
   notice: string;
   quickScrollLetter?: string;
@@ -33,7 +35,7 @@ type Props = {
 /** Current classic renderer: receives UI state/commands, never owns a playback session. */
 export function ClassicShell({
   appearance, selectedService, playbackSource, page, view, split,
-  held, sleeping, dimmed, brightness, notice, quickScrollLetter, contentRef,
+  held, sleeping, dimmed, screenSaver, lockOverlay, brightness, notice, quickScrollLetter, contentRef,
   onActivity, onToggleHold, wheel, imports, header, children,
 }: Props) {
   return (
@@ -77,12 +79,13 @@ export function ClassicShell({
                 {children}
               </div>
             </div>
+            {lockOverlay}
             {quickScrollLetter && (
               <div className="classic-quick-scroll" role="status" aria-label={`快速定位 ${quickScrollLetter}`}>
                 {quickScrollLetter}
               </div>
             )}
-            {dimmed && <div className="lcd-backlight-dim" aria-hidden="true" />}
+            {dimmed && (screenSaver ?? <div className="lcd-backlight-dim" aria-hidden="true" />)}
             {notice && <div className="screen-notice" role="status">{notice}</div>}
           </div>
         </ReadOnlyScreen>

@@ -118,7 +118,7 @@ export function createClassicMenuModel({ page, selectedKey, browseArtist, catego
                         detail: track.artist || track.album || track.filename,
                         action: () => playTrack(track.id),
                       }))
-                    : page === "favorites" || page === "search" ||
+                    : page === "favorites" || page === "top-rated" || page === "most-played" || page === "recently-played" || page === "search" ||
                         page === "playlist-tracks" || page === "playlist-add-tracks" || page === "podcast-episodes"
                       ? []
                       : !current || isTrackList

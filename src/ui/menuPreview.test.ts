@@ -41,7 +41,7 @@ it("selects a contextual card without confusing a setting with a music category"
     detail: undefined,
   });
   expect(menuPreview("settings", "date-time", "日期与时间").icon).toBe("clock");
-  expect(menuPreview("reipod-settings", "photo-settings", "照片设置").icon).toBe("albums");
+  expect(menuPreview("reipod-settings", "photo-settings", "照片设置").icon).toBe("photos");
   expect(menuPreview("reipod-settings", "alarm-settings", "闹钟与计时").icon).toBe("clock");
   expect(menuPreview("reipod-settings", "organizer", "日历与通讯录").icon).toBe("playlists");
   expect(menuPreview("reipod-settings", "metadata-license", "音频解析器许可").icon).toBe("info");

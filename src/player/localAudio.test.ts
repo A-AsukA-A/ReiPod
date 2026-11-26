@@ -1,10 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { LocalGainAudio, createLocalAudio, setLocalEq, setLocalSoundCheck } from "./localAudio";
+import { LocalGainAudio, createLocalAudio, setLocalEq, setLocalPlaybackRate, setLocalSoundCheck } from "./localAudio";
 import { Player } from "./Player";
 
 afterEach(() => {
   setLocalEq([0, 0, 0]);
   setLocalSoundCheck(false);
+  setLocalPlaybackRate(1);
   vi.unstubAllGlobals();
 });
 
@@ -167,4 +168,21 @@ it("wires DynamicsCompressorNode for Sound Check and updates desktop audio routi
   expect([compressor.threshold.value, compressor.knee.value, compressor.ratio.value]).toEqual([0, 0, 1]);
   port.removeAttribute("src");
   expect(compressor.disconnect).toHaveBeenCalledTimes(1);
+});
+
+it("applies playback rate across local audio ports and plain desktop audio elements", async () => {
+  class FakeAudio {
+    defaultPlaybackRate = 1;
+    playbackRate = 1;
+  }
+  vi.stubGlobal("navigator", { userAgent: "Mozilla/5.0 (Macintosh)", platform: "MacIntel", maxTouchPoints: 0 });
+  vi.stubGlobal("Audio", FakeAudio);
+  const plain = createLocalAudio() as unknown as FakeAudio;
+  expect(plain).toBeInstanceOf(FakeAudio);
+  setLocalPlaybackRate(1.5);
+  expect(plain.playbackRate).toBe(1.5);
+  expect(plain.defaultPlaybackRate).toBe(1.5);
+  expect(createLocalAudio()).toBeInstanceOf(LocalGainAudio);
+  setLocalPlaybackRate(1);
+  expect(plain.playbackRate).toBe(1);
 });

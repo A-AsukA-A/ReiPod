@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ClassicClock } from "./ClassicClock";
-import { clockCity, formatStopwatch, lapDurations, stopwatchElapsed } from "../models/classicExtras";
-import type { StopwatchSession } from "../models/classicExtras";
+import { clockCity, formatClassicTime, formatStopwatch, lapDurations, stopwatchElapsed } from "../models/classicExtras";
+import type { StopwatchSession, TimeFormat } from "../models/classicExtras";
 import "./classic-extras.css";
 function useNow(interval: number) {
   const [now, setNow] = useState(Date.now);
@@ -14,7 +14,7 @@ function useNow(interval: number) {
   }, [interval]);
   return now;
 }
-export function ClassicClocksScreen({ clocks, selected }: { clocks: string[]; selected?: string }) {
+export function ClassicClocksScreen({ clocks, selected, timeFormat = "24h" }: { clocks: string[]; selected?: string; timeFormat?: TimeFormat }) {
   const now = useNow(1000), focus = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const row = focus.current, parent = row?.parentElement;
@@ -26,7 +26,7 @@ export function ClassicClocksScreen({ clocks, selected }: { clocks: string[]; se
   return <div className="classic-clocks" role="list" aria-label="世界时钟">
     {clocks.map(id => { const city = clockCity(id); return <div className="world-clock" key={id} role="listitem" aria-current={selected === id ? "true" : undefined} ref={selected === id ? focus : undefined}>
       <ClassicClock now={now} zone={city.zone} />
-      <div><strong>{city.name}</strong><time>{new Intl.DateTimeFormat("zh-CN", { timeZone: city.zone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now)}</time>
+      <div><strong>{city.name}</strong><time>{formatClassicTime(now, timeFormat, city.zone).text}</time>
         <span>{new Intl.DateTimeFormat("zh-CN", { timeZone: city.zone, month: "long", day: "numeric", weekday: "short" }).format(now)}</span></div>
     </div>; })}
   </div>;

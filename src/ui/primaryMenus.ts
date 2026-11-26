@@ -16,6 +16,9 @@ type PrimaryMenuContext = {
   podcastShows: Album[];
   podcastFirstKey?: string;
   musicCount: number;
+  topRatedCount?: number;
+  mostPlayedCount?: number;
+  recentlyPlayedCount?: number;
   compilationsAvailable?: boolean;
   current?: Track;
   playlists: Playlist[];
@@ -37,6 +40,9 @@ export function createPrimaryMenus({
   podcastShows,
   podcastFirstKey,
   musicCount,
+  topRatedCount = 0,
+  mostPlayedCount = 0,
+  recentlyPlayedCount = 0,
   compilationsAvailable = true,
   current,
   playlists,
@@ -180,6 +186,27 @@ export function createPrimaryMenus({
       action: () => open("favorites"),
     },
     { key: "recent", label: "最近添加", action: () => open("recent") },
+    {
+      key: "top-rated",
+      label: "我的高评分",
+      value: `${topRatedCount}`,
+      action: () => open("top-rated"),
+    },
+    {
+      key: "most-played",
+      label: "最常播放",
+      value: `${mostPlayedCount}`,
+      action: () => open("most-played"),
+    },
+    {
+      key: "recently-played",
+      label: "最近播放",
+      value: `${recentlyPlayedCount}`,
+      action: () => open("recently-played"),
+    },
+    ...(state.queue.length
+      ? [{ key: "queue", label: "播放队列", value: `${state.queue.length}`, action: () => open("queue") }]
+      : []),
     { key: "demo", label: "试听精选", action: loadDemos },
 
     { key: "new-playlist", label: "新建歌单…", action: () => editName() },
@@ -250,6 +277,12 @@ export function createPrimaryMenus({
       label: "音量平衡",
       value: prefs.soundCheck ? "开启" : "关闭",
       action: () => open("sound-check", String(prefs.soundCheck)),
+    },
+    {
+      key: "playback-speed",
+      label: "播放速度",
+      value: `${prefs.playbackSpeed}×`,
+      action: () => open("playback-speed", String(prefs.playbackSpeed)),
     },
     {
       key: "date-time",

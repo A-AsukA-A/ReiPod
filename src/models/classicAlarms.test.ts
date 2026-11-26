@@ -1,5 +1,5 @@
 import { expect,test } from "vitest";
-import { advanceAlarms,alarmPlaylistId,alarmSchedules,alarmSoundLabel,emptyAlarms,freshAlarm,nextAlarm,parseAlarms,timerRemaining } from "./classicAlarms";
+import { advanceAlarms,alarmPlaylistId,alarmSchedules,alarmSoundLabel,alarmToneOptions,emptyAlarms,freshAlarm,nextAlarm,parseAlarms,timerRemaining } from "./classicAlarms";
 const id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 test("weekday alarms use local dates, fire once per occurrence and expire stale one-off alarms",()=>{
  const friday=new Date(2026,10,13,8).getTime(),alarm={...freshAlarm(id,friday),repeat:"weekdays" as const,minute:420};
@@ -33,4 +33,18 @@ test("alarm sound persists beep or local playlist selection, defaults legacy ala
  const fired=advanceAlarms(parsedPlaylist,at+1);
  expect(fired.alerts[0]).toMatchObject({id,kind:"alarm",playlistId:"pl-morning"});
  expect(parseAlarms({alarms:[{...withPlaylist,sound:{playlistId:"",playlistName:"无效"}}],timer:emptyAlarms(id).timer,sleepAt:null,alerts:[]},id).alarms).toHaveLength(0);
+});
+
+test("alarm supports all built-in tone options, rejects unknown tones and carries tone into AlarmNotice",()=>{
+ const friday=new Date(2026,10,13,6).getTime(),at=new Date(2026,10,13,7).getTime();
+ for(const tone of alarmToneOptions){
+  const alarm={...freshAlarm(id,friday),sound:tone.id};
+  const parsed=parseAlarms({alarms:[alarm],timer:emptyAlarms(id).timer,sleepAt:null,alerts:[]},id);
+  expect(parsed.alarms[0].sound).toBe(tone.id);
+  expect(alarmSoundLabel(parsed.alarms[0].sound,"蜂鸣",[])).toBe(tone.label);
+  const fired=advanceAlarms(parsed,at+1);
+  expect(fired.alerts[0]).toMatchObject({id,kind:"alarm",tone:tone.id});
+  expect(fired.alerts[0].playlistId).toBeUndefined();
+ }
+ expect(parseAlarms({alarms:[{...freshAlarm(id,friday),sound:"unknown-tone"}],timer:emptyAlarms(id).timer,sleepAt:null,alerts:[]},id).alarms).toHaveLength(0);
 });

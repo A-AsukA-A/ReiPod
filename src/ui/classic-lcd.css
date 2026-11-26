@@ -6,7 +6,7 @@
   --lcd-select-bg: linear-gradient(180deg, #74cdf6 0%, #44afe8 47%, #1a90d8 50%, #147ec5 100%);
   --lcd-select-shadow: inset 0 var(--lcd-unit) 0 #a8e5fe, inset 0 calc(var(--lcd-unit) * -1) 0 #0c65a1;
   --lcd-select-text-shadow: 0 calc(var(--lcd-unit) * -0.8) 0 #0a4f8080;
-  --lcd-studio-bg: linear-gradient(180deg, #a2b6c4 0%, #7d92a1 48%, #5e7280 58%, #485865 60%, #3b4955 100%);
+  --lcd-studio-bg: linear-gradient(180deg, #a5b8c6 0%, #7a90a0 48%, #617686 53.5%, #445461 54.5%, #34424e 100%);
   font-family: var(--font-lcd);
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums;
@@ -564,22 +564,9 @@
 }
 .album-preview-empty {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  gap: 8px;
-  color: #8a949e;
-  text-align: center;
-}
-.album-preview-empty > span {
-  font-size: 52px;
-  color: #b5bec8;
-}
-.album-preview-empty small {
-  font-size: 10px;
-  line-height: 1.6;
+  height: 100%;
+  background: var(--lcd-studio-bg);
+  color: #fff;
 }
 .album-preview[data-paused="true"] .preview-cover > .album-art {
   animation-play-state: paused;
@@ -734,33 +721,22 @@
 .menu-preview > .album-preview[aria-hidden="true"] {
   visibility: hidden;
 }
-.menu-preview-card {
+.menu-preview-card,
+.album-preview-empty {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: calc(var(--lcd-unit) * 26) calc(var(--lcd-unit) * 8)
-    calc(var(--lcd-unit) * 10);
-  gap: calc(var(--lcd-unit) * 8);
+  justify-content: center;
+  gap: calc(var(--lcd-unit) * 14);
+  padding: calc(var(--lcd-unit) * 18) calc(var(--lcd-unit) * 10);
   color: white;
   text-align: center;
   background: var(--lcd-studio-bg);
+}
+.menu-preview-card {
   animation: preview-card-in var(--lcd-preview-card-duration) ease-out both;
-}
-.menu-preview-card > strong {
-  font-size: calc(var(--lcd-unit) * 15);
-  font-weight: 700;
-  line-height: 1.2;
-  white-space: normal;
-  text-shadow: 0 1px 2px #1b2c3a9c;
-  overflow-wrap: anywhere;
-}
-.menu-preview-card > span {
-  font-size: calc(var(--lcd-unit) * 11);
-  line-height: 1.5;
-  color: #f0f4f7;
 }
 .classic-glyph {
   flex-shrink: 0;
@@ -769,13 +745,47 @@
   margin-bottom: calc(var(--lcd-unit) * 8);
   filter: drop-shadow(0 1px 0 #eff6ffa6) drop-shadow(0 3px 2px #24374769);
 }
-.menu-preview-card > .classic-glyph {
-  margin-bottom: calc(var(--lcd-unit) * 16);
-  -webkit-box-reflect: below calc(var(--lcd-unit) * -12)
-    linear-gradient(transparent 68%, rgba(255, 255, 255, 0.22) 100%);
+.preview-glyph-stage {
+  position: relative;
+  width: calc(var(--lcd-unit) * 88);
+  height: calc(var(--lcd-unit) * 88);
+  flex-shrink: 0;
+}
+.preview-glyph-stage > .classic-glyph {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  position: relative;
+  z-index: 1;
   filter:
     drop-shadow(0 var(--lcd-unit) 0 #ffffffb8)
-    drop-shadow(0 calc(var(--lcd-unit) * 4) calc(var(--lcd-unit) * 5) #16253280);
+    drop-shadow(0 calc(var(--lcd-unit) * 3) calc(var(--lcd-unit) * 4) #16253280);
+}
+.preview-caption {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 4);
+  text-align: center;
+}
+.preview-caption > strong {
+  font-size: calc(var(--lcd-unit) * 14);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  white-space: normal;
+  text-shadow: 0 1px 2px #162532b8;
+  overflow-wrap: anywhere;
+}
+.preview-caption > span,
+.preview-caption > small {
+  font-size: calc(var(--lcd-unit) * 10);
+  line-height: 1.35;
+  color: #dbe5ec;
 }
 .preview-storage {
   height: calc(var(--lcd-unit) * 9);
@@ -939,9 +949,106 @@
   position: absolute;
   inset: 0;
   z-index: 10;
-  background: #000;
-  opacity: 0.62;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: calc(var(--lcd-unit) * 10) calc(var(--lcd-unit) * 14) calc(var(--lcd-unit) * 12);
+  background: linear-gradient(180deg, #1b1f23 0%, #101316 100%);
+  color: #b8c2ca;
   pointer-events: none;
+}
+.screensaver-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: calc(var(--lcd-unit) * 14);
+}
+.screensaver-icons {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 6);
+}
+.screensaver-status .hold-icon {
+  fill: #9aa6b0;
+  stroke: #76828c;
+}
+.screensaver-transport {
+  display: inline-flex;
+  align-items: center;
+}
+.screensaver-transport .status-transport {
+  width: calc(var(--lcd-unit) * 10);
+  height: calc(var(--lcd-unit) * 12);
+  fill: #9aa6b0;
+  stroke: none;
+}
+.screensaver-status .classic-battery {
+  border-color: #7c8791;
+  background: #23282d;
+}
+.screensaver-status .classic-battery::after {
+  background: #7c8791;
+}
+.screensaver-status .classic-battery > i {
+  background: #9aa6b0;
+}
+.screensaver-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--lcd-unit) * 4);
+  text-align: center;
+}
+.screensaver-clock {
+  display: inline-flex;
+  align-items: baseline;
+  gap: calc(var(--lcd-unit) * 4);
+  font-size: calc(var(--lcd-unit) * 44);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: calc(var(--lcd-unit) * -0.5);
+  font-variant-numeric: tabular-nums;
+  color: #cfd8df;
+  text-shadow: 0 var(--lcd-unit) calc(var(--lcd-unit) * 2) #00000080;
+}
+.screensaver-clock > small {
+  font-size: calc(var(--lcd-unit) * 14);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #9aa6b0;
+}
+.screensaver-date {
+  font-size: calc(var(--lcd-unit) * 12);
+  font-weight: 600;
+  color: #8f9ba6;
+}
+.screensaver-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--lcd-unit) * 2);
+  min-width: 0;
+  text-align: center;
+}
+.screensaver-track > strong,
+.screensaver-track > span {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.screensaver-track > strong {
+  font-size: calc(var(--lcd-unit) * 12);
+  font-weight: 700;
+  color: #b8c2ca;
+}
+.screensaver-track > span {
+  font-size: calc(var(--lcd-unit) * 10);
+  color: #87939e;
+}
+.screensaver-spacer {
+  min-height: calc(var(--lcd-unit) * 14);
 }
 .np-shuffle-options,
 .classic-rating {

@@ -6,7 +6,7 @@ import type { Album } from "../player/library";
 
 import { MenuPreview } from "./MenuPreview";
 
-import type { ExtrasState } from "../models/classicExtras";
+import type { ExtrasState, TimeFormat } from "../models/classicExtras";
 import { ClassicGlyph } from "./ClassicGlyph";
 
 import type { ClassicAboutInformation } from "./ClassicAboutScreen";
@@ -17,6 +17,8 @@ import type { AlarmPageInput } from "./alarmInput";
 import type { AlarmPlaylistOption } from "./ClassicAlarms";
 import type { OrganizerInput } from "./organizerInput";
 import type { GameInput } from "./gameInput";
+import type { ScreenLockInput } from "./ClassicScreenLock";
+import type { ScreenLockState } from "../models/classicScreenLock";
 import type { QuizTrack } from "../models/iQuiz";
 
 
@@ -37,6 +39,7 @@ const screenLoaders = {
   notes: () => import("./TextReader").then(m => ({ default: m.TextReader })),
   photos: () => import("./PhotoScreen").then(m => ({ default: m.PhotoScreen })),
   games: () => import("./ClassicGamesScreen").then(m => ({ default: m.ClassicGamesScreen })),
+  screenLock: () => import("./ClassicScreenLock").then(m => ({ default: m.ClassicScreenLockScreen })),
 } as const;
 
 const NowPlayingScreen = lazy(screenLoaders.playing);
@@ -50,6 +53,7 @@ const ClassicSearchScreen = lazy(screenLoaders.search);
 const TextReader = lazy(screenLoaders.notes);
 const PhotoScreen = lazy(screenLoaders.photos);
 const ClassicGamesScreen = lazy(screenLoaders.games);
+const ClassicScreenLockScreen = lazy(screenLoaders.screenLock);
 
 type Props = {
   page: Page; groupKey?: string; title: string;
@@ -68,20 +72,21 @@ type Props = {
     reader: RefObject<TextReaderHandle | null>; searchCount: number; searchPending: boolean; searchError?: string };
   photos: { activePhotos: ComponentProps<typeof PhotoScreen>["photos"];
     photoIndex: number; slideshow: boolean; loading?: boolean; total?: number; offset?: number };
-  prefs: { brightness: number; volumeLimit: number };
+  prefs: { brightness: number; volumeLimit: number; timeFormat: TimeFormat };
   about: { index: number; information: ClassicAboutInformation };
   extras: ExtrasState;
   alarms: { input: RefObject<AlarmPageInput | null>; playlists: readonly AlarmPlaylistOption[]; exit: () => void; open: (page: Page) => void; notice: (message: string) => void };
   organizer: { input: RefObject<OrganizerInput | null>; active: boolean; exit: () => void; notice: (message: string) => void };
   games: { input: RefObject<GameInput | null>; active: boolean; tracks: readonly QuizTrack[]; scope: string;
     open: (id: string) => void; exit: () => void; notice: (message: string) => void };
+  screenLock: { state: ScreenLockState; input: RefObject<ScreenLockInput | null>; onSaveCode: (code: string | null) => void; onLockNow: () => void; exit: () => void; notice: (message: string) => void };
   preview: Parameters<typeof classicPreviewModel>[0];
   accountHeader: ReactNode; qrImage?: string; serviceName: string;
 };
 
 /** Classic page presentation only; sessions, service capabilities and commands are injected. */
 export function ClassicScreenContent({ page, groupKey, title, menu, library, playback,
-  text, photos, prefs, about, extras, alarms, organizer, games, preview, accountHeader, qrImage, serviceName }: Props) {
+  text, photos, prefs, about, extras, alarms, organizer, games, screenLock, preview, accountHeader, qrImage, serviceName }: Props) {
   const { rows, focusedRow, selectedIndex, isTrackList, visibleIds, visibleTracks,
     trackById, playlistTrackIds, selectedRow, hasManagedRows, splitMenu, positionKey } = menu;
   const positions = useRef<MenuScrollPositions>(new Map());
@@ -117,6 +122,7 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
       {(page === "games" || page === "game") && <ClassicGamesScreen id={page === "game" ? groupKey : undefined}
         input={games.input} active={games.active} tracks={games.tracks} scope={games.scope}
         openGame={games.open} exit={games.exit} notice={games.notice} />}
+      {page === "screen-lock" && <ClassicScreenLockScreen {...screenLock} />}
       {page === "search" && (
         <ClassicSearchScreen query={query} editing={textEntry.editing}
           characters={textEntry.characters} index={textEntry.index}
@@ -166,7 +172,7 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
         </div>
       )}
       {page === "clock" && (extras.clocks.length
-        ? <ClassicClocksScreen clocks={extras.clocks} selected={focusedRow?.key} />
+        ? <ClassicClocksScreen clocks={extras.clocks} selected={focusedRow?.key} timeFormat={prefs.timeFormat} />
         : <nav className="settings-screen">{renderRows()}</nav>)}
       {page === "stopwatch-timer" && <ClassicStopwatchScreen session={extras.current}>{renderRows()}</ClassicStopwatchScreen>}
       {page === "stopwatch-log" && (() => {
@@ -254,7 +260,7 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
           !isTrackList &&
           ![
             "about",
-            "calendar", "contacts", "organizer-settings", "alarms", "countdown", "sleep-timer", "alarm-settings",
+            "calendar", "contacts", "organizer-settings", "alarms", "countdown", "sleep-timer", "alarm-settings", "screen-lock",
             "games",
             "game",
             "brightness",
@@ -360,6 +366,10 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
             <strong>
               {page === "favorites"
                 ? "还没有收藏的歌曲"
+                : page === "top-rated"
+                  ? "还没有高评分歌曲"
+                : page === "most-played" || page === "recently-played"
+                  ? "还没有播放记录"
                 : page === "podcast-episodes"
                   ? "此节目暂无单集"
                 : page === "playlist-tracks"
@@ -372,6 +382,10 @@ export function ClassicScreenContent({ page, groupKey, title, menu, library, pla
               </nav>
             ) : page === "favorites" ? (
               <small>长按中心键，在歌曲选项中收藏</small>
+            ) : page === "top-rated" ? (
+              <small>在正在播放页按中心键可打 4–5 星</small>
+            ) : page === "most-played" || page === "recently-played" ? (
+              <small>播放音乐后将自动汇总到这里</small>
             ) : (
               <nav className="empty-actions" aria-label="添加音乐">
                 {renderRows()}

@@ -70,10 +70,19 @@ it("Reset Settings restores implemented firmware preferences through their owner
   rows[0].action();
   expect(f.context.setPreferences).not.toHaveBeenCalled();
   rows[1].action();
-  expect(f.context.setPreferences).toHaveBeenCalledWith({ clickSound: true, brightness: 1, volumeLimit: 1, backlight: 0, mainMenu: parsePreferences(null).mainMenu, musicMenu: parsePreferences(null).musicMenu, eq: "off", soundCheck: false, timeInTitle: false, slideshow: parsePreferences(null).slideshow });
+  expect(f.context.setPreferences).toHaveBeenCalledWith({ clickSound: true, brightness: 1, volumeLimit: 1, backlight: 0, mainMenu: parsePreferences(null).mainMenu, musicMenu: parsePreferences(null).musicMenu, eq: "off", soundCheck: false, playbackSpeed: 1, timeInTitle: false, timeFormat: "24h", slideshow: parsePreferences(null).slideshow });
   expect(f.context.shuffle).toHaveBeenCalledWith(false);
   expect(f.context.repeat).toHaveBeenCalledWith("off");
   expect(f.context.clear).not.toHaveBeenCalled();
   expect(f.context.state.tracks).toEqual([]);
   expect(f.context.prefs).toMatchObject({ finish: "black", background: "dark", lyricsEnabled: false, brightness: .25 });
+});
+it("date-time menu toggles 12h/24h timeFormat without leaving the settings page", () => {
+  const f = fixture();
+  const dateTimeRows = f.menus().managedRows["date-time"]!;
+  const formatRow = dateTimeRows.find(row => row.key === "time-format")!;
+  expect(formatRow.value).toBe("24 小时制");
+  formatRow.action();
+  expect(f.context.setPreferences).toHaveBeenCalledWith({ timeFormat: "12h" });
+  expect(f.context.back).not.toHaveBeenCalled();
 });

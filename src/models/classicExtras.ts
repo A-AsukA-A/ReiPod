@@ -25,6 +25,33 @@ export const clockCities = [
   { id: "cairo", name: "开罗", region: "africa", zone: "Africa/Cairo" },
   { id: "johannesburg", name: "约翰内斯堡", region: "africa", zone: "Africa/Johannesburg" },
 ];
+export type TimeFormat = "24h" | "12h";
+export function formatClassicTime(
+  now: Date | number,
+  format: TimeFormat = "24h",
+  timeZone?: string,
+): { time: string; meridiem?: string; text: string } {
+  if (format === "24h") {
+    const time = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(now);
+    return { time, text: time };
+  }
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(now);
+  const hour = parts.find((p) => p.type === "hour")?.value ?? "";
+  const minute = parts.find((p) => p.type === "minute")?.value ?? "";
+  const meridiem = parts.find((p) => p.type === "dayPeriod")?.value;
+  const time = `${hour}:${minute}`;
+  return { time, meridiem, text: meridiem ? `${time} ${meridiem}` : time };
+}
 export function clockCity(id: string) {
   return clockCities.find(city => city.id === id) ?? {
     id: "local", name: "本地时间", zone: Intl.DateTimeFormat().resolvedOptions().timeZone,

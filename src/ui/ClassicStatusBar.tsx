@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import { BatteryIndicator } from "./BatteryIndicator";
 import { ClassicLcdIcon } from "./ClassicLcdIcon";
+import { formatClassicTime, type TimeFormat } from "../models/classicExtras";
 import { repeatText } from "./primaryMenus";
-
-function localClockText() {
-  const now = new Date();
-  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-}
 
 type Props = {
   title: string;
   timeInTitle?: boolean;
+  timeFormat?: TimeFormat;
   shuffle: boolean;
   repeat: "off" | "all" | "one";
   held: boolean;
@@ -21,15 +18,15 @@ type Props = {
 };
 
 export function ClassicStatusBar({
-  title, timeInTitle = false, shuffle, repeat, held, hasCurrent, active, busy, transportHint,
+  title, timeInTitle = false, timeFormat = "24h", shuffle, repeat, held, hasCurrent, active, busy, transportHint,
 }: Props) {
-  const [clockText, setClockText] = useState(localClockText);
+  const [clockText, setClockText] = useState(() => formatClassicTime(Date.now(), timeFormat).text);
   useEffect(() => {
     if (!timeInTitle) return;
-    setClockText(localClockText());
-    const timer = setInterval(() => setClockText(localClockText()), 15000);
+    setClockText(formatClassicTime(Date.now(), timeFormat).text);
+    const timer = setInterval(() => setClockText(formatClassicTime(Date.now(), timeFormat).text), 15000);
     return () => clearInterval(timer);
-  }, [timeInTitle]);
+  }, [timeInTitle, timeFormat]);
   return (
     <div className="screen-status">
       <strong title={title}>{timeInTitle ? clockText : title}</strong>
